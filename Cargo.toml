@@ -24,3 +24,7 @@ dbg_macro = "warn"
 expect_used = "warn"
 todo = "warn"
 unwrap_used = "warn"
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+yaml_serde = "0.10"
