@@ -83,6 +83,14 @@ godlint config validate
 godlint config validate --config path/to/godlint.yaml
 ```
 
+Source discovery is available through the initial `check` command. It currently lists
+the Rust, TypeScript/JavaScript, and Python files that future rules will evaluate:
+
+```bash
+godlint check
+godlint check crates services
+```
+
 ## Contributing
 
 We welcome early design feedback, rule ideas backed by concrete examples, parser and

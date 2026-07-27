@@ -1,8 +1,11 @@
-use std::{path::Path, process::ExitCode};
+use std::{
+    path::{Path, PathBuf},
+    process::ExitCode,
+};
 
-use godlint_core::{VERSION, config::Config};
+use godlint_core::{VERSION, config::Config, discovery::discover};
 
-const USAGE: &str = "Usage:\n  godlint config validate [--config <path>]\n  godlint [--help] [--version]\n\nGodlint is a deterministic code-policy engine for polyglot repositories.";
+const USAGE: &str = "Usage:\n  godlint check [paths...]\n  godlint config validate [--config <path>]\n  godlint [--help] [--version]\n\nGodlint is a deterministic code-policy engine for polyglot repositories.";
 
 fn main() -> ExitCode {
     match std::env::args().skip(1).collect::<Vec<_>>().as_slice() {
@@ -18,6 +21,7 @@ fn main() -> ExitCode {
             println!("godlint {VERSION}");
             ExitCode::SUCCESS
         }
+        [command, paths @ ..] if command == "check" => check(paths),
         [command, subcommand] if command == "config" && subcommand == "validate" => {
             validate_config(Path::new("godlint.yaml"))
         }
@@ -32,6 +36,34 @@ fn main() -> ExitCode {
         }
         _ => {
             eprintln!("Expected at most one argument.\n\n{USAGE}");
+            ExitCode::from(2)
+        }
+    }
+}
+
+fn check(paths: &[String]) -> ExitCode {
+    let paths = if paths.is_empty() {
+        vec![PathBuf::from(".")]
+    } else {
+        paths.iter().map(PathBuf::from).collect()
+    };
+
+    match discover(&paths) {
+        Ok(files) if files.is_empty() => {
+            println!("No supported source files found.");
+            ExitCode::SUCCESS
+        }
+        Ok(files) => {
+            println!("Discovered {} supported source files:", files.len());
+
+            for path in files {
+                println!("{}", path.display());
+            }
+
+            ExitCode::SUCCESS
+        }
+        Err(error) => {
+            eprintln!("Unable to discover source files: {error}");
             ExitCode::from(2)
         }
     }

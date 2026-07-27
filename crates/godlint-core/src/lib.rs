@@ -1,3 +1,4 @@
 pub mod config;
+pub mod discovery;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
