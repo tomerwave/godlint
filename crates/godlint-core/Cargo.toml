@@ -1,0 +1,12 @@
+[package]
+name = "godlint-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+description = "Core contracts for Godlint."
+license.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true

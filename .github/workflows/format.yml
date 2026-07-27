@@ -1,0 +1,24 @@
+name: Format
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    name: Check formatting
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: rustup toolchain install 1.97.1 --profile minimal
+
+      - run: rustup component add rustfmt --toolchain 1.97.1
+
+      - run: cargo +1.97.1 fmt --all -- --check

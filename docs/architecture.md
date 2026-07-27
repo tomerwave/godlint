@@ -12,8 +12,8 @@ Language adapters retain native AST and parser details. They emit a small shared
 model (`Function`, `Import`, `Call`, `EnvironmentRead`, `ErrorHandler`, `Assertion`,
 `Mock`, and `DependencyEdge`) that rules can consume without a universal AST.
 
-Start with only `godlint-cli`, `godlint-core`, and `godlint-test-support`. Split
+Start with only `godlint-cli` and `godlint-core`. Add fixture-test support,
 configuration, diagnostics, analyzers, rules, graph, cache, SARIF, and external tools
-into dedicated crates only after their ownership boundaries are proven by real code.
+as dedicated crates only after their ownership boundaries are proven by real code.
 
 Semantic workers and external ecosystem-tool adapters are post-MVP capabilities.
