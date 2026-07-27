@@ -83,12 +83,12 @@ godlint config validate
 godlint config validate --config path/to/godlint.yaml
 ```
 
-Source discovery is available through the initial `check` command. It currently lists
-the Rust, TypeScript/JavaScript, and Python files that future rules will evaluate:
+The initial `check` command evaluates the configured function-size rule across Rust,
+TypeScript/JavaScript, and Python source files:
 
 ```bash
 godlint check
-godlint check crates services
+godlint check crates
 ```
 
 ## Contributing

@@ -1,0 +1,4 @@
+function example() {
+  first();
+  second();
+}

@@ -20,3 +20,5 @@ jobs:
       - run: rustup toolchain install 1.97.1 --profile minimal
 
       - run: cargo +1.97.1 test --workspace
+
+      - run: cargo +1.97.1 run -p godlint-cli -- check .

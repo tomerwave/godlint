@@ -2,6 +2,7 @@ use std::{
     error::Error,
     fmt,
     path::{Component, Path, PathBuf},
+    sync::Arc,
 };
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -16,7 +17,7 @@ pub enum Language {
 pub struct SourceFile {
     path: PathBuf,
     language: Language,
-    source: String,
+    source: Arc<str>,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -73,7 +74,7 @@ impl SourceFile {
         Ok(Self {
             path,
             language,
-            source,
+            source: Arc::from(source),
         })
     }
 

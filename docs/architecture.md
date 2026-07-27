@@ -19,6 +19,10 @@ Function extractors emit validated `FunctionFact` values with a source file, opt
 name, whole-function range, body range, and nesting depth. Rules consume these facts
 rather than language-specific parser nodes.
 
+Tree-sitter and its official Rust, JavaScript, TypeScript/TSX, and Python grammars
+provide the initial syntax boundary. The adapters retain Tree-sitter nodes and byte
+spans; no parser type crosses into rules, findings, or reporters.
+
 Start with only `godlint-cli` and `godlint-core`. Add fixture-test support,
 configuration, diagnostics, analyzers, rules, graph, cache, SARIF, and external tools
 as dedicated crates only after their ownership boundaries are proven by real code.
