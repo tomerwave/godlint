@@ -1,0 +1,27 @@
+[workspace]
+members = [
+  "crates/godlint-cli",
+  "crates/godlint-core",
+  "crates/godlint-test-support",
+]
+resolver = "3"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.97"
+authors = ["Tomer Gal"]
+description = "A deterministic code-policy engine for polyglot repositories."
+license = "MIT"
+repository = "https://github.com/tomerwave/godlint"
+keywords = ["lint", "static-analysis", "code-quality", "policy"]
+categories = ["development-tools", "development-tools::cargo-plugins"]
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+dbg_macro = "warn"
+expect_used = "warn"
+todo = "warn"
+unwrap_used = "warn"

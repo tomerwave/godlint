@@ -1,0 +1,21 @@
+[package]
+name = "godlint-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+description = "Command-line interface for Godlint."
+license.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+godlint-core = { path = "../godlint-core", version = "0.1.0" }
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "godlint"
+path = "src/main.rs"

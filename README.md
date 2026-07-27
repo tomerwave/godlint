@@ -58,6 +58,24 @@ materials while the repository is pre-alpha. The implementation sequence is:
 4. Caching, architecture graph, and GitHub Actions integration.
 5. Optional semantic workers and ecosystem-tool adapters.
 
+## Local development
+
+Godlint currently requires Rust `1.97.1`. After installing Rust with
+[rustup](https://rustup.rs/), run the same checks used by CI:
+
+```bash
+cargo fmt --check
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace
+RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps
+```
+
+The initial command shell is available with:
+
+```bash
+cargo run -p godlint-cli -- --version
+```
+
 ## Contributing
 
 We welcome early design feedback, rule ideas backed by concrete examples, parser and

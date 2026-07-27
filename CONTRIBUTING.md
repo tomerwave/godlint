@@ -37,7 +37,7 @@ When the Rust workspace is introduced, the required local checks will be:
 cargo fmt --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
-cargo doc --workspace --no-deps
+RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps
 ```
 
 Until then, documentation and community changes should be checked for working links,

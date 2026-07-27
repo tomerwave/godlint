@@ -1,0 +1,12 @@
+[package]
+name = "godlint-test-support"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+description = "Shared test support for Godlint fixtures."
+license.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
