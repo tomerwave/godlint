@@ -1,4 +1,12 @@
-use std::process::Command;
+use std::{
+    fs,
+    path::PathBuf,
+    process::Command,
+    sync::atomic::{AtomicU64, Ordering},
+    time::{SystemTime, UNIX_EPOCH},
+};
+
+static NEXT_CONFIG_ID: AtomicU64 = AtomicU64::new(0);
 
 fn godlint() -> Command {
     Command::new(env!("CARGO_BIN_EXE_godlint"))
@@ -9,6 +17,18 @@ fn run(command: &mut Command) -> std::process::Output {
         Ok(output) => output,
         Err(error) => panic!("runs godlint: {error}"),
     }
+}
+
+fn config_file(contents: &str) -> PathBuf {
+    let timestamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_or(0, |duration| duration.as_nanos());
+    let id = NEXT_CONFIG_ID.fetch_add(1, Ordering::Relaxed);
+    let path = std::env::temp_dir().join(format!("godlint-cli-{timestamp}-{id}.yaml"));
+
+    fs::write(&path, contents).unwrap_or_else(|error| panic!("writes config: {error}"));
+
+    path
 }
 
 #[test]
@@ -26,4 +46,41 @@ fn rejects_unknown_arguments() {
 
     assert_eq!(output.status.code(), Some(2));
     assert!(String::from_utf8_lossy(&output.stderr).contains("Unknown argument: check"));
+}
+
+#[test]
+fn validates_a_function_size_configuration() {
+    let path = config_file(
+        "version: 1\nrules:\n  maintainability/function-size:\n    severity: error\n    max-lines: 30\n    skip-blank-lines: true\n    skip-comments: true\n",
+    );
+    let output = run(godlint().args([
+        "config",
+        "validate",
+        "--config",
+        &path.display().to_string(),
+    ]));
+
+    fs::remove_file(path).unwrap_or_else(|error| panic!("removes config: {error}"));
+
+    assert!(output.status.success());
+    assert!(String::from_utf8_lossy(&output.stdout).contains("Configuration is valid:"));
+    assert!(output.stderr.is_empty());
+}
+
+#[test]
+fn reports_an_invalid_configuration() {
+    let path = config_file("version: 2\n");
+    let output = run(godlint().args([
+        "config",
+        "validate",
+        "--config",
+        &path.display().to_string(),
+    ]));
+
+    fs::remove_file(path).unwrap_or_else(|error| panic!("removes config: {error}"));
+
+    assert_eq!(output.status.code(), Some(2));
+    assert!(
+        String::from_utf8_lossy(&output.stderr).contains("unsupported configuration version: 2")
+    );
 }

@@ -76,6 +76,13 @@ The initial command shell is available with:
 cargo run -p godlint-cli -- --version
 ```
 
+Configuration validation is the first implemented product capability:
+
+```bash
+godlint config validate
+godlint config validate --config path/to/godlint.yaml
+```
+
 ## Contributing
 
 We welcome early design feedback, rule ideas backed by concrete examples, parser and
