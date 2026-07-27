@@ -33,7 +33,7 @@ pub struct FunctionSizeRule {
     pub skip_comments: bool,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum Severity {
     Off,
