@@ -45,7 +45,9 @@ fn rejects_unknown_arguments() {
     let output = run(godlint().arg("unknown"));
 
     assert_eq!(output.status.code(), Some(2));
-    assert!(String::from_utf8_lossy(&output.stderr).contains("Unknown argument: unknown"));
+    assert!(
+        String::from_utf8_lossy(&output.stderr).contains("Unknown command or arguments: unknown")
+    );
 }
 
 #[test]
