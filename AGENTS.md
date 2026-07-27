@@ -27,5 +27,7 @@ Read the linked documents relevant to the task before changing code or policy.
 
 ## Current implementation status
 
-Godlint is pre-implementation. Do not add analyzers, rules, configuration loading, or
-semantic workers until the workspace-foundation milestone is intentionally started.
+The workspace, CLI shell, configuration validation, and deterministic source discovery
+are implemented. Build the first rule as small vertical slices: shared source and
+diagnostic contracts, language extractors, the rule evaluator, then reports and
+dogfooding. Do not add semantic workers or new crate boundaries without a proven need.
