@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use godlint_core::{
     config::{FunctionSizeRule, Severity},
     facts::FunctionFact,
-    rules::function_size::{RULE_ID, evaluate},
+    rules::{Rule, function_size::FunctionSize},
     source::{SourceFile, SourceRange},
 };
 
@@ -29,9 +29,9 @@ fn configuration(max_lines: u32, skip_blank_lines: bool, skip_comments: bool) ->
 #[test]
 fn reports_a_function_that_exceeds_its_limit() {
     let function = function("src/example.rs", "fn example() {\n    run();\n}");
-    let violation = evaluate(&function, &configuration(2, true, true));
+    let violation = FunctionSize::evaluate(&function, &configuration(2, true, true));
 
-    assert_eq!(RULE_ID, "maintainability/function-size");
+    assert_eq!(FunctionSize::ID, "maintainability/function-size");
     assert_eq!(
         violation.map(|violation| violation.effective_line_count),
         Some(3)
@@ -42,16 +42,22 @@ fn reports_a_function_that_exceeds_its_limit() {
 fn accepts_a_function_at_its_limit() {
     let function = function("src/example.rs", "fn example() {\n    run();\n}");
 
-    assert_eq!(evaluate(&function, &configuration(3, true, true)), None);
+    assert_eq!(
+        FunctionSize::evaluate(&function, &configuration(3, true, true)),
+        None
+    );
 }
 
 #[test]
 fn applies_blank_line_configuration() {
     let function = function("src/example.rs", "fn example() {\n\n    run();\n\n}");
 
-    assert_eq!(evaluate(&function, &configuration(3, true, true)), None);
     assert_eq!(
-        evaluate(&function, &configuration(3, false, true))
+        FunctionSize::evaluate(&function, &configuration(3, true, true)),
+        None
+    );
+    assert_eq!(
+        FunctionSize::evaluate(&function, &configuration(3, false, true))
             .map(|violation| violation.effective_line_count),
         Some(5)
     );
@@ -64,7 +70,10 @@ fn skips_rust_comment_only_lines() {
         "fn example() {\n    // explanation\n    run();\n    /*\n     * detail\n     */\n}",
     );
 
-    assert_eq!(evaluate(&function, &configuration(3, true, true)), None);
+    assert_eq!(
+        FunctionSize::evaluate(&function, &configuration(3, true, true)),
+        None
+    );
 }
 
 #[test]
@@ -74,7 +83,10 @@ fn skips_typescript_comment_only_lines() {
         "function example() {\n  // explanation\n  run();\n  /* detail */\n}",
     );
 
-    assert_eq!(evaluate(&function, &configuration(3, true, true)), None);
+    assert_eq!(
+        FunctionSize::evaluate(&function, &configuration(3, true, true)),
+        None
+    );
 }
 
 #[test]
@@ -84,7 +96,10 @@ fn skips_python_comment_only_lines() {
         "def example():\n    # explanation\n    run()",
     );
 
-    assert_eq!(evaluate(&function, &configuration(2, true, true)), None);
+    assert_eq!(
+        FunctionSize::evaluate(&function, &configuration(2, true, true)),
+        None
+    );
 }
 
 #[test]
@@ -95,7 +110,7 @@ fn counts_lines_with_code_and_inline_comments() {
     );
 
     assert_eq!(
-        evaluate(&function, &configuration(2, true, true))
+        FunctionSize::evaluate(&function, &configuration(2, true, true))
             .map(|violation| violation.effective_line_count),
         Some(3)
     );
@@ -111,5 +126,5 @@ fn disables_evaluation_when_the_rule_is_off() {
         skip_comments: true,
     };
 
-    assert_eq!(evaluate(&function, &configuration), None);
+    assert_eq!(FunctionSize::evaluate(&function, &configuration), None);
 }

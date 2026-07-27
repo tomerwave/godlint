@@ -1,29 +1,38 @@
 use crate::{
     config::{FunctionSizeRule, Severity},
     facts::FunctionFact,
+    rules::Rule,
     source::Language,
 };
 
-pub const RULE_ID: &str = "maintainability/function-size";
+pub struct FunctionSize;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct FunctionSizeViolation {
     pub effective_line_count: usize,
 }
 
-pub fn evaluate(
-    function: &FunctionFact,
-    configuration: &FunctionSizeRule,
-) -> Option<FunctionSizeViolation> {
-    if configuration.severity == Severity::Off {
-        return None;
+impl Rule for FunctionSize {
+    type Input = FunctionFact;
+    type Configuration = FunctionSizeRule;
+    type Violation = FunctionSizeViolation;
+
+    const ID: &'static str = "maintainability/function-size";
+
+    fn evaluate(
+        function: &Self::Input,
+        configuration: &Self::Configuration,
+    ) -> Option<Self::Violation> {
+        if configuration.severity == Severity::Off {
+            return None;
+        }
+
+        let effective_line_count = effective_line_count(function, configuration);
+
+        (effective_line_count > configuration.max_lines as usize).then_some(FunctionSizeViolation {
+            effective_line_count,
+        })
     }
-
-    let effective_line_count = effective_line_count(function, configuration);
-
-    (effective_line_count > configuration.max_lines as usize).then_some(FunctionSizeViolation {
-        effective_line_count,
-    })
 }
 
 fn effective_line_count(function: &FunctionFact, configuration: &FunctionSizeRule) -> usize {
