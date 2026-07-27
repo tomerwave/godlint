@@ -1,0 +1,41 @@
+name: Rule proposal
+description: Propose a deterministic, explainable policy rule.
+title: "rule: "
+labels: [rule-proposal]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Prefer high-confidence rules with clear remediation. Do not include proprietary code.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Policy problem
+      description: What engineering principle should Godlint enforce?
+    validations:
+      required: true
+  - type: textarea
+    id: examples
+    attributes:
+      label: Valid and invalid examples
+      description: Include minimal examples for every relevant language and likely false-positive cases.
+    validations:
+      required: true
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Analysis scope
+      options:
+        - File-local syntax/fact rule
+        - Semantic/type-aware rule
+        - Repository graph rule
+        - Cross-language rule
+    validations:
+      required: true
+  - type: textarea
+    id: remediation
+    attributes:
+      label: Diagnostic and remediation
+      description: State the desired rule ID, message, evidence, confidence, and safe fix possibility.
+    validations:
+      required: true
