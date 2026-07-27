@@ -15,6 +15,9 @@ model (`Function`, `Import`, `Call`, `EnvironmentRead`, `ErrorHandler`, `Asserti
 Source files are identified with repository-relative paths and a shared language enum.
 Ranges use byte offsets internally; the source contract validates them and derives
 one-based line and Unicode-scalar-column positions only at reporting boundaries.
+Function extractors emit validated `FunctionFact` values with a source file, optional
+name, whole-function range, body range, and nesting depth. Rules consume these facts
+rather than language-specific parser nodes.
 
 Start with only `godlint-cli` and `godlint-core`. Add fixture-test support,
 configuration, diagnostics, analyzers, rules, graph, cache, SARIF, and external tools
