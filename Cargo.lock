@@ -12,7 +12,3 @@ dependencies = [
 [[package]]
 name = "godlint-core"
 version = "0.1.0"
-
-[[package]]
-name = "godlint-test-support"
-version = "0.1.0"
