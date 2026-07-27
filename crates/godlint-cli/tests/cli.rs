@@ -42,10 +42,12 @@ fn prints_its_version() {
 
 #[test]
 fn rejects_unknown_arguments() {
-    let output = run(godlint().arg("check"));
+    let output = run(godlint().arg("unknown"));
 
     assert_eq!(output.status.code(), Some(2));
-    assert!(String::from_utf8_lossy(&output.stderr).contains("Unknown argument: check"));
+    assert!(
+        String::from_utf8_lossy(&output.stderr).contains("Unknown command or arguments: unknown")
+    );
 }
 
 #[test]
@@ -83,4 +85,29 @@ fn reports_an_invalid_configuration() {
     assert!(
         String::from_utf8_lossy(&output.stderr).contains("unsupported configuration version: 2")
     );
+}
+
+#[test]
+fn lists_discovered_source_files() {
+    let directory = std::env::temp_dir().join("godlint-cli-discovery-test");
+
+    fs::create_dir_all(&directory).unwrap_or_else(|error| panic!("creates directory: {error}"));
+    fs::write(directory.join("example.rs"), "fn main() {}")
+        .unwrap_or_else(|error| panic!("writes source file: {error}"));
+    fs::write(directory.join("README.md"), "ignored")
+        .unwrap_or_else(|error| panic!("writes markdown file: {error}"));
+
+    let output = run(godlint().args(["check", &directory.display().to_string()]));
+
+    fs::remove_dir_all(&directory).unwrap_or_else(|error| panic!("removes directory: {error}"));
+
+    assert!(output.status.success());
+    assert_eq!(
+        String::from_utf8_lossy(&output.stdout),
+        format!(
+            "Discovered 1 supported source files:\n{}\n",
+            directory.join("example.rs").display()
+        )
+    );
+    assert!(output.stderr.is_empty());
 }

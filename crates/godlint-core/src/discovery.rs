@@ -1,0 +1,112 @@
+use std::{
+    collections::BTreeSet,
+    error::Error,
+    fmt, fs,
+    path::{Path, PathBuf},
+};
+
+const IGNORED_DIRECTORY_NAMES: [&str; 3] = [".git", "node_modules", "target"];
+const SUPPORTED_EXTENSIONS: [&str; 7] = ["js", "jsx", "py", "pyi", "rs", "ts", "tsx"];
+
+#[derive(Debug)]
+pub enum DiscoveryError {
+    ReadDirectory {
+        path: PathBuf,
+        source: std::io::Error,
+    },
+    ReadMetadata {
+        path: PathBuf,
+        source: std::io::Error,
+    },
+}
+
+pub fn discover(paths: &[PathBuf]) -> Result<Vec<PathBuf>, DiscoveryError> {
+    let mut files = BTreeSet::new();
+
+    for path in paths {
+        discover_path(path, &mut files)?;
+    }
+
+    Ok(files.into_iter().collect())
+}
+
+fn discover_path(path: &Path, files: &mut BTreeSet<PathBuf>) -> Result<(), DiscoveryError> {
+    let metadata = fs::symlink_metadata(path).map_err(|source| DiscoveryError::ReadMetadata {
+        path: path.to_path_buf(),
+        source,
+    })?;
+
+    if metadata.file_type().is_symlink() {
+        return Ok(());
+    }
+
+    if metadata.is_file() {
+        add_supported_file(path, files);
+    } else if metadata.is_dir() && !is_ignored_directory(path) {
+        discover_directory(path, files)?;
+    }
+
+    Ok(())
+}
+
+fn discover_directory(
+    directory: &Path,
+    files: &mut BTreeSet<PathBuf>,
+) -> Result<(), DiscoveryError> {
+    let entries = fs::read_dir(directory).map_err(|source| DiscoveryError::ReadDirectory {
+        path: directory.to_path_buf(),
+        source,
+    })?;
+    let mut paths = Vec::new();
+
+    for entry in entries {
+        let entry = entry.map_err(|source| DiscoveryError::ReadDirectory {
+            path: directory.to_path_buf(),
+            source,
+        })?;
+
+        paths.push(entry.path());
+    }
+
+    paths.sort();
+
+    for path in paths {
+        discover_path(&path, files)?;
+    }
+
+    Ok(())
+}
+
+fn add_supported_file(path: &Path, files: &mut BTreeSet<PathBuf>) {
+    if path
+        .extension()
+        .and_then(|extension| extension.to_str())
+        .is_some_and(|extension| SUPPORTED_EXTENSIONS.contains(&extension))
+    {
+        files.insert(path.to_path_buf());
+    }
+}
+
+fn is_ignored_directory(path: &Path) -> bool {
+    path.file_name()
+        .and_then(|name| name.to_str())
+        .is_some_and(|name| IGNORED_DIRECTORY_NAMES.contains(&name))
+}
+
+impl fmt::Display for DiscoveryError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::ReadDirectory { path, source } | Self::ReadMetadata { path, source } => {
+                write!(formatter, "{}: {source}", path.display())
+            }
+        }
+    }
+}
+
+impl Error for DiscoveryError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            Self::ReadDirectory { source, .. } | Self::ReadMetadata { source, .. } => Some(source),
+        }
+    }
+}
