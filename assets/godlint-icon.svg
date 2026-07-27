@@ -1,0 +1,20 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1024" height="1024" fill="#FFFFFF"/>
+
+  <!-- Outer broken ring -->
+  <path d="M236 360C278 247 380 164 500 150" stroke="#232831" stroke-width="46" stroke-linecap="butt"/>
+  <path d="M524 150C644 164 746 247 788 360" stroke="#232831" stroke-width="46" stroke-linecap="butt"/>
+  <path d="M788 664C746 777 644 860 524 874" stroke="#232831" stroke-width="46" stroke-linecap="butt"/>
+  <path d="M500 874C380 860 278 777 236 664" stroke="#232831" stroke-width="46" stroke-linecap="butt"/>
+
+  <!-- Top and bottom markers -->
+  <rect x="489" y="118" width="46" height="112" rx="2" fill="#232831"/>
+  <rect x="489" y="794" width="46" height="112" rx="2" fill="#232831"/>
+
+  <!-- Code brackets -->
+  <path d="M406 347L250 500C241 509 241 523 250 532L406 685" stroke="#232831" stroke-width="72" stroke-linecap="square" stroke-linejoin="miter"/>
+  <path d="M618 347L774 500C783 509 783 523 774 532L618 685" stroke="#232831" stroke-width="72" stroke-linecap="square" stroke-linejoin="miter"/>
+
+  <!-- Check mark -->
+  <path d="M436 514L502 580L628 448" stroke="#4A86C5" stroke-width="50" stroke-linecap="square" stroke-linejoin="miter"/>
+</svg>
