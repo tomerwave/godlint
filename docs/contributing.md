@@ -10,5 +10,7 @@ For repository changes:
 - Maintain deterministic diagnostic ordering and stable finding fingerprints.
 - Update documentation when public behavior, configuration, suite defaults, or rule
   semantics change.
+- Keep test code outside `src/`: crate contracts live in `crates/<crate>/tests/`, and
+  rule behavior lives in repository fixtures.
 - Do not add a public API or crate boundary before a real implementation need exists.
 - Never commit `.omx/` planning/runtime files.
