@@ -6,7 +6,8 @@ use std::{
 
 use godlint_core::{
     config::{Config, Severity},
-    scan::scan,
+    rules::evaluate,
+    scan::analyze,
 };
 
 pub const USAGE: &str = "check [paths...]";
@@ -60,38 +61,45 @@ fn check(paths: &[String]) -> ExitCode {
         }
     };
 
-    match scan(&root, &paths, &config) {
-        Ok(report) if report.findings.is_empty() && report.issues.is_empty() => {
-            println!("No findings.");
-            ExitCode::SUCCESS
-        }
-        Ok(report) => {
-            let exit_code = scan_exit_code(&report);
-
-            for finding in report.findings {
-                println!(
-                    "{}:{}:{}: {}[{}] Function has {} effective lines (max {}).",
-                    finding.path.display(),
-                    finding.line,
-                    finding.column,
-                    severity_name(finding.severity),
-                    finding.rule_id,
-                    finding.effective_line_count,
-                    finding.max_lines
-                );
-            }
-
-            for issue in report.issues {
-                eprintln!("{}: {}", issue.path.display(), issue.message);
-            }
-
-            exit_code
-        }
+    let report = match analyze(&root, &paths) {
+        Ok(report) => report,
         Err(error) => {
             eprintln!("Unable to scan source files: {error}");
-            ExitCode::from(2)
+            return ExitCode::from(2);
         }
+    };
+    let findings = match evaluate(&report.functions, &config) {
+        Ok(findings) => findings,
+        Err(error) => {
+            eprintln!("Unable to evaluate rules: {error}");
+            return ExitCode::from(2);
+        }
+    };
+
+    if findings.is_empty() && report.issues.is_empty() {
+        println!("No findings.");
+        return ExitCode::SUCCESS;
     }
+
+    let exit_code = scan_exit_code(&report.issues);
+
+    for finding in findings {
+        println!(
+            "{}:{}:{}: {}[{}] {}",
+            finding.path.display(),
+            finding.line,
+            finding.column,
+            severity_name(finding.severity),
+            finding.rule_id,
+            finding.message
+        );
+    }
+
+    for issue in report.issues {
+        eprintln!("{}: {}", issue.path.display(), issue.message);
+    }
+
+    exit_code
 }
 
 fn requested_paths(arguments: &[String], current_directory: &Path) -> Result<Vec<PathBuf>, String> {
@@ -203,8 +211,8 @@ fn scan_path(root: &Path, path: PathBuf) -> Result<PathBuf, String> {
     Ok(path)
 }
 
-fn scan_exit_code(report: &godlint_core::scan::ScanReport) -> ExitCode {
-    if !report.issues.is_empty() {
+fn scan_exit_code(issues: &[godlint_core::scan::AnalysisIssue]) -> ExitCode {
+    if !issues.is_empty() {
         return ExitCode::from(2);
     }
 

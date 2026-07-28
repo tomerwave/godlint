@@ -1,7 +1,7 @@
 use crate::{
     config::{FunctionSizeRule, Severity},
     facts::FunctionFact,
-    rules::Rule,
+    rules::{Finding, Rule, RuleError},
     source::Language,
 };
 
@@ -10,6 +10,23 @@ pub struct FunctionSize;
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct FunctionSizeViolation {
     pub effective_line_count: usize,
+}
+
+pub fn evaluate(
+    functions: &[FunctionFact],
+    configuration: &FunctionSizeRule,
+) -> Result<Vec<Finding>, RuleError> {
+    let mut findings = Vec::new();
+
+    for function in functions {
+        let Some(violation) = FunctionSize::evaluate(function, configuration) else {
+            continue;
+        };
+
+        findings.push(finding(function, violation, configuration)?);
+    }
+
+    Ok(findings)
 }
 
 impl Rule for FunctionSize {
@@ -124,4 +141,27 @@ impl FunctionSize {
             Language::JavaScript | Language::Rust | Language::TypeScript
         )
     }
+}
+
+fn finding(
+    function: &FunctionFact,
+    violation: FunctionSizeViolation,
+    configuration: &FunctionSizeRule,
+) -> Result<Finding, RuleError> {
+    let location = function
+        .source()
+        .location(function.range())
+        .map_err(|source| RuleError::LocatesSource { source })?;
+
+    Ok(Finding {
+        path: function.source().path().to_path_buf(),
+        line: location.start.line,
+        column: location.start.column,
+        severity: configuration.severity,
+        rule_id: FunctionSize::ID,
+        message: format!(
+            "Function has {} effective lines (max {}).",
+            violation.effective_line_count, configuration.max_lines
+        ),
+    })
 }

@@ -5,34 +5,22 @@ use std::{
 };
 
 use crate::{
-    analyzers::Analyzer,
-    config::{Config, Severity},
+    analyzers::extract_functions,
     discovery::{DiscoveryError, discover},
-    rules::{Rule, function_size::FunctionSize},
+    facts::FunctionFact,
     source::{SourceFile, SourceFileError},
 };
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Finding {
-    pub path: PathBuf,
-    pub line: usize,
-    pub column: usize,
-    pub severity: Severity,
-    pub rule_id: &'static str,
-    pub effective_line_count: usize,
-    pub max_lines: u32,
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ScanIssue {
+pub struct AnalysisIssue {
     pub path: PathBuf,
     pub message: String,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ScanReport {
-    pub findings: Vec<Finding>,
-    pub issues: Vec<ScanIssue>,
+pub struct AnalysisReport {
+    pub functions: Vec<FunctionFact>,
+    pub issues: Vec<AnalysisIssue>,
 }
 
 #[derive(Debug)]
@@ -52,43 +40,29 @@ pub enum ScanError {
     },
 }
 
-pub fn scan(root: &Path, paths: &[PathBuf], config: &Config) -> Result<ScanReport, ScanError> {
+/// Discovers source files and converts their syntax into language-neutral facts.
+///
+/// This layer deliberately does not know which rules are configured or what
+/// constitutes a finding. Rules consume the returned facts separately.
+pub fn analyze(root: &Path, paths: &[PathBuf]) -> Result<AnalysisReport, ScanError> {
     let files = discover(paths).map_err(|source| ScanError::DiscoversFiles { source })?;
-    let mut findings = Vec::new();
+    let mut functions = Vec::new();
     let mut issues = Vec::new();
 
     for path in files {
-        scan_file(root, &path, config, &mut findings, &mut issues)?;
+        analyze_file(root, &path, &mut functions, &mut issues)?;
     }
-
-    findings.sort_by(|left, right| {
-        (
-            &left.path,
-            left.line,
-            left.column,
-            left.rule_id,
-            left.effective_line_count,
-        )
-            .cmp(&(
-                &right.path,
-                right.line,
-                right.column,
-                right.rule_id,
-                right.effective_line_count,
-            ))
-    });
 
     issues.sort_by(|left, right| (&left.path, &left.message).cmp(&(&right.path, &right.message)));
 
-    Ok(ScanReport { findings, issues })
+    Ok(AnalysisReport { functions, issues })
 }
 
-fn scan_file(
+fn analyze_file(
     root: &Path,
     path: &Path,
-    config: &Config,
-    findings: &mut Vec<Finding>,
-    issues: &mut Vec<ScanIssue>,
+    functions: &mut Vec<FunctionFact>,
+    issues: &mut Vec<AnalysisIssue>,
 ) -> Result<(), ScanError> {
     let relative_path = path
         .strip_prefix(root)
@@ -102,10 +76,10 @@ fn scan_file(
     })?;
     let source = SourceFile::new(relative_path, source)
         .map_err(|source| ScanError::CreatesSource { source })?;
-    let functions = match Analyzer::extract_functions(&source) {
+    let file_functions = match extract_functions(&source) {
         Ok(functions) => functions,
         Err(error) => {
-            issues.push(ScanIssue {
+            issues.push(AnalysisIssue {
                 path: source.path().to_path_buf(),
                 message: error.to_string(),
             });
@@ -114,38 +88,7 @@ fn scan_file(
         }
     };
 
-    for function in functions {
-        add_function_size_finding(&function, config, findings)?;
-    }
-
-    Ok(())
-}
-
-fn add_function_size_finding(
-    function: &crate::facts::FunctionFact,
-    config: &Config,
-    findings: &mut Vec<Finding>,
-) -> Result<(), ScanError> {
-    let Some(configuration) = &config.rules.function_size else {
-        return Ok(());
-    };
-    let Some(violation) = FunctionSize::evaluate(function, configuration) else {
-        return Ok(());
-    };
-    let location = function
-        .source()
-        .location(function.range())
-        .map_err(|source| ScanError::CreatesSource { source })?;
-
-    findings.push(Finding {
-        path: function.source().path().to_path_buf(),
-        line: location.start.line,
-        column: location.start.column,
-        severity: configuration.severity,
-        rule_id: FunctionSize::ID,
-        effective_line_count: violation.effective_line_count,
-        max_lines: configuration.max_lines,
-    });
+    functions.extend(file_functions);
 
     Ok(())
 }
