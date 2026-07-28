@@ -4,6 +4,8 @@ mod empty_function;
 #[path = "rules/function_size.rs"]
 mod function_size;
 
+#[path = "rules/cyclomatic_complexity.rs"]
+mod cyclomatic_complexity;
 #[path = "rules/function_nesting.rs"]
 mod function_nesting;
 

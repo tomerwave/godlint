@@ -131,7 +131,12 @@ fn collect_source_facts(
     let child_nesting_depth = nesting_depth + u32::from(is_function);
 
     if is_function {
-        functions.push(function_fact(node, source, nesting_depth)?);
+        functions.push(function_fact(
+            node,
+            source,
+            nesting_depth,
+            is_function_node,
+        )?);
     }
 
     if node_is_comment(node, source) {
@@ -183,6 +188,7 @@ fn function_fact(
     node: Node<'_>,
     source: &SourceFile,
     nesting_depth: u32,
+    is_function_node: fn(&str) -> bool,
 ) -> Result<FunctionFact, AnalyzerError> {
     let range = node_range(node, source)?;
     let body_range = node
@@ -194,6 +200,7 @@ fn function_fact(
         .child_by_field_name("body")
         .is_some_and(|body| body_is_empty(body, source.language()));
     let parameter_count = parameter_count(node);
+    let decision_points = decision_points(node, source.language(), is_function_node);
     let name = node
         .child_by_field_name("name")
         .and_then(|name| source.source().get(name.byte_range()))
@@ -206,6 +213,7 @@ fn function_fact(
             range,
             body_range,
             parameter_count,
+            decision_points,
             body_is_empty,
             nesting_depth,
         },
@@ -214,6 +222,73 @@ fn function_fact(
         path: source.path().to_path_buf(),
         source: error,
     })
+}
+
+fn decision_points(
+    function: Node<'_>,
+    language: Language,
+    is_function_node: fn(&str) -> bool,
+) -> u32 {
+    let mut cursor = function.walk();
+
+    function
+        .children(&mut cursor)
+        .map(|child| decision_points_in(child, language, is_function_node))
+        .sum()
+}
+
+fn decision_points_in(
+    node: Node<'_>,
+    language: Language,
+    is_function_node: fn(&str) -> bool,
+) -> u32 {
+    if is_function_node(node.kind()) {
+        return 0;
+    }
+
+    let mut cursor = node.walk();
+
+    decision_point(node.kind(), language)
+        + node
+            .children(&mut cursor)
+            .map(|child| decision_points_in(child, language, is_function_node))
+            .sum::<u32>()
+}
+
+fn decision_point(kind: &str, language: Language) -> u32 {
+    let is_decision = match language {
+        Language::JavaScript | Language::TypeScript => matches!(
+            kind,
+            "catch_clause"
+                | "do_statement"
+                | "for_in_statement"
+                | "for_statement"
+                | "if_statement"
+                | "switch_case"
+                | "ternary_expression"
+                | "while_statement"
+        ),
+        Language::Python => matches!(
+            kind,
+            "case_clause"
+                | "conditional_expression"
+                | "elif_clause"
+                | "except_clause"
+                | "for_statement"
+                | "if_statement"
+                | "while_statement"
+        ),
+        Language::Rust => matches!(
+            kind,
+            "for_expression"
+                | "if_expression"
+                | "loop_expression"
+                | "match_arm"
+                | "while_expression"
+        ),
+    };
+
+    u32::from(is_decision)
 }
 
 fn parameter_count(node: Node<'_>) -> u32 {

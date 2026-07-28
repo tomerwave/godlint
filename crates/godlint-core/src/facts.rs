@@ -15,6 +15,7 @@ pub struct FunctionFact {
     range: SourceRange,
     body_range: SourceRange,
     parameter_count: u32,
+    decision_points: u32,
     body_is_empty: bool,
     nesting_depth: u32,
 }
@@ -24,6 +25,7 @@ pub struct FunctionFactDetails {
     pub range: SourceRange,
     pub body_range: SourceRange,
     pub parameter_count: u32,
+    pub decision_points: u32,
     pub body_is_empty: bool,
     pub nesting_depth: u32,
 }
@@ -95,6 +97,7 @@ impl FunctionFact {
             range: details.range,
             body_range: details.body_range,
             parameter_count: details.parameter_count,
+            decision_points: details.decision_points,
             body_is_empty: details.body_is_empty,
             nesting_depth: details.nesting_depth,
         })
@@ -118,6 +121,10 @@ impl FunctionFact {
 
     pub fn parameter_count(&self) -> u32 {
         self.parameter_count
+    }
+
+    pub fn decision_points(&self) -> u32 {
+        self.decision_points
     }
 
     pub fn body_is_empty(&self) -> bool {

@@ -29,6 +29,8 @@ pub struct Rules {
     pub todo_requires_reference: Option<TodoRequiresReferenceRule>,
     #[serde(rename = "maintainability/parameter-count")]
     pub parameter_count: Option<ParameterCountRule>,
+    #[serde(rename = "maintainability/cyclomatic-complexity")]
+    pub cyclomatic_complexity: Option<CyclomaticComplexityRule>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -85,6 +87,14 @@ pub struct ParameterCountRule {
     pub severity: Severity,
     #[serde(rename = "max-parameters")]
     pub max_parameters: u32,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct CyclomaticComplexityRule {
+    pub severity: Severity,
+    #[serde(rename = "max-complexity")]
+    pub max_complexity: u32,
 }
 
 fn default_reference_prefixes() -> Vec<String> {
