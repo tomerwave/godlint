@@ -76,6 +76,15 @@ fn accepts_the_todo_reference_rule() {
 }
 
 #[test]
+fn accepts_the_parameter_count_rule() {
+    let result = load(
+        "version: 1\nrules:\n  maintainability/parameter-count:\n    severity: warning\n    max-parameters: 6\n",
+    );
+
+    assert!(result.is_ok());
+}
+
+#[test]
 fn rejects_an_unknown_rule() {
     let result = load("version: 1\nrules:\n  maintainability/unknown: {}\n");
 

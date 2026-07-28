@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use godlint_core::{
     config::{FunctionNestingRule, Severity},
-    facts::FunctionFact,
+    facts::{FunctionFact, FunctionFactDetails},
     rules::{Rule, function_nesting::FunctionNesting},
     source::{SourceFile, SourceRange},
 };
@@ -16,10 +16,13 @@ fn function(nesting_depth: u32) -> FunctionFact {
     FunctionFact::new(
         source,
         Some("example".into()),
-        range,
-        range,
-        false,
-        nesting_depth,
+        FunctionFactDetails {
+            range,
+            body_range: range,
+            parameter_count: 0,
+            body_is_empty: false,
+            nesting_depth,
+        },
     )
     .unwrap_or_else(|error| panic!("creates function fact: {error}"))
 }

@@ -12,3 +12,6 @@ mod file_size;
 
 #[path = "rules/todo_requires_reference.rs"]
 mod todo_requires_reference;
+
+#[path = "rules/parameter_count.rs"]
+mod parameter_count;

@@ -27,6 +27,7 @@ fn extracts_function_facts_from_every_supported_language() {
 
         assert_eq!(facts.functions().len(), 1, "{path}");
         assert_eq!(facts.functions()[0].name(), Some("example"), "{path}");
+        assert_eq!(facts.functions()[0].parameter_count(), 0, "{path}");
         assert!(!facts.functions()[0].body_is_empty(), "{path}");
     }
 }
@@ -48,6 +49,42 @@ fn extracts_javascript_function_expressions() {
 
     assert_eq!(facts.functions().len(), 1);
     assert_eq!(facts.functions()[0].name(), None);
+}
+
+#[test]
+fn extracts_parameter_counts_from_every_supported_language() {
+    let cases = [
+        (
+            "example.rs",
+            "fn example(one: u32, two: u32, three: u32) {}",
+        ),
+        ("example.js", "function example(one, two, three) {}"),
+        (
+            "example.ts",
+            "function example(one: number, two: number, three: number) {}",
+        ),
+        (
+            "example.tsx",
+            "function example(one: number, two: number, three: number) {}",
+        ),
+        ("example.py", "def example(one, two, three):\n    pass"),
+        ("example.pyi", "def example(one, two, three):\n    pass"),
+    ];
+
+    for (path, contents) in cases {
+        let facts = analyze(&source(path, contents))
+            .unwrap_or_else(|error| panic!("extracts parameters from {path}: {error}"));
+
+        assert_eq!(facts.functions()[0].parameter_count(), 3, "{path}");
+    }
+}
+
+#[test]
+fn extracts_an_unparenthesized_arrow_parameter() {
+    let facts = analyze(&source("example.js", "const example = value => value;"))
+        .unwrap_or_else(|error| panic!("extracts arrow function: {error}"));
+
+    assert_eq!(facts.functions()[0].parameter_count(), 1);
 }
 
 #[test]

@@ -27,6 +27,8 @@ pub struct Rules {
     pub empty_function: Option<EmptyFunctionRule>,
     #[serde(rename = "policy/todo-requires-reference")]
     pub todo_requires_reference: Option<TodoRequiresReferenceRule>,
+    #[serde(rename = "maintainability/parameter-count")]
+    pub parameter_count: Option<ParameterCountRule>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -75,6 +77,14 @@ pub struct TodoRequiresReferenceRule {
     pub severity: Severity,
     #[serde(default = "default_reference_prefixes", rename = "reference-prefixes")]
     pub reference_prefixes: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ParameterCountRule {
+    pub severity: Severity,
+    #[serde(rename = "max-parameters")]
+    pub max_parameters: u32,
 }
 
 fn default_reference_prefixes() -> Vec<String> {

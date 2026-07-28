@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use godlint_core::{
-    facts::{CommentFact, CommentFactError, FunctionFact, FunctionFactError},
+    facts::{CommentFact, CommentFactError, FunctionFact, FunctionFactDetails, FunctionFactError},
     source::{SourceFile, SourceRange},
 };
 
@@ -22,10 +22,13 @@ fn records_a_language_neutral_function_fact() {
     let fact = FunctionFact::new(
         source(),
         Some("outer".into()),
-        range(0, 28),
-        range(11, 28),
-        false,
-        0,
+        FunctionFactDetails {
+            range: range(0, 28),
+            body_range: range(11, 28),
+            parameter_count: 0,
+            body_is_empty: false,
+            nesting_depth: 0,
+        },
     )
     .unwrap_or_else(|error| panic!("creates function fact: {error}"));
 
@@ -33,6 +36,7 @@ fn records_a_language_neutral_function_fact() {
     assert_eq!(fact.name(), Some("outer"));
     assert_eq!(fact.range(), range(0, 28));
     assert_eq!(fact.body_range(), range(11, 28));
+    assert_eq!(fact.parameter_count(), 0);
     assert!(!fact.body_is_empty());
     assert_eq!(fact.nesting_depth(), 0);
 }
@@ -42,10 +46,13 @@ fn preserves_nesting_for_nested_functions() {
     let fact = FunctionFact::new(
         source(),
         Some("inner".into()),
-        range(17, 24),
-        range(17, 24),
-        false,
-        1,
+        FunctionFactDetails {
+            range: range(17, 24),
+            body_range: range(17, 24),
+            parameter_count: 0,
+            body_is_empty: false,
+            nesting_depth: 1,
+        },
     )
     .unwrap_or_else(|error| panic!("creates nested function fact: {error}"));
 
@@ -57,10 +64,13 @@ fn rejects_a_body_outside_the_function_range() {
     let result = FunctionFact::new(
         source(),
         Some("outer".into()),
-        range(0, 10),
-        range(11, 28),
-        false,
-        0,
+        FunctionFactDetails {
+            range: range(0, 10),
+            body_range: range(11, 28),
+            parameter_count: 0,
+            body_is_empty: false,
+            nesting_depth: 0,
+        },
     );
 
     assert!(matches!(
@@ -74,10 +84,13 @@ fn rejects_ranges_that_are_invalid_for_the_source_file() {
     let result = FunctionFact::new(
         source(),
         Some("outer".into()),
-        range(0, 29),
-        range(11, 28),
-        false,
-        0,
+        FunctionFactDetails {
+            range: range(0, 29),
+            body_range: range(11, 28),
+            parameter_count: 0,
+            body_is_empty: false,
+            nesting_depth: 0,
+        },
     );
 
     assert!(matches!(
@@ -94,7 +107,17 @@ fn rejects_a_range_that_splits_a_multi_byte_character() {
     )
     .unwrap_or_else(|error| panic!("creates source file: {error}"));
 
-    let result = FunctionFact::new(source, Some("é".into()), range(0, 4), range(0, 4), false, 0);
+    let result = FunctionFact::new(
+        source,
+        Some("é".into()),
+        FunctionFactDetails {
+            range: range(0, 4),
+            body_range: range(0, 4),
+            parameter_count: 0,
+            body_is_empty: false,
+            nesting_depth: 0,
+        },
+    );
 
     assert!(matches!(
         result,
@@ -107,10 +130,13 @@ fn rejects_a_body_range_that_is_invalid_for_the_source_file() {
     let result = FunctionFact::new(
         source(),
         Some("outer".into()),
-        range(0, 28),
-        range(11, 29),
-        false,
-        0,
+        FunctionFactDetails {
+            range: range(0, 28),
+            body_range: range(11, 29),
+            parameter_count: 0,
+            body_is_empty: false,
+            nesting_depth: 0,
+        },
     );
 
     assert!(matches!(

@@ -3,7 +3,7 @@ use std::{error::Error, fmt, path::PathBuf};
 use tree_sitter::{Language as TreeSitterLanguage, Node, Parser};
 
 use crate::{
-    facts::{CommentFact, CommentFactError, FunctionFact, FunctionFactError},
+    facts::{CommentFact, CommentFactError, FunctionFact, FunctionFactDetails, FunctionFactError},
     source::{Language, SourceFile, SourceRange, SourceRangeError},
 };
 
@@ -193,6 +193,7 @@ fn function_fact(
     let body_is_empty = node
         .child_by_field_name("body")
         .is_some_and(|body| body_is_empty(body, source.language()));
+    let parameter_count = parameter_count(node);
     let name = node
         .child_by_field_name("name")
         .and_then(|name| source.source().get(name.byte_range()))
@@ -201,15 +202,27 @@ fn function_fact(
     FunctionFact::new(
         source.clone(),
         name,
-        range,
-        body_range,
-        body_is_empty,
-        nesting_depth,
+        FunctionFactDetails {
+            range,
+            body_range,
+            parameter_count,
+            body_is_empty,
+            nesting_depth,
+        },
     )
     .map_err(|error| AnalyzerError::InvalidFunction {
         path: source.path().to_path_buf(),
         source: error,
     })
+}
+
+fn parameter_count(node: Node<'_>) -> u32 {
+    if node.child_by_field_name("parameter").is_some() {
+        return 1;
+    }
+
+    node.child_by_field_name("parameters")
+        .map_or(0, |parameters| parameters.named_child_count() as u32)
 }
 
 fn body_is_empty(body: Node<'_>, language: Language) -> bool {

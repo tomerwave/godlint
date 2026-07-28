@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use godlint_core::{
     config::{FunctionSizeRule, Severity},
-    facts::FunctionFact,
+    facts::{FunctionFact, FunctionFactDetails},
     rules::{Rule, function_size::FunctionSize},
     source::{SourceFile, SourceRange},
 };
@@ -13,8 +13,18 @@ fn function(path: &str, source: &str) -> FunctionFact {
     let range = SourceRange::new(0, source.source().len())
         .unwrap_or_else(|error| panic!("creates source range: {error}"));
 
-    FunctionFact::new(source, Some("example".into()), range, range, false, 0)
-        .unwrap_or_else(|error| panic!("creates function fact: {error}"))
+    FunctionFact::new(
+        source,
+        Some("example".into()),
+        FunctionFactDetails {
+            range,
+            body_range: range,
+            parameter_count: 0,
+            body_is_empty: false,
+            nesting_depth: 0,
+        },
+    )
+    .unwrap_or_else(|error| panic!("creates function fact: {error}"))
 }
 
 fn configuration(max_lines: u32, skip_blank_lines: bool, skip_comments: bool) -> FunctionSizeRule {

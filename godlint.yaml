@@ -1,6 +1,9 @@
 version: 1
 
 rules:
+  maintainability/parameter-count:
+    severity: warning
+    max-parameters: 6
   policy/todo-requires-reference:
     severity: warning
     reference-prefixes:
