@@ -113,6 +113,10 @@ impl SourceFile {
         }
     }
 
+    pub fn line(&self, offset: usize) -> usize {
+        self.line_starts.partition_point(|start| *start <= offset)
+    }
+
     pub fn location(&self, range: SourceRange) -> Result<SourceLocation, SourceFileError> {
         Ok(SourceLocation {
             start: self.position(range.start)?,

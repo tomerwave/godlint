@@ -34,6 +34,7 @@ macro_rules! fixture_tests {
 }
 
 fixture_tests! {
+    accountable_suppression => "accountable-suppression",
     clean_repository => "clean",
     cyclomatic_complexity => "cyclomatic-complexity",
     documented_empty_body => "documented-empty-body",
@@ -53,6 +54,7 @@ fixture_tests! {
     return_count => "return-count",
     rust_try_operator => "rust-try-operator",
     severity_below_threshold => "severity-below-threshold",
+    suppression_applies => "suppression-applies",
     todo_requires_reference => "todo-requires-reference",
 }
 

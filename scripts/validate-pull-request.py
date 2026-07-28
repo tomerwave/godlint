@@ -84,6 +84,16 @@ def check_rule(report: Report, module: Path, identifier: str) -> None:
         f'{CONFIG}: no field renamed "{identifier}", so the rule cannot be configured',
     )
 
+    # RULE_IDS is what a suppression directive is validated against. A rule missing from
+    # it cannot be suppressed, and the directive naming it is reported as a typo instead.
+    report.check(
+        re.search(
+            rf"RULE_IDS[^;]*<{name}::\w+ as Rule>::ID", registry, re.DOTALL
+        )
+        is not None,
+        f"{REGISTRY}: {name} is not in RULE_IDS, so a suppression cannot name {identifier}",
+    )
+
     fixture = FIXTURES_DIR / slug
     report.check(
         fixture.is_dir(),

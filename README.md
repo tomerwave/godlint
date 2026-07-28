@@ -84,7 +84,7 @@ godlint config validate --config path/to/godlint.yaml
 ```
 
 The `check` command evaluates the configured rules across Rust,
-TypeScript/JavaScript, and Python source files. Ten rules are implemented:
+TypeScript/JavaScript, and Python source files. Eleven rules are implemented:
 
 - `maintainability/file-size` — effective lines in a file.
 - `maintainability/function-size` — effective lines in a function.
@@ -98,6 +98,8 @@ TypeScript/JavaScript, and Python source files. Ten rules are implemented:
 - `maintainability/empty-function` — function bodies that appear unintentionally empty.
 - `policy/todo-requires-reference` — TODO-style markers that need an issue reference.
 - `style/no-comments` — commentary where the code should speak for itself.
+- `policy/accountable-suppression` — inline suppressions that cannot account for
+  themselves.
 
 A function means the same thing in every language: Rust `fn` items and closures,
 Python `def` functions and lambdas, and JavaScript/TypeScript function declarations,
@@ -108,6 +110,29 @@ function expressions, methods, and arrow functions. Findings below the configure
 godlint check
 godlint check crates
 ```
+
+## Accountable exceptions
+
+A single site can be exempted from a rule by a comment that says why, who owns it, and
+when the exemption lapses:
+
+```rust
+// godlint-ignore-next-line maintainability/function-size owner=tomer expires=2026-12-31 -- splitting this in #482
+fn long_function() {
+    // ...
+}
+```
+
+`godlint-ignore-enclosing` applies to the whole function containing it. There is no
+file-wide form — that is what `exclude` is for. `policy/accountable-suppression` reports
+a directive with no reason, an unknown rule, or an expiry in the past, and cannot itself
+be suppressed. List every exemption in the repository with:
+
+```bash
+godlint suppressions
+```
+
+See [inline suppression](docs/suppressions.md) for the full syntax and semantics.
 
 ## Contributing
 

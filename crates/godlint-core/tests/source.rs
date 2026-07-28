@@ -7,6 +7,23 @@ use godlint_core::source::{
 };
 
 #[test]
+fn reports_the_line_an_offset_falls_on() {
+    let source = SourceFile::new(PathBuf::from("src/example.rs"), "one\ntwo\n\nfour".into())
+        .unwrap_or_else(|error| panic!("creates source file: {error}"));
+
+    assert_eq!(source.line(0), 1);
+    assert_eq!(source.line(3), 1);
+    assert_eq!(source.line(4), 2);
+    assert_eq!(source.line(8), 3);
+    assert_eq!(source.line(9), 4);
+    assert_eq!(
+        source.line(source.source().len()),
+        4,
+        "the end of the file is on its last line"
+    );
+}
+
+#[test]
 fn detects_the_supported_languages() {
     assert_eq!(
         Language::from_path(Path::new("src/main.rs")),

@@ -8,6 +8,7 @@ use godlint_core::{
         CommentRule, FileLimitRule, FunctionLimitRule, Violation, evaluate_file_limit_rule,
         evaluate_function_limit_rule,
     },
+    suppression::{Suppression, collect},
 };
 
 pub(super) fn facts(path: &str, source: &str) -> SourceFacts {
@@ -15,6 +16,10 @@ pub(super) fn facts(path: &str, source: &str) -> SourceFacts {
         .unwrap_or_else(|error| panic!("creates source file: {error}"));
 
     analyze(&source).unwrap_or_else(|error| panic!("analyzes {path}: {error}"))
+}
+
+pub(super) fn suppressions(path: &str, source: &str) -> Vec<Suppression> {
+    collect(std::slice::from_ref(&facts(path, source)))
 }
 
 pub(super) fn nth_function(path: &str, source: &str, index: usize) -> (SourceFacts, FunctionFact) {
