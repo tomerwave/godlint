@@ -39,19 +39,47 @@ def blank():
     pass
 ```
 
-A directive comment is exempt from `style/no-comments`. A directive is machine-readable
-policy metadata rather than prose beside the code, and a rule that forbade it would make
-suppression unusable in any repository that adopts that policy — including this one.
+A comment that is **only** directives is exempt from `style/no-comments`. A directive is
+machine-readable policy metadata rather than prose beside the code, and a rule that
+forbade it would make suppression unusable in any repository that adopts that policy —
+including this one.
+
+The exemption is scoped to directive-only comments on purpose. Exempting any comment that
+*contains* a directive would be a bypass: one valid directive would launder arbitrary
+prose past a rule set to `error`.
+
+```rust
+/*
+This prose is reported, because the comment is not only a directive.
+godlint-ignore-next-line maintainability/empty-function -- reason
+*/
+```
+
+Blank lines and the comment's own delimiters do not count against the exemption, so a
+block comment wrapping a directive on its own line is still exempt. Prose that belongs
+with an exception goes in the justification after `--`, where the audit can see it.
 
 ## Scope
 
 | Directive | Silences findings on |
 | --- | --- |
-| `godlint-ignore-next-line` | the line after the directive |
+| `godlint-ignore-next-line` | the first line after the directive that is not the rest of its own comment |
 | `godlint-ignore-enclosing` | every line of the innermost function containing the directive |
 
 There is deliberately no file-wide directive. A file-wide suppression is an `exclude`
 entry with less visibility, and the point of this feature is visibility.
+
+"The rest of its own comment" matters for a block comment. Taken literally, the next line
+after the directive below is `*/`, so the directive would silence nothing and say nothing
+— a silent no-op in a feature whose purpose is that exceptions are visible. The closing
+delimiter is skipped instead, and this reaches `fn example`:
+
+```rust
+/*
+godlint-ignore-next-line maintainability/empty-function -- reason
+*/
+fn example() {}
+```
 
 Which scope to reach for follows from where a finding is anchored. A function-level
 finding is reported at the line the function opens, so a directive above the declaration

@@ -6,7 +6,7 @@ use crate::{
         CommentRule, Finding, Rule, RuleError, Violation, evaluate_comment_rule, when_configured,
     },
     source::SourceRange,
-    suppression::is_directive,
+    suppression::is_directive_only,
 };
 
 pub struct NoComments;
@@ -26,7 +26,7 @@ impl CommentRule for NoComments {
         comment: &CommentFact,
         configuration: &Self::Configuration,
     ) -> Vec<(SourceRange, Violation)> {
-        if is_directive(comment.text()) || is_permitted(comment.kind(), configuration) {
+        if is_directive_only(comment.text()) || is_permitted(comment.kind(), configuration) {
             return Vec::new();
         }
 

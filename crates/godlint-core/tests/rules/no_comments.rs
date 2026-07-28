@@ -168,3 +168,36 @@ fn treats_an_empty_block_comment_as_an_aside() {
         1
     );
 }
+
+#[test]
+fn permits_a_comment_that_is_only_a_suppression_directive() {
+    assert_eq!(
+        violations(
+            "src/example.rs",
+            "// godlint-ignore-next-line maintainability/empty-function -- reason\nfn example() {}\n",
+            false
+        ),
+        0
+    );
+    assert_eq!(
+        violations(
+            "src/example.rs",
+            "/*\ngodlint-ignore-next-line maintainability/empty-function -- reason\n*/\nfn example() {}\n",
+            false
+        ),
+        0
+    );
+}
+
+#[test]
+fn reports_a_comment_that_mixes_prose_with_a_directive() {
+    assert_eq!(
+        violations(
+            "src/example.rs",
+            "/*\nThis prose would otherwise be laundered past the rule.\ngodlint-ignore-next-line maintainability/empty-function -- reason\n*/\nfn example() {}\n",
+            false
+        ),
+        1,
+        "one directive must not exempt a whole comment"
+    );
+}

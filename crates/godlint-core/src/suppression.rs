@@ -121,8 +121,22 @@ pub fn collect(facts: &[SourceFacts]) -> Vec<Suppression> {
     suppressions
 }
 
-pub fn is_directive(text: &str) -> bool {
-    lines(text).any(|(_, line)| directive(line).is_some())
+pub fn is_directive_only(text: &str) -> bool {
+    let mut directives = 0;
+
+    for (_, line) in lines(text) {
+        if directive(line).is_some() {
+            directives += 1;
+        } else if !is_furniture_only(line) {
+            return false;
+        }
+    }
+
+    directives > 0
+}
+
+fn is_furniture_only(line: &str) -> bool {
+    line.trim_start_matches(is_furniture).is_empty()
 }
 
 pub fn apply(findings: Vec<Finding>, suppressions: &[Suppression]) -> Vec<Finding> {
@@ -137,19 +151,30 @@ pub fn apply(findings: Vec<Finding>, suppressions: &[Suppression]) -> Vec<Findin
 }
 
 fn in_comment(comment_range: SourceRange, text: &str, facts: &SourceFacts) -> Vec<Suppression> {
-    lines(text)
-        .filter_map(|(offset, line)| {
-            let (scope, arguments, keyword_offset) = directive(line)?;
-            let start = comment_range.start() + offset + keyword_offset;
+    let numbered: Vec<(usize, &str)> = lines(text).collect();
+
+    numbered
+        .iter()
+        .enumerate()
+        .filter_map(|(index, (offset, line))| {
+            let found = directive(line)?;
+            let start = comment_range.start() + offset + found.offset;
 
             Some(suppression(
-                scope,
-                arguments,
-                SourceRange::new(start, comment_range.start() + offset + line.len()).ok()?,
+                found.scope,
+                found.arguments,
+                SourceRange::new(start, start + found.length).ok()?,
+                closing_lines(&numbered[index + 1..]),
                 facts,
             ))
         })
         .collect()
+}
+
+fn closing_lines(rest: &[(usize, &str)]) -> usize {
+    rest.iter()
+        .take_while(|(_, line)| is_furniture_only(line))
+        .count()
 }
 
 fn lines(text: &str) -> impl Iterator<Item = (usize, &str)> {
@@ -164,19 +189,32 @@ fn lines(text: &str) -> impl Iterator<Item = (usize, &str)> {
     })
 }
 
-fn directive(line: &str) -> Option<(Scope, &str, usize)> {
-    let trimmed = line.trim_start_matches(is_furniture);
-    let keyword_offset = line.len() - trimmed.len();
+struct Directive<'a> {
+    scope: Scope,
+    arguments: &'a str,
+    offset: usize,
+    length: usize,
+}
+
+fn directive(line: &str) -> Option<Directive<'_>> {
+    let opened = line.trim_start_matches(is_furniture);
+    let offset = line.len() - opened.len();
+    let body = opened.trim_end_matches(is_closing);
 
     DIRECTIVES.into_iter().find_map(|(keyword, scope)| {
-        let rest = trimmed.strip_prefix(keyword)?;
+        let arguments = body.strip_prefix(keyword)?;
 
-        (rest.is_empty() || rest.starts_with(char::is_whitespace)).then_some((
+        (arguments.is_empty() || arguments.starts_with(char::is_whitespace)).then_some(Directive {
             scope,
-            rest,
-            keyword_offset,
-        ))
+            arguments,
+            offset,
+            length: body.len(),
+        })
     })
+}
+
+fn is_closing(character: char) -> bool {
+    character.is_whitespace() || "*/\"'".contains(character)
 }
 
 fn is_furniture(character: char) -> bool {
@@ -187,6 +225,7 @@ fn suppression(
     scope: Scope,
     arguments: &str,
     range: SourceRange,
+    closing: usize,
     facts: &SourceFacts,
 ) -> Suppression {
     let source = facts.source();
@@ -208,7 +247,7 @@ fn suppression(
         owner: parsed.owner,
         expires: parsed.expires,
         unknown_options: parsed.unknown_options,
-        covers: coverage(scope, line, range, facts),
+        covers: coverage(scope, line + closing, range, facts),
     }
 }
 

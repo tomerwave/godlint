@@ -66,6 +66,11 @@ releases begin.
 - `godlint suppressions [paths...]` — lists every suppression in scope with its location,
   scope, rules, owner, expiry, and reason, then the total. A directive with no reason is
   listed as `(no justification)` rather than omitted.
+- `godlint-ignore-next-line` skips the remainder of its own comment, so a directive on its
+  own line inside a block comment reaches the code after the comment rather than the
+  closing delimiter. Read literally, the next line after such a directive is `*/`, which
+  would make it silence nothing and report nothing. A justification likewise no longer
+  absorbs the closing delimiter, so `-- awaiting #485 */` records `awaiting #485`.
 - `godlint_core::date::Date` — a calendar date with no new dependency, used for
   suppression expiry. `godlint check` now reads the current date, which is passed
   explicitly into rule evaluation rather than read inside a rule; it is the only
@@ -73,10 +78,13 @@ releases begin.
 
 ### Changed
 
-- `style/no-comments` no longer reports a suppression directive. A directive is
-  machine-readable policy metadata rather than prose beside the code, and reporting it
-  would make suppression unusable in any repository that adopts the policy — including
-  this one.
+- `style/no-comments` no longer reports a comment that is **only** suppression directives.
+  A directive is machine-readable policy metadata rather than prose beside the code, and
+  reporting it would make suppression unusable in any repository that adopts the policy —
+  including this one. The exemption deliberately requires the whole comment to be
+  directives: exempting any comment that merely *contains* one would let a single valid
+  directive launder arbitrary prose past a rule set to `error`. Blank lines and the
+  comment's own delimiters do not count against it.
 - `maintainability/function-nesting` measures how deeply control-flow blocks nest
   inside a function — `if`, `for`, `while`, `match`, `with`, `try`, `switch` — rather
   than how many functions enclose it. An `else if` chain counts as one level. The

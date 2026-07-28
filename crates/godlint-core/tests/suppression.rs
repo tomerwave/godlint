@@ -8,7 +8,7 @@ use godlint_core::{
     date::Date,
     rules::evaluate,
     source::SourceFile,
-    suppression::{Scope, Suppression, collect, is_directive},
+    suppression::{Scope, Suppression, collect, is_directive_only},
 };
 
 fn facts(path: &str, source: &str) -> SourceFacts {
@@ -190,10 +190,64 @@ fn an_enclosing_directive_resolves_to_the_innermost_function() {
 }
 
 #[test]
-fn identifies_a_directive_comment() {
-    assert!(is_directive("// godlint-ignore-next-line a/b -- reason"));
-    assert!(is_directive("# godlint-ignore-enclosing a/b -- reason"));
-    assert!(!is_directive("// an ordinary aside"));
+fn identifies_a_comment_that_is_only_a_directive() {
+    assert!(is_directive_only(
+        "// godlint-ignore-next-line a/b -- reason"
+    ));
+    assert!(is_directive_only(
+        "# godlint-ignore-enclosing a/b -- reason"
+    ));
+    assert!(is_directive_only(
+        "/*\n godlint-ignore-next-line a/b -- reason\n*/"
+    ));
+    assert!(!is_directive_only("// an ordinary aside"));
+}
+
+#[test]
+fn prose_beside_a_directive_is_not_a_directive_comment() {
+    assert!(
+        !is_directive_only(
+            "/*\nThis ordinary comment would otherwise be allowed.\n\
+             godlint-ignore-next-line a/b -- reason\n*/"
+        ),
+        "one directive must not launder arbitrary prose past style/no-comments"
+    );
+}
+
+#[test]
+fn a_next_line_directive_reaches_past_the_end_of_its_own_comment() {
+    let source = facts(
+        "src/example.rs",
+        "/*\ngodlint-ignore-next-line maintainability/empty-function -- reason\n*/\nfn a() {}\n",
+    );
+    let body = "version: 1\nrules:\n  maintainability/empty-function:\n    severity: error\n";
+    let findings = evaluate(std::slice::from_ref(&source), &config(body), today())
+        .unwrap_or_else(|error| panic!("evaluates: {error}"));
+
+    assert!(
+        findings.is_empty(),
+        "the closing delimiter is not the next line: {findings:?}"
+    );
+}
+
+#[test]
+fn a_justification_excludes_the_comments_closing_delimiter() {
+    let suppression = only(
+        "src/example.rs",
+        "fn example() {\n    /* godlint-ignore-enclosing a/b -- awaiting #485 */\n}\n",
+    );
+
+    assert_eq!(suppression.justification(), Some("awaiting #485"));
+}
+
+#[test]
+fn a_justification_keeps_a_trailing_issue_reference() {
+    let suppression = only(
+        "src/example.rs",
+        "// godlint-ignore-next-line a/b -- see #485\nfn example() {}\n",
+    );
+
+    assert_eq!(suppression.justification(), Some("see #485"));
 }
 
 #[test]
