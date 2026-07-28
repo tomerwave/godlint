@@ -1,6 +1,11 @@
 version: 1
 
 rules:
+  maintainability/file-size:
+    severity: warning
+    max-lines: 500
+    skip-blank-lines: true
+    skip-comments: true
   maintainability/function-size:
     severity: error
     max-lines: 300

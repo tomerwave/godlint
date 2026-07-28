@@ -15,10 +15,15 @@ mod typescript;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SourceFacts {
+    source: SourceFile,
     functions: Vec<FunctionFact>,
 }
 
 impl SourceFacts {
+    pub fn source(&self) -> &SourceFile {
+        &self.source
+    }
+
     pub fn functions(&self) -> &[FunctionFact] {
         &self.functions
     }
@@ -96,7 +101,10 @@ pub(super) fn analyze_with(
         &mut functions,
     )?;
 
-    Ok(SourceFacts { functions })
+    Ok(SourceFacts {
+        source: source.clone(),
+        functions,
+    })
 }
 
 fn collect_functions(

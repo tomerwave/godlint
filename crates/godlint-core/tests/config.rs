@@ -49,6 +49,15 @@ fn accepts_the_function_nesting_rule() {
 }
 
 #[test]
+fn accepts_the_file_size_rule() {
+    let result = load(
+        "version: 1\nrules:\n  maintainability/file-size:\n    severity: warning\n    max-lines: 500\n    skip-blank-lines: true\n    skip-comments: true\n",
+    );
+
+    assert!(result.is_ok());
+}
+
+#[test]
 fn rejects_an_unknown_rule() {
     let result = load("version: 1\nrules:\n  maintainability/unknown: {}\n");
 
@@ -79,4 +88,13 @@ fn rejects_a_zero_function_size_limit() {
     );
 
     assert!(matches!(result, Err(ConfigError::InvalidFunctionSizeLimit)));
+}
+
+#[test]
+fn rejects_a_zero_file_size_limit() {
+    let result = load(
+        "version: 1\nrules:\n  maintainability/file-size:\n    severity: error\n    max-lines: 0\n    skip-blank-lines: true\n    skip-comments: true\n",
+    );
+
+    assert!(matches!(result, Err(ConfigError::InvalidFileSizeLimit)));
 }

@@ -21,6 +21,8 @@ pub struct Rules {
     pub function_size: Option<FunctionSizeRule>,
     #[serde(rename = "maintainability/function-nesting")]
     pub function_nesting: Option<FunctionNestingRule>,
+    #[serde(rename = "maintainability/file-size")]
+    pub file_size: Option<FileSizeRule>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -41,6 +43,18 @@ pub struct FunctionNestingRule {
     pub severity: Severity,
     #[serde(rename = "max-depth")]
     pub max_depth: u32,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct FileSizeRule {
+    pub severity: Severity,
+    #[serde(rename = "max-lines")]
+    pub max_lines: u32,
+    #[serde(rename = "skip-blank-lines")]
+    pub skip_blank_lines: bool,
+    #[serde(rename = "skip-comments")]
+    pub skip_comments: bool,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq)]
@@ -66,6 +80,7 @@ pub enum ConfigError {
         version: u8,
     },
     InvalidFunctionSizeLimit,
+    InvalidFileSizeLimit,
 }
 
 impl Config {
@@ -96,12 +111,23 @@ impl Config {
             return Err(ConfigError::InvalidFunctionSizeLimit);
         }
 
+        if self.file_size_limit_is_invalid() {
+            return Err(ConfigError::InvalidFileSizeLimit);
+        }
+
         Ok(())
     }
 
     fn function_size_limit_is_invalid(&self) -> bool {
         self.rules
             .function_size
+            .as_ref()
+            .is_some_and(|rule| rule.max_lines == 0)
+    }
+
+    fn file_size_limit_is_invalid(&self) -> bool {
+        self.rules
+            .file_size
             .as_ref()
             .is_some_and(|rule| rule.max_lines == 0)
     }
@@ -121,6 +147,12 @@ impl fmt::Display for ConfigError {
                     "maintainability/function-size max-lines must be at least 1"
                 )
             }
+            Self::InvalidFileSizeLimit => {
+                write!(
+                    formatter,
+                    "maintainability/file-size max-lines must be at least 1"
+                )
+            }
         }
     }
 }
@@ -130,7 +162,9 @@ impl Error for ConfigError {
         match self {
             Self::Read { source, .. } => Some(source),
             Self::Parse { source, .. } => Some(source),
-            Self::UnsupportedVersion { .. } | Self::InvalidFunctionSizeLimit => None,
+            Self::UnsupportedVersion { .. }
+            | Self::InvalidFunctionSizeLimit
+            | Self::InvalidFileSizeLimit => None,
         }
     }
 }

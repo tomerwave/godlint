@@ -19,8 +19,10 @@ pub trait Rule {
     ) -> Option<Self::Violation>;
 }
 
+pub mod file_size;
 pub mod function_nesting;
 pub mod function_size;
+mod line_count;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Finding {
@@ -46,6 +48,10 @@ pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, 
 
     if let Some(configuration) = &config.rules.function_nesting {
         findings.extend(function_nesting::evaluate(facts, configuration)?);
+    }
+
+    if let Some(configuration) = &config.rules.file_size {
+        findings.extend(file_size::evaluate(facts, configuration)?);
     }
 
     findings.sort_by(|left, right| {

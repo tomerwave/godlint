@@ -90,6 +90,13 @@ impl SourceFile {
         &self.source
     }
 
+    pub fn full_range(&self) -> SourceRange {
+        SourceRange {
+            start: 0,
+            end: self.source.len(),
+        }
+    }
+
     pub fn location(&self, range: SourceRange) -> Result<SourceLocation, SourceFileError> {
         Ok(SourceLocation {
             start: self.position(range.start)?,
