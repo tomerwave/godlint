@@ -1,0 +1,47 @@
+exit-code: 1
+
+findings:
+  - path: example.js
+    line: 1
+    column: 1
+    severity: error
+    rule-id: maintainability/file-size
+    message: File has 4 effective lines (max 3).
+  - path: example.jsx
+    line: 1
+    column: 1
+    severity: error
+    rule-id: maintainability/file-size
+    message: File has 4 effective lines (max 3).
+  - path: example.py
+    line: 1
+    column: 1
+    severity: error
+    rule-id: maintainability/file-size
+    message: File has 4 effective lines (max 3).
+  - path: example.pyi
+    line: 1
+    column: 1
+    severity: error
+    rule-id: maintainability/file-size
+    message: File has 4 effective lines (max 3).
+  - path: example.rs
+    line: 1
+    column: 1
+    severity: error
+    rule-id: maintainability/file-size
+    message: File has 4 effective lines (max 3).
+  - path: example.ts
+    line: 1
+    column: 1
+    severity: error
+    rule-id: maintainability/file-size
+    message: File has 4 effective lines (max 3).
+  - path: example.tsx
+    line: 1
+    column: 1
+    severity: error
+    rule-id: maintainability/file-size
+    message: File has 4 effective lines (max 3).
+
+stderr: []

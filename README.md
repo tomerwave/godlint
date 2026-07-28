@@ -82,8 +82,8 @@ godlint config validate
 godlint config validate --config path/to/godlint.yaml
 ```
 
-The initial `check` command evaluates the configured function-size rule across Rust,
-TypeScript/JavaScript, and Python source files:
+The initial `check` command evaluates configured function-size, function-nesting, and
+file-size rules across Rust, TypeScript/JavaScript, and Python source files:
 
 ```bash
 godlint check
