@@ -38,6 +38,8 @@ name = "godlint-cli"
 version = "0.1.0"
 dependencies = [
  "godlint-core",
+ "serde",
+ "yaml_serde",
 ]
 
 [[package]]

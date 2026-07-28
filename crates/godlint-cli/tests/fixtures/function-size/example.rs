@@ -1,4 +1,0 @@
-fn example() {
-    first();
-    second();
-}

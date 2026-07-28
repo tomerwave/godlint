@@ -1,0 +1,4 @@
+fn example() {
+    one();
+    two();
+}

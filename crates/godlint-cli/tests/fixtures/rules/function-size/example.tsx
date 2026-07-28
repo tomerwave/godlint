@@ -1,4 +1,4 @@
 function example() {
-  first();
-  second();
+  one();
+  two();
 }
