@@ -114,8 +114,8 @@ impl Suppression {
         match &self.covers {
             Some(Covers::Line(line)) => *line == finding.line,
             Some(Covers::Declaration { range, nested }) => {
-                contains(*range, finding.offset)
-                    && !nested.iter().any(|inner| contains(*inner, finding.offset))
+                encloses(*range, finding.range)
+                    && !nested.iter().any(|inner| encloses(*inner, finding.range))
             }
             None => false,
         }
@@ -389,10 +389,6 @@ fn is_standalone(text: &str, index: usize) -> bool {
     let after = text[index + SEPARATOR.len()..].chars().next();
 
     before.is_none_or(char::is_whitespace) && after.is_none_or(char::is_whitespace)
-}
-
-fn contains(range: SourceRange, offset: usize) -> bool {
-    range.start() <= offset && offset <= range.end()
 }
 
 fn coverage(

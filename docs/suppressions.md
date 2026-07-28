@@ -117,6 +117,11 @@ fn outer() {
 }
 ```
 
+`fn a() {…}fn b() {}` behaves the same way even with no separator between them: containment
+compares whole ranges, not the position a finding starts at, so a declaration that begins
+where another ends is not inside it. That is also why a file-level finding stays
+unsuppressible — it spans the whole file, which no declaration encloses.
+
 The closure is still reported. A justification describes one site, and a declaration nested
 inside the one it names is a different site with a reason of its own — the same rule the
 function metrics follow, where a nested function is measured on its own body rather than

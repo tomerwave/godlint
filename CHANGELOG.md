@@ -231,8 +231,10 @@ releases begin.
   by a reason that described only its parent. Both were widening failures: they hid findings
   with no output saying so. A directive for a nested declaration goes inside that
   declaration, which resolution already handles by picking the innermost. `Finding` carries
-  the byte offset it is derived from to make this possible; it was previously computed and
-  discarded.
+  the source range it is derived from to make this possible; it was previously computed and
+  discarded. Containment compares whole ranges rather than the position a finding starts at,
+  so a declaration beginning where another ends is not inside it, and a file-level finding —
+  which spans the whole file — remains unsuppressible inline as documented.
 
 - Quoted prose is no longer a live suppression. `is_furniture` stripped `"` and `'` on every
   line of every comment so that a Python docstring's delimiter could open a directive, which

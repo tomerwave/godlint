@@ -243,6 +243,41 @@ fn an_enclosing_directive_does_not_reach_a_neighbour_on_its_line() {
 }
 
 #[test]
+fn an_enclosing_directive_stops_where_its_declaration_ends() {
+    let directive = "/* godlint-ignore-enclosing maintainability/empty-function -- a */";
+    let body = format!("fn a() {{{directive}}}fn b() {{}}\n");
+
+    assert_eq!(
+        surviving("src/example.rs", &body, EMPTY_FUNCTION).len(),
+        1,
+        "b begins at the byte a ends on, and is a different declaration"
+    );
+}
+
+#[test]
+fn an_enclosing_directive_cannot_reach_a_file_level_finding() {
+    let source = concat!(
+        "fn a() {\n",
+        "    // godlint-ignore-enclosing maintainability/file-size -- reaches the file?\n",
+        "    work();\n",
+        "}\n"
+    );
+    let body = concat!(
+        "version: 1\n",
+        "rules:\n",
+        "  maintainability/file-size:\n",
+        "    severity: error\n",
+        "    max-lines: 1\n"
+    );
+
+    assert_eq!(
+        surviving("src/example.rs", source, body).len(),
+        1,
+        "a file-level finding spans the whole file, so no declaration encloses it"
+    );
+}
+
+#[test]
 fn identifies_a_comment_that_is_only_a_directive() {
     assert!(is_directive_only(
         "// godlint-ignore-next-line a/b -- reason",
