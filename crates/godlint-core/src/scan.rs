@@ -6,10 +6,11 @@ use std::{
 
 use crate::{
     analyzers::{SourceFacts, analyze},
-    discovery::{DiscoveryError, discover},
-    source::{SourceFile, SourceFileError},
+    discovery::{DiscoveryError, Scope, discover},
+    source::SourceFile,
 };
 
+/// A file that could not be turned into facts, reported alongside the findings.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ScanIssue {
     pub path: PathBuf,
@@ -24,68 +25,58 @@ pub struct ScanReport {
 
 #[derive(Debug)]
 pub enum ScanError {
-    DiscoversFiles {
-        source: DiscoveryError,
-    },
-    ReadsSource {
-        path: PathBuf,
-        source: std::io::Error,
-    },
-    SourcePath {
-        path: PathBuf,
-    },
-    CreatesSource {
-        source: SourceFileError,
-    },
+    DiscoversFiles { source: DiscoveryError },
+    SourcePath { path: PathBuf },
 }
 
-pub fn scan(root: &Path, paths: &[PathBuf]) -> Result<ScanReport, ScanError> {
-    let files = discover(paths).map_err(|source| ScanError::DiscoversFiles { source })?;
-    let mut facts = Vec::new();
-    let mut issues = Vec::new();
+pub fn scan(root: &Path, paths: &[PathBuf], excludes: &[String]) -> Result<ScanReport, ScanError> {
+    let scope = Scope { root, excludes };
+    let files = discover(paths, &scope).map_err(|source| ScanError::DiscoversFiles { source })?;
+    let mut report = ScanReport {
+        facts: Vec::new(),
+        issues: Vec::new(),
+    };
 
     for path in files {
-        scan_file(root, &path, &mut facts, &mut issues)?;
+        scan_file(root, &path, &mut report)?;
     }
 
-    issues.sort_by(|left, right| (&left.path, &left.message).cmp(&(&right.path, &right.message)));
+    report
+        .issues
+        .sort_by(|left, right| (&left.path, &left.message).cmp(&(&right.path, &right.message)));
 
-    Ok(ScanReport { facts, issues })
+    Ok(report)
 }
 
-fn scan_file(
-    root: &Path,
-    path: &Path,
-    facts: &mut Vec<SourceFacts>,
-    issues: &mut Vec<ScanIssue>,
-) -> Result<(), ScanError> {
+/// Turns one file into facts, recording rather than propagating per-file failures.
+///
+/// A file that cannot be read or parsed must not discard the findings from every other
+/// file, so anything specific to one file becomes an issue on the report instead.
+fn scan_file(root: &Path, path: &Path, report: &mut ScanReport) -> Result<(), ScanError> {
     let relative_path = path
         .strip_prefix(root)
         .map_err(|_| ScanError::SourcePath {
             path: path.to_path_buf(),
         })?
         .to_path_buf();
-    let source = fs::read_to_string(path).map_err(|source| ScanError::ReadsSource {
-        path: path.to_path_buf(),
-        source,
-    })?;
-    let source = SourceFile::new(relative_path, source)
-        .map_err(|source| ScanError::CreatesSource { source })?;
-    let source_facts = match analyze(&source) {
-        Ok(facts) => facts,
-        Err(error) => {
-            issues.push(ScanIssue {
-                path: source.path().to_path_buf(),
-                message: error.to_string(),
-            });
 
-            return Ok(());
-        }
-    };
-
-    facts.push(source_facts);
+    match read_facts(relative_path.clone(), path) {
+        Ok(facts) => report.facts.push(facts),
+        Err(message) => report.issues.push(ScanIssue {
+            path: relative_path,
+            message,
+        }),
+    }
 
     Ok(())
+}
+
+fn read_facts(relative_path: PathBuf, path: &Path) -> Result<SourceFacts, String> {
+    let contents = fs::read_to_string(path).map_err(|error| format!("unable to read: {error}"))?;
+    let source = SourceFile::new(relative_path, contents)
+        .map_err(|error| format!("invalid source: {error}"))?;
+
+    analyze(&source).map_err(|error| error.to_string())
 }
 
 impl fmt::Display for ScanError {
@@ -94,9 +85,6 @@ impl fmt::Display for ScanError {
             Self::DiscoversFiles { source } => {
                 write!(formatter, "unable to discover files: {source}")
             }
-            Self::ReadsSource { path, source } => {
-                write!(formatter, "unable to read {}: {source}", path.display())
-            }
             Self::SourcePath { path } => {
                 write!(
                     formatter,
@@ -104,7 +92,6 @@ impl fmt::Display for ScanError {
                     path.display()
                 )
             }
-            Self::CreatesSource { source } => write!(formatter, "invalid source file: {source}"),
         }
     }
 }
@@ -113,8 +100,6 @@ impl Error for ScanError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             Self::DiscoversFiles { source } => Some(source),
-            Self::ReadsSource { source, .. } => Some(source),
-            Self::CreatesSource { source } => Some(source),
             Self::SourcePath { .. } => None,
         }
     }

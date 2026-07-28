@@ -5,9 +5,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::source::Language;
-
-const IGNORED_DIRECTORY_NAMES: [&str; 3] = [".git", "node_modules", "target"];
+use crate::{glob, source::Language};
 
 #[derive(Debug)]
 pub enum DiscoveryError {
@@ -21,37 +19,64 @@ pub enum DiscoveryError {
     },
 }
 
-pub fn discover(paths: &[PathBuf]) -> Result<Vec<PathBuf>, DiscoveryError> {
+/// Where discovery is rooted and what it must leave alone.
+///
+/// Exclusions are configured policy rather than a constant, so a repository can keep a
+/// virtual environment or a build directory out of its results.
+pub struct Scope<'a> {
+    pub root: &'a Path,
+    pub excludes: &'a [String],
+}
+
+pub fn discover(paths: &[PathBuf], scope: &Scope<'_>) -> Result<Vec<PathBuf>, DiscoveryError> {
     let mut files = BTreeSet::new();
 
     for path in paths {
-        discover_path(path, &mut files)?;
+        discover_path(path, scope, &mut files)?;
     }
 
     Ok(files.into_iter().collect())
 }
 
-fn discover_path(path: &Path, files: &mut BTreeSet<PathBuf>) -> Result<(), DiscoveryError> {
+fn discover_path(
+    path: &Path,
+    scope: &Scope<'_>,
+    files: &mut BTreeSet<PathBuf>,
+) -> Result<(), DiscoveryError> {
     let metadata = fs::symlink_metadata(path).map_err(|source| DiscoveryError::ReadMetadata {
         path: path.to_path_buf(),
         source,
     })?;
 
-    if metadata.file_type().is_symlink() {
+    if metadata.file_type().is_symlink() || is_excluded(path, scope) {
         return Ok(());
     }
 
     if metadata.is_file() {
         add_supported_file(path, files);
-    } else if metadata.is_dir() && !is_ignored_directory(path) {
-        discover_directory(path, files)?;
+    } else if metadata.is_dir() {
+        discover_directory(path, scope, files)?;
     }
 
     Ok(())
 }
 
+/// Reports whether configured policy excludes this path from scanning.
+fn is_excluded(path: &Path, scope: &Scope<'_>) -> bool {
+    let relative = path.strip_prefix(scope.root).unwrap_or(path);
+    let Some(candidate) = relative.to_str() else {
+        return false;
+    };
+
+    scope
+        .excludes
+        .iter()
+        .any(|pattern| glob::matches(pattern, candidate))
+}
+
 fn discover_directory(
     directory: &Path,
+    scope: &Scope<'_>,
     files: &mut BTreeSet<PathBuf>,
 ) -> Result<(), DiscoveryError> {
     let entries = fs::read_dir(directory).map_err(|source| DiscoveryError::ReadDirectory {
@@ -72,7 +97,7 @@ fn discover_directory(
     paths.sort();
 
     for path in paths {
-        discover_path(&path, files)?;
+        discover_path(&path, scope, files)?;
     }
 
     Ok(())
@@ -82,12 +107,6 @@ fn add_supported_file(path: &Path, files: &mut BTreeSet<PathBuf>) {
     if Language::from_path(path).is_some() {
         files.insert(path.to_path_buf());
     }
-}
-
-fn is_ignored_directory(path: &Path) -> bool {
-    path.file_name()
-        .and_then(|name| name.to_str())
-        .is_some_and(|name| IGNORED_DIRECTORY_NAMES.contains(&name))
 }
 
 impl fmt::Display for DiscoveryError {
