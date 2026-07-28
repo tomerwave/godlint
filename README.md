@@ -105,10 +105,18 @@ TypeScript/JavaScript, and Python source files. Fifteen rules are implemented:
   finding.
 - `architecture/restricted-call` — abrupt process exits and debug-only output, plus
   configured direct callees outside their approved paths.
-- `security/no-dynamic-execution` — JavaScript `eval`/`Function` and Python
-  `eval`/`exec`.
+- `security/no-dynamic-execution` — JavaScript `eval` and `Function`, Python `eval` and
+  `exec`.
 - `security/direct-environment-read` — environment access outside a configuration
   boundary.
+
+These three read the callee exactly as it is spelled. `std::env::var` is matched and the
+aliased `env::var` after `use std::env` is not, because knowing they name the same function
+needs resolution Godlint does not have yet — see
+[the rule roadmap](docs/rule-roadmap.md) for what that defers. They also have no scope
+analysis, so a local binding that shadows a restricted name is reported: a Python parameter
+called `exec`, or a `const process = …` in TypeScript. Enable them deliberately; each is
+off until a repository configures it.
 
 A function means the same thing in every language: Rust `fn` items and closures,
 Python `def` functions and lambdas, and JavaScript/TypeScript function declarations,

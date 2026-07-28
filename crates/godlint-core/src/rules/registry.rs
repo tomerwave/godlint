@@ -63,29 +63,17 @@ severity!(
     unused_suppression
 );
 
-fn restricted_call_severity(config: &Config) -> Severity {
-    config
-        .rules
-        .restricted_call
-        .as_ref()
-        .map_or(Severity::Error, RestrictedCall::severity)
-}
-
-fn no_dynamic_execution_severity(config: &Config) -> Severity {
-    config
-        .rules
-        .no_dynamic_execution
-        .as_ref()
-        .map_or(Severity::Error, NoDynamicExecution::severity)
-}
-
-fn direct_environment_read_severity(config: &Config) -> Severity {
-    config
-        .rules
-        .direct_environment_read
-        .as_ref()
-        .map_or(Severity::Error, DirectEnvironmentRead::severity)
-}
+severity!(restricted_call_severity, RestrictedCall, restricted_call);
+severity!(
+    no_dynamic_execution_severity,
+    NoDynamicExecution,
+    no_dynamic_execution
+);
+severity!(
+    direct_environment_read_severity,
+    DirectEnvironmentRead,
+    direct_environment_read
+);
 
 const REGISTRATIONS: &[Registration] = &[
     Registration {

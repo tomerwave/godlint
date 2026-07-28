@@ -31,11 +31,12 @@ RULES = "/src/rules/"
 # Removing that plumbing would take this budget to zero; until then it is fixed, so a
 # newly uncovered line pushes the count over and fails.
 BUDGET = {
-    "src/rules/mod.rs": 9,
-    # The call and access evaluators return a location error only for an invalid fact.
-    # CallFact and AccessFact validate their ranges on construction, so these two `?`
-    # propagation lines cannot execute through the public fact contract.
+    "src/rules/mod.rs": 7,
+    # A rule that evaluates two fact kinds propagates a location error from each, and the
+    # shared reference driver propagates one of its own. CallFact and AccessFact validate
+    # their ranges on construction, so none of these can execute through the fact contract.
     "src/rules/direct_environment_read.rs": 2,
+    "src/rules/reference.rs": 1,
     "src/rules/todo_requires_reference.rs": 1,
 }
 

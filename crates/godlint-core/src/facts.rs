@@ -57,6 +57,7 @@ pub struct CallFact {
     source: SourceFile,
     range: SourceRange,
     callee: String,
+    is_macro: bool,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -162,6 +163,7 @@ impl CallFact {
         source: SourceFile,
         range: SourceRange,
         callee: String,
+        is_macro: bool,
     ) -> Result<Self, CallFactError> {
         source
             .validate_range(range)
@@ -171,6 +173,7 @@ impl CallFact {
             source,
             range,
             callee,
+            is_macro,
         })
     }
 
@@ -184,6 +187,10 @@ impl CallFact {
 
     pub fn callee(&self) -> &str {
         &self.callee
+    }
+
+    pub fn is_macro(&self) -> bool {
+        self.is_macro
     }
 }
 

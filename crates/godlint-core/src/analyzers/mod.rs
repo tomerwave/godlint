@@ -154,29 +154,51 @@ struct Collected {
     calls: Vec<CallFact>,
 }
 
+impl Collected {
+    fn absorb_declarations(
+        &mut self,
+        node: Node<'_>,
+        source: &SourceFile,
+        vocabulary: &Vocabulary,
+    ) -> Result<(), AnalyzerError> {
+        if metrics::is_function(node, vocabulary) {
+            self.functions
+                .push(function_fact(node, source, vocabulary)?);
+        }
+
+        if let Some(kind) = (vocabulary.comment_kind)(node, source.source()) {
+            self.comments.push(comment_fact(node, source, kind)?);
+        }
+
+        Ok(())
+    }
+
+    fn absorb_references(
+        &mut self,
+        node: Node<'_>,
+        source: &SourceFile,
+        vocabulary: &Vocabulary,
+    ) -> Result<(), AnalyzerError> {
+        if let Some(call) = call_fact(node, source, vocabulary)? {
+            self.calls.push(call);
+        }
+
+        if let Some(access) = access_fact(node, source, vocabulary)? {
+            self.accesses.push(access);
+        }
+
+        Ok(())
+    }
+}
+
 fn collect_source_facts(
     node: Node<'_>,
     source: &SourceFile,
     vocabulary: &Vocabulary,
     collected: &mut Collected,
 ) -> Result<(), AnalyzerError> {
-    if metrics::is_function(node, vocabulary) {
-        collected
-            .functions
-            .push(function_fact(node, source, vocabulary)?);
-    }
-
-    if let Some(kind) = (vocabulary.comment_kind)(node, source.source()) {
-        collected.comments.push(comment_fact(node, source, kind)?);
-    }
-
-    if let Some(call) = call_fact(node, source)? {
-        collected.calls.push(call);
-    }
-
-    if let Some(access) = access_fact(node, source)? {
-        collected.accesses.push(access);
-    }
+    collected.absorb_declarations(node, source, vocabulary)?;
+    collected.absorb_references(node, source, vocabulary)?;
 
     let mut cursor = node.walk();
 
@@ -187,34 +209,44 @@ fn collect_source_facts(
     Ok(())
 }
 
-fn call_fact(node: Node<'_>, source: &SourceFile) -> Result<Option<CallFact>, AnalyzerError> {
-    let callee = match node.kind() {
-        "call" | "call_expression" => node.child_by_field_name("function"),
-        "macro_invocation" => node.child_by_field_name("macro"),
-        _ => None,
-    };
-    let Some(callee) = callee else {
+fn call_fact(
+    node: Node<'_>,
+    source: &SourceFile,
+    vocabulary: &Vocabulary,
+) -> Result<Option<CallFact>, AnalyzerError> {
+    let Some(callee) = (vocabulary.callee)(node) else {
         return Ok(None);
     };
-    let callee_text = source.source().get(callee.byte_range()).unwrap_or_default();
+    let callee_text = source
+        .source()
+        .get(callee.node.byte_range())
+        .unwrap_or_default();
 
     if !is_direct_path(callee_text) {
         return Ok(None);
     }
 
-    let range = node_range(callee, source)?;
-    let fact = CallFact::new(source.clone(), range, callee_text.to_owned()).map_err(|error| {
-        AnalyzerError::InvalidCall {
-            path: source.path().to_path_buf(),
-            source: error,
-        }
+    let range = node_range(callee.node, source)?;
+    let fact = CallFact::new(
+        source.clone(),
+        range,
+        callee_text.to_owned(),
+        callee.is_macro,
+    )
+    .map_err(|error| AnalyzerError::InvalidCall {
+        path: source.path().to_path_buf(),
+        source: error,
     })?;
 
     Ok(Some(fact))
 }
 
-fn access_fact(node: Node<'_>, source: &SourceFile) -> Result<Option<AccessFact>, AnalyzerError> {
-    if !matches!(node.kind(), "attribute" | "member_expression") {
+fn access_fact(
+    node: Node<'_>,
+    source: &SourceFile,
+    vocabulary: &Vocabulary,
+) -> Result<Option<AccessFact>, AnalyzerError> {
+    if !node.is_named() || !(vocabulary.is_access)(node.kind()) {
         return Ok(None);
     }
 

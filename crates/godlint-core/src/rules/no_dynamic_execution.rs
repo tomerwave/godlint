@@ -2,7 +2,7 @@ use crate::{
     analyzers::SourceFacts,
     config::{Config, NoDynamicExecutionRule, Severity},
     facts::CallFact,
-    rules::{Finding, Rule, RuleError, Violation, evaluate_call_rule},
+    rules::{Finding, Rule, RuleError, Violation, evaluate_call_rule, when_configured},
     source::Language,
 };
 
@@ -19,16 +19,17 @@ impl Rule for NoDynamicExecution {
 }
 
 pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, RuleError> {
-    let severity = config
-        .rules
-        .no_dynamic_execution
-        .as_ref()
-        .map_or(Severity::Error, NoDynamicExecution::severity);
-
-    evaluate_call_rule(facts, severity, NoDynamicExecution::ID, |call| {
-        is_dynamic_execution(call).then(|| Violation::DynamicExecution {
-            callee: call.callee().to_owned(),
-        })
+    when_configured(config.rules.no_dynamic_execution.as_ref(), |rule| {
+        evaluate_call_rule(
+            facts,
+            NoDynamicExecution::severity(rule),
+            NoDynamicExecution::ID,
+            |call| {
+                is_dynamic_execution(call).then(|| Violation::DynamicExecution {
+                    callee: call.callee().to_owned(),
+                })
+            },
+        )
     })
 }
 

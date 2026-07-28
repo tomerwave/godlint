@@ -129,7 +129,7 @@ fn rejects_a_comment_range_outside_the_file() {
 
 #[test]
 fn records_a_call() {
-    let fact = CallFact::new(source(), range(17, 24), "inner".into())
+    let fact = CallFact::new(source(), range(17, 24), "inner".into(), false)
         .unwrap_or_else(|error| panic!("creates call fact: {error}"));
 
     assert_eq!(fact.range(), range(17, 24));
@@ -138,7 +138,7 @@ fn records_a_call() {
 
 #[test]
 fn rejects_a_call_range_outside_the_file() {
-    let result = CallFact::new(source(), range(0, 999), "inner".into());
+    let result = CallFact::new(source(), range(0, 999), "inner".into(), false);
 
     assert!(matches!(
         result,

@@ -21,6 +21,7 @@ mod line_count;
 pub mod no_comments;
 pub mod no_dynamic_execution;
 pub mod parameter_count;
+mod reference;
 mod registry;
 pub mod restricted_call;
 pub mod return_count;
@@ -304,29 +305,7 @@ pub fn evaluate_call_rule(
     rule_id: &'static str,
     check: impl Fn(&CallFact) -> Option<Violation>,
 ) -> Result<Vec<Finding>, RuleError> {
-    if severity == Severity::Off {
-        return Ok(Vec::new());
-    }
-
-    let mut findings = Vec::new();
-
-    for source_facts in facts {
-        for call in source_facts.calls() {
-            let Some(violation) = check(call) else {
-                continue;
-            };
-
-            findings.push(finding(
-                call.source(),
-                call.range(),
-                severity,
-                rule_id,
-                violation,
-            )?);
-        }
-    }
-
-    Ok(findings)
+    reference::evaluate(facts, severity, rule_id, SourceFacts::calls, check)
 }
 
 pub fn evaluate_access_rule(
@@ -335,29 +314,7 @@ pub fn evaluate_access_rule(
     rule_id: &'static str,
     check: impl Fn(&AccessFact) -> Option<Violation>,
 ) -> Result<Vec<Finding>, RuleError> {
-    if severity == Severity::Off {
-        return Ok(Vec::new());
-    }
-
-    let mut findings = Vec::new();
-
-    for source_facts in facts {
-        for access in source_facts.accesses() {
-            let Some(violation) = check(access) else {
-                continue;
-            };
-
-            findings.push(finding(
-                access.source(),
-                access.range(),
-                severity,
-                rule_id,
-                violation,
-            )?);
-        }
-    }
-
-    Ok(findings)
+    reference::evaluate(facts, severity, rule_id, SourceFacts::accesses, check)
 }
 
 fn evaluate_files(

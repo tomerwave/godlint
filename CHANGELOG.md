@@ -66,12 +66,22 @@ releases begin.
 - `policy/unused-suppression` — reports an inline directive that does not silence an
   enabled finding. A directive for an off rule is dormant rather than unused, so staged
   rule adoption does not manufacture exception debt.
-- `architecture/restricted-call` — blocks direct process exits and debug-only output by
-  default, and can restrict configured direct callees to approved path globs.
-- `security/no-dynamic-execution` — blocks JavaScript `eval` and `Function`, plus
-  Python `eval` and `exec`.
-- `security/direct-environment-read` — blocks direct JavaScript, Python, and Rust
-  environment reads outside configured configuration paths.
+- `architecture/restricted-call` — restricts direct process exits and debug-only output
+  once enabled, and restricts configured direct callees to approved path globs. Naming a
+  built-in restriction under `calls` lets its `allow-in` boundary apply to it, which is how
+  a CLI permits `console.log` in its entry point.
+- `security/no-dynamic-execution` — reports JavaScript `eval`, `Function`, and
+  `new Function`, plus Python `eval` and `exec`.
+- `security/direct-environment-read` — reports direct JavaScript, Python, and Rust
+  environment reads outside a configuration boundary. `**/config.*` and `**/config/**` are
+  allowed without configuration, and `allow-in` widens that set rather than replacing it.
+- All three read a callee exactly as spelled, and are off until a repository configures
+  them, like every other rule. `std::env::var` is matched where the aliased `env::var` after
+  `use std::env` is not, because knowing they name the same function needs resolution that
+  [the rule roadmap](docs/rule-roadmap.md) defers to a semantic phase. There is no scope
+  analysis either, so a local binding shadowing a restricted name is reported — a Python
+  parameter called `exec`, or a TypeScript `const process`. A Rust macro and a function that
+  share a name are distinguished, so `dbg!(x)` is restricted where a `fn dbg` is not.
 - `godlint suppressions [paths...]` — lists every suppression in scope with its location,
   scope, rules, owner, expiry, and reason, then the total. A directive with no reason is
   listed as `(no justification)` rather than omitted.

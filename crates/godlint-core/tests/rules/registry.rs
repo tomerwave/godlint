@@ -50,7 +50,7 @@ fn every_registered_rule_reads_its_own_configuration() {
 
             assert_eq!(
                 severity_of(other, enabled),
-                default_severity(other),
+                Severity::Off,
                 "{other} reads {enabled}'s configuration"
             );
         }
@@ -58,24 +58,16 @@ fn every_registered_rule_reads_its_own_configuration() {
 }
 
 #[test]
-fn an_absent_rule_uses_its_default_severity() {
+fn an_absent_rule_is_off_rather_than_unknown() {
     let empty = config("version: 1\n");
 
     for identifier in rule_ids() {
         assert_eq!(
             configured_severity(&empty, identifier),
-            default_severity(identifier)
+            Severity::Off,
+            "{identifier} must do nothing until a repository asks for it"
         );
         assert!(is_known_rule(identifier));
-    }
-}
-
-fn default_severity(rule_id: &str) -> Severity {
-    match rule_id {
-        "architecture/restricted-call"
-        | "security/no-dynamic-execution"
-        | "security/direct-environment-read" => Severity::Error,
-        _ => Severity::Off,
     }
 }
 

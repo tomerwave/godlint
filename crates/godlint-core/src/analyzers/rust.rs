@@ -1,7 +1,10 @@
 use tree_sitter::Node;
 
 use crate::{
-    analyzers::{Analyzer, AnalyzerError, SourceFacts, vocabulary::Vocabulary},
+    analyzers::{
+        Analyzer, AnalyzerError, SourceFacts,
+        vocabulary::{Callee, Vocabulary},
+    },
     facts::CommentKind,
     source::SourceFile,
 };
@@ -24,6 +27,8 @@ const VOCABULARY: Vocabulary = Vocabulary {
     is_placeholder,
     is_receiver,
     is_abstract,
+    callee,
+    is_access,
     comment_kind,
     has_implicit_tail_return,
 };
@@ -49,6 +54,22 @@ fn is_block(kind: &str) -> bool {
 
 fn is_conditional(kind: &str) -> bool {
     kind == "if_expression"
+}
+
+fn callee(node: Node<'_>) -> Option<Callee<'_>> {
+    let is_macro = match node.kind() {
+        "call_expression" => false,
+        "macro_invocation" => true,
+        _ => return None,
+    };
+    let field = if is_macro { "macro" } else { "function" };
+
+    node.child_by_field_name(field)
+        .map(|node| Callee { node, is_macro })
+}
+
+fn is_access(_kind: &str) -> bool {
+    false
 }
 
 fn is_decision(node: Node<'_>) -> bool {

@@ -1,9 +1,14 @@
+use std::path::Path;
+
 use crate::{
     analyzers::SourceFacts,
     config::{Config, DirectEnvironmentReadRule, Severity},
     facts::{AccessFact, CallFact},
     glob,
-    rules::{Finding, Rule, RuleError, Violation, evaluate_access_rule, evaluate_call_rule},
+    rules::{
+        Finding, Rule, RuleError, Violation, evaluate_access_rule, evaluate_call_rule,
+        when_configured,
+    },
     source::Language,
 };
 
@@ -22,30 +27,29 @@ impl Rule for DirectEnvironmentRead {
 }
 
 pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, RuleError> {
-    let severity = config
-        .rules
-        .direct_environment_read
-        .as_ref()
-        .map_or(Severity::Error, DirectEnvironmentRead::severity);
-    let mut findings =
-        evaluate_access_rule(facts, severity, DirectEnvironmentRead::ID, |access| {
-            is_environment_access(access)
-                .then(|| direct_read_violation(access.target()))
-                .filter(|_| !is_allowed(access.source().path().to_string_lossy().as_ref(), config))
-        })?;
+    when_configured(config.rules.direct_environment_read.as_ref(), |rule| {
+        let severity = DirectEnvironmentRead::severity(rule);
+        let allowed = |path: &Path| is_allowed(&path.to_string_lossy(), &rule.allow_in);
+        let mut findings =
+            evaluate_access_rule(facts, severity, DirectEnvironmentRead::ID, |access| {
+                is_environment_access(access)
+                    .then(|| direct_read_violation(access.target()))
+                    .filter(|_| !allowed(access.source().path()))
+            })?;
 
-    findings.extend(evaluate_call_rule(
-        facts,
-        severity,
-        DirectEnvironmentRead::ID,
-        |call| {
-            is_environment_call(call)
-                .then(|| direct_read_violation(call.callee()))
-                .filter(|_| !is_allowed(call.source().path().to_string_lossy().as_ref(), config))
-        },
-    )?);
+        findings.extend(evaluate_call_rule(
+            facts,
+            severity,
+            DirectEnvironmentRead::ID,
+            |call| {
+                is_environment_call(call)
+                    .then(|| direct_read_violation(call.callee()))
+                    .filter(|_| !allowed(call.source().path()))
+            },
+        )?);
 
-    Ok(findings)
+        Ok(findings)
+    })
 }
 
 fn is_environment_access(access: &AccessFact) -> bool {
@@ -70,16 +74,10 @@ fn direct_read_violation(target: &str) -> Violation {
     }
 }
 
-fn is_allowed(path: &str, config: &Config) -> bool {
+fn is_allowed(path: &str, allow_in: &[String]) -> bool {
     DEFAULT_ALLOWED_PATHS
         .iter()
         .copied()
-        .chain(
-            config
-                .rules
-                .direct_environment_read
-                .iter()
-                .flat_map(|rule| rule.allow_in.iter().map(String::as_str)),
-        )
+        .chain(allow_in.iter().map(String::as_str))
         .any(|pattern| glob::matches(pattern, path))
 }

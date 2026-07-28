@@ -7,3 +7,6 @@ rules:
       - name: loadConfig
         allow-in:
           - config/**
+      - name: console.log
+        allow-in:
+          - allowed.ts
