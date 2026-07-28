@@ -67,6 +67,15 @@ fn accepts_the_empty_function_rule() {
 }
 
 #[test]
+fn accepts_the_todo_reference_rule() {
+    let result = load(
+        "version: 1\nrules:\n  policy/todo-requires-reference:\n    severity: warning\n    reference-prefixes:\n      - GH-\n      - '#'\n",
+    );
+
+    assert!(result.is_ok());
+}
+
+#[test]
 fn rejects_an_unknown_rule() {
     let result = load("version: 1\nrules:\n  maintainability/unknown: {}\n");
 
@@ -106,4 +115,28 @@ fn rejects_a_zero_file_size_limit() {
     );
 
     assert!(matches!(result, Err(ConfigError::InvalidFileSizeLimit)));
+}
+
+#[test]
+fn rejects_empty_todo_reference_prefixes() {
+    let result = load(
+        "version: 1\nrules:\n  policy/todo-requires-reference:\n    severity: error\n    reference-prefixes: []\n",
+    );
+
+    assert!(matches!(
+        result,
+        Err(ConfigError::InvalidTodoReferencePrefixes)
+    ));
+}
+
+#[test]
+fn rejects_blank_todo_reference_prefixes() {
+    let result = load(
+        "version: 1\nrules:\n  policy/todo-requires-reference:\n    severity: error\n    reference-prefixes:\n      - ' '\n",
+    );
+
+    assert!(matches!(
+        result,
+        Err(ConfigError::InvalidTodoReferencePrefixes)
+    ));
 }

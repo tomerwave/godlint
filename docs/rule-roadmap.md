@@ -74,7 +74,7 @@ These rules need no new language fact beyond `SourceFile` and `FunctionFact`.
 | `maintainability/function-nesting` | Shipped | High | All seven supported extensions | `max-depth` | Error, 5 |
 | `maintainability/file-size` | Shipped | High | All seven supported extensions | `max-lines`, blank/comment policy | Warning, 500 |
 | `maintainability/empty-function` | Shipped | High with explicit allow-list | All seven supported extensions | `allow-names` | Warning |
-| `policy/todo-requires-reference` | Next | High | All comment syntaxes | issue pattern, expiration requirement | Warning |
+| `policy/todo-requires-reference` | Shipped | High | All comment syntaxes | `reference-prefixes` | Warning |
 
 `file-size` establishes that Godlint can evaluate file-level facts alongside
 function-level facts. It directly reflects the requested 500-line policy without

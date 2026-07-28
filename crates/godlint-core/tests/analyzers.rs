@@ -57,3 +57,23 @@ fn ignores_rust_trait_methods_without_bodies() {
 
     assert!(facts.functions().is_empty());
 }
+
+#[test]
+fn extracts_comments_from_every_supported_language() {
+    let cases = [
+        ("example.rs", "// TODO: track #1"),
+        ("example.js", "// TODO: track #1"),
+        ("example.ts", "// TODO: track #1"),
+        ("example.tsx", "// TODO: track #1"),
+        ("example.py", "# TODO: track #1"),
+        ("example.pyi", "# TODO: track #1"),
+    ];
+
+    for (path, contents) in cases {
+        let facts = analyze(&source(path, contents))
+            .unwrap_or_else(|error| panic!("extracts comments from {path}: {error}"));
+
+        assert_eq!(facts.comments().len(), 1, "{path}");
+        assert_eq!(facts.comments()[0].text(), contents, "{path}");
+    }
+}

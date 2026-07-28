@@ -9,3 +9,6 @@ mod function_nesting;
 
 #[path = "rules/file_size.rs"]
 mod file_size;
+
+#[path = "rules/todo_requires_reference.rs"]
+mod todo_requires_reference;

@@ -24,6 +24,7 @@ pub mod file_size;
 pub mod function_nesting;
 pub mod function_size;
 mod line_count;
+pub mod todo_requires_reference;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Finding {
@@ -57,6 +58,10 @@ pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, 
 
     if let Some(configuration) = &config.rules.empty_function {
         findings.extend(empty_function::evaluate(facts, configuration)?);
+    }
+
+    if let Some(configuration) = &config.rules.todo_requires_reference {
+        findings.extend(todo_requires_reference::evaluate(facts, configuration)?);
     }
 
     findings.sort_by(|left, right| {
