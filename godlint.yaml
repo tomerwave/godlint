@@ -56,3 +56,10 @@ rules:
   style/no-comments:
     severity: error
     allow-doc-comments: false
+  # An exception this project cannot fix yet must name someone and a date, which is what
+  # docs/dogfooding.md asks of every exception. The rule cannot be suppressed, so setting
+  # it to error means a lapsed expiry fails CI.
+  policy/accountable-suppression:
+    severity: error
+    require-owner: true
+    require-expiry: true

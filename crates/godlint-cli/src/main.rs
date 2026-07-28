@@ -3,6 +3,7 @@ use std::process::ExitCode;
 use godlint_core::VERSION;
 
 mod commands;
+mod workspace;
 
 fn main() -> ExitCode {
     let arguments = std::env::args().skip(1).collect::<Vec<_>>();

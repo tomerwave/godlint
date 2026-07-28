@@ -2,17 +2,20 @@ use std::error::Error;
 
 use godlint_core::{
     config::{
-        EmptyFunctionRule, LineLimitRule, NoCommentsRule, Severity, TodoRequiresReferenceRule,
+        AccountableSuppressionRule, EmptyFunctionRule, LineLimitRule, NoCommentsRule, Severity,
+        TodoRequiresReferenceRule,
     },
+    date::Date,
     rules::{
-        Finding, RuleError, empty_function::EmptyFunction, evaluate_comment_rule,
-        evaluate_file_limit_rule, evaluate_function_rule, file_size::FileSize,
+        Finding, RuleError, accountable_suppression::AccountableSuppression,
+        empty_function::EmptyFunction, evaluate_comment_rule, evaluate_file_limit_rule,
+        evaluate_function_rule, evaluate_suppression_rule, file_size::FileSize,
         no_comments::NoComments,
     },
     source::SourceFileError,
 };
 
-use super::support::{comment_violations, facts, limit};
+use super::support::{comment_violations, facts, limit, suppressions};
 
 fn error() -> RuleError {
     RuleError::LocatesSource {
@@ -95,6 +98,30 @@ fn a_comment_rule_set_to_off_reports_nothing() {
             &configuration
         ))
         .is_empty()
+    );
+}
+
+#[test]
+fn a_suppression_rule_set_to_off_reports_nothing() {
+    let suppressions = suppressions(
+        "src/example.rs",
+        "// godlint-ignore-next-line maintainability/empty-function\nfn a() {}\n",
+    );
+    let configuration = AccountableSuppressionRule {
+        severity: Severity::Off,
+        require_owner: true,
+        require_expiry: true,
+    };
+    let today = Date::parse("2026-07-28").unwrap_or_else(|error| panic!("parses date: {error}"));
+
+    assert!(
+        evaluated(evaluate_suppression_rule::<AccountableSuppression>(
+            &suppressions,
+            &configuration,
+            today
+        ))
+        .is_empty(),
+        "a directive with three defects is still silent when the rule is off"
     );
 }
 

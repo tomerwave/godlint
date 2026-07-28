@@ -3,10 +3,13 @@ use std::{error::Error, fmt, path::PathBuf};
 use crate::{
     analyzers::SourceFacts,
     config::{Config, Severity},
+    date::Date,
     facts::{CommentFact, FunctionFact},
     source::{SourceFile, SourceFileError, SourceRange},
+    suppression::{self, Suppression},
 };
 
+pub mod accountable_suppression;
 pub mod cyclomatic_complexity;
 pub mod empty_function;
 pub mod file_size;
@@ -42,6 +45,23 @@ pub enum Violation {
         marker: String,
     },
     CommentNotPermitted,
+    UnaccountableSuppression {
+        defect: SuppressionDefect,
+    },
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum SuppressionDefect {
+    NoRules,
+    UnknownRule { rule: String },
+    NotSuppressible { rule: String },
+    UnknownOption { option: String },
+    MissingJustification,
+    MissingOwner,
+    MissingExpiry,
+    InvalidExpiry { value: String },
+    Expired { expires: String },
+    Unresolved,
 }
 
 impl Metric {
@@ -147,6 +167,42 @@ pub trait FileLimitRule: Rule {
     fn measure(facts: &SourceFacts, configuration: &Self::Configuration) -> u32;
 
     fn max(configuration: &Self::Configuration) -> u32;
+}
+
+pub trait SuppressionRule: Rule {
+    fn check(
+        suppression: &Suppression,
+        configuration: &Self::Configuration,
+        today: Date,
+    ) -> Vec<Violation>;
+}
+
+pub fn evaluate_suppression_rule<R: SuppressionRule>(
+    suppressions: &[Suppression],
+    configuration: &R::Configuration,
+    today: Date,
+) -> Result<Vec<Finding>, RuleError> {
+    let severity = R::severity(configuration);
+
+    if severity == Severity::Off {
+        return Ok(Vec::new());
+    }
+
+    let mut findings = Vec::new();
+
+    for suppression in suppressions {
+        for violation in R::check(suppression, configuration, today) {
+            findings.push(finding(
+                suppression.source(),
+                suppression.range(),
+                severity,
+                R::ID,
+                violation,
+            )?);
+        }
+    }
+
+    Ok(findings)
 }
 
 pub fn evaluate_function_rule<R: FunctionRule>(
@@ -314,12 +370,39 @@ const EVALUATORS: &[Evaluator] = &[
     no_comments::evaluate,
 ];
 
-pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, RuleError> {
+pub const RULE_IDS: &[&str] = &[
+    <accountable_suppression::AccountableSuppression as Rule>::ID,
+    <cyclomatic_complexity::CyclomaticComplexity as Rule>::ID,
+    <empty_function::EmptyFunction as Rule>::ID,
+    <file_size::FileSize as Rule>::ID,
+    <function_nesting::FunctionNesting as Rule>::ID,
+    <function_size::FunctionSize as Rule>::ID,
+    <function_statements::FunctionStatements as Rule>::ID,
+    <no_comments::NoComments as Rule>::ID,
+    <parameter_count::ParameterCount as Rule>::ID,
+    <return_count::ReturnCount as Rule>::ID,
+    <todo_requires_reference::TodoRequiresReference as Rule>::ID,
+];
+
+pub fn evaluate(
+    facts: &[SourceFacts],
+    config: &Config,
+    today: Date,
+) -> Result<Vec<Finding>, RuleError> {
+    let suppressions = suppression::collect(facts);
     let mut findings = Vec::new();
 
     for evaluate_rule in EVALUATORS {
         findings.extend(evaluate_rule(facts, config)?);
     }
+
+    let mut findings = suppression::apply(findings, &suppressions);
+
+    findings.extend(accountable_suppression::evaluate(
+        &suppressions,
+        config,
+        today,
+    )?);
 
     findings.sort_by(|left, right| {
         (&left.path, left.line, left.column, left.rule_id).cmp(&(
@@ -355,6 +438,53 @@ impl fmt::Display for Violation {
             Self::CommentNotPermitted => write!(
                 formatter,
                 "Comment is not permitted; express the intent in the code."
+            ),
+            Self::UnaccountableSuppression { defect } => defect.fmt(formatter),
+        }
+    }
+}
+
+impl fmt::Display for SuppressionDefect {
+    // godlint-ignore-next-line maintainability/cyclomatic-complexity owner=tomerwave expires=2027-01-31 -- An exhaustive match whose every arm is a single write! is a formatting table, not eleven decisions a reader traces; splitting this impl to satisfy the number would be worse code. Whether the metric should count such an arm is #30
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::NoRules => write!(
+                formatter,
+                "Suppression names no rule; list the rule IDs it applies to."
+            ),
+            Self::UnknownRule { rule } => {
+                write!(formatter, "Suppression names unknown rule {rule}.")
+            }
+            Self::NotSuppressible { rule } => write!(
+                formatter,
+                "{rule} cannot be suppressed; it is what holds suppressions to account."
+            ),
+            Self::UnknownOption { option } => {
+                write!(formatter, "Suppression option {option} is not recognised.")
+            }
+            Self::MissingJustification => write!(
+                formatter,
+                "Suppression has no justification; state the reason after `--`."
+            ),
+            Self::MissingOwner => write!(
+                formatter,
+                "Suppression has no owner; name one with `owner=<name>`."
+            ),
+            Self::MissingExpiry => write!(
+                formatter,
+                "Suppression has no expiry; set one with `expires=YYYY-MM-DD`."
+            ),
+            Self::InvalidExpiry { value } => write!(
+                formatter,
+                "Suppression expiry {value} must be written YYYY-MM-DD."
+            ),
+            Self::Expired { expires } => {
+                write!(formatter, "Suppression expired on {expires}.")
+            }
+            Self::Unresolved => write!(
+                formatter,
+                "Suppression has no enclosing declaration; place it inside the declaration \
+                 it applies to."
             ),
         }
     }

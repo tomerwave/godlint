@@ -152,6 +152,75 @@ fn does_not_adopt_a_configuration_from_outside_the_repository() {
     );
 }
 
+#[test]
+fn lists_every_suppression_for_audit() {
+    let repository = Repository::new();
+
+    repository.write(
+        "godlint.yaml",
+        "version: 1\nrules:\n  maintainability/empty-function:\n    severity: error\n",
+    );
+    repository.write(
+        "source.rs",
+        "fn blank() {\n    // godlint-ignore-enclosing maintainability/empty-function \
+         owner=tomer expires=2999-12-31 -- awaiting #482\n}\n",
+    );
+
+    let output = run(godlint()
+        .arg("suppressions")
+        .arg(".")
+        .current_dir(repository.path()));
+
+    assert_eq!(output.status.code(), Some(0));
+    assert_eq!(
+        String::from_utf8_lossy(&output.stdout),
+        "source.rs:2 godlint-ignore-enclosing maintainability/empty-function owner=tomer \
+         expires=2999-12-31 -- awaiting #482\n\n1 suppressions.\n"
+    );
+    assert!(output.stderr.is_empty());
+}
+
+#[test]
+fn reports_a_repository_with_no_suppressions() {
+    let repository = Repository::new();
+
+    repository.write("godlint.yaml", "version: 1\n");
+    repository.write("source.rs", "fn active() {\n    work();\n}\n");
+
+    let output = run(godlint()
+        .arg("suppressions")
+        .arg(".")
+        .current_dir(repository.path()));
+
+    assert_eq!(output.status.code(), Some(0));
+    assert_eq!(
+        String::from_utf8_lossy(&output.stdout),
+        "No suppressions.\n"
+    );
+}
+
+#[test]
+fn lists_a_suppression_that_cannot_account_for_itself() {
+    let repository = Repository::new();
+
+    repository.write("godlint.yaml", "version: 1\n");
+    repository.write(
+        "source.rs",
+        "// godlint-ignore-next-line maintainability/empty-function\nfn blank() {}\n",
+    );
+
+    let output = run(godlint()
+        .arg("suppressions")
+        .arg(".")
+        .current_dir(repository.path()));
+
+    assert_eq!(output.status.code(), Some(0));
+    assert!(
+        String::from_utf8_lossy(&output.stdout).contains("-- (no justification)"),
+        "the audit must show that a suppression has no reason, not omit the field"
+    );
+}
+
 struct Repository {
     path: PathBuf,
 }

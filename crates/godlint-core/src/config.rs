@@ -57,6 +57,18 @@ pub struct Rules {
     pub function_statements: Option<FunctionStatementsRule>,
     #[serde(rename = "style/no-comments")]
     pub no_comments: Option<NoCommentsRule>,
+    #[serde(rename = "policy/accountable-suppression")]
+    pub accountable_suppression: Option<AccountableSuppressionRule>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct AccountableSuppressionRule {
+    pub severity: Severity,
+    #[serde(default, rename = "require-owner")]
+    pub require_owner: bool,
+    #[serde(default, rename = "require-expiry")]
+    pub require_expiry: bool,
 }
 
 #[derive(Debug, Deserialize)]

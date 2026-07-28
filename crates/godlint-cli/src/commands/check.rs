@@ -1,20 +1,15 @@
-use std::{
-    path::{Path, PathBuf},
-    process::ExitCode,
-};
+use std::process::ExitCode;
 
 use godlint_core::{
-    config::{Config, Severity},
-    paths,
+    config::Severity,
+    date::Date,
     rules::{Finding, evaluate},
-    scan::{ScanReport, scan},
+    scan::ScanReport,
 };
 
+use crate::workspace::Workspace;
+
 pub const USAGE: &str = "check [paths...]";
-
-const CONFIG_NAME: &str = "godlint.yaml";
-
-const REPOSITORY_MARKER: &str = ".git";
 
 pub fn run(arguments: &[String]) -> Option<ExitCode> {
     let [command, paths @ ..] = arguments else {
@@ -38,40 +33,14 @@ fn check(paths: &[String]) -> ExitCode {
     }
 }
 
-struct Prepared {
-    root: PathBuf,
-    scan_paths: Vec<PathBuf>,
-    config: Config,
-}
-
 fn run_check(paths: &[String]) -> Result<ExitCode, String> {
-    let prepared = prepare(paths)?;
-    let report = scan(
-        &prepared.root,
-        &prepared.scan_paths,
-        &prepared.config.excludes(),
-    )
-    .map_err(|error| format!("Unable to scan source files: {error}"))?;
-    let findings = evaluate(&report.facts, &prepared.config)
+    let workspace = Workspace::prepare(paths)?;
+    let report = workspace.scan()?;
+    let today = Date::today().ok_or_else(|| "Unable to determine the current date.".to_owned())?;
+    let findings = evaluate(&report.facts, &workspace.config, today)
         .map_err(|error| format!("Unable to evaluate rules: {error}"))?;
 
-    Ok(report_outcome(&findings, &report, prepared.config.fail_on))
-}
-
-fn prepare(paths: &[String]) -> Result<Prepared, String> {
-    let current_directory = std::env::current_dir()
-        .map_err(|error| format!("Unable to determine the scan root: {error}"))?;
-    let requested_paths = requested_paths(paths, &current_directory)?;
-    let root = config_root(&requested_paths)?;
-    let scan_paths = scan_paths(&requested_paths, &root)?;
-    let config = Config::load(root.join(CONFIG_NAME))
-        .map_err(|error| format!("Configuration is invalid: {error}"))?;
-
-    Ok(Prepared {
-        root,
-        scan_paths,
-        config,
-    })
+    Ok(report_outcome(&findings, &report, workspace.config.fail_on))
 }
 
 fn report_outcome(findings: &[Finding], report: &ScanReport, fail_on: Severity) -> ExitCode {
@@ -110,80 +79,6 @@ fn report_outcome(findings: &[Finding], report: &ScanReport, fail_on: Severity) 
 
 fn fails(findings: &[Finding], fail_on: Severity) -> bool {
     fail_on != Severity::Off && findings.iter().any(|finding| finding.severity >= fail_on)
-}
-
-fn requested_paths(arguments: &[String], current_directory: &Path) -> Result<Vec<PathBuf>, String> {
-    if arguments.is_empty() {
-        return Ok(vec![current_directory.to_path_buf()]);
-    }
-
-    arguments
-        .iter()
-        .map(|argument| requested_path(current_directory, Path::new(argument)))
-        .collect()
-}
-
-fn requested_path(current_directory: &Path, path: &Path) -> Result<PathBuf, String> {
-    let absolute = if path.is_absolute() {
-        path.to_path_buf()
-    } else {
-        current_directory.join(path)
-    };
-
-    paths::normalize(&absolute).ok_or_else(|| {
-        format!(
-            "Invalid scan path: {} escapes the filesystem root",
-            path.display()
-        )
-    })
-}
-
-fn config_root(requested: &[PathBuf]) -> Result<PathBuf, String> {
-    let path = requested
-        .first()
-        .ok_or_else(|| "Invalid scan path: no scan paths were provided".to_owned())?;
-    let directory = if path.is_file() {
-        path.parent().unwrap_or(path)
-    } else {
-        path.as_path()
-    };
-
-    paths::find_upward(directory, CONFIG_NAME, REPOSITORY_MARKER).ok_or_else(|| {
-        format!(
-            "No {CONFIG_NAME} found in {} or any parent directory within the repository.",
-            directory.display()
-        )
-    })
-}
-
-fn scan_paths(requested: &[PathBuf], root: &Path) -> Result<Vec<PathBuf>, String> {
-    if paths::is_symlink(root) {
-        return Err(format!(
-            "Invalid scan path: {} is a symbolic link",
-            root.display()
-        ));
-    }
-
-    requested.iter().map(|path| scan_path(root, path)).collect()
-}
-
-fn scan_path(root: &Path, path: &Path) -> Result<PathBuf, String> {
-    if path.strip_prefix(root).is_err() {
-        return Err(format!(
-            "Invalid scan path: {} is outside {}",
-            path.display(),
-            root.display()
-        ));
-    }
-
-    if paths::contains_symlink(root, path) {
-        return Err(format!(
-            "Invalid scan path: {} contains a symbolic link",
-            path.display()
-        ));
-    }
-
-    Ok(path.to_path_buf())
 }
 
 fn severity_name(severity: Severity) -> &'static str {

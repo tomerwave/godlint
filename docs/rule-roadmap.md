@@ -118,6 +118,7 @@ These rules use source-level `CommentFact` and `SourceFile` data alongside
 | `maintainability/empty-function` | Shipped | High | All eleven supported extensions except `.pyi` interface stubs | `allow-names` | Warning |
 | `policy/todo-requires-reference` | Shipped | High | All comment syntaxes and Python docstrings | `markers`, `reference-prefixes` | Warning |
 | `style/no-comments` | Shipped | High, but opinionated | All comment syntaxes and Python docstrings | `allow-doc-comments` | Error, documentation not permitted |
+| `policy/accountable-suppression` | Shipped | High | All comment syntaxes and Python docstrings | `require-owner`, `require-expiry` | Error, owner and expiry required |
 
 `style/no-comments` is a policy rather than a defect check, which is why it sits in the
 `style` category and is off unless a repository opts in. It states that code should carry
@@ -153,42 +154,49 @@ Phase 2 is complete. Its fact additions stay small and reusable for future polic
 
 ### Accountable exceptions
 
-Godlint can currently narrow a rule two ways, and neither can carry accountability. The
-`exclude` globs remove a path from the scan, which suits generated code and deliberately
-non-conforming test data. `allow-names` on `maintainability/empty-function` names a
-function, and it applies repository-wide.
+Shipped. [Inline suppression](suppressions.md) is the reference; this section records what
+was required and how each requirement was met.
+
+Godlint could previously narrow a rule two ways, and neither could carry accountability.
+The `exclude` globs remove a path from the scan, which suits generated code and
+deliberately non-conforming test data. `allow-names` on
+`maintainability/empty-function` names a function, and it applies repository-wide.
 
 Neither expresses "this one site is a known exception". That matters because
 [dogfooding policy](dogfooding.md) requires every exception to record a reason, an owner,
 an issue reference, and an expiry, and none of those can be attached to a glob or to an
-entry in a name list. The gap has a cost already visible in practice: an unavoidable
-exception forces a rule to be weakened for the whole repository, which is how a
-fixture-shaped allow-list entry can end up load-bearing for CI.
+entry in a name list. The gap had a cost visible in practice: an unavoidable exception
+forced a rule to be weakened for the whole repository, which is how a fixture-shaped
+allow-list entry can end up load-bearing for CI.
 
-Inline suppression closes it. A comment at the site names the rule and carries the
-justification, for example:
+A comment at the site now names the rules and carries the justification:
 
 ```text
-godlint-ignore-next-line maintainability/function-size -- splitting this in #482
+godlint-ignore-next-line maintainability/function-size owner=tomer expires=2026-12-31 -- splitting this in #482
 ```
 
-Requirements, before implementation:
+| Requirement | How it is met |
+| --- | --- |
+| A stable directive syntax in every supported comment syntax, including Python docstrings, resolved from `CommentFact` rather than by re-scanning text | `godlint-ignore-next-line` and `godlint-ignore-enclosing`, parsed from comment facts. A directive must open its line, so prose mentioning one is not one |
+| A required justification, so an unexplained suppression is itself a finding | `policy/accountable-suppression` reports a directive with no `-- <reason>` |
+| Scope limited to the following line or the enclosing declaration; never a whole file | The two directives above. There is no file-wide form, and `godlint-ignore-enclosing` at the top level is reported rather than ignored |
+| Optional owner and expiry, with an expired suppression reported so exceptions cannot accumulate silently | `owner=` and `expires=`, enforceable with `require-owner` and `require-expiry`; an expiry in the past is reported |
+| A report of every active suppression, so the total is auditable rather than discovered one grep at a time | `godlint suppressions` |
 
-1. A stable directive syntax in every supported comment syntax, including Python
-   docstrings, resolved from `CommentFact` rather than by re-scanning text.
-2. A required justification, so an unexplained suppression is itself a finding.
-3. Scope limited to the following line or the enclosing declaration; never a whole file,
-   because a file-wide directive is an `exclude` entry with less visibility.
-4. Optional owner and expiry, with an expired suppression reported so exceptions cannot
-   accumulate silently.
-5. A report of every active suppression, so the total is auditable rather than discovered
-   one grep at a time.
+Two consequences are deliberate and documented in the reference: a defective directive
+still suppresses and is reported against itself, so an expiry does not detonate into
+unrelated findings; and `policy/accountable-suppression` cannot itself be suppressed.
 
 This precedes the strict suites and the baseline work: promoting a rule to blocking is
 only reasonable once a project has an accountable way to record the cases it cannot fix
 yet. It also unblocks the fourth fixture class that
-[the testing strategy](testing.md) currently has to defer, and the accountable-exception
+[the testing strategy](testing.md) previously had to defer, and the accountable-exception
 row in the policy mapping below.
+
+`policy/unused-suppression` — a directive that silences nothing — is the natural
+follow-up. It is not one of the requirements above, and it needs a lookup from rule ID to
+configured severity so a directive naming a disabled rule reads as dormant rather than
+unused.
 
 ### Phase 3 — Calls and organization policy
 
@@ -259,7 +267,7 @@ Only after the syntax/fact rules are stable:
 | `unicorn/filename-case` | Future `architecture/filename-case`; scoped paths and generated-file exemptions required |
 | `padding-line-between-statements` | Delegate to formatting/style tooling; do not add a fragile cross-language whitespace rule |
 | Type-aware `typescript-eslint` rules | Defer to the TypeScript semantic phase; Godlint must never claim type-aware parity from syntax alone |
-| Per-file exceptions | Implement first-class scoped overrides and accountable exceptions before strict suites |
+| Per-file exceptions | [Inline suppression](suppressions.md) is shipped; scoped path overrides remain before strict suites |
 
 ## Ecosystem positioning
 

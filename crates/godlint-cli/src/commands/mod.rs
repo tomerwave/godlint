@@ -2,13 +2,14 @@ use std::process::ExitCode;
 
 pub mod check;
 pub mod config;
+pub mod suppressions;
 
 struct Command {
     usage: &'static str,
     run: fn(&[String]) -> Option<ExitCode>,
 }
 
-const COMMANDS: [Command; 2] = [
+const COMMANDS: [Command; 3] = [
     Command {
         usage: check::USAGE,
         run: check::run,
@@ -16,6 +17,10 @@ const COMMANDS: [Command; 2] = [
     Command {
         usage: config::USAGE,
         run: config::run,
+    },
+    Command {
+        usage: suppressions::USAGE,
+        run: suppressions::run,
     },
 ];
 

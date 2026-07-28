@@ -1,0 +1,12 @@
+version: 1
+
+rules:
+  maintainability/empty-function:
+    severity: error
+  style/no-comments:
+    severity: error
+    allow-doc-comments: false
+  policy/accountable-suppression:
+    severity: error
+    require-owner: true
+    require-expiry: true

@@ -1,0 +1,18 @@
+exit-code: 1
+
+stdout: |
+  example.rs:2:8: error[policy/accountable-suppression] Suppression has no justification; state the reason after `--`.
+  example.rs:6:8: error[policy/accountable-suppression] Suppression names no rule; list the rule IDs it applies to.
+  example.rs:10:8: error[policy/accountable-suppression] Suppression names unknown rule maintainability/no-such-rule.
+  example.rs:14:8: error[policy/accountable-suppression] policy/accountable-suppression cannot be suppressed; it is what holds suppressions to account.
+  example.rs:18:8: error[policy/accountable-suppression] Suppression expired on 2020-01-01.
+  example.rs:22:8: error[policy/accountable-suppression] Suppression expiry 31-12-2999 must be written YYYY-MM-DD.
+  example.rs:26:8: error[policy/accountable-suppression] Suppression option ownr is not recognised.
+  example.rs:26:8: error[policy/accountable-suppression] Suppression has no owner; name one with `owner=<name>`.
+  example.rs:30:8: error[policy/accountable-suppression] Suppression has no owner; name one with `owner=<name>`.
+  example.rs:34:8: error[policy/accountable-suppression] Suppression has no expiry; set one with `expires=YYYY-MM-DD`.
+  example.rs:37:4: error[policy/accountable-suppression] Suppression has no enclosing declaration; place it inside the declaration it applies to.
+  example.rs:38:1: error[maintainability/empty-function] Function has an empty body.
+  mixed.rs:1:1: error[style/no-comments] Comment is not permitted; express the intent in the code.
+
+stderr: ""
