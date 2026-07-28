@@ -1,78 +1,39 @@
 use crate::{
     analyzers::SourceFacts,
-    config::{FunctionStatementsRule, Severity},
+    config::{Config, FunctionStatementsRule, Severity},
     facts::FunctionFact,
-    rules::{Finding, Rule, RuleError},
+    rules::{
+        Finding, FunctionRule, Rule, RuleError, Violation, evaluate_function_rule, when_configured,
+    },
 };
 
 pub struct FunctionStatements;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct FunctionStatementsViolation {
-    pub statement_count: u32,
-}
-
-pub fn evaluate(
-    facts: &[SourceFacts],
-    configuration: &FunctionStatementsRule,
-) -> Result<Vec<Finding>, RuleError> {
-    let mut findings = Vec::new();
-
-    for source_facts in facts {
-        for function in source_facts.functions() {
-            let Some(violation) = FunctionStatements::evaluate(function, configuration) else {
-                continue;
-            };
-
-            findings.push(finding(function, violation, configuration)?);
-        }
-    }
-
-    Ok(findings)
-}
-
 impl Rule for FunctionStatements {
-    type Input = FunctionFact;
-    type Configuration = FunctionStatementsRule;
-    type Violation = FunctionStatementsViolation;
-
     const ID: &'static str = "maintainability/function-statements";
 
-    fn evaluate(
-        function: &Self::Input,
-        configuration: &Self::Configuration,
-    ) -> Option<Self::Violation> {
-        if configuration.severity == Severity::Off {
-            return None;
-        }
+    type Configuration = FunctionStatementsRule;
 
-        (function.statement_count() > configuration.max_statements).then_some(
-            FunctionStatementsViolation {
-                statement_count: function.statement_count(),
-            },
-        )
+    fn severity(configuration: &Self::Configuration) -> Severity {
+        configuration.severity
     }
 }
 
-fn finding(
-    function: &FunctionFact,
-    violation: FunctionStatementsViolation,
-    configuration: &FunctionStatementsRule,
-) -> Result<Finding, RuleError> {
-    let location = function
-        .source()
-        .location(function.range())
-        .map_err(|source| RuleError::LocatesSource { source })?;
+impl FunctionRule for FunctionStatements {
+    fn check(
+        function: &FunctionFact,
+        _facts: &SourceFacts,
+        configuration: &Self::Configuration,
+    ) -> Option<Violation> {
+        let actual = function.statement_count().value();
+        let max = configuration.limit();
 
-    Ok(Finding {
-        path: function.source().path().to_path_buf(),
-        line: location.start.line,
-        column: location.start.column,
-        severity: configuration.severity,
-        rule_id: FunctionStatements::ID,
-        message: format!(
-            "Function has {} statements (max {}).",
-            violation.statement_count, configuration.max_statements
-        ),
+        (actual > max).then_some(Violation::StatementCount { actual, max })
+    }
+}
+
+pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, RuleError> {
+    when_configured(config.rules.function_statements.as_ref(), |configuration| {
+        evaluate_function_rule::<FunctionStatements>(facts, configuration)
     })
 }

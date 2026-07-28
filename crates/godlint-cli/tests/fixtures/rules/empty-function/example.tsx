@@ -1,6 +1,5 @@
-// intentional no-op is configured below
 function fixtureAllowed() {}
-function fixtureViolation() {}
+function fixtureReported() {}
 function active() {
   work();
 }

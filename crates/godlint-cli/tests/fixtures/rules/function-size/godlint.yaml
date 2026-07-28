@@ -3,6 +3,4 @@ version: 1
 rules:
   maintainability/function-size:
     severity: error
-    max-lines: 3
-    skip-blank-lines: true
-    skip-comments: true
+    max-lines: 4

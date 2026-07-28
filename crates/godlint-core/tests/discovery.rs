@@ -1,3 +1,5 @@
+#![allow(clippy::expect_used, clippy::unwrap_used)]
+
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -5,7 +7,10 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use godlint_core::discovery::{DiscoveryError, discover};
+use godlint_core::{
+    config::DEFAULT_EXCLUDES,
+    discovery::{DiscoveryError, Scope, discover},
+};
 
 static NEXT_REPOSITORY_ID: AtomicU64 = AtomicU64::new(0);
 
@@ -37,7 +42,17 @@ impl Repository {
     }
 
     fn discover(&self) -> Result<Vec<PathBuf>, DiscoveryError> {
-        discover(std::slice::from_ref(&self.path))
+        self.discover_excluding(&defaults())
+    }
+
+    fn discover_excluding(&self, excludes: &[String]) -> Result<Vec<PathBuf>, DiscoveryError> {
+        discover(
+            std::slice::from_ref(&self.path),
+            &Scope {
+                root: &self.path,
+                excludes,
+            },
+        )
     }
 }
 
@@ -107,7 +122,51 @@ fn ignores_unsupported_and_generated_files() {
 #[test]
 fn reports_missing_input_paths() {
     let path = std::env::temp_dir().join("godlint-discovery-missing-path");
-    let result = discover(&[path]);
+    let result = discover(
+        std::slice::from_ref(&path),
+        &Scope {
+            root: &path,
+            excludes: &defaults(),
+        },
+    );
 
     assert!(matches!(result, Err(DiscoveryError::ReadMetadata { .. })));
+}
+
+fn defaults() -> Vec<String> {
+    DEFAULT_EXCLUDES.iter().map(|name| (*name).into()).collect()
+}
+
+/// Exclusions are policy, so a repository can name its own generated directories.
+#[test]
+fn honours_configured_exclusions() {
+    let repository = Repository::new();
+
+    repository.create_file("source.rs");
+    repository.create_file("generated/api.rs");
+    repository.create_file("src/legacy.py");
+
+    let discovered = repository
+        .discover_excluding(&["generated".to_owned(), "*.py".to_owned()])
+        .unwrap_or_else(|error| panic!("discovers source files: {error}"));
+
+    assert_eq!(
+        relative_paths(&repository, discovered),
+        vec![Path::new("source.rs").to_path_buf()]
+    );
+}
+
+/// Without exclusions every file is in scope, including dependency trees.
+#[test]
+fn scans_everything_when_nothing_is_excluded() {
+    let repository = Repository::new();
+
+    repository.create_file("source.rs");
+    repository.create_file("node_modules/package/index.ts");
+
+    let discovered = repository
+        .discover_excluding(&[])
+        .unwrap_or_else(|error| panic!("discovers source files: {error}"));
+
+    assert_eq!(relative_paths(&repository, discovered).len(), 2);
 }

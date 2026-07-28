@@ -1,0 +1,8 @@
+exit-code: 1
+
+stdout: |
+  chain.py:11:1: error[maintainability/function-nesting] Function nests blocks 2 levels deep (max 1).
+  chain.rs:13:1: error[maintainability/function-nesting] Function nests blocks 2 levels deep (max 1).
+  chain.ts:13:1: error[maintainability/function-nesting] Function nests blocks 2 levels deep (max 1).
+
+stderr: ""

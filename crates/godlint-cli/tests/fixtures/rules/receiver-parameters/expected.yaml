@@ -1,0 +1,8 @@
+exit-code: 1
+
+stdout: |
+  method.py:6:5: error[maintainability/parameter-count] Function has 4 parameters (max 3).
+  method.rs:9:5: error[maintainability/parameter-count] Function has 4 parameters (max 3).
+  method.ts:6:3: error[maintainability/parameter-count] Function has 4 parameters (max 3).
+
+stderr: ""

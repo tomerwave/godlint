@@ -1,22 +1,9 @@
-use std::path::PathBuf;
-
 use godlint_core::{
-    analyzers::analyze,
     config::{ParameterCountRule, Severity},
-    rules::{
-        Rule,
-        parameter_count::{ParameterCount, ParameterCountViolation},
-    },
-    source::SourceFile,
+    rules::{FunctionRule, Rule, Violation, parameter_count::ParameterCount},
 };
 
-fn function(path: &str, source: &str) -> godlint_core::facts::FunctionFact {
-    let source = SourceFile::new(PathBuf::from(path), source.into())
-        .unwrap_or_else(|error| panic!("creates source file: {error}"));
-    let facts = analyze(&source).unwrap_or_else(|error| panic!("analyzes source: {error}"));
-
-    facts.functions()[0].clone()
-}
+use super::support::function;
 
 fn configuration(max_parameters: u32) -> ParameterCountRule {
     ParameterCountRule {
@@ -25,45 +12,75 @@ fn configuration(max_parameters: u32) -> ParameterCountRule {
     }
 }
 
-#[test]
-fn reports_a_function_that_exceeds_its_limit() {
-    let function = function(
-        "src/example.rs",
-        "fn example(one: u32, two: u32, three: u32) {}",
-    );
-    let violation = ParameterCount::evaluate(&function, &configuration(2));
+fn count(path: &str, source: &str) -> u32 {
+    function(path, source).1.parameter_count().value()
+}
 
+#[test]
+fn counts_declared_parameters() {
     assert_eq!(ParameterCount::ID, "maintainability/parameter-count");
+    assert_eq!(count("src/example.rs", "fn example(a: u32, b: u32) {}"), 2);
+    assert_eq!(count("src/example.py", "def example(a, b):\n    pass"), 2);
+    assert_eq!(count("src/example.ts", "function example(a: number) {}"), 1);
+}
+
+#[test]
+fn counts_a_single_unparenthesized_arrow_parameter() {
     assert_eq!(
-        violation.map(|violation| violation.parameter_count),
-        Some(3)
+        count("src/example.ts", "const example = value => value;"),
+        1
+    );
+}
+
+/// A receiver is not a parameter the author chose to declare, and counting it would make
+/// the same three-argument method a violation in Rust and Python but not in TypeScript.
+#[test]
+fn excludes_the_method_receiver() {
+    let rust = count(
+        "src/example.rs",
+        "struct S;\nimpl S {\n    fn example(&self, a: u32, b: u32, c: u32) {}\n}",
+    );
+    let python = count(
+        "src/example.py",
+        "class S:\n    def example(self, a, b, c):\n        pass",
+    );
+    let typescript = count(
+        "src/example.ts",
+        "class S {\n  example(a: number, b: number, c: number) {}\n}",
+    );
+
+    assert_eq!(rust, 3);
+    assert_eq!(python, 3);
+    assert_eq!(typescript, 3);
+}
+
+#[test]
+fn excludes_a_python_class_receiver() {
+    assert_eq!(
+        count(
+            "src/example.py",
+            "class S:\n    @classmethod\n    def example(cls, a):\n        pass"
+        ),
+        1
+    );
+}
+
+#[test]
+fn reports_a_function_over_its_limit() {
+    let (facts, wide) = function("src/example.rs", "fn example(a: u32, b: u32, c: u32) {}");
+
+    assert_eq!(
+        ParameterCount::check(&wide, &facts, &configuration(2)),
+        Some(Violation::ParameterCount { actual: 3, max: 2 })
     );
 }
 
 #[test]
 fn accepts_a_function_at_its_limit() {
-    let function = function("src/example.py", "def example(one, two):\n    pass");
-
-    assert_eq!(ParameterCount::evaluate(&function, &configuration(2)), None);
-}
-
-#[test]
-fn counts_a_single_arrow_parameter() {
-    let function = function("src/example.ts", "const example = value => value;");
+    let (facts, wide) = function("src/example.rs", "fn example(a: u32, b: u32) {}");
 
     assert_eq!(
-        ParameterCount::evaluate(&function, &configuration(0)),
-        Some(ParameterCountViolation { parameter_count: 1 })
+        ParameterCount::check(&wide, &facts, &configuration(2)),
+        None
     );
-}
-
-#[test]
-fn disables_evaluation_when_the_rule_is_off() {
-    let function = function("src/example.rs", "fn example(one: u32) {}");
-    let configuration = ParameterCountRule {
-        severity: Severity::Off,
-        max_parameters: 0,
-    };
-
-    assert_eq!(ParameterCount::evaluate(&function, &configuration), None);
 }

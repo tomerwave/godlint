@@ -3,4 +3,4 @@ version: 1
 rules:
   maintainability/cyclomatic-complexity:
     severity: error
-    max-complexity: 1
+    max-complexity: 3

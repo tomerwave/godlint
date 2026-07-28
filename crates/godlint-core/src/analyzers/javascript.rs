@@ -10,7 +10,7 @@ impl Analyzer for JavaScript {
         super::analyze_with(
             source,
             tree_sitter_javascript::LANGUAGE.into(),
-            super::ecmascript::is_function_node,
+            super::ecmascript::VOCABULARY,
         )
     }
 }

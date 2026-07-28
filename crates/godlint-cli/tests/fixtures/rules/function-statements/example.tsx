@@ -1,4 +1,8 @@
 function example() {
-  work();
-  moreWork();
+  // Comments are documentation, not statements.
+  one();
+  if (ready) {
+    two();
+    three();
+  }
 }

@@ -1,9 +1,11 @@
 use std::{
     error::Error,
     fmt,
-    path::{Component, Path, PathBuf},
+    path::{Path, PathBuf},
     sync::Arc,
 };
+
+use crate::paths;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Language {
@@ -52,13 +54,19 @@ pub enum SourceRangeError {
     Reversed { start: usize, end: usize },
 }
 
+/// Byte-order mark that some editors prepend to UTF-8 sources.
+///
+/// It is stripped before parsing so that byte offsets, line accounting, and reported
+/// columns all describe the source a reader sees rather than an invisible prefix.
+const BYTE_ORDER_MARK: &str = "\u{feff}";
+
 impl Language {
     pub fn from_path(path: &Path) -> Option<Self> {
         match path.extension().and_then(|extension| extension.to_str()) {
-            Some("js" | "jsx") => Some(Self::JavaScript),
+            Some("cjs" | "js" | "jsx" | "mjs") => Some(Self::JavaScript),
             Some("py" | "pyi") => Some(Self::Python),
             Some("rs") => Some(Self::Rust),
-            Some("ts" | "tsx") => Some(Self::TypeScript),
+            Some("cts" | "mts" | "ts" | "tsx") => Some(Self::TypeScript),
             _ => None,
         }
     }
@@ -70,12 +78,26 @@ impl SourceFile {
 
         let language = Language::from_path(&path)
             .ok_or_else(|| SourceFileError::UnsupportedLanguage { path: path.clone() })?;
+        let source = source
+            .strip_prefix(BYTE_ORDER_MARK)
+            .map_or(source.as_str(), |stripped| stripped);
 
         Ok(Self {
             path,
             language,
             source: Arc::from(source),
         })
+    }
+
+    /// Reports whether the file only declares an interface, as a `.pyi` stub does.
+    ///
+    /// Stub files are all signatures and placeholder bodies by construction, so
+    /// body-shaped rules would report every declaration in them.
+    pub fn is_interface_stub(&self) -> bool {
+        self.path
+            .extension()
+            .and_then(|extension| extension.to_str())
+            .is_some_and(|extension| extension == "pyi")
     }
 
     pub fn path(&self) -> &Path {
@@ -169,10 +191,7 @@ fn validate_path(path: &Path) -> Result<(), SourceFileError> {
         });
     }
 
-    if path
-        .components()
-        .any(|component| matches!(component, Component::ParentDir))
-    {
+    if paths::climbs(path) {
         return Err(SourceFileError::PathOutsideRepository {
             path: path.to_path_buf(),
         });

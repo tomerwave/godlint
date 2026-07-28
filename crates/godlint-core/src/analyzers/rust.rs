@@ -1,5 +1,7 @@
+use tree_sitter::Node;
+
 use crate::{
-    analyzers::{Analyzer, AnalyzerError, SourceFacts},
+    analyzers::{Analyzer, AnalyzerError, SourceFacts, vocabulary::Vocabulary},
     source::SourceFile,
 };
 
@@ -7,10 +9,107 @@ pub(super) struct Rust;
 
 impl Analyzer for Rust {
     fn analyze(&self, source: &SourceFile) -> Result<SourceFacts, AnalyzerError> {
-        super::analyze_with(source, tree_sitter_rust::LANGUAGE.into(), is_function_node)
+        super::analyze_with(source, tree_sitter_rust::LANGUAGE.into(), VOCABULARY)
     }
 }
 
-fn is_function_node(kind: &str) -> bool {
-    kind == "function_item"
+const VOCABULARY: Vocabulary = Vocabulary {
+    is_function,
+    is_nesting,
+    is_block,
+    is_conditional,
+    is_decision,
+    is_return,
+    is_placeholder,
+    is_receiver,
+    is_abstract,
+    is_docstring,
+    has_implicit_tail_return,
+};
+
+/// Closures are functions.
+///
+/// A closure carries the same maintainability weight as a named function, and treating
+/// it otherwise would attribute its size and branching to whatever `fn` encloses it.
+fn is_function(kind: &str) -> bool {
+    matches!(kind, "closure_expression" | "function_item")
+}
+
+fn is_nesting(kind: &str) -> bool {
+    matches!(
+        kind,
+        "for_expression"
+            | "if_expression"
+            | "loop_expression"
+            | "match_expression"
+            | "while_expression"
+    )
+}
+
+fn is_block(kind: &str) -> bool {
+    kind == "block"
+}
+
+fn is_conditional(kind: &str) -> bool {
+    kind == "if_expression"
+}
+
+/// Counts `?` as a branch.
+///
+/// The try operator is the dominant conditional in idiomatic Rust: it either continues
+/// or returns early, which is exactly a decision point.
+fn is_decision(kind: &str) -> bool {
+    matches!(
+        kind,
+        "for_expression" | "if_expression" | "match_arm" | "try_expression" | "while_expression"
+    )
+}
+
+/// Counts `?` as an exit as well as a branch, because it can return from the function.
+fn is_return(kind: &str) -> bool {
+    matches!(kind, "return_expression" | "try_expression")
+}
+
+fn is_placeholder(_kind: &str, _text: &str) -> bool {
+    false
+}
+
+fn is_receiver(kind: &str, _text: &str) -> bool {
+    kind == "self_parameter"
+}
+
+fn is_abstract(_node: Node<'_>, _source: &str) -> bool {
+    false
+}
+
+fn is_docstring(_node: Node<'_>) -> bool {
+    false
+}
+
+/// Reports whether the body yields a value by falling off its end.
+///
+/// A trailing expression is an exit path, and counting it keeps Rust comparable with
+/// languages that must write `return` for the same control flow.
+fn has_implicit_tail_return(node: Node<'_>) -> bool {
+    let Some(body) = node.child_by_field_name("body") else {
+        return false;
+    };
+
+    if body.kind() != "block" {
+        return true;
+    }
+
+    let mut cursor = body.walk();
+
+    body.named_children(&mut cursor)
+        .filter(|child| !child.is_extra())
+        .last()
+        .is_some_and(|last| !is_statement(last.kind()))
+}
+
+fn is_statement(kind: &str) -> bool {
+    matches!(
+        kind,
+        "empty_statement" | "expression_statement" | "let_declaration"
+    ) || kind.ends_with("_item")
 }

@@ -19,7 +19,10 @@ Read the linked documents relevant to the task before changing code or policy.
 - Prefer high-confidence, explainable diagnostics over broad heuristic coverage.
 - Keep language-specific parser details inside their analyzer boundaries; rules consume
   small, language-neutral facts.
-- Add a rule only with valid, invalid, configuration, and suppression fixtures.
+- Add a rule only with valid, invalid, and configuration fixtures plus scoped-exclusion
+  coverage. Inline suppression is not implemented yet; its requirements are recorded
+  under accountable exceptions in the rule roadmap, and suppression fixtures become
+  required in the change that adds it.
 - Dogfood every shipped rule: Godlint must run it against this repository in CI.
 - Do not add dependencies, public APIs, configuration schema, or crate boundaries
   without updating the relevant documentation and tests.
@@ -27,7 +30,16 @@ Read the linked documents relevant to the task before changing code or policy.
 
 ## Current implementation status
 
-The workspace, CLI shell, configuration validation, source discovery, and the shared
-function-size rule are implemented. The current slice connects language extractors and
-the CLI so Godlint can dogfood the rule against this repository. Do not add semantic
-workers or new crate boundaries without a proven need.
+The workspace, CLI, configuration validation and discovery, source discovery, and nine
+rules are implemented: `maintainability/file-size`, `function-size`, `function-nesting`,
+`parameter-count`, `cyclomatic-complexity`, `return-count`, `function-statements`,
+`empty-function`, and `policy/todo-requires-reference`. CI dogfoods all nine against
+this repository through `godlint check .`. Phases 1 and 2 of the
+[rule roadmap](docs/rule-roadmap.md) are complete; call facts, imports, and the
+repository graph are not. Do not add semantic workers or new crate boundaries without a
+proven need.
+
+A function means the same thing in every language, and rules depend on that: Rust `fn`
+items and closures, Python `def` functions and lambdas, and JavaScript/TypeScript
+function declarations, function expressions, methods, and arrow functions. Do not add a
+function-shaped fact for one language without its equivalents in the other two.

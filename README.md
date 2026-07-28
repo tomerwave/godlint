@@ -67,6 +67,7 @@ cargo fmt --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps
+cargo run -p godlint-cli -- check .
 ```
 
 The initial command shell is available with:
@@ -82,9 +83,25 @@ godlint config validate
 godlint config validate --config path/to/godlint.yaml
 ```
 
-The initial `check` command evaluates configured function-size, function-nesting,
-file-size, and empty-function rules across Rust, TypeScript/JavaScript, and Python
-source files, as well as TODO comments that need issue references:
+The `check` command evaluates the configured rules across Rust,
+TypeScript/JavaScript, and Python source files. Nine rules are implemented:
+
+- `maintainability/file-size` — effective lines in a file.
+- `maintainability/function-size` — effective lines in a function.
+- `maintainability/function-nesting` — how deeply control-flow blocks nest inside a
+  function.
+- `maintainability/parameter-count` — declared parameters, excluding a method receiver.
+- `maintainability/cyclomatic-complexity` — branch points in a function.
+- `maintainability/return-count` — exit paths from a function, explicit or implicit.
+- `maintainability/function-statements` — statements in a function, through nested
+  blocks but not into nested functions.
+- `maintainability/empty-function` — function bodies that appear unintentionally empty.
+- `policy/todo-requires-reference` — TODO-style markers that need an issue reference.
+
+A function means the same thing in every language: Rust `fn` items and closures,
+Python `def` functions and lambdas, and JavaScript/TypeScript function declarations,
+function expressions, methods, and arrow functions. Findings below the configured
+`fail-on` severity are reported without failing the command.
 
 ```bash
 godlint check

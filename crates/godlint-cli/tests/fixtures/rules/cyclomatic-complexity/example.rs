@@ -1,5 +1,5 @@
-fn example(value: bool) {
-    if value {
-        work();
-    }
+fn example(first: bool, second: bool, third: bool) {
+    if first {}
+    if second {}
+    if third {}
 }

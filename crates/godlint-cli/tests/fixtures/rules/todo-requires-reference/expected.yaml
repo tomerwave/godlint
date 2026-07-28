@@ -1,47 +1,15 @@
 exit-code: 1
 
-findings:
-  - path: example.js
-    line: 2
-    column: 1
-    severity: error
-    rule-id: policy/todo-requires-reference
-    message: TODO comment requires an issue reference.
-  - path: example.jsx
-    line: 2
-    column: 1
-    severity: error
-    rule-id: policy/todo-requires-reference
-    message: TODO comment requires an issue reference.
-  - path: example.py
-    line: 2
-    column: 1
-    severity: error
-    rule-id: policy/todo-requires-reference
-    message: TODO comment requires an issue reference.
-  - path: example.pyi
-    line: 2
-    column: 1
-    severity: error
-    rule-id: policy/todo-requires-reference
-    message: TODO comment requires an issue reference.
-  - path: example.rs
-    line: 2
-    column: 1
-    severity: error
-    rule-id: policy/todo-requires-reference
-    message: TODO comment requires an issue reference.
-  - path: example.ts
-    line: 2
-    column: 1
-    severity: error
-    rule-id: policy/todo-requires-reference
-    message: TODO comment requires an issue reference.
-  - path: example.tsx
-    line: 2
-    column: 1
-    severity: error
-    rule-id: policy/todo-requires-reference
-    message: TODO comment requires an issue reference.
+stdout: |
+  example.cjs:2:4: error[policy/todo-requires-reference] TODO comment requires an issue reference.
+  example.cts:2:4: error[policy/todo-requires-reference] TODO comment requires an issue reference.
+  example.js:2:4: error[policy/todo-requires-reference] TODO comment requires an issue reference.
+  example.jsx:2:4: error[policy/todo-requires-reference] TODO comment requires an issue reference.
+  example.mjs:2:4: error[policy/todo-requires-reference] TODO comment requires an issue reference.
+  example.mts:2:4: error[policy/todo-requires-reference] TODO comment requires an issue reference.
+  example.py:2:3: error[policy/todo-requires-reference] TODO comment requires an issue reference.
+  example.rs:2:4: error[policy/todo-requires-reference] TODO comment requires an issue reference.
+  example.ts:2:4: error[policy/todo-requires-reference] TODO comment requires an issue reference.
+  example.tsx:2:4: error[policy/todo-requires-reference] TODO comment requires an issue reference.
 
-stderr: []
+stderr: ""

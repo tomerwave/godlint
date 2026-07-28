@@ -17,6 +17,6 @@ impl Analyzer for TypeScript {
             tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into()
         };
 
-        super::analyze_with(source, language, super::ecmascript::is_function_node)
+        super::analyze_with(source, language, super::ecmascript::VOCABULARY)
     }
 }

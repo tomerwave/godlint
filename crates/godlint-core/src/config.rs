@@ -1,15 +1,44 @@
 use std::{
     error::Error,
     fmt, fs,
+    num::NonZeroU32,
     path::{Path, PathBuf},
 };
 
 use serde::Deserialize;
 
+/// Directories skipped unless a repository configures its own exclusions.
+///
+/// These hold build output and dependency trees rather than authored source; scanning
+/// them reports findings nobody can act on.
+pub const DEFAULT_EXCLUDES: [&str; 12] = [
+    ".git",
+    ".mypy_cache",
+    ".next",
+    ".tox",
+    ".venv",
+    "__pycache__",
+    "build",
+    "coverage",
+    "dist",
+    "node_modules",
+    "target",
+    "vendor",
+];
+
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Config {
     pub version: u8,
+    /// Lowest severity that makes `godlint check` fail.
+    ///
+    /// Without this, every severity blocks equally and the confidence ladder that lets a
+    /// new rule land as a warning cannot exist.
+    #[serde(default = "default_fail_on", rename = "fail-on")]
+    pub fail_on: Severity,
+    /// Path globs excluded from scanning, replacing [`DEFAULT_EXCLUDES`] when set.
+    #[serde(default)]
+    pub exclude: Vec<String>,
     #[serde(default)]
     pub rules: Rules,
 }
@@ -18,11 +47,11 @@ pub struct Config {
 #[serde(deny_unknown_fields)]
 pub struct Rules {
     #[serde(rename = "maintainability/function-size")]
-    pub function_size: Option<FunctionSizeRule>,
+    pub function_size: Option<LineLimitRule>,
     #[serde(rename = "maintainability/function-nesting")]
     pub function_nesting: Option<FunctionNestingRule>,
     #[serde(rename = "maintainability/file-size")]
-    pub file_size: Option<FileSizeRule>,
+    pub file_size: Option<LineLimitRule>,
     #[serde(rename = "maintainability/empty-function")]
     pub empty_function: Option<EmptyFunctionRule>,
     #[serde(rename = "policy/todo-requires-reference")]
@@ -37,36 +66,56 @@ pub struct Rules {
     pub function_statements: Option<FunctionStatementsRule>,
 }
 
+/// Shared shape of the two line-counting rules.
+///
+/// `function-size` and `file-size` ask the same question of different ranges, so they
+/// share one configuration type rather than two identical ones.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct FunctionSizeRule {
+pub struct LineLimitRule {
     pub severity: Severity,
     #[serde(rename = "max-lines")]
-    pub max_lines: u32,
-    #[serde(rename = "skip-blank-lines")]
+    pub max_lines: NonZeroU32,
+    #[serde(default = "enabled", rename = "skip-blank-lines")]
     pub skip_blank_lines: bool,
-    #[serde(rename = "skip-comments")]
+    #[serde(default = "enabled", rename = "skip-comments")]
     pub skip_comments: bool,
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct FunctionNestingRule {
-    pub severity: Severity,
-    #[serde(rename = "max-depth")]
-    pub max_depth: u32,
+/// Declares the rules whose entire configuration is a severity and one ceiling.
+///
+/// Each needs its own YAML key, so they cannot literally be one type; generating them
+/// keeps the shape in a single place and gives them a uniform `limit` accessor.
+///
+/// These ceilings accept zero, because forbidding a construct outright is a real policy:
+/// `max-depth: 0` bans nested blocks and `max-parameters: 0` bans parameters. Only a
+/// ceiling below the metric's own floor is meaningless, which [`Config::validate`] checks.
+macro_rules! count_limit_rules {
+    ($($name:ident { $key:literal => $field:ident }),+ $(,)?) => {
+        $(
+            #[derive(Debug, Deserialize)]
+            #[serde(deny_unknown_fields)]
+            pub struct $name {
+                pub severity: Severity,
+                #[serde(rename = $key)]
+                pub $field: u32,
+            }
+
+            impl $name {
+                pub fn limit(&self) -> u32 {
+                    self.$field
+                }
+            }
+        )+
+    };
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct FileSizeRule {
-    pub severity: Severity,
-    #[serde(rename = "max-lines")]
-    pub max_lines: u32,
-    #[serde(rename = "skip-blank-lines")]
-    pub skip_blank_lines: bool,
-    #[serde(rename = "skip-comments")]
-    pub skip_comments: bool,
+count_limit_rules! {
+    FunctionNestingRule { "max-depth" => max_depth },
+    ParameterCountRule { "max-parameters" => max_parameters },
+    CyclomaticComplexityRule { "max-complexity" => max_complexity },
+    ReturnCountRule { "max-returns" => max_returns },
+    FunctionStatementsRule { "max-statements" => max_statements },
 }
 
 #[derive(Debug, Deserialize)]
@@ -81,47 +130,29 @@ pub struct EmptyFunctionRule {
 #[serde(deny_unknown_fields)]
 pub struct TodoRequiresReferenceRule {
     pub severity: Severity,
+    #[serde(default = "default_markers")]
+    pub markers: Vec<String>,
     #[serde(default = "default_reference_prefixes", rename = "reference-prefixes")]
     pub reference_prefixes: Vec<String>,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct ParameterCountRule {
-    pub severity: Severity,
-    #[serde(rename = "max-parameters")]
-    pub max_parameters: u32,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct CyclomaticComplexityRule {
-    pub severity: Severity,
-    #[serde(rename = "max-complexity")]
-    pub max_complexity: u32,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct ReturnCountRule {
-    pub severity: Severity,
-    #[serde(rename = "max-returns")]
-    pub max_returns: u32,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct FunctionStatementsRule {
-    pub severity: Severity,
-    #[serde(rename = "max-statements")]
-    pub max_statements: u32,
 }
 
 fn default_reference_prefixes() -> Vec<String> {
     vec!["#".into()]
 }
 
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq)]
+fn default_markers() -> Vec<String> {
+    vec!["TODO".into(), "FIXME".into(), "HACK".into(), "XXX".into()]
+}
+
+const fn default_fail_on() -> Severity {
+    Severity::Error
+}
+
+const fn enabled() -> bool {
+    true
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd)]
 #[serde(rename_all = "lowercase")]
 pub enum Severity {
     Off,
@@ -143,9 +174,12 @@ pub enum ConfigError {
     UnsupportedVersion {
         version: u8,
     },
-    InvalidFunctionSizeLimit,
-    InvalidFileSizeLimit,
+    InvalidComplexityLimit,
+    InvalidTodoMarkers,
     InvalidTodoReferencePrefixes,
+    InvalidExclude {
+        pattern: String,
+    },
 }
 
 impl Config {
@@ -165,6 +199,15 @@ impl Config {
         Ok(config)
     }
 
+    /// Reports the exclusion globs in force, falling back to the built-in defaults.
+    pub fn excludes(&self) -> Vec<String> {
+        if self.exclude.is_empty() {
+            return DEFAULT_EXCLUDES.iter().map(|name| (*name).into()).collect();
+        }
+
+        self.exclude.clone()
+    }
+
     fn validate(&self) -> Result<(), ConfigError> {
         if self.version != 1 {
             return Err(ConfigError::UnsupportedVersion {
@@ -172,47 +215,58 @@ impl Config {
             });
         }
 
-        if self.function_size_limit_is_invalid() {
-            return Err(ConfigError::InvalidFunctionSizeLimit);
+        if let Some(pattern) = self
+            .exclude
+            .iter()
+            .find(|pattern| pattern.trim().is_empty())
+        {
+            return Err(ConfigError::InvalidExclude {
+                pattern: pattern.clone(),
+            });
         }
 
-        if self.file_size_limit_is_invalid() {
-            return Err(ConfigError::InvalidFileSizeLimit);
+        if self
+            .rules
+            .cyclomatic_complexity
+            .as_ref()
+            .is_some_and(|rule| rule.limit() == 0)
+        {
+            return Err(ConfigError::InvalidComplexityLimit);
         }
 
-        if self.todo_reference_prefixes_are_invalid() {
+        self.validate_todo_rule()
+    }
+
+    fn validate_todo_rule(&self) -> Result<(), ConfigError> {
+        let Some(rule) = &self.rules.todo_requires_reference else {
+            return Ok(());
+        };
+
+        if rule.markers.is_empty() || rule.markers.iter().any(|marker| marker.trim().is_empty()) {
+            return Err(ConfigError::InvalidTodoMarkers);
+        }
+
+        if rule.reference_prefixes.is_empty()
+            || rule
+                .reference_prefixes
+                .iter()
+                .any(|prefix| prefix_is_unusable(prefix))
+        {
             return Err(ConfigError::InvalidTodoReferencePrefixes);
         }
 
         Ok(())
     }
+}
 
-    fn function_size_limit_is_invalid(&self) -> bool {
-        self.rules
-            .function_size
-            .as_ref()
-            .is_some_and(|rule| rule.max_lines == 0)
-    }
+/// Rejects prefixes that cannot identify a reference.
+///
+/// A digits-only prefix would make any number starting with it read as accountability,
+/// so `1` would accept a timeout of `10` as an issue reference.
+fn prefix_is_unusable(prefix: &str) -> bool {
+    let trimmed = prefix.trim();
 
-    fn file_size_limit_is_invalid(&self) -> bool {
-        self.rules
-            .file_size
-            .as_ref()
-            .is_some_and(|rule| rule.max_lines == 0)
-    }
-
-    fn todo_reference_prefixes_are_invalid(&self) -> bool {
-        self.rules
-            .todo_requires_reference
-            .as_ref()
-            .is_some_and(|rule| {
-                rule.reference_prefixes.is_empty()
-                    || rule
-                        .reference_prefixes
-                        .iter()
-                        .any(|prefix| prefix.trim().is_empty())
-            })
-    }
+    trimmed.is_empty() || trimmed.chars().all(|character| character.is_ascii_digit())
 }
 
 impl fmt::Display for ConfigError {
@@ -223,23 +277,26 @@ impl fmt::Display for ConfigError {
             Self::UnsupportedVersion { version } => {
                 write!(formatter, "unsupported configuration version: {version}")
             }
-            Self::InvalidFunctionSizeLimit => {
+            Self::InvalidComplexityLimit => {
                 write!(
                     formatter,
-                    "maintainability/function-size max-lines must be at least 1"
+                    "maintainability/cyclomatic-complexity max-complexity must be at least 1"
                 )
             }
-            Self::InvalidFileSizeLimit => {
+            Self::InvalidTodoMarkers => {
                 write!(
                     formatter,
-                    "maintainability/file-size max-lines must be at least 1"
+                    "policy/todo-requires-reference markers must not be empty"
                 )
             }
             Self::InvalidTodoReferencePrefixes => {
                 write!(
                     formatter,
-                    "policy/todo-requires-reference reference-prefixes must not be empty"
+                    "policy/todo-requires-reference reference-prefixes must not be empty or numeric"
                 )
+            }
+            Self::InvalidExclude { pattern } => {
+                write!(formatter, "exclude pattern must not be blank: {pattern:?}")
             }
         }
     }
@@ -251,9 +308,10 @@ impl Error for ConfigError {
             Self::Read { source, .. } => Some(source),
             Self::Parse { source, .. } => Some(source),
             Self::UnsupportedVersion { .. }
-            | Self::InvalidFunctionSizeLimit
-            | Self::InvalidFileSizeLimit
-            | Self::InvalidTodoReferencePrefixes => None,
+            | Self::InvalidComplexityLimit
+            | Self::InvalidTodoMarkers
+            | Self::InvalidTodoReferencePrefixes
+            | Self::InvalidExclude { .. } => None,
         }
     }
 }

@@ -1,47 +1,15 @@
 exit-code: 1
 
-findings:
-  - path: example.js
-    line: 1
-    column: 1
-    severity: error
-    rule-id: maintainability/file-size
-    message: File has 4 effective lines (max 3).
-  - path: example.jsx
-    line: 1
-    column: 1
-    severity: error
-    rule-id: maintainability/file-size
-    message: File has 4 effective lines (max 3).
-  - path: example.py
-    line: 1
-    column: 1
-    severity: error
-    rule-id: maintainability/file-size
-    message: File has 4 effective lines (max 3).
-  - path: example.pyi
-    line: 1
-    column: 1
-    severity: error
-    rule-id: maintainability/file-size
-    message: File has 4 effective lines (max 3).
-  - path: example.rs
-    line: 1
-    column: 1
-    severity: error
-    rule-id: maintainability/file-size
-    message: File has 4 effective lines (max 3).
-  - path: example.ts
-    line: 1
-    column: 1
-    severity: error
-    rule-id: maintainability/file-size
-    message: File has 4 effective lines (max 3).
-  - path: example.tsx
-    line: 1
-    column: 1
-    severity: error
-    rule-id: maintainability/file-size
-    message: File has 4 effective lines (max 3).
+stdout: |
+  example.cjs:1:1: error[maintainability/file-size] File has 5 effective lines (max 4).
+  example.cts:1:1: error[maintainability/file-size] File has 5 effective lines (max 4).
+  example.js:1:1: error[maintainability/file-size] File has 5 effective lines (max 4).
+  example.jsx:1:1: error[maintainability/file-size] File has 5 effective lines (max 4).
+  example.mjs:1:1: error[maintainability/file-size] File has 5 effective lines (max 4).
+  example.mts:1:1: error[maintainability/file-size] File has 5 effective lines (max 4).
+  example.py:1:1: error[maintainability/file-size] File has 5 effective lines (max 4).
+  example.rs:1:1: error[maintainability/file-size] File has 5 effective lines (max 4).
+  example.ts:1:1: error[maintainability/file-size] File has 5 effective lines (max 4).
+  example.tsx:1:1: error[maintainability/file-size] File has 5 effective lines (max 4).
 
-stderr: []
+stderr: ""

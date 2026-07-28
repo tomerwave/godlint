@@ -1,47 +1,15 @@
 exit-code: 1
 
-findings:
-  - path: example.js
-    line: 2
-    column: 3
-    severity: error
-    rule-id: maintainability/function-nesting
-    message: Function is nested at depth 1 (max 0).
-  - path: example.jsx
-    line: 2
-    column: 3
-    severity: error
-    rule-id: maintainability/function-nesting
-    message: Function is nested at depth 1 (max 0).
-  - path: example.py
-    line: 2
-    column: 5
-    severity: error
-    rule-id: maintainability/function-nesting
-    message: Function is nested at depth 1 (max 0).
-  - path: example.pyi
-    line: 2
-    column: 5
-    severity: error
-    rule-id: maintainability/function-nesting
-    message: Function is nested at depth 1 (max 0).
-  - path: example.rs
-    line: 2
-    column: 5
-    severity: error
-    rule-id: maintainability/function-nesting
-    message: Function is nested at depth 1 (max 0).
-  - path: example.ts
-    line: 2
-    column: 3
-    severity: error
-    rule-id: maintainability/function-nesting
-    message: Function is nested at depth 1 (max 0).
-  - path: example.tsx
-    line: 2
-    column: 3
-    severity: error
-    rule-id: maintainability/function-nesting
-    message: Function is nested at depth 1 (max 0).
+stdout: |
+  example.cjs:1:1: error[maintainability/function-nesting] Function nests blocks 3 levels deep (max 2).
+  example.cts:1:1: error[maintainability/function-nesting] Function nests blocks 3 levels deep (max 2).
+  example.js:1:1: error[maintainability/function-nesting] Function nests blocks 3 levels deep (max 2).
+  example.jsx:1:1: error[maintainability/function-nesting] Function nests blocks 3 levels deep (max 2).
+  example.mjs:1:1: error[maintainability/function-nesting] Function nests blocks 3 levels deep (max 2).
+  example.mts:1:1: error[maintainability/function-nesting] Function nests blocks 3 levels deep (max 2).
+  example.py:1:1: error[maintainability/function-nesting] Function nests blocks 3 levels deep (max 2).
+  example.rs:1:1: error[maintainability/function-nesting] Function nests blocks 3 levels deep (max 2).
+  example.ts:1:1: error[maintainability/function-nesting] Function nests blocks 3 levels deep (max 2).
+  example.tsx:1:1: error[maintainability/function-nesting] Function nests blocks 3 levels deep (max 2).
 
-stderr: []
+stderr: ""

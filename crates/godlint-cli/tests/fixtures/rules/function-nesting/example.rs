@@ -1,3 +1,9 @@
-fn outer() {
-    fn fixtureNested() {}
+fn example() {
+    if first {
+        for item in items {
+            while ready {
+                work();
+            }
+        }
+    }
 }

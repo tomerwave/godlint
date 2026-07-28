@@ -1,0 +1,10 @@
+version: 1
+
+# A path removed from the scan must produce no findings, however plainly it violates.
+exclude:
+  - generated
+  - '*.min.js'
+
+rules:
+  maintainability/empty-function:
+    severity: error
