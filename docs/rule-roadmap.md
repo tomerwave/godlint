@@ -57,10 +57,49 @@ universal number. The following profiles are the starting point for documented s
 | `maintainability/function-nesting` | 3 | 2 | Existing Godlint rule; lower is intentionally stricter |
 | `maintainability/parameter-count` | 6 | 4 | Common design-lint threshold; tune per repository |
 | `maintainability/cyclomatic-complexity` | 10 | 8 | Existing TypeScript `complexity: 10` policy |
+| `maintainability/return-count` | 5 | 3 | Pylint's `too-many-return-statements` design metric. Counting `?` and implicit tail expressions raises Rust counts, so Rust-heavy repositories may need a looser threshold than the profile — this one uses 8 |
+| `maintainability/function-statements` | 30 | 20 | Derived from the `maintainability/function-size` profile: a function sitting at its effective-line ceiling should not be almost entirely statements, so each profile allows about two thirds of its line budget as statements |
 
 “Effective lines” exclude blank lines and comment-only lines when configured, matching
 the current function-size contract. ESLint likewise makes blank-line and comment
-handling explicit for function-size metrics.
+handling explicit for function-size metrics. Both options default to enabled, because
+a policy about function length is a policy about code, not about documentation.
+
+The complexity threshold needs one caveat. Godlint counts language-defined branch
+points — `if`, `else if`, loops, `match` and `switch` arms, `catch` and `except`
+handlers, conditional expressions, and the Rust `?` operator — but deliberately does
+not count short-circuit `&&`, `||`, `and`, or `or`. A boolean guard is one decision a
+reader makes at one place, and counting its operands penalizes writing the condition
+plainly. The recommended threshold of 10 was borrowed from an existing ESLint
+`complexity` setting, and tools differ on whether logical operators contribute, so a
+threshold migrated from another linter should be re-checked against Godlint's own metric
+rather than assumed equivalent.
+
+Nesting depth is likewise a property of control flow, not of declarations.
+`maintainability/function-nesting` measures how deeply `if`, `for`, `while`, `match`,
+`with`, `try`, and `switch` blocks nest inside one function; an `else if` chain is one
+level, because that is how it reads. Enclosing functions do not contribute depth, so a
+closure is measured on its own body.
+
+### What counts as a function
+
+One shared threshold across three languages only means something if “a function” means
+the same thing in each of them. Otherwise the same code, written idiomatically, scores
+differently per language: a 40-line Rust closure would be charged to its enclosing
+`fn`, while the equivalent JavaScript arrow function would be measured on its own. Every
+function rule — size, nesting, complexity, return count, statement count, empty body,
+parameter count — consumes the same `FunctionFact`, so the fact must cover every
+construct a reader would call a function.
+
+| Language | Counted as a function |
+| --- | --- |
+| Rust | `fn` items, including methods and associated functions, and closures |
+| Python | `def` functions, including methods, and lambdas |
+| JavaScript/TypeScript | Function declarations, function expressions, methods, and arrow functions |
+
+A nested function is measured on its own body and is not folded into the function that
+encloses it. This is what makes a closure-heavy Rust or JavaScript file comparable with
+a Python file that would express the same logic as named helpers.
 
 ## Delivery roadmap
 
@@ -71,26 +110,33 @@ These rules use source-level `CommentFact` and `SourceFile` data alongside
 
 | Rule | Status | Confidence | Languages | Configuration | Dogfood default |
 | --- | --- | --- | --- | --- | --- |
-| `maintainability/function-size` | Shipped | High | All seven supported extensions | `max-lines`, blank/comment policy | Error, 300 while Godlint is young |
-| `maintainability/function-nesting` | Shipped | High | All seven supported extensions | `max-depth` | Error, 5 |
-| `maintainability/file-size` | Shipped | High | All seven supported extensions | `max-lines`, blank/comment policy | Warning, 500 |
-| `maintainability/empty-function` | Shipped | High with explicit allow-list | All seven supported extensions | `allow-names` | Warning |
-| `policy/todo-requires-reference` | Shipped | High | All comment syntaxes | `reference-prefixes` | Warning |
+| `maintainability/function-size` | Shipped | High | All eleven supported extensions | `max-lines`, blank/comment policy | Error, 300 while Godlint is young |
+| `maintainability/function-nesting` | Shipped | High | All eleven supported extensions | `max-depth` | Error, 3 |
+| `maintainability/file-size` | Shipped | High | All eleven supported extensions | `max-lines`, blank/comment policy | Warning, 500 |
+| `maintainability/empty-function` | Shipped | High | All eleven supported extensions except `.pyi` interface stubs | `allow-names` | Warning |
+| `policy/todo-requires-reference` | Shipped | High | All comment syntaxes and Python docstrings | `markers`, `reference-prefixes` | Warning |
 
 `file-size` establishes that Godlint can evaluate file-level facts alongside
 function-level facts. It directly reflects the requested 500-line policy without
 requiring a new parser capability.
 
+The eleven supported extensions are `.rs`; `.py` and `.pyi`; `.js`, `.jsx`, `.mjs`, and
+`.cjs`; and `.ts`, `.tsx`, `.mts`, and `.cts`. Scanning skips the paths in the top-level
+`exclude` list, which replaces the built-in defaults when set. Findings below the
+top-level `fail-on` severity are reported without failing `godlint check`, which is the
+mechanism the confidence ladder depends on: a medium-confidence rule can be adopted as a
+warning and observed before it blocks anyone.
+
 ### Phase 2 — Richer function facts
 
 Extend `FunctionFact` only when the same data will serve multiple rules.
 
-| New field or fact | Rules unlocked | Status | Confidence | Notes |
-| --- | --- | --- | --- | --- |
-| `parameter_count` | `maintainability/parameter-count` | Shipped | High | Count declared parameters only; do not infer types or defaults initially |
-| `decision_points` | `maintainability/cyclomatic-complexity` | Shipped | High | Count language-defined branch points; fixture each language explicitly |
-| `return_count` | `maintainability/return-count` | Shipped | Medium | Keep opt-in because early returns are often clearer |
-| `statement_count` | `maintainability/function-statements` | Shipped | Medium | Count direct body statements only; do not include nested function bodies |
+| New field or fact | Rules unlocked | Status | Confidence | Languages | Configuration | Dogfood default | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `parameter_count` | `maintainability/parameter-count` | Shipped | High | All eleven supported extensions | `max-parameters` | Warning, 6 | Count declared parameters only, excluding a method receiver (`self`, `&self`, `cls`); do not infer types or defaults initially |
+| `decision_points` | `maintainability/cyclomatic-complexity` | Shipped | High | All eleven supported extensions | `max-complexity` | Warning, 10 | Count language-defined branch points, including the Rust `?` operator, but not short-circuit boolean operators; fixture each language explicitly |
+| `return_count` | `maintainability/return-count` | Shipped | Medium | All eleven supported extensions | `max-returns` | Warning, 8 | Count every exit path: explicit `return`, the Rust `?` operator, and an implicit trailing expression. Keep opt-in because early returns are often clearer |
+| `statement_count` | `maintainability/function-statements` | Shipped | Medium | All eleven supported extensions | `max-statements` | Warning, 30 | Count statements through nested blocks but not into nested functions, which are measured as functions in their own right; comments are not statements, and an expression-bodied arrow or lambda is one |
 
 Phase 2 is complete. Its fact additions stay small and reusable for future policy.
 
@@ -214,8 +260,9 @@ Before merging a rule PR:
 
 1. Add or reuse a fact without exposing parser nodes.
 2. Add strict configuration validation and deterministic finding order.
-3. Add a fixture mini-repository under `tests/fixtures/rules/<rule-id>/` with
-   `godlint.yaml` and `expected.yaml`.
+3. Add a fixture mini-repository under
+   `crates/godlint-cli/tests/fixtures/rules/<rule-id>/` with `godlint.yaml` and
+   `expected.yaml`.
 4. Cover every claimed source extension; omit unsupported languages explicitly.
 5. Enable the rule for Godlint in the same PR, or record a temporary accountable
    exception.
@@ -235,4 +282,7 @@ Before merging a rule PR:
   and [rustfmt import configuration](https://doc.rust-lang.org/beta/nightly-rustc/src/rustfmt_nightly/config/mod.rs.html)
 - [Biome rule catalog](https://biomejs.dev/linter/rules)
 - [Pylint branch metric](https://pylint.readthedocs.io/en/v3.1.1/user_guide/messages/refactor/too-many-branches.html)
+  and its sibling design metrics for return statements and statement count
+- [ESLint `complexity` rule](https://eslint.org/docs/latest/rules/complexity), whose
+  threshold Godlint borrows while counting a slightly different metric
 - [Semgrep rule-writing ideas](https://semgrep.dev/docs/writing-rules/rule-ideas)

@@ -1,39 +1,51 @@
 version: 1
 
+# Findings below this severity are reported without failing the build, which is what
+# lets a new rule be adopted as a warning before it becomes blocking.
+fail-on: error
+
+# Test fixtures are deliberately non-conforming inputs, so they are excluded by path
+# rather than by weakening a rule for the whole repository.
+exclude:
+  - .git
+  - .mypy_cache
+  - .next
+  - .tox
+  - .venv
+  - __pycache__
+  - build
+  - coverage
+  - dist
+  - node_modules
+  - target
+  - vendor
+  - crates/godlint-cli/tests/fixtures
+
 rules:
-  maintainability/function-statements:
-    severity: warning
-    max-statements: 30
-  maintainability/return-count:
-    severity: warning
-    max-returns: 5
-  maintainability/cyclomatic-complexity:
-    severity: warning
-    max-complexity: 10
-  maintainability/parameter-count:
-    severity: warning
-    max-parameters: 6
-  policy/todo-requires-reference:
-    severity: warning
-    reference-prefixes:
-      - '#'
-      - fixture-
-  maintainability/empty-function:
-    severity: warning
-    allow-names:
-      - fixtureAllowed
-      - fixtureViolation
-      - fixtureNested
-  maintainability/file-size:
-    severity: warning
-    max-lines: 500
-    skip-blank-lines: true
-    skip-comments: true
   maintainability/function-size:
     severity: error
     max-lines: 300
-    skip-blank-lines: true
-    skip-comments: true
+  maintainability/file-size:
+    severity: warning
+    max-lines: 500
   maintainability/function-nesting:
     severity: error
-    max-depth: 5
+    max-depth: 3
+  maintainability/parameter-count:
+    severity: warning
+    max-parameters: 6
+  maintainability/cyclomatic-complexity:
+    severity: warning
+    max-complexity: 10
+  # Counting `?` as an exit path raises Rust counts relative to a language that must
+  # write `return`, so this threshold is calibrated above the roadmap's recommended 5.
+  maintainability/return-count:
+    severity: warning
+    max-returns: 8
+  maintainability/function-statements:
+    severity: warning
+    max-statements: 30
+  maintainability/empty-function:
+    severity: warning
+  policy/todo-requires-reference:
+    severity: warning

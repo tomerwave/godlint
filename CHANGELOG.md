@@ -12,3 +12,93 @@ releases begin.
 
 - Open-source project foundations, community guidance, security reporting guidance,
   and project brand assets.
+- A local CLI with `godlint config validate` and `godlint check`, source discovery for
+  Rust, TypeScript/JavaScript, and Python, and a versioned root `godlint.yaml`.
+- `maintainability/function-size` (`max-lines`) — reports a function longer than a
+  configured effective-line ceiling.
+- `maintainability/file-size` (`max-lines`) — the same ceiling applied to a whole file.
+- `maintainability/function-nesting` (`max-depth`) — reports control-flow blocks
+  nested too deeply inside a function.
+- `maintainability/parameter-count` (`max-parameters`) — reports declared parameters
+  above a ceiling, excluding a method receiver (`self`, `&self`, `cls`).
+- `maintainability/cyclomatic-complexity` (`max-complexity`) — reports a function with
+  too many branch points.
+- `maintainability/return-count` (`max-returns`) — reports a function with too many
+  exit paths.
+- `maintainability/function-statements` (`max-statements`) — reports a function with
+  too many statements.
+- `maintainability/empty-function` (`allow-names`) — reports a function body that
+  appears unintentionally empty.
+- `policy/todo-requires-reference` (`markers`, `reference-prefixes`) — requires an
+  issue reference beside a TODO-style marker.
+- Top-level `fail-on` (default `error`) — the lowest severity that makes `godlint
+  check` fail. Findings below it are reported without failing the command, which is
+  what makes adopting a rule as a warning first a real option rather than a promise.
+- Top-level `exclude` — a list of path globs supporting `*`, `?`, and `**` that
+  replaces the built-in defaults when set. The defaults are `.git`, `.mypy_cache`,
+  `.next`, `.tox`, `.venv`, `__pycache__`, `build`, `coverage`, `dist`,
+  `node_modules`, `target`, and `vendor`. Previously only `.git`, `node_modules`, and
+  `target` were skipped, and the list was not configurable.
+- Support for the `.mjs` and `.cjs` JavaScript extensions and the `.mts` and `.cts`
+  TypeScript extensions.
+
+### Changed
+
+- `maintainability/function-nesting` measures how deeply control-flow blocks nest
+  inside a function — `if`, `for`, `while`, `match`, `with`, `try`, `switch` — rather
+  than how many functions enclose it. An `else if` chain counts as one level. The
+  message is now "Function nests blocks N levels deep (max M)."
+- Rust closures and Python lambdas are functions for every function rule, as
+  JavaScript/TypeScript arrow functions already were. Size, nesting, complexity,
+  return paths, and statement count are attributed to the closure itself rather than
+  to the function enclosing it, so one shared threshold means the same thing in all
+  three languages.
+- `maintainability/cyclomatic-complexity` counts the Rust `?` operator as a branch.
+  Short-circuit `&&`, `||`, `and`, and `or` are deliberately not counted, which is a
+  strict control-flow reading of the metric. The recommended threshold of 10 was
+  borrowed from an existing ESLint `complexity` setting, so confirm how your previous
+  tool treats logical operators before carrying a threshold across.
+- `maintainability/return-count` counts every exit path: an explicit `return`, the
+  Rust `?` operator, and an implicit trailing expression such as a Rust tail
+  expression or a concise arrow or lambda body. The message is now "Function has N
+  return paths (max M)." This keeps Rust comparable with languages that must write
+  `return`.
+- `maintainability/function-statements` counts statements through nested blocks but
+  not into nested functions, and no longer counts comments as statements. An
+  expression-bodied arrow or lambda counts as one statement.
+- `maintainability/empty-function` no longer reports a body containing only a comment,
+  an abstract or overload declaration (`@abstractmethod`, `@overload`), a TypeScript
+  constructor that assigns parameter properties, or any declaration in a `.pyi`
+  interface stub. Python `pass` and `...` both count as empty.
+- `policy/todo-requires-reference` takes a configurable `markers` list, defaulting to
+  `TODO`, `FIXME`, `HACK`, and `XXX`. Each marker is reported at its own position and
+  owns only the text up to the next marker, so one reference can no longer excuse
+  several markers. A reference is a configured prefix followed by digits that end the
+  token, and a prefix must start a word, so `NOTJIRA-42` does not satisfy `JIRA-`.
+  Purely numeric `reference-prefixes` are rejected by configuration validation. Python
+  docstrings are scanned alongside comments.
+- `skip-blank-lines` and `skip-comments` default to `true` instead of being required.
+- Effective-line counting is derived from the analyzer's comment facts instead of
+  scanning text for `//` and `#`, so Python docstrings are skipped like JSDoc blocks
+  and nested Rust block comments are handled correctly.
+- `max-lines` and `max-complexity` reject `0`, because those metrics have a floor of 1.
+  `max-depth`, `max-parameters`, `max-returns`, and `max-statements` accept `0`,
+  because forbidding a construct outright is a real policy.
+
+### Fixed
+
+- Configuration discovery stops at a repository boundary, meaning a directory
+  containing `.git`. It previously walked to the filesystem root, so a stray
+  `godlint.yaml` in a parent or home directory could silently govern an unrelated
+  repository and relocate the reported path root.
+- A file that cannot be read, for example because it is not valid UTF-8, is reported
+  as an issue against that file. It previously aborted the whole run and discarded
+  every other finding.
+- `policy/todo-requires-reference` matches markers on word boundaries, so an
+  identifier such as `AUTODOWNLOAD` is no longer reported as a `TODO`.
+- `policy/todo-requires-reference` no longer accepts a colour literal such as
+  `#3366ff` as an issue reference for the `#` prefix.
+- A `//` inside a string literal is no longer mistaken for the start of a comment when
+  counting effective lines.
+- A UTF-8 byte-order mark is stripped before parsing, so it no longer changes line
+  accounting or shifts reported columns.
