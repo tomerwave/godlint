@@ -143,6 +143,35 @@ fn reports_a_stray_argument_as_an_unrecognised_option() {
 }
 
 #[test]
+fn reports_an_option_given_twice() {
+    assert_eq!(
+        enclosing(
+            "maintainability/empty-function expires=2999-01-01 expires=2999-12-31 -- renewed"
+        ),
+        vec![SuppressionDefect::RepeatedOption {
+            option: "expires".to_owned()
+        }]
+    );
+    assert_eq!(
+        enclosing("maintainability/empty-function owner=one owner=two -- two owners"),
+        vec![SuppressionDefect::RepeatedOption {
+            option: "owner".to_owned()
+        }]
+    );
+}
+
+#[test]
+fn an_empty_option_value_is_absent_rather_than_satisfied() {
+    let directive = "fn example() {\n    // godlint-ignore-enclosing \
+                     maintainability/empty-function owner= -- blank\n}\n";
+
+    assert_eq!(
+        defects(directive, true, false),
+        vec![SuppressionDefect::MissingOwner]
+    );
+}
+
+#[test]
 fn reports_an_expiry_that_is_not_a_calendar_date() {
     assert_eq!(
         enclosing("maintainability/empty-function expires=31-12-2999 -- day first"),

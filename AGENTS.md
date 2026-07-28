@@ -13,6 +13,12 @@ Read the linked documents relevant to the task before changing code or policy.
 
 ## Operating rules
 
+- Be concise, always. Report the finding, the evidence, and the decision — not the
+  narration. Prefer a table or a short list to prose, name the file and line rather than
+  describing where it is, and cut any sentence that restates the previous one. This applies
+  to pull request descriptions, review comments, commit bodies, and answers to the user.
+  Brevity is not the same as vagueness: keep the reasoning that changes a decision and drop
+  the rest.
 - Keep pass/fail enforcement deterministic; an LLM must never decide CI status.
 - Keep analysis local by default and never expose source code without explicit user
   authorization.
@@ -20,9 +26,9 @@ Read the linked documents relevant to the task before changing code or policy.
 - Keep language-specific parser details inside their analyzer boundaries; rules consume
   small, language-neutral facts.
 - Add a rule only with valid, invalid, and configuration fixtures plus scoped-exclusion
-  coverage. Inline suppression is not implemented yet; its requirements are recorded
-  under accountable exceptions in the rule roadmap, and suppression fixtures become
-  required in the change that adds it.
+  coverage. [Inline suppression](docs/suppressions.md) is implemented; a suppression
+  fixture is intent rather than an enforced gate, and `docs/testing.md` records which rules
+  have one.
 - Dogfood every shipped rule: Godlint must run it against this repository in CI.
 - Write no comments in Rust source, including documentation comments; `style/no-comments`
   enforces this and a comment will fail CI. Put the reasoning a comment would carry into

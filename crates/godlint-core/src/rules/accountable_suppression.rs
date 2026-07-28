@@ -46,6 +46,12 @@ fn defects(
         }
     }));
 
+    defects.extend(suppression.repeated_options().iter().map(|option| {
+        SuppressionDefect::RepeatedOption {
+            option: option.clone(),
+        }
+    }));
+
     if suppression.justification().is_none() {
         defects.push(SuppressionDefect::MissingJustification);
     }

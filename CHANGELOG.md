@@ -224,6 +224,31 @@ releases begin.
 
 ### Fixed
 
+- Quoted prose is no longer a live suppression. `is_furniture` stripped `"` and `'` on every
+  line of every comment so that a Python docstring's delimiter could open a directive, which
+  also meant `// 'godlint-ignore-next-line maintainability/empty-function -- only prose'`
+  parsed as a defect-free directive, silenced the rule, and was exempt from
+  `style/no-comments`. A quote now opens a directive only on the line where a quote opens
+  the comment. Closing a comment is a separate question: a docstring's final `"""` remains
+  furniture wherever it falls, so a directive inside a multiline docstring still reaches the
+  code after it rather than the closing delimiter.
+- `maintainability/decision-complexity` counts a refutable `let` — Rust's `let … else`. It
+  counted zero, so the idiomatic form measured less than the nested `if let` it replaces:
+  three bindings measured 1 against the nested form's 4. Both now measure 4.
+- A suppression stacked above another reaches the code rather than its neighbour. The first
+  of two consecutive directives resolved its next line to the second directive, silencing
+  nothing while the audit listed it as live — the same silent no-op that the closing
+  delimiter used to cause. Directive lines are now skipped whether they sit in the same
+  comment or in another.
+- An option given twice keeps its first value and is reported as a defect. An expiry could
+  previously be renewed by appending a second `expires=`, invisible to both `godlint check`
+  and `godlint suppressions`.
+- `owner=` with an empty value no longer satisfies `require-owner`. An empty option value
+  reads as absent.
+- `policy/unused-suppression` no longer reports a `godlint-ignore-enclosing` that has
+  nothing to enclose. Such a directive is misplaced rather than stale, so "remove it" was
+  the wrong remedy, and it was reported twice when both suppression rules were enabled.
+
 - A Python docstring following a shebang is recognised as a docstring. The shebang counted
   as the block's first statement, so the docstring below it was read as an ordinary string:
   `skip-comments` counted it as code and `policy/todo-requires-reference` did not scan it.

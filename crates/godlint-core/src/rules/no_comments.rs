@@ -26,7 +26,9 @@ impl CommentRule for NoComments {
         comment: &CommentFact,
         configuration: &Self::Configuration,
     ) -> Vec<(SourceRange, Violation)> {
-        if is_directive_only(comment.text()) || is_permitted(comment.kind(), configuration) {
+        if is_directive_only(comment.text(), comment.kind())
+            || is_permitted(comment.kind(), configuration)
+        {
             return Vec::new();
         }
 

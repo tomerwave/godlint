@@ -6,6 +6,7 @@ use godlint_core::{
     analyzers::{SourceFacts, analyze},
     config::{Config, Severity},
     date::Date,
+    facts::CommentKind,
     rules::evaluate,
     source::SourceFile,
     suppression::{Scope, Suppression, collect, is_directive_only},
@@ -192,15 +193,25 @@ fn an_enclosing_directive_resolves_to_the_innermost_function() {
 #[test]
 fn identifies_a_comment_that_is_only_a_directive() {
     assert!(is_directive_only(
-        "// godlint-ignore-next-line a/b -- reason"
+        "// godlint-ignore-next-line a/b -- reason",
+        CommentKind::Line
     ));
     assert!(is_directive_only(
-        "# godlint-ignore-enclosing a/b -- reason"
+        "# godlint-ignore-enclosing a/b -- reason",
+        CommentKind::Line
     ));
     assert!(is_directive_only(
-        "/*\n godlint-ignore-next-line a/b -- reason\n*/"
+        "/*\n godlint-ignore-next-line a/b -- reason\n*/",
+        CommentKind::Block
     ));
-    assert!(!is_directive_only("// an ordinary aside"));
+    assert!(is_directive_only(
+        "\"\"\"godlint-ignore-enclosing a/b -- reason\"\"\"",
+        CommentKind::Docstring
+    ));
+    assert!(!is_directive_only(
+        "// an ordinary aside",
+        CommentKind::Line
+    ));
 }
 
 #[test]
@@ -208,7 +219,8 @@ fn prose_beside_a_directive_is_not_a_directive_comment() {
     assert!(
         !is_directive_only(
             "/*\nThis ordinary comment would otherwise be allowed.\n\
-             godlint-ignore-next-line a/b -- reason\n*/"
+             godlint-ignore-next-line a/b -- reason\n*/",
+            CommentKind::Block
         ),
         "one directive must not launder arbitrary prose past style/no-comments"
     );
@@ -308,4 +320,112 @@ fn the_accountability_rule_reports_even_when_every_other_rule_is_silent() {
     assert_eq!(findings.len(), 1);
     assert_eq!(findings[0].rule_id, "policy/accountable-suppression");
     assert_eq!(findings[0].severity, Severity::Error);
+}
+
+#[test]
+fn quoted_prose_is_not_a_directive() {
+    for source in [
+        "// 'godlint-ignore-next-line a/b -- only prose'\nfn example() {}\n",
+        "// \"godlint-ignore-next-line a/b -- example\" shows the syntax\nfn example() {}\n",
+        "/* 'godlint-ignore-enclosing a/b -- quoted' */\nfn example() {}\n",
+    ] {
+        assert!(
+            suppressions("src/example.rs", source).is_empty(),
+            "a quoted directive is prose, not policy: {source}"
+        );
+    }
+}
+
+#[test]
+fn a_multiline_docstring_directive_reaches_past_the_closing_delimiter() {
+    let source = facts(
+        "src/example.py",
+        "\"\"\"\ngodlint-ignore-next-line maintainability/empty-function -- reason\n\"\"\"\ndef empty():\n    pass\n",
+    );
+    let body = "version: 1\nrules:\n  maintainability/empty-function:\n    severity: error\n  \
+                style/no-comments:\n    severity: error\n    allow-doc-comments: false\n";
+    let findings = evaluate(std::slice::from_ref(&source), &config(body), today())
+        .unwrap_or_else(|error| panic!("evaluates: {error}"));
+
+    assert!(
+        findings.is_empty(),
+        "a closing docstring delimiter is furniture, not the target line: {findings:?}"
+    );
+}
+
+#[test]
+fn a_quoted_directive_inside_a_docstring_is_still_prose() {
+    assert!(
+        suppressions(
+            "src/example.py",
+            "def three():\n    \"\"\"Prose here.\n\n    \'godlint-ignore-enclosing a/b -- quoted\'\n    \"\"\"\n"
+        )
+        .is_empty(),
+        "only a delimiter that opens the docstring may open a directive"
+    );
+}
+
+#[test]
+fn a_docstring_delimiter_still_opens_a_directive() {
+    for source in [
+        "def example():\n    \"\"\"godlint-ignore-enclosing a/b -- docstring\"\"\"\n",
+        "def example():\n    \'\'\'godlint-ignore-enclosing a/b -- docstring\'\'\'\n",
+    ] {
+        let suppression = only("src/example.py", source);
+
+        assert_eq!(suppression.rules(), ["a/b"]);
+        assert_eq!(suppression.justification(), Some("docstring"));
+    }
+}
+
+#[test]
+fn stacked_directives_all_reach_the_same_line() {
+    let found = suppressions(
+        "src/example.rs",
+        "// godlint-ignore-next-line a/b -- first\n         // godlint-ignore-next-line c/d -- second\nfn example() {}\n",
+    );
+
+    assert_eq!(found.len(), 2);
+    assert!(
+        found.iter().all(|suppression| suppression.covers_line(3)),
+        "a directive stacked above another must reach the code, not its neighbour"
+    );
+}
+
+#[test]
+fn stacked_directives_inside_one_comment_reach_the_same_line() {
+    let found = suppressions(
+        "src/example.rs",
+        "/*\ngodlint-ignore-next-line a/b -- first\ngodlint-ignore-next-line c/d -- second\n*/\nfn example() {}\n",
+    );
+
+    assert_eq!(found.len(), 2);
+    assert!(found.iter().all(|suppression| suppression.covers_line(5)));
+}
+
+#[test]
+fn an_empty_option_value_reads_as_absent() {
+    let suppression = only(
+        "src/example.rs",
+        "// godlint-ignore-next-line a/b owner= expires= -- blank values\nfn example() {}\n",
+    );
+
+    assert_eq!(suppression.owner(), None);
+    assert_eq!(suppression.expires(), None);
+    assert!(suppression.repeated_options().is_empty());
+}
+
+#[test]
+fn a_repeated_option_keeps_the_first_value_and_is_recorded() {
+    let suppression = only(
+        "src/example.rs",
+        "// godlint-ignore-next-line a/b expires=2020-01-01 expires=2999-01-01 -- renewed\nfn example() {}\n",
+    );
+
+    assert_eq!(
+        suppression.expires(),
+        Some("2020-01-01"),
+        "an expiry must not be extended by appending a second one"
+    );
+    assert_eq!(suppression.repeated_options(), ["expires"]);
 }

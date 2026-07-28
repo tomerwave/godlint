@@ -36,3 +36,7 @@ fn undated() {
 
 // godlint-ignore-enclosing maintainability/empty-function owner=tomer expires=2999-12-31 -- nothing encloses this
 fn detached() {}
+
+fn renewed() {
+    // godlint-ignore-enclosing maintainability/empty-function owner=tomer expires=2020-01-01 expires=2999-12-31 -- appending an expiry must not renew it
+}

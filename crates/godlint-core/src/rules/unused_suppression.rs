@@ -52,5 +52,7 @@ fn is_unused(suppression: &Suppression, findings: &[Finding], config: &Config) -
         is_suppressible_rule(rule_id) && configured_severity(config, rule_id) != Severity::Off
     });
 
-    has_enabled_rule && !findings.iter().any(|finding| suppression.covers(finding))
+    suppression.resolves()
+        && has_enabled_rule
+        && !findings.iter().any(|finding| suppression.covers(finding))
 }

@@ -12,11 +12,16 @@ the scan. Shared rules need equivalent Rust, TypeScript/JavaScript, and Python c
 when the concept applies. Repository rules need miniature realistic repositories rather
 than mocked dependency graphs.
 
-Inline suppression is a fourth fixture class for every rule it can reach. The fixture
-must show a directive silencing the rule at one site, while
-`policy/unused-suppression` ensures a directive that no longer hides a finding is not
-left behind. File-level findings remain unsuppressible inline because their location has
-no preceding declaration; test their configured path exclusion instead.
+Inline suppression is a fourth fixture class, and it is intent rather than an enforced
+gate today. The `suppression-applies` fixture shows a directive silencing
+`maintainability/function-nesting`, `maintainability/empty-function` and
+`policy/todo-requires-reference`; the remaining function rules are covered by the shared
+mechanism rather than one fixture each, and `scripts/validate-pull-request.py` does not
+require a fourth class. Extending it per rule is worth doing, but claiming it is required
+while nine rules lack it would make this document the thing that is wrong.
+`policy/unused-suppression` is what keeps a directive from outliving the finding it hid.
+File-level findings remain unsuppressible inline because their location has no preceding
+declaration; test their configured path exclusion instead.
 
 Keep test code outside production `src/` modules. Public crate contracts belong in
 `crates/<crate>/tests/`. Rule fixtures belong in

@@ -61,6 +61,7 @@ pub enum SuppressionDefect {
     UnknownRule { rule: String },
     NotSuppressible { rule: String },
     UnknownOption { option: String },
+    RepeatedOption { option: String },
     MissingJustification,
     MissingOwner,
     MissingExpiry,
@@ -463,6 +464,10 @@ impl fmt::Display for SuppressionDefect {
             Self::UnknownOption { option } => {
                 write!(formatter, "Suppression option {option} is not recognised.")
             }
+            Self::RepeatedOption { option } => write!(
+                formatter,
+                "Suppression sets {option} more than once; only one value can be accountable."
+            ),
             Self::MissingJustification => write!(
                 formatter,
                 "Suppression has no justification; state the reason after `--`."
