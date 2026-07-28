@@ -19,9 +19,15 @@ godlint-ignore-enclosing <rule-id>[,<rule-id>...] [owner=<name>] [expires=<YYYY-
 
 The directive must open its line, ignoring leading whitespace and the comment's own
 punctuation, so prose that merely mentions a directive is not one. Which punctuation counts
-depends on the comment: `/`, `#`, `*` and `!` always, and a quote only where a quote opens
-the comment, which is a Python docstring. Without that restriction `// 'godlint-ignore-next-line …'`
-would be a live suppression rather than a sentence about one.
+depends on the comment: `/`, `#`, `*` and `!` always, and a quote only on the line where a
+quote opens the comment, which is a Python docstring. Without that restriction
+`// 'godlint-ignore-next-line …'` would be a live suppression rather than a sentence about
+one, and a quoted line in the middle of a docstring would be a directive.
+
+Opening a directive and closing a comment are separate questions. A docstring's final
+`"""` is still comment furniture on whatever line it falls, so a directive on its own line
+inside a multiline docstring reaches the code after the docstring rather than the closing
+delimiter.
 
 An option given twice keeps its first value and is reported. Otherwise an expiry could be
 renewed by appending a second one, invisibly to both `check` and the audit. An option with

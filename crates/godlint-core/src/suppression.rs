@@ -139,7 +139,7 @@ pub fn is_directive_only(text: &str, kind: CommentKind) -> bool {
     for (index, (_, line)) in lines(text).enumerate() {
         if directive(line, kind, index == 0).is_some() {
             directives += 1;
-        } else if !is_furniture_only(line, kind, index == 0) {
+        } else if !is_furniture_only(line, kind) {
             return false;
         }
     }
@@ -147,13 +147,17 @@ pub fn is_directive_only(text: &str, kind: CommentKind) -> bool {
     directives > 0
 }
 
-fn is_furniture_only(line: &str, kind: CommentKind, opens: bool) -> bool {
-    line.trim_start_matches(|character| is_furniture(character, quotes_delimit(kind, opens)))
+fn is_furniture_only(line: &str, kind: CommentKind) -> bool {
+    line.trim_start_matches(|character| is_furniture(character, quotes_delimit(kind)))
         .is_empty()
 }
 
-fn quotes_delimit(kind: CommentKind, opens: bool) -> bool {
-    opens && kind == CommentKind::Docstring
+fn quotes_delimit(kind: CommentKind) -> bool {
+    kind == CommentKind::Docstring
+}
+
+fn quotes_open(kind: CommentKind, opens: bool) -> bool {
+    opens && quotes_delimit(kind)
 }
 
 pub fn apply(findings: Vec<Finding>, suppressions: &[Suppression]) -> Vec<Finding> {
@@ -214,7 +218,7 @@ fn in_comment(
 fn spent_lines(rest: &[(usize, &str)], kind: CommentKind) -> usize {
     rest.iter()
         .take_while(|(_, line)| {
-            is_furniture_only(line, kind, false) || directive(line, kind, false).is_some()
+            is_furniture_only(line, kind) || directive(line, kind, false).is_some()
         })
         .count()
 }
@@ -239,7 +243,7 @@ struct Directive<'a> {
 }
 
 fn directive(line: &str, kind: CommentKind, opens: bool) -> Option<Directive<'_>> {
-    let quotes = quotes_delimit(kind, opens);
+    let quotes = quotes_open(kind, opens);
     let opened = line.trim_start_matches(|character| is_furniture(character, quotes));
     let offset = line.len() - opened.len();
     let body = opened.trim_end_matches(|character| is_closing(character, quotes));

@@ -337,14 +337,45 @@ fn quoted_prose_is_not_a_directive() {
 }
 
 #[test]
-fn a_docstring_delimiter_still_opens_a_directive() {
-    let suppression = only(
+fn a_multiline_docstring_directive_reaches_past_the_closing_delimiter() {
+    let source = facts(
         "src/example.py",
-        "def example():\n    \"\"\"godlint-ignore-enclosing a/b -- docstring\"\"\"\n",
+        "\"\"\"\ngodlint-ignore-next-line maintainability/empty-function -- reason\n\"\"\"\ndef empty():\n    pass\n",
     );
+    let body = "version: 1\nrules:\n  maintainability/empty-function:\n    severity: error\n  \
+                style/no-comments:\n    severity: error\n    allow-doc-comments: false\n";
+    let findings = evaluate(std::slice::from_ref(&source), &config(body), today())
+        .unwrap_or_else(|error| panic!("evaluates: {error}"));
 
-    assert_eq!(suppression.rules(), ["a/b"]);
-    assert_eq!(suppression.justification(), Some("docstring"));
+    assert!(
+        findings.is_empty(),
+        "a closing docstring delimiter is furniture, not the target line: {findings:?}"
+    );
+}
+
+#[test]
+fn a_quoted_directive_inside_a_docstring_is_still_prose() {
+    assert!(
+        suppressions(
+            "src/example.py",
+            "def three():\n    \"\"\"Prose here.\n\n    \'godlint-ignore-enclosing a/b -- quoted\'\n    \"\"\"\n"
+        )
+        .is_empty(),
+        "only a delimiter that opens the docstring may open a directive"
+    );
+}
+
+#[test]
+fn a_docstring_delimiter_still_opens_a_directive() {
+    for source in [
+        "def example():\n    \"\"\"godlint-ignore-enclosing a/b -- docstring\"\"\"\n",
+        "def example():\n    \'\'\'godlint-ignore-enclosing a/b -- docstring\'\'\'\n",
+    ] {
+        let suppression = only("src/example.py", source);
+
+        assert_eq!(suppression.rules(), ["a/b"]);
+        assert_eq!(suppression.justification(), Some("docstring"));
+    }
 }
 
 #[test]

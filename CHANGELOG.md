@@ -228,7 +228,10 @@ releases begin.
   line of every comment so that a Python docstring's delimiter could open a directive, which
   also meant `// 'godlint-ignore-next-line maintainability/empty-function -- only prose'`
   parsed as a defect-free directive, silenced the rule, and was exempt from
-  `style/no-comments`. A quote now opens a directive only where a quote opens the comment.
+  `style/no-comments`. A quote now opens a directive only on the line where a quote opens
+  the comment. Closing a comment is a separate question: a docstring's final `"""` remains
+  furniture wherever it falls, so a directive inside a multiline docstring still reaches the
+  code after it rather than the closing delimiter.
 - `maintainability/decision-complexity` counts a refutable `let` — Rust's `let … else`. It
   counted zero, so the idiomatic form measured less than the nested `if let` it replaces:
   three bindings measured 1 against the nested form's 4. Both now measure 4.
