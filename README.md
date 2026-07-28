@@ -84,7 +84,7 @@ godlint config validate --config path/to/godlint.yaml
 ```
 
 The `check` command evaluates the configured rules across Rust,
-TypeScript/JavaScript, and Python source files. Twelve rules are implemented:
+TypeScript/JavaScript, and Python source files. Fifteen rules are implemented:
 
 - `maintainability/file-size` — effective lines in a file.
 - `maintainability/function-size` — effective lines in a function.
@@ -103,6 +103,26 @@ TypeScript/JavaScript, and Python source files. Twelve rules are implemented:
   themselves.
 - `policy/unused-suppression` — inline suppressions that no longer silence an enabled
   finding.
+- `architecture/restricted-call` — abrupt process exits and debug-only output, plus
+  configured direct callees outside their approved paths.
+- `security/no-dynamic-execution` — JavaScript `eval`, `Function`, and `new Function`;
+  Python `eval` and `exec`.
+- `security/direct-environment-read` — environment access outside a configuration
+  boundary.
+
+These three read the callee exactly as it is spelled. `std::env::var` is matched and the
+aliased `env::var` after `use std::env` is not, because knowing they name the same function
+needs resolution Godlint does not have yet — see
+[the rule roadmap](docs/rule-roadmap.md) for what that defers. They also have no scope
+analysis, so a local binding that shadows a restricted name is reported: a Python parameter
+called `exec`, or a `const process = …` in TypeScript. Enable them deliberately; each is
+off until a repository configures it.
+
+One consequence of built-in restrictions being language-bound is worth knowing before you
+write a policy: a name a built-in already claims belongs to that built-in's language. Naming
+`print` restricts Python's, and a TypeScript function of your own called `print` cannot be
+restricted at all — there is no language key to say which you meant, so the policy is silent
+rather than wrong. Pick a name no built-in claims, or wait for that key.
 
 A function means the same thing in every language: Rust `fn` items and closures,
 Python `def` functions and lambdas, and JavaScript/TypeScript function declarations,

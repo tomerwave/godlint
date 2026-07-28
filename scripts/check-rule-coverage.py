@@ -25,12 +25,22 @@ RULES = "/src/rules/"
 # Lines that cannot be executed by any test, with the reason they cannot.
 #
 # Every entry is error propagation from `SourceFile::location`, which fails only for a
-# range that is out of bounds or off a character boundary. Facts validate their ranges
-# when they are constructed, so no fact can carry such a range and the `?` never fires.
+# range that is out of bounds or off a character boundary. Function, comment, call, and
+# access facts validate their ranges when they are constructed, so no fact can carry such
+# a range and the `?` never fires.
 # Removing that plumbing would take this budget to zero; until then it is fixed, so a
 # newly uncovered line pushes the count over and fails.
 BUDGET = {
     "src/rules/mod.rs": 7,
+    # A rule that evaluates two fact kinds propagates a location error from each, and the
+    # shared reference driver propagates one of its own. CallFact and AccessFact validate
+    # their ranges on construction, so none of these can execute through the fact contract.
+    # Two are the rule's own `?` propagations. The third is `Language::Rust => false` in
+    # `is_environment_access`: Rust states in its vocabulary that it has no member-access
+    # form, so no Rust file produces an access fact and the arm exists to make the compiler
+    # demand a decision when a language is added.
+    "src/rules/direct_environment_read.rs": 3,
+    "src/rules/reference.rs": 1,
     "src/rules/todo_requires_reference.rs": 1,
 }
 

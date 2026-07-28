@@ -1,0 +1,10 @@
+exit-code: 1
+
+stdout: |
+  config.js:1:1: error[security/no-dynamic-execution] eval executes dynamically generated code; use an explicit, reviewed boundary instead.
+  example.js:1:1: error[security/no-dynamic-execution] eval executes dynamically generated code; use an explicit, reviewed boundary instead.
+  example.js:2:1: error[security/no-dynamic-execution] Function executes dynamically generated code; use an explicit, reviewed boundary instead.
+  example.py:1:1: error[security/no-dynamic-execution] eval executes dynamically generated code; use an explicit, reviewed boundary instead.
+  example.py:2:1: error[security/no-dynamic-execution] exec executes dynamically generated code; use an explicit, reviewed boundary instead.
+
+stderr: ""

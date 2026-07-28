@@ -4,8 +4,8 @@ use tree_sitter::{Language as TreeSitterLanguage, Node, Parser};
 
 use crate::{
     facts::{
-        CommentFact, CommentFactError, CommentKind, FunctionFact, FunctionFactDetails,
-        FunctionFactError,
+        AccessFact, AccessFactError, CallFact, CallFactError, CommentFact, CommentFactError,
+        FunctionFact, FunctionFactDetails, FunctionFactError,
     },
     source::{Language, SourceFile, SourceRange, SourceRangeError},
 };
@@ -23,7 +23,9 @@ mod vocabulary;
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SourceFacts {
     source: SourceFile,
+    accesses: Vec<AccessFact>,
     comments: Vec<CommentFact>,
+    calls: Vec<CallFact>,
     functions: Vec<FunctionFact>,
 }
 
@@ -36,8 +38,16 @@ impl SourceFacts {
         &self.functions
     }
 
+    pub fn accesses(&self) -> &[AccessFact] {
+        &self.accesses
+    }
+
     pub fn comments(&self) -> &[CommentFact] {
         &self.comments
+    }
+
+    pub fn calls(&self) -> &[CallFact] {
+        &self.calls
     }
 }
 
@@ -69,6 +79,14 @@ pub enum AnalyzerError {
         path: PathBuf,
         source: CommentFactError,
     },
+    InvalidCall {
+        path: PathBuf,
+        source: CallFactError,
+    },
+    InvalidAccess {
+        path: PathBuf,
+        source: AccessFactError,
+    },
 }
 
 pub fn analyze(source: &SourceFile) -> Result<SourceFacts, AnalyzerError> {
@@ -92,7 +110,9 @@ pub(crate) fn analyze_with(
 
     Ok(SourceFacts {
         source: source.clone(),
+        accesses: collected.accesses,
         comments: collected.comments,
+        calls: collected.calls,
         functions: collected.functions,
     })
 }
@@ -128,8 +148,28 @@ fn parse(
 
 #[derive(Default)]
 struct Collected {
+    accesses: Vec<AccessFact>,
     functions: Vec<FunctionFact>,
     comments: Vec<CommentFact>,
+    calls: Vec<CallFact>,
+}
+
+impl Collected {
+    fn absorb(
+        &mut self,
+        node: Node<'_>,
+        source: &SourceFile,
+        vocabulary: &Vocabulary,
+    ) -> Result<(), AnalyzerError> {
+        self.functions
+            .extend(function_fact(node, source, vocabulary)?);
+        self.comments
+            .extend(comment_fact(node, source, vocabulary)?);
+        self.calls.extend(call_fact(node, source, vocabulary)?);
+        self.accesses.extend(access_fact(node, source, vocabulary)?);
+
+        Ok(())
+    }
 }
 
 fn collect_source_facts(
@@ -138,15 +178,7 @@ fn collect_source_facts(
     vocabulary: &Vocabulary,
     collected: &mut Collected,
 ) -> Result<(), AnalyzerError> {
-    if metrics::is_function(node, vocabulary) {
-        collected
-            .functions
-            .push(function_fact(node, source, vocabulary)?);
-    }
-
-    if let Some(kind) = (vocabulary.comment_kind)(node, source.source()) {
-        collected.comments.push(comment_fact(node, source, kind)?);
-    }
+    collected.absorb(node, source, vocabulary)?;
 
     let mut cursor = node.walk();
 
@@ -157,24 +189,93 @@ fn collect_source_facts(
     Ok(())
 }
 
+fn call_fact(
+    node: Node<'_>,
+    source: &SourceFile,
+    vocabulary: &Vocabulary,
+) -> Result<Option<CallFact>, AnalyzerError> {
+    let Some(callee) = (vocabulary.callee)(node) else {
+        return Ok(None);
+    };
+    if direct_path(callee.node, source).is_none() {
+        return Ok(None);
+    }
+
+    let range = node_range(callee.node, source)?;
+    let fact = CallFact::new(source.clone(), range, callee.is_macro).map_err(|error| {
+        AnalyzerError::InvalidCall {
+            path: source.path().to_path_buf(),
+            source: error,
+        }
+    })?;
+
+    Ok(Some(fact))
+}
+
+fn access_fact(
+    node: Node<'_>,
+    source: &SourceFile,
+    vocabulary: &Vocabulary,
+) -> Result<Option<AccessFact>, AnalyzerError> {
+    if !(vocabulary.is_access)(node.kind()) {
+        return Ok(None);
+    }
+
+    if direct_path(node, source).is_none() {
+        return Ok(None);
+    }
+
+    let range = node_range(node, source)?;
+    let fact =
+        AccessFact::new(source.clone(), range).map_err(|error| AnalyzerError::InvalidAccess {
+            path: source.path().to_path_buf(),
+            source: error,
+        })?;
+
+    Ok(Some(fact))
+}
+
+fn direct_path<'source>(node: Node<'_>, source: &'source SourceFile) -> Option<&'source str> {
+    source
+        .source()
+        .get(node.byte_range())
+        .filter(|text| is_direct_path(text))
+}
+
+fn is_direct_path(text: &str) -> bool {
+    !text.is_empty()
+        && text
+            .chars()
+            .all(|character| character.is_alphanumeric() || "_.:".contains(character))
+}
+
 fn comment_fact(
     node: Node<'_>,
     source: &SourceFile,
-    kind: CommentKind,
-) -> Result<CommentFact, AnalyzerError> {
+    vocabulary: &Vocabulary,
+) -> Result<Option<CommentFact>, AnalyzerError> {
+    let Some(kind) = (vocabulary.comment_kind)(node, source.source()) else {
+        return Ok(None);
+    };
     let range = node_range(node, source)?;
 
-    CommentFact::new(source.clone(), range, kind).map_err(|error| AnalyzerError::InvalidComment {
-        path: source.path().to_path_buf(),
-        source: error,
-    })
+    CommentFact::new(source.clone(), range, kind)
+        .map(Some)
+        .map_err(|error| AnalyzerError::InvalidComment {
+            path: source.path().to_path_buf(),
+            source: error,
+        })
 }
 
 fn function_fact(
     node: Node<'_>,
     source: &SourceFile,
     vocabulary: &Vocabulary,
-) -> Result<FunctionFact, AnalyzerError> {
+) -> Result<Option<FunctionFact>, AnalyzerError> {
+    if !metrics::is_function(node, vocabulary) {
+        return Ok(None);
+    }
+
     let range = node_range(node, source)?;
     let body_range = node
         .child_by_field_name("body")
@@ -202,6 +303,7 @@ fn function_fact(
             is_abstract: (vocabulary.is_abstract)(node, text),
         },
     )
+    .map(Some)
     .map_err(|error| AnalyzerError::InvalidFunction {
         path: source.path().to_path_buf(),
         source: error,
@@ -250,6 +352,12 @@ impl fmt::Display for AnalyzerError {
             Self::InvalidComment { path, source } => {
                 write!(formatter, "invalid comment in {}: {source}", path.display())
             }
+            Self::InvalidCall { path, source } => {
+                write!(formatter, "invalid call in {}: {source}", path.display())
+            }
+            Self::InvalidAccess { path, source } => {
+                write!(formatter, "invalid access in {}: {source}", path.display())
+            }
         }
     }
 }
@@ -261,6 +369,8 @@ impl Error for AnalyzerError {
             Self::InvalidRange { source, .. } => Some(source),
             Self::InvalidFunction { source, .. } => Some(source),
             Self::InvalidComment { source, .. } => Some(source),
+            Self::InvalidCall { source, .. } => Some(source),
+            Self::InvalidAccess { source, .. } => Some(source),
             Self::MissingSyntaxTree { .. } | Self::InvalidSyntax { .. } => None,
         }
     }

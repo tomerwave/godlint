@@ -1,6 +1,6 @@
 use tree_sitter::Node;
 
-use super::vocabulary::Vocabulary;
+use super::vocabulary::{Callee, Vocabulary};
 use crate::facts::CommentKind;
 
 pub(super) const VOCABULARY: Vocabulary = Vocabulary {
@@ -13,6 +13,8 @@ pub(super) const VOCABULARY: Vocabulary = Vocabulary {
     is_placeholder,
     is_receiver,
     is_abstract,
+    callee,
+    is_access,
     comment_kind,
     has_implicit_tail_return,
 };
@@ -48,6 +50,23 @@ fn is_block(kind: &str) -> bool {
 
 fn is_conditional(kind: &str) -> bool {
     kind == "if_statement"
+}
+
+fn callee(node: Node<'_>) -> Option<Callee<'_>> {
+    let field = match node.kind() {
+        "call_expression" => "function",
+        "new_expression" => "constructor",
+        _ => return None,
+    };
+
+    node.child_by_field_name(field).map(|node| Callee {
+        node,
+        is_macro: false,
+    })
+}
+
+fn is_access(kind: &str) -> bool {
+    kind == "member_expression"
 }
 
 fn is_decision(node: Node<'_>) -> bool {

@@ -1,3 +1,7 @@
+pub fn matches_any<'a>(patterns: impl IntoIterator<Item = &'a str>, path: &str) -> bool {
+    patterns.into_iter().any(|pattern| matches(pattern, path))
+}
+
 pub fn matches(pattern: &str, path: &str) -> bool {
     let pattern_segments = split(pattern);
     let path_segments = split(path);

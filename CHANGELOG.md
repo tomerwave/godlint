@@ -66,6 +66,32 @@ releases begin.
 - `policy/unused-suppression` — reports an inline directive that does not silence an
   enabled finding. A directive for an off rule is dormant rather than unused, so staged
   rule adoption does not manufacture exception debt.
+- `architecture/restricted-call` — restricts direct process exits and debug-only output
+  once enabled, and restricts configured direct callees to approved path globs. Naming a
+  built-in restriction under `calls` lets its `allow-in` boundary apply to it, which is how
+  a CLI permits `console.log` in its entry point. A Rust macro is named with its `!` —
+  `dbg!` restricts the macro, `dbg` restricts a function of that name — which is both how
+  Rust spells them and how a finding reports them, so the name a reader sees is the name
+  they configure. A built-in name stays bound to the language that defines it, so scoping
+  Python's `print` does not restrict a TypeScript function of that name, while a name the
+  project invents applies wherever it is called. The consequence is that a callee of your own
+  whose name a built-in already claims cannot be restricted: naming `print` reaches Python's
+  and not a TypeScript function of that name, and there is no language key yet to say which
+  was meant, so such a policy is silent rather than wrong. Listing one callee twice is a
+  configuration error rather than a silent choice between the two entries.
+- `security/no-dynamic-execution` — reports JavaScript `eval`, `Function`, and
+  `new Function`, plus Python `eval` and `exec`.
+- `security/direct-environment-read` — reports direct JavaScript, Python, and Rust
+  environment reads outside a configuration boundary. `allow-in` defaults to `**/config.*`
+  and `**/config/**`, and setting it replaces that default rather than adding to it, so a
+  repository can narrow the exemption as well as widen it.
+- All three read a callee exactly as spelled, and are off until a repository configures
+  them, like every other rule. `std::env::var` is matched where the aliased `env::var` after
+  `use std::env` is not, because knowing they name the same function needs resolution that
+  [the rule roadmap](docs/rule-roadmap.md) defers to a semantic phase. There is no scope
+  analysis either, so a local binding shadowing a restricted name is reported — a Python
+  parameter called `exec`, or a TypeScript `const process`. A Rust macro and a function that
+  share a name are distinguished, so `dbg!(x)` is restricted where a `fn dbg` is not.
 - `godlint suppressions [paths...]` — lists every suppression in scope with its location,
   scope, rules, owner, expiry, and reason, then the total. A directive with no reason is
   listed as `(no justification)` rather than omitted.
@@ -223,6 +249,11 @@ releases begin.
   template asks for it there.
 
 ### Fixed
+
+- A call or access fact reads its callee or target from the range it already carries instead
+  of storing a second copy, and `SourceFile` holds its path behind an `Arc` so cloning a file
+  into a fact no longer allocates one. Both cut the memory a scan holds, since every fact for
+  every file is live at once, and the first removes state that could disagree with itself.
 
 - `godlint-ignore-enclosing` covers a byte range rather than a line range, and excludes
   declarations nested inside the one it resolves to. It previously silenced the named rule

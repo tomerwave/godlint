@@ -4,8 +4,9 @@ use std::path::PathBuf;
 
 use godlint_core::{
     facts::{
-        BlockDepth, CommentFact, CommentFactError, CommentKind, DecisionPoints, FunctionFact,
-        FunctionFactDetails, FunctionFactError, ParameterCount, ReturnPaths, StatementCount,
+        AccessFact, AccessFactError, BlockDepth, CallFact, CallFactError, CommentFact,
+        CommentFactError, CommentKind, DecisionPoints, FunctionFact, FunctionFactDetails,
+        FunctionFactError, ParameterCount, ReturnPaths, StatementCount,
     },
     source::{SourceFile, SourceRange},
 };
@@ -123,5 +124,52 @@ fn rejects_a_comment_range_outside_the_file() {
     assert!(matches!(
         result,
         Err(CommentFactError::InvalidCommentRange { .. })
+    ));
+}
+
+#[test]
+fn records_a_call() {
+    let fact = CallFact::new(source(), range(17, 22), false)
+        .unwrap_or_else(|error| panic!("creates call fact: {error}"));
+
+    assert_eq!(fact.range(), range(17, 22));
+    assert_eq!(
+        fact.callee(),
+        "inner",
+        "a callee is read from the range rather than stored beside it"
+    );
+    assert!(!fact.is_macro());
+}
+
+#[test]
+fn rejects_a_call_range_outside_the_file() {
+    let result = CallFact::new(source(), range(0, 999), false);
+
+    assert!(matches!(
+        result,
+        Err(CallFactError::InvalidCallRange { .. })
+    ));
+}
+
+#[test]
+fn records_an_access() {
+    let fact = AccessFact::new(source(), range(3, 8))
+        .unwrap_or_else(|error| panic!("creates access fact: {error}"));
+
+    assert_eq!(fact.range(), range(3, 8));
+    assert_eq!(
+        fact.target(),
+        "outer",
+        "a target is read from the range rather than stored beside it"
+    );
+}
+
+#[test]
+fn rejects_an_access_range_outside_the_file() {
+    let result = AccessFact::new(source(), range(0, 999));
+
+    assert!(matches!(
+        result,
+        Err(AccessFactError::InvalidAccessRange { .. })
     ));
 }

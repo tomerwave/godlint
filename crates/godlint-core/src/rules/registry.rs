@@ -2,11 +2,13 @@ use crate::{
     config::{Config, Severity},
     rules::{
         Rule, accountable_suppression::AccountableSuppression,
-        decision_complexity::DecisionComplexity, empty_function::EmptyFunction,
-        file_size::FileSize, function_nesting::FunctionNesting, function_size::FunctionSize,
-        function_statements::FunctionStatements, no_comments::NoComments,
-        parameter_count::ParameterCount, return_count::ReturnCount,
-        todo_requires_reference::TodoRequiresReference, unused_suppression::UnusedSuppression,
+        decision_complexity::DecisionComplexity, direct_environment_read::DirectEnvironmentRead,
+        empty_function::EmptyFunction, file_size::FileSize, function_nesting::FunctionNesting,
+        function_size::FunctionSize, function_statements::FunctionStatements,
+        no_comments::NoComments, no_dynamic_execution::NoDynamicExecution,
+        parameter_count::ParameterCount, restricted_call::RestrictedCall,
+        return_count::ReturnCount, todo_requires_reference::TodoRequiresReference,
+        unused_suppression::UnusedSuppression,
     },
 };
 
@@ -59,6 +61,18 @@ severity!(
     unused_suppression_severity,
     UnusedSuppression,
     unused_suppression
+);
+
+severity!(restricted_call_severity, RestrictedCall, restricted_call);
+severity!(
+    no_dynamic_execution_severity,
+    NoDynamicExecution,
+    no_dynamic_execution
+);
+severity!(
+    direct_environment_read_severity,
+    DirectEnvironmentRead,
+    direct_environment_read
 );
 
 const REGISTRATIONS: &[Registration] = &[
@@ -121,6 +135,21 @@ const REGISTRATIONS: &[Registration] = &[
         id: UnusedSuppression::ID,
         severity: unused_suppression_severity,
         suppressible: false,
+    },
+    Registration {
+        id: RestrictedCall::ID,
+        severity: restricted_call_severity,
+        suppressible: true,
+    },
+    Registration {
+        id: NoDynamicExecution::ID,
+        severity: no_dynamic_execution_severity,
+        suppressible: true,
+    },
+    Registration {
+        id: DirectEnvironmentRead::ID,
+        severity: direct_environment_read_severity,
+        suppressible: true,
     },
 ];
 

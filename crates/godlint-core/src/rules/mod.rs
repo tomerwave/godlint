@@ -11,6 +11,7 @@ use crate::{
 
 pub mod accountable_suppression;
 pub mod decision_complexity;
+pub mod direct_environment_read;
 pub mod empty_function;
 pub mod file_size;
 pub mod function_nesting;
@@ -18,8 +19,13 @@ pub mod function_size;
 pub mod function_statements;
 mod line_count;
 pub mod no_comments;
+pub mod no_dynamic_execution;
 pub mod parameter_count;
+mod reference;
+
+pub use reference::{AccessRule, CallRule, evaluate_access_rule, evaluate_call_rule};
 mod registry;
+pub mod restricted_call;
 pub mod return_count;
 pub mod todo_requires_reference;
 pub mod unused_suppression;
@@ -53,6 +59,15 @@ pub enum Violation {
         defect: SuppressionDefect,
     },
     UnusedSuppression,
+    RestrictedCall {
+        callee: String,
+    },
+    DynamicExecution {
+        callee: String,
+    },
+    DirectEnvironmentRead {
+        target: String,
+    },
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -376,6 +391,9 @@ const EVALUATORS: &[Evaluator] = &[
     return_count::evaluate,
     function_statements::evaluate,
     no_comments::evaluate,
+    restricted_call::evaluate,
+    no_dynamic_execution::evaluate,
+    direct_environment_read::evaluate,
 ];
 
 pub fn evaluate(
@@ -444,6 +462,17 @@ impl fmt::Display for Violation {
             Self::UnusedSuppression => write!(
                 formatter,
                 "Suppression does not silence an enabled finding; remove it or narrow the rule."
+            ),
+            Self::RestrictedCall { callee } => {
+                write!(formatter, "{callee} is restricted by project policy.")
+            }
+            Self::DynamicExecution { callee } => write!(
+                formatter,
+                "{callee} executes dynamically generated code; use an explicit, reviewed boundary instead."
+            ),
+            Self::DirectEnvironmentRead { target } => write!(
+                formatter,
+                "{target} reads environment directly; read configuration through a config boundary instead."
             ),
         }
     }

@@ -1,4 +1,5 @@
 use std::{
+    collections::BTreeSet,
     error::Error,
     fmt, fs,
     num::NonZeroU32,
@@ -61,6 +62,12 @@ pub struct Rules {
     pub accountable_suppression: Option<AccountableSuppressionRule>,
     #[serde(rename = "policy/unused-suppression")]
     pub unused_suppression: Option<UnusedSuppressionRule>,
+    #[serde(rename = "architecture/restricted-call")]
+    pub restricted_call: Option<RestrictedCallRule>,
+    #[serde(rename = "security/no-dynamic-execution")]
+    pub no_dynamic_execution: Option<NoDynamicExecutionRule>,
+    #[serde(rename = "security/direct-environment-read")]
+    pub direct_environment_read: Option<DirectEnvironmentReadRule>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -77,6 +84,36 @@ pub struct AccountableSuppressionRule {
 #[serde(deny_unknown_fields)]
 pub struct UnusedSuppressionRule {
     pub severity: Severity,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RestrictedCallRule {
+    pub severity: Severity,
+    #[serde(default)]
+    pub calls: Vec<RestrictedCall>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RestrictedCall {
+    pub name: String,
+    #[serde(default, rename = "allow-in")]
+    pub allow_in: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct NoDynamicExecutionRule {
+    pub severity: Severity,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct DirectEnvironmentReadRule {
+    pub severity: Severity,
+    #[serde(default = "default_configuration_paths", rename = "allow-in")]
+    pub allow_in: Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -153,6 +190,10 @@ fn default_markers() -> Vec<String> {
     vec!["TODO".into(), "FIXME".into(), "HACK".into(), "XXX".into()]
 }
 
+fn default_configuration_paths() -> Vec<String> {
+    vec!["**/config.*".into(), "**/config/**".into()]
+}
+
 const fn default_fail_on() -> Severity {
     Severity::Error
 }
@@ -186,6 +227,13 @@ pub enum ConfigError {
     InvalidComplexityLimit,
     InvalidTodoMarkers,
     InvalidTodoReferencePrefixes,
+    InvalidRestrictedCallName,
+    DuplicateRestrictedCallName {
+        name: String,
+    },
+    BlankAllowIn {
+        rule: &'static str,
+    },
     InvalidExclude {
         pattern: String,
     },
@@ -242,7 +290,10 @@ impl Config {
             return Err(ConfigError::InvalidComplexityLimit);
         }
 
-        self.validate_todo_rule()
+        self.validate_todo_rule()?;
+        self.validate_restricted_call_rule()?;
+
+        self.validate_direct_environment_read_rule()
     }
 
     fn validate_todo_rule(&self) -> Result<(), ConfigError> {
@@ -250,7 +301,7 @@ impl Config {
             return Ok(());
         };
 
-        if rule.markers.is_empty() || rule.markers.iter().any(|marker| marker.trim().is_empty()) {
+        if rule.markers.is_empty() || any_blank(&rule.markers) {
             return Err(ConfigError::InvalidTodoMarkers);
         }
 
@@ -265,6 +316,53 @@ impl Config {
 
         Ok(())
     }
+
+    fn validate_restricted_call_rule(&self) -> Result<(), ConfigError> {
+        let Some(rule) = &self.rules.restricted_call else {
+            return Ok(());
+        };
+
+        let mut seen = BTreeSet::new();
+
+        for call in &rule.calls {
+            if call.name.trim().is_empty() {
+                return Err(ConfigError::InvalidRestrictedCallName);
+            }
+
+            if any_blank(&call.allow_in) {
+                return Err(ConfigError::BlankAllowIn {
+                    rule: "architecture/restricted-call",
+                });
+            }
+
+            if !seen.insert(call.name.as_str()) {
+                return Err(ConfigError::DuplicateRestrictedCallName {
+                    name: call.name.clone(),
+                });
+            }
+        }
+
+        Ok(())
+    }
+
+    fn validate_direct_environment_read_rule(&self) -> Result<(), ConfigError> {
+        if self
+            .rules
+            .direct_environment_read
+            .as_ref()
+            .is_some_and(|rule| any_blank(&rule.allow_in))
+        {
+            return Err(ConfigError::BlankAllowIn {
+                rule: "security/direct-environment-read",
+            });
+        }
+
+        Ok(())
+    }
+}
+
+fn any_blank(values: &[String]) -> bool {
+    values.iter().any(|value| value.trim().is_empty())
 }
 
 fn prefix_is_unusable(prefix: &str) -> bool {
@@ -299,6 +397,22 @@ impl fmt::Display for ConfigError {
                     "policy/todo-requires-reference reference-prefixes must not be empty or numeric"
                 )
             }
+            Self::InvalidRestrictedCallName => {
+                write!(
+                    formatter,
+                    "architecture/restricted-call call names must not be blank"
+                )
+            }
+            Self::DuplicateRestrictedCallName { name } => {
+                write!(
+                    formatter,
+                    "architecture/restricted-call lists {name} more than once; \
+                     one entry decides its allow-in boundary"
+                )
+            }
+            Self::BlankAllowIn { rule } => {
+                write!(formatter, "{rule} allow-in paths must not be blank")
+            }
             Self::InvalidExclude { pattern } => {
                 write!(formatter, "exclude pattern must not be blank: {pattern:?}")
             }
@@ -315,6 +429,9 @@ impl Error for ConfigError {
             | Self::InvalidComplexityLimit
             | Self::InvalidTodoMarkers
             | Self::InvalidTodoReferencePrefixes
+            | Self::InvalidRestrictedCallName
+            | Self::DuplicateRestrictedCallName { .. }
+            | Self::BlankAllowIn { .. }
             | Self::InvalidExclude { .. } => None,
         }
     }

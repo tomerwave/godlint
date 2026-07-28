@@ -62,7 +62,11 @@ fn an_absent_rule_is_off_rather_than_unknown() {
     let empty = config("version: 1\n");
 
     for identifier in rule_ids() {
-        assert_eq!(configured_severity(&empty, identifier), Severity::Off);
+        assert_eq!(
+            configured_severity(&empty, identifier),
+            Severity::Off,
+            "{identifier} must do nothing until a repository asks for it"
+        );
         assert!(is_known_rule(identifier));
     }
 }

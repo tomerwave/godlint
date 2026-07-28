@@ -1,0 +1,12 @@
+version: 1
+
+rules:
+  architecture/restricted-call:
+    severity: error
+    calls:
+      - name: loadConfig
+        allow-in:
+          - config/**
+      - name: console.log
+        allow-in:
+          - allowed.ts

@@ -121,6 +121,32 @@ fn accepts_the_function_statements_rule() {
 }
 
 #[test]
+fn accepts_the_restricted_call_rule() {
+    let result = load(
+        "version: 1\nrules:\n  architecture/restricted-call:\n    severity: error\n    calls:\n      - name: loadConfig\n        allow-in:\n          - '**/config.*'\n",
+    );
+
+    assert!(result.is_ok());
+}
+
+#[test]
+fn accepts_the_dynamic_execution_rule() {
+    let result =
+        load("version: 1\nrules:\n  security/no-dynamic-execution:\n    severity: warning\n");
+
+    assert!(result.is_ok());
+}
+
+#[test]
+fn accepts_the_direct_environment_read_rule() {
+    let result = load(
+        "version: 1\nrules:\n  security/direct-environment-read:\n    severity: error\n    allow-in:\n      - 'services/**/settings.*'\n",
+    );
+
+    assert!(result.is_ok());
+}
+
+#[test]
 fn rejects_an_unknown_rule() {
     let result = load("version: 1\nrules:\n  maintainability/unknown: {}\n");
 
@@ -184,4 +210,71 @@ fn rejects_blank_todo_reference_prefixes() {
         result,
         Err(ConfigError::InvalidTodoReferencePrefixes)
     ));
+}
+
+#[test]
+fn rejects_a_blank_restricted_call_name() {
+    let result = load(
+        "version: 1\nrules:\n  architecture/restricted-call:\n    severity: error\n    calls:\n      - name: ' '\n",
+    );
+
+    assert!(matches!(
+        result,
+        Err(ConfigError::InvalidRestrictedCallName)
+    ));
+}
+
+#[test]
+fn rejects_a_blank_restricted_call_allow_in_path() {
+    let result = load(
+        "version: 1\nrules:\n  architecture/restricted-call:\n    severity: error\n    calls:\n      - name: loadConfig\n        allow-in:\n          - ' '\n",
+    );
+
+    assert!(matches!(
+        result,
+        Err(ConfigError::BlankAllowIn {
+            rule: "architecture/restricted-call"
+        })
+    ));
+}
+
+#[test]
+fn rejects_a_blank_direct_environment_read_allow_in_path() {
+    let result = load(
+        "version: 1\nrules:\n  security/direct-environment-read:\n    severity: error\n    allow-in:\n      - ' '\n",
+    );
+
+    assert!(matches!(
+        result,
+        Err(ConfigError::BlankAllowIn {
+            rule: "security/direct-environment-read"
+        })
+    ));
+}
+
+#[test]
+fn rejects_a_restricted_call_listed_twice() {
+    let result = load(concat!(
+        "version: 1\n",
+        "rules:\n",
+        "  architecture/restricted-call:\n",
+        "    severity: error\n",
+        "    calls:\n",
+        "      - name: console.log\n",
+        "        allow-in:\n",
+        "          - a.ts\n",
+        "      - name: console.log\n",
+        "        allow-in:\n",
+        "          - b.ts\n"
+    ));
+
+    let Err(error) = result else {
+        panic!("two entries for one callee leave its boundary ambiguous");
+    };
+    let message = error.to_string();
+
+    assert!(
+        message.contains("console.log") && message.contains("more than once"),
+        "{message}"
+    );
 }

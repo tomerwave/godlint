@@ -31,9 +31,37 @@ expected: read it here.
 ## Facts
 
 Language adapters retain native AST and parser details. They emit a small shared fact
-model that rules consume without a universal AST. Two fact types exist today,
-`FunctionFact` and `CommentFact`; `Import`, `Call`, `EnvironmentRead`, `ErrorHandler`,
-`Assertion`, `Mock`, and `DependencyEdge` are planned and are described in the
+model that rules consume without a universal AST. `FunctionFact`, `CommentFact`,
+`CallFact`, and `AccessFact` exist today. `CallFact` records a direct callee path, a
+source range, and whether the call site was a macro invocation; `AccessFact` does the same
+for direct member access. Neither resolves aliases, types, or dynamically computed
+properties.
+
+The macro flag exists because a name is not enough to identify a callee in Rust. A grammar
+names a macro without its `!`, so a `fn dbg` and the `dbg!` macro reach a rule as the same
+string, and restricting one restricted the other. Rules spell a macro callee with its `!`,
+which is both how Rust writes it and the name a finding reports, so the name a reader sees
+is the name they configure.
+
+Naming a callee under `calls` scopes the restriction that already exists rather than
+redefining it. A built-in name stays bound to the language that defines it, so giving
+Python's `print` an `allow-in` boundary leaves a TypeScript function of that name alone. A
+name the project invents belongs to no language and applies wherever it is called, which is
+what a policy about `loadConfig` means.
+
+The unstated cost is that a project cannot restrict a callee of its own whose name a built-in
+already claims, and the failure is silence rather than a diagnostic. Resolving it needs a
+language key in the configuration, which is a schema addition rather than a restructuring:
+the table already carries the dialect, so the key would narrow a configured entry the same
+way the table narrows a built-in.
+
+One table pairs each built-in callee with the dialect that speaks it, and both questions the
+rule asks — is this name a built-in anywhere, and is it restricted in this call's dialect —
+are answered from that table. Splitting them across a list per language meant a new
+restriction had to be added twice, and forgetting the second made a built-in silently
+language-agnostic again. A dialect is not quite a language: Rust reaches the table twice,
+once for calls and once for macros, which is what keeps `dbg!` and a `fn dbg` apart. `Import`, `EnvironmentRead`,
+`ErrorHandler`, `Assertion`, `Mock`, and `DependencyEdge` are planned and are described in the
 [rule roadmap](rule-roadmap.md).
 
 Source files are identified with repository-relative paths and a shared language enum.
@@ -114,6 +142,25 @@ A finding carries a typed violation rather than a prepared sentence. Reporters o
 the terminal need the numbers, and a rendered message must never be load-bearing:
 findings are ordered by path, line, column, and rule identifier, so output order cannot
 depend on wording.
+
+A call and an access carry a range and read their text from it, the way `CommentFact`
+already does, rather than storing a copy of the text beside the range. Two fields for one
+truth can disagree, and a test asserting a callee of `inner` for a range spelling `inner()`
+is what that drift looks like. `SourceFile` holds its path behind an `Arc` because a fact
+clones the file it came from, and an owned path allocated on every one of those clones.
+
+`AccessFact` is produced for JavaScript, TypeScript and Python only. Rust states in its
+vocabulary that it has no member-read form of the constructs these rules police — it reads
+the environment through a call — so a reader can tell the difference between "Rust is not
+violated" and "Rust is not seen".
+
+Calls and accesses share one driver in `rules::reference`, which also owns the `CallRule`
+and `AccessRule` traits, so a reference rule declares what it looks for and the driver reads
+its identity and severity. That is what stops a rule naming another rule's identifier or
+ignoring the severity gate. Both answer the same question of
+a different fact slice — does this reference violate a policy — so the loop that walks them,
+honours the severity gate, and turns a violation into a finding is written once. A rule that
+consumes both, as the environment-read rule does, gets consistent ordering for free.
 
 `rules::line_count` identifies commentary from the comment facts the analyzer already
 produced rather than by re-scanning text for `//` and `#`. Re-lexing there would

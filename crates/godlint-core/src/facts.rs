@@ -28,6 +28,35 @@ macro_rules! function_metrics {
     };
 }
 
+macro_rules! range_errors {
+    ($($name:ident => $variant:ident, $noun:literal),+ $(,)?) => {
+        $(
+            #[derive(Debug)]
+            pub enum $name {
+                $variant { source: SourceFileError },
+            }
+
+            impl fmt::Display for $name {
+                fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+                    match self {
+                        Self::$variant { source } => {
+                            write!(formatter, concat!($noun, " range is invalid: {}"), source)
+                        }
+                    }
+                }
+            }
+
+            impl Error for $name {
+                fn source(&self) -> Option<&(dyn Error + 'static)> {
+                    match self {
+                        Self::$variant { source } => Some(source),
+                    }
+                }
+            }
+        )+
+    };
+}
+
 function_metrics! {
     ParameterCount,
     DecisionPoints,
@@ -50,6 +79,19 @@ pub struct CommentFact {
     source: SourceFile,
     range: SourceRange,
     kind: CommentKind,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CallFact {
+    source: SourceFile,
+    range: SourceRange,
+    is_macro: bool,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct AccessFact {
+    source: SourceFile,
+    range: SourceRange,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -94,9 +136,10 @@ pub enum FunctionFactError {
     },
 }
 
-#[derive(Debug)]
-pub enum CommentFactError {
-    InvalidCommentRange { source: SourceFileError },
+range_errors! {
+    CommentFactError => InvalidCommentRange, "comment",
+    CallFactError => InvalidCallRange, "call",
+    AccessFactError => InvalidAccessRange, "access",
 }
 
 impl CommentFact {
@@ -129,6 +172,62 @@ impl CommentFact {
     }
 
     pub fn text(&self) -> &str {
+        &self.source.source()[self.range.start()..self.range.end()]
+    }
+}
+
+impl CallFact {
+    pub fn new(
+        source: SourceFile,
+        range: SourceRange,
+        is_macro: bool,
+    ) -> Result<Self, CallFactError> {
+        source
+            .validate_range(range)
+            .map_err(|source| CallFactError::InvalidCallRange { source })?;
+
+        Ok(Self {
+            source,
+            range,
+            is_macro,
+        })
+    }
+
+    pub fn source(&self) -> &SourceFile {
+        &self.source
+    }
+
+    pub fn range(&self) -> SourceRange {
+        self.range
+    }
+
+    pub fn callee(&self) -> &str {
+        &self.source.source()[self.range.start()..self.range.end()]
+    }
+
+    pub fn is_macro(&self) -> bool {
+        self.is_macro
+    }
+}
+
+impl AccessFact {
+    pub fn new(source: SourceFile, range: SourceRange) -> Result<Self, AccessFactError> {
+        source
+            .validate_range(range)
+            .map_err(|source| AccessFactError::InvalidAccessRange { source })?;
+
+        Ok(Self { source, range })
+    }
+
+    pub fn source(&self) -> &SourceFile {
+        &self.source
+    }
+
+    pub fn range(&self) -> SourceRange {
+        self.range
+    }
+
+    pub fn target(&self) -> &str {
         &self.source.source()[self.range.start()..self.range.end()]
     }
 }
@@ -248,24 +347,6 @@ impl Error for FunctionFactError {
                 Some(source)
             }
             Self::BodyOutsideFunction { .. } => None,
-        }
-    }
-}
-
-impl fmt::Display for CommentFactError {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::InvalidCommentRange { source } => {
-                write!(formatter, "comment range is invalid: {source}")
-            }
-        }
-    }
-}
-
-impl Error for CommentFactError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match self {
-            Self::InvalidCommentRange { source } => Some(source),
         }
     }
 }
