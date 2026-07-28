@@ -45,15 +45,32 @@ pub enum Violation {
 }
 
 impl Metric {
-    fn parts(self) -> (&'static str, &'static str) {
+    fn describe(self, formatter: &mut fmt::Formatter<'_>, actual: u32, max: u32) -> fmt::Result {
         match self {
-            Self::FunctionLines => ("Function has", "effective lines"),
-            Self::FileLines => ("File has", "effective lines"),
-            Self::BlockDepth => ("Function nests blocks", "levels deep"),
-            Self::ParameterCount => ("Function has", "parameters"),
-            Self::Complexity => ("Function has cyclomatic complexity", ""),
-            Self::ReturnPaths => ("Function has", "return paths"),
-            Self::StatementCount => ("Function has", "statements"),
+            Self::FunctionLines => {
+                write!(
+                    formatter,
+                    "Function has {actual} effective lines (max {max})."
+                )
+            }
+            Self::FileLines => write!(formatter, "File has {actual} effective lines (max {max})."),
+            Self::BlockDepth => write!(
+                formatter,
+                "Function nests blocks {actual} levels deep (max {max})."
+            ),
+            Self::ParameterCount => {
+                write!(formatter, "Function has {actual} parameters (max {max}).")
+            }
+            Self::Complexity => write!(
+                formatter,
+                "Function has cyclomatic complexity {actual} (max {max})."
+            ),
+            Self::ReturnPaths => {
+                write!(formatter, "Function has {actual} return paths (max {max}).")
+            }
+            Self::StatementCount => {
+                write!(formatter, "Function has {actual} statements (max {max}).")
+            }
         }
     }
 }
@@ -66,6 +83,16 @@ pub struct Finding {
     pub severity: Severity,
     pub rule_id: &'static str,
     pub violation: Violation,
+}
+
+impl Violation {
+    pub const fn limit(metric: Metric, actual: u32, max: u32) -> Self {
+        Self::Limit {
+            metric,
+            actual,
+            max,
+        }
+    }
 }
 
 impl Finding {
@@ -261,15 +288,7 @@ impl fmt::Display for Violation {
                 metric,
                 actual,
                 max,
-            } => {
-                let (subject, measure) = metric.parts();
-
-                if measure.is_empty() {
-                    return write!(formatter, "{subject} {actual} (max {max}).");
-                }
-
-                write!(formatter, "{subject} {actual} {measure} (max {max}).")
-            }
+            } => metric.describe(formatter, *actual, *max),
             Self::EmptyBody => write!(formatter, "Function has an empty body."),
             Self::MissingReference { marker } => {
                 write!(formatter, "{marker} comment requires an issue reference.")

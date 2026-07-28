@@ -74,6 +74,16 @@ fn is_abstract(_node: Node<'_>, _source: &str) -> bool {
     false
 }
 
+const COMMENT_PREFIXES: [(&str, CommentKind); 7] = [
+    ("///", CommentKind::Doc),
+    ("//!", CommentKind::Doc),
+    ("//", CommentKind::Line),
+    ("/**/", CommentKind::Block),
+    ("/**", CommentKind::Doc),
+    ("/*!", CommentKind::Doc),
+    ("/*", CommentKind::Block),
+];
+
 fn comment_kind(node: Node<'_>, source: &str) -> Option<CommentKind> {
     if !node.is_extra() {
         return None;
@@ -81,19 +91,10 @@ fn comment_kind(node: Node<'_>, source: &str) -> Option<CommentKind> {
 
     let text = source.get(node.byte_range())?;
 
-    if text.starts_with("//!") || text.starts_with("///") {
-        return Some(CommentKind::Doc);
-    }
-
-    if text.starts_with("//") {
-        return Some(CommentKind::Line);
-    }
-
-    if text.starts_with("/*!") || (text.starts_with("/**") && !text.starts_with("/**/")) {
-        return Some(CommentKind::Doc);
-    }
-
-    text.starts_with("/*").then_some(CommentKind::Block)
+    COMMENT_PREFIXES
+        .iter()
+        .find(|(prefix, _)| text.starts_with(prefix))
+        .map(|(_, kind)| *kind)
 }
 
 fn has_implicit_tail_return(node: Node<'_>) -> bool {

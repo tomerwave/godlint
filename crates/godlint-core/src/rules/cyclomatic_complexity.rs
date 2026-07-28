@@ -29,11 +29,7 @@ impl FunctionRule for CyclomaticComplexity {
         let actual = function.decision_points().value() + 1;
         let max = configuration.limit();
 
-        (actual > max).then_some(Violation::Limit {
-            metric: Metric::Complexity,
-            actual,
-            max,
-        })
+        (actual > max).then_some(Violation::limit(Metric::Complexity, actual, max))
     }
 }
 

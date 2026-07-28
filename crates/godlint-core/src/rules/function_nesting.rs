@@ -29,11 +29,7 @@ impl FunctionRule for FunctionNesting {
         let actual = function.block_depth().value();
         let max = configuration.limit();
 
-        (actual > max).then_some(Violation::Limit {
-            metric: Metric::BlockDepth,
-            actual,
-            max,
-        })
+        (actual > max).then_some(Violation::limit(Metric::BlockDepth, actual, max))
     }
 }
 

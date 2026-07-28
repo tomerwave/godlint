@@ -29,11 +29,7 @@ impl FunctionRule for ParameterCount {
         let actual = function.parameter_count().value();
         let max = configuration.limit();
 
-        (actual > max).then_some(Violation::Limit {
-            metric: Metric::ParameterCount,
-            actual,
-            max,
-        })
+        (actual > max).then_some(Violation::limit(Metric::ParameterCount, actual, max))
     }
 }
 

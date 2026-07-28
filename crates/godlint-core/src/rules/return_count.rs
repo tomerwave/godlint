@@ -29,11 +29,7 @@ impl FunctionRule for ReturnCount {
         let actual = function.return_paths().value();
         let max = configuration.limit();
 
-        (actual > max).then_some(Violation::Limit {
-            metric: Metric::ReturnPaths,
-            actual,
-            max,
-        })
+        (actual > max).then_some(Violation::limit(Metric::ReturnPaths, actual, max))
     }
 }
 

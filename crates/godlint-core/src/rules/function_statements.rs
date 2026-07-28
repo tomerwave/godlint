@@ -29,11 +29,7 @@ impl FunctionRule for FunctionStatements {
         let actual = function.statement_count().value();
         let max = configuration.limit();
 
-        (actual > max).then_some(Violation::Limit {
-            metric: Metric::StatementCount,
-            actual,
-            max,
-        })
+        (actual > max).then_some(Violation::limit(Metric::StatementCount, actual, max))
     }
 }
 

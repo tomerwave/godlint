@@ -22,7 +22,11 @@ fn lines(path: &str, source: &str, skip_blank_lines: bool, skip_comments: bool) 
         &facts,
         &configuration(1, skip_blank_lines, skip_comments),
     ) {
-        Some(Violation::Limit { actual, .. }) => actual,
+        Some(Violation::Limit {
+            metric: Metric::FunctionLines,
+            actual,
+            ..
+        }) => actual,
         _ => 1,
     }
 }

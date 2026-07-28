@@ -38,7 +38,11 @@ model that rules consume without a universal AST. Two fact types exist today,
 
 Source files are identified with repository-relative paths and a shared language enum.
 Ranges use byte offsets internally; the source contract validates them and derives
-one-based line and Unicode-scalar-column positions only at reporting boundaries. A
+one-based line and Unicode-scalar-column positions only at reporting boundaries. That
+derivation binary-searches a line-start index built once per file, because scanning to
+the offset instead would make reporting cost grow with a finding's distance into the
+file — which is invisible while rules fire rarely and quadratic once one fires per
+comment. A
 UTF-8 byte-order mark is stripped when a `SourceFile` is created, so byte offsets, line
 accounting, and reported columns all describe the source a reader sees rather than an
 invisible prefix.

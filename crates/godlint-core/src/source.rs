@@ -20,6 +20,7 @@ pub struct SourceFile {
     path: PathBuf,
     language: Language,
     source: Arc<str>,
+    line_starts: Arc<[usize]>,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -81,6 +82,7 @@ impl SourceFile {
         Ok(Self {
             path,
             language,
+            line_starts: line_starts(source),
             source: Arc::from(source),
         })
     }
@@ -143,14 +145,14 @@ impl SourceFile {
     fn position(&self, offset: usize) -> Result<SourcePosition, SourceFileError> {
         self.validate_offset(offset)?;
 
-        let prefix = &self.source[..offset];
-        let line = prefix.bytes().filter(|byte| *byte == b'\n').count() + 1;
-        let column = prefix
-            .rsplit('\n')
-            .next()
-            .map_or(1, |line| line.chars().count() + 1);
+        let line_index = self.line_starts.partition_point(|start| *start <= offset) - 1;
+        let line_start = self.line_starts.get(line_index).copied().unwrap_or(0);
+        let column = self.source[line_start..offset].chars().count() + 1;
 
-        Ok(SourcePosition { line, column })
+        Ok(SourcePosition {
+            line: line_index + 1,
+            column,
+        })
     }
 }
 
@@ -170,6 +172,20 @@ impl SourceRange {
     pub fn end(&self) -> usize {
         self.end
     }
+}
+
+fn line_starts(source: &str) -> Arc<[usize]> {
+    let mut starts = vec![0];
+
+    starts.extend(
+        source
+            .bytes()
+            .enumerate()
+            .filter(|(_, byte)| *byte == b'\n')
+            .map(|(index, _)| index + 1),
+    );
+
+    Arc::from(starts)
 }
 
 fn validate_path(path: &Path) -> Result<(), SourceFileError> {

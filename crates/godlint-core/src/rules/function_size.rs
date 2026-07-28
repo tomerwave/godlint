@@ -34,11 +34,7 @@ impl FunctionRule for FunctionSize {
         );
         let max = configuration.max_lines.get();
 
-        (actual > max).then_some(Violation::Limit {
-            metric: Metric::FunctionLines,
-            actual,
-            max,
-        })
+        (actual > max).then_some(Violation::limit(Metric::FunctionLines, actual, max))
     }
 }
 

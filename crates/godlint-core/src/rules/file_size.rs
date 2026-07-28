@@ -29,11 +29,7 @@ impl FileRule for FileSize {
         );
         let max = configuration.max_lines.get();
 
-        (actual > max).then_some(Violation::Limit {
-            metric: Metric::FileLines,
-            actual,
-            max,
-        })
+        (actual > max).then_some(Violation::limit(Metric::FileLines, actual, max))
     }
 }
 

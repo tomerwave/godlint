@@ -92,6 +92,10 @@ releases begin.
   in fragments beside the code it constrains.
 - A limit violation is one `Violation::Limit` carrying the metric, the measured value,
   and the ceiling, rather than one variant per metric. Rendering stays identical.
+- Line and column derivation binary-searches a per-file line index instead of scanning to
+  the offset, so reporting cost no longer grows with how far into a file a finding sits.
+  With `style/no-comments` reporting once per comment this was measurable: a file with
+  6,400 comments took 678 ms and now takes 161 ms.
 - Effective-line counting is derived from the analyzer's comment facts instead of
   scanning text for `//` and `#`, so Python docstrings are skipped like JSDoc blocks
   and nested Rust block comments are handled correctly.
