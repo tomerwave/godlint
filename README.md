@@ -15,9 +15,8 @@
   <a href="CODE_OF_CONDUCT.md">Code of Conduct</a>
 </p>
 
-> **Pre-alpha:** Godlint is in public preparation. There is no installable CLI or
-> stable API yet. We are establishing the project’s product, contribution, and
-> release foundations before implementation begins.
+> **Pre-alpha:** Godlint has an early local CLI and its first cross-language rules.
+> Its public API, configuration format, and rule suites are not stable yet.
 
 Godlint is an open-source, deterministic code-policy engine for polyglot
 repositories. It will help teams define engineering standards once and enforce them
@@ -49,8 +48,8 @@ formatters, or support arbitrary third-party plugins in its early releases.
 
 ## Status and roadmap
 
-The detailed product and technical direction is maintained in the project planning
-materials while the repository is pre-alpha. The implementation sequence is:
+See the [rule roadmap](docs/rule-roadmap.md) for the rule families, thresholds, and
+delivery sequence. The implementation sequence is:
 
 1. Workspace, CLI, configuration, diagnostics, fixtures, and documentation.
 2. Syntax analysis for all three initial languages and common facts.
