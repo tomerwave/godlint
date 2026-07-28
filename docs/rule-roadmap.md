@@ -56,7 +56,7 @@ universal number. The following profiles are the starting point for documented s
 | `maintainability/function-size` | 50 effective lines | 30 effective lines | Existing TypeScript `max-lines-per-function` policy |
 | `maintainability/function-nesting` | 3 | 2 | Existing Godlint rule; lower is intentionally stricter |
 | `maintainability/parameter-count` | 6 | 4 | Common design-lint threshold; tune per repository |
-| `maintainability/cyclomatic-complexity` | 10 | 8 | Existing TypeScript `complexity: 10` policy |
+| `maintainability/decision-complexity` | 8 | 5 | Measured against this repository under Godlint's own metric. The former 10 came from an ESLint `complexity: 10` setting, which does not transfer: ESLint counts every `case`, Godlint counts a multiway branch once |
 | `maintainability/return-count` | 5 | 3 | Pylint's `too-many-return-statements` design metric. Counting `?` and implicit tail expressions raises Rust counts, so Rust-heavy repositories may need a looser threshold than the profile — this one uses 8 |
 | `maintainability/function-statements` | 30 | 20 | Derived from the `maintainability/function-size` profile: a function sitting at its effective-line ceiling should not be almost entirely statements, so each profile allows about two thirds of its line budget as statements |
 
@@ -65,17 +65,44 @@ the current function-size contract. ESLint likewise makes blank-line and comment
 handling explicit for function-size metrics. Both options default to enabled, because
 a policy about function length is a policy about code, not about documentation.
 
-The complexity threshold needs one caveat. Godlint counts language-defined branch
-points — `if`, `else if`, loops, `match` and `switch` arms, `catch` and `except`
-handlers, conditional expressions, and the Rust `?` operator — but deliberately does
-not count short-circuit `&&`, `||`, `and`, or `or`. A boolean guard is one decision a
-reader makes at one place, and counting its operands penalizes writing the condition
-plainly. JavaScript and TypeScript `?.` and `??` are excluded on the same grounds and
-this is a decision, not an oversight: they read as one access with a fallback rather
-than as a branch a reader has to trace. The recommended threshold of 10 was borrowed from an existing ESLint
-`complexity` setting, and tools differ on whether logical operators contribute, so a
-threshold migrated from another linter should be re-checked against Godlint's own metric
-rather than assumed equivalent.
+`maintainability/decision-complexity` is named for what it counts rather than for
+McCabe's cyclomatic complexity, because it deliberately differs from it in one way that
+matters.
+
+Godlint counts language-defined branch points: `if`, `else if`, loops, `catch` and
+`except` handlers, conditional expressions, the Rust `?` operator, a `match` or `case`
+guard, and a multiway branch — `match` or `switch` — **once**, not once per arm.
+
+The arm rule is the interesting one. Cyclomatic complexity counts each arm, because each
+is a distinct path. But an exhaustive `match` over an enum is a dispatch table: the reader
+looks up one variant and reads one arm, and the compiler guarantees no case is missing.
+Ten one-line arms is one decision, not ten. Counting per arm also produced a perverse
+ordering — a `match` with three guards scored the same as the same `match` with none,
+because guards were not counted at all, and both scored higher than a `match` with real
+nested branching. Counting the construct once and counting guards fixes the ordering.
+
+The cost is honesty about naming and about the threshold. This is closer to Cognitive
+Complexity, which treats a `switch` as a single structure for the same reason, than to
+cyclomatic complexity. And the recommended threshold could not come across from the
+ESLint `complexity: 10` it was originally borrowed from, because ESLint counts every
+`case`: under Godlint's metric this repository's worst function measures 7 rather than 11,
+so 10 constrained nothing. The profiles above are measured against this repository, which
+is what the general warning here always asked for — a threshold migrated from another
+linter must be re-checked against Godlint's own metric rather than assumed equivalent.
+
+Short-circuit `&&`, `||`, `and`, and `or` are deliberately not counted. A boolean guard is
+one decision a reader makes at one place, and counting its operands penalizes writing the
+condition plainly. JavaScript and TypeScript `?.` and `??` are excluded on the same grounds
+and this is a decision, not an oversight: they read as one access with a fallback rather
+than as a branch a reader has to trace. A Python comprehension filter is likewise not
+counted; only a `case` guard is.
+
+One consequence is uneven across languages and accepted knowingly. "The construct is one
+decision" rests on exhaustiveness, which Rust's `match` has and JavaScript's `switch` — with
+fallthrough and no exhaustiveness check — does not. Counting `switch` per case in
+JavaScript alone would make the same threshold mean different things in different
+languages, which is the failure this project exists to avoid, so the uniform rule wins and
+a JavaScript `switch` is scored slightly generously.
 
 Nesting depth is likewise a property of control flow, not of declarations.
 `maintainability/function-nesting` measures how deeply `if`, `for`, `while`, `match`,
@@ -146,7 +173,7 @@ Extend `FunctionFact` only when the same data will serve multiple rules.
 | New field or fact | Rules unlocked | Status | Confidence | Languages | Configuration | Dogfood default | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `parameter_count` | `maintainability/parameter-count` | Shipped | High | All eleven supported extensions | `max-parameters` | Warning, 6 | Count declared parameters only, excluding a method receiver (`self`, `&self`, `cls`); do not infer types or defaults initially |
-| `decision_points` | `maintainability/cyclomatic-complexity` | Shipped | High | All eleven supported extensions | `max-complexity` | Warning, 10 | Count language-defined branch points, including the Rust `?` operator, but not short-circuit boolean operators; fixture each language explicitly |
+| `decision_points` | `maintainability/decision-complexity` | Shipped | High | All eleven supported extensions | `max-complexity` | Warning, 8 | Count language-defined branch points, including the Rust `?` operator and a `match`/`case` guard, but not short-circuit boolean operators and not one per arm of a multiway branch; fixture each language explicitly |
 | `return_count` | `maintainability/return-count` | Shipped | Medium | All eleven supported extensions | `max-returns` | Warning, 8 | Count every exit path: explicit `return`, the Rust `?` operator, and an implicit trailing expression. Keep opt-in because early returns are often clearer |
 | `statement_count` | `maintainability/function-statements` | Shipped | Medium | All eleven supported extensions | `max-statements` | Warning, 30 | Count statements through nested blocks but not into nested functions, which are measured as functions in their own right; comments are not statements, and an expression-bodied arrow or lambda is one |
 
@@ -260,7 +287,7 @@ Only after the syntax/fact rules are stable:
 | --- | --- |
 | `max-lines: 300` | Implement `maintainability/file-size`; strict profile 300, recommended profile 500 |
 | `max-lines-per-function: 30` | Existing `function-size`; strict profile 30 |
-| `complexity: 10` | Implement after `decision_points` fact; recommended threshold 10 |
+| `complexity: 10` | Shipped as `maintainability/decision-complexity`; recommended threshold 8, because Godlint counts a multiway branch once rather than once per `case` and the ESLint number does not transfer |
 | `curly: all` | Delegate to ESLint, Biome, or formatter/language style tooling; Rust and Python do not share this syntax policy |
 | `no-restricted-syntax(loadConfig)` | Implement as `architecture/restricted-call` with configured allowed paths |
 | `unicorn/prevent-abbreviations` | Future opt-in `style/identifier-terms`; medium confidence because domain vocabulary needs project-specific allow-lists |

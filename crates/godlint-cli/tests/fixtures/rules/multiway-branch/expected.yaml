@@ -1,0 +1,7 @@
+exit-code: 1
+
+stdout: |
+  guarded.py:1:1: error[maintainability/decision-complexity] Function has decision complexity 5 (max 3).
+  guarded.rs:1:1: error[maintainability/decision-complexity] Function has decision complexity 5 (max 3).
+
+stderr: ""

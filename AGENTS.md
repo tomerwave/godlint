@@ -44,7 +44,7 @@ Read the linked documents relevant to the task before changing code or policy.
 
 The workspace, CLI, configuration validation and discovery, source discovery, and ten
 rules are implemented: `maintainability/file-size`, `function-size`, `function-nesting`,
-`parameter-count`, `cyclomatic-complexity`, `return-count`, `function-statements`,
+`parameter-count`, `decision-complexity`, `return-count`, `function-statements`,
 `empty-function`, `policy/todo-requires-reference`, and `style/no-comments`. CI dogfoods
 all ten against this repository through `godlint check .`. Phases 1 and 2 of the
 [rule roadmap](docs/rule-roadmap.md) are complete; call facts, imports, and the

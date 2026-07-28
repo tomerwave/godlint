@@ -6,8 +6,8 @@ mod support;
 #[path = "rules/accountable_suppression.rs"]
 mod accountable_suppression;
 
-#[path = "rules/cyclomatic_complexity.rs"]
-mod cyclomatic_complexity;
+#[path = "rules/decision_complexity.rs"]
+mod decision_complexity;
 
 #[path = "rules/errors.rs"]
 mod errors;

@@ -155,14 +155,24 @@ something discovered one grep at a time.
 
 ## Godlint's own exceptions
 
-The repository has one, and it is the worked example. `impl fmt::Display for
-SuppressionDefect` is an eleven-arm exhaustive `match` in which every arm is a single
-`write!`, which `maintainability/cyclomatic-complexity` reports at 11 against a limit of
-10. Raising the limit would weaken the rule everywhere to accommodate one site; splitting
-the impl would make it less readable purely to move a number. So the site carries a
+There are none. `godlint suppressions` prints `No suppressions.` and that is the whole
+inventory.
+
+That is worth recording, because there briefly was one and how it went away is the point
+of the feature. `impl fmt::Display for SuppressionDefect` is an eleven-arm exhaustive
+`match` in which every arm is a single `write!`, and
+`maintainability/decision-complexity` reported it at 11 against a limit of 10. Raising the
+limit would have weakened the rule everywhere to accommodate one site, and splitting the
+impl would have made it less readable purely to move a number, so the site took a
 directive with an owner, an expiry, and a reason, and
-[#30](https://github.com/tomerwave/godlint/issues/30) records the question the exception
-rests on. `godlint suppressions` shows it, and it is the whole inventory.
+[#30](https://github.com/tomerwave/godlint/issues/30) recorded the question it rested on:
+should the metric count each arm of an exhaustive `match` at all?
+
+Answering that question changed the metric — a multiway branch now counts once, and a
+guard on an arm counts, which it previously did not — and the exception was deleted rather
+than renewed. An exception with an expiry and a stated reason is a question someone can
+answer. That is the difference between it and a widened threshold, which is an answer
+nobody will revisit.
 
 ## What is not implemented
 

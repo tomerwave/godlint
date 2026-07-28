@@ -59,17 +59,24 @@ fn is_conditional(kind: &str) -> bool {
     kind == "if_statement"
 }
 
-fn is_decision(kind: &str) -> bool {
+fn is_decision(node: Node<'_>) -> bool {
     matches!(
-        kind,
-        "case_clause"
-            | "conditional_expression"
+        node.kind(),
+        "conditional_expression"
             | "elif_clause"
             | "except_clause"
             | "for_statement"
             | "if_statement"
+            | "match_statement"
             | "while_statement"
-    )
+    ) || is_case_guard(node)
+}
+
+fn is_case_guard(node: Node<'_>) -> bool {
+    node.kind() == "if_clause"
+        && node
+            .parent()
+            .is_some_and(|parent| parent.kind() == "case_clause")
 }
 
 fn is_return(kind: &str) -> bool {

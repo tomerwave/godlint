@@ -10,7 +10,7 @@ use crate::{
 };
 
 pub mod accountable_suppression;
-pub mod cyclomatic_complexity;
+pub mod decision_complexity;
 pub mod empty_function;
 pub mod file_size;
 pub mod function_nesting;
@@ -83,7 +83,7 @@ impl Metric {
             }
             Self::Complexity => write!(
                 formatter,
-                "Function has cyclomatic complexity {actual} (max {max})."
+                "Function has decision complexity {actual} (max {max})."
             ),
             Self::ReturnPaths => {
                 write!(formatter, "Function has {actual} return paths (max {max}).")
@@ -364,7 +364,7 @@ const EVALUATORS: &[Evaluator] = &[
     empty_function::evaluate,
     todo_requires_reference::evaluate,
     parameter_count::evaluate,
-    cyclomatic_complexity::evaluate,
+    decision_complexity::evaluate,
     return_count::evaluate,
     function_statements::evaluate,
     no_comments::evaluate,
@@ -372,7 +372,7 @@ const EVALUATORS: &[Evaluator] = &[
 
 pub const RULE_IDS: &[&str] = &[
     <accountable_suppression::AccountableSuppression as Rule>::ID,
-    <cyclomatic_complexity::CyclomaticComplexity as Rule>::ID,
+    <decision_complexity::DecisionComplexity as Rule>::ID,
     <empty_function::EmptyFunction as Rule>::ID,
     <file_size::FileSize as Rule>::ID,
     <function_nesting::FunctionNesting as Rule>::ID,
@@ -445,7 +445,6 @@ impl fmt::Display for Violation {
 }
 
 impl fmt::Display for SuppressionDefect {
-    // godlint-ignore-next-line maintainability/cyclomatic-complexity owner=tomerwave expires=2027-01-31 -- An exhaustive match whose every arm is a single write! is a formatting table, not eleven decisions a reader traces; splitting this impl to satisfy the number would be worse code. Whether the metric should count such an arm is #30
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::NoRules => write!(

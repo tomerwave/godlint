@@ -36,7 +36,7 @@ macro_rules! fixture_tests {
 fixture_tests! {
     accountable_suppression => "accountable-suppression",
     clean_repository => "clean",
-    cyclomatic_complexity => "cyclomatic-complexity",
+    decision_complexity => "decision-complexity",
     documented_empty_body => "documented-empty-body",
     else_if_chain => "else-if-chain",
     empty_function => "empty-function",
@@ -47,6 +47,7 @@ fixture_tests! {
     function_statements => "function-statements",
     invalid_syntax => "invalid-syntax",
     marker_word_boundary => "marker-word-boundary",
+    multiway_branch => "multiway-branch",
     no_comments => "no-comments",
     no_comments_strict => "no-comments-strict",
     parameter_count => "parameter-count",

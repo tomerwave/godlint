@@ -43,15 +43,16 @@ fn is_receiver(parameter: Node<'_>, source: &str, vocabulary: &Vocabulary) -> bo
 }
 
 pub(super) fn decision_points(function: Node<'_>, vocabulary: &Vocabulary) -> DecisionPoints {
-    DecisionPoints::new(count_own_nodes(
-        function,
-        vocabulary,
-        vocabulary.is_decision,
-    ))
+    let is_decision = vocabulary.is_decision;
+
+    DecisionPoints::new(count_own_nodes(function, vocabulary, |node| {
+        node.is_named() && is_decision(node)
+    }))
 }
 
 pub(super) fn return_paths(function: Node<'_>, vocabulary: &Vocabulary) -> ReturnPaths {
-    let explicit = count_own_nodes(function, vocabulary, vocabulary.is_return);
+    let is_return = vocabulary.is_return;
+    let explicit = count_own_nodes(function, vocabulary, |node| matches(node, is_return));
     let implicit = u32::from((vocabulary.has_implicit_tail_return)(function));
 
     ReturnPaths::new(explicit + implicit)
@@ -60,7 +61,7 @@ pub(super) fn return_paths(function: Node<'_>, vocabulary: &Vocabulary) -> Retur
 fn count_own_nodes(
     function: Node<'_>,
     vocabulary: &Vocabulary,
-    predicate: fn(&str) -> bool,
+    predicate: impl Fn(Node<'_>) -> bool + Copy,
 ) -> u32 {
     let mut cursor = function.walk();
 
@@ -70,14 +71,18 @@ fn count_own_nodes(
         .sum()
 }
 
-fn count_nodes_in(node: Node<'_>, vocabulary: &Vocabulary, predicate: fn(&str) -> bool) -> u32 {
+fn count_nodes_in(
+    node: Node<'_>,
+    vocabulary: &Vocabulary,
+    predicate: impl Fn(Node<'_>) -> bool + Copy,
+) -> u32 {
     if is_function(node, vocabulary) {
         return 0;
     }
 
     let mut cursor = node.walk();
 
-    u32::from(matches(node, predicate))
+    u32::from(predicate(node))
         + node
             .children(&mut cursor)
             .map(|child| count_nodes_in(child, vocabulary, predicate))

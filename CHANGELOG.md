@@ -21,7 +21,7 @@ releases begin.
   nested too deeply inside a function.
 - `maintainability/parameter-count` (`max-parameters`) — reports declared parameters
   above a ceiling, excluding a method receiver (`self`, `&self`, `cls`).
-- `maintainability/cyclomatic-complexity` (`max-complexity`) — reports a function with
+- `maintainability/decision-complexity` (`max-complexity`) — reports a function with
   too many branch points.
 - `maintainability/return-count` (`max-returns`) — reports a function with too many
   exit paths.
@@ -94,11 +94,32 @@ releases begin.
   return paths, and statement count are attributed to the closure itself rather than
   to the function enclosing it, so one shared threshold means the same thing in all
   three languages.
-- `maintainability/cyclomatic-complexity` counts the Rust `?` operator as a branch.
-  Short-circuit `&&`, `||`, `and`, and `or` are deliberately not counted, which is a
-  strict control-flow reading of the metric. The recommended threshold of 10 was
-  borrowed from an existing ESLint `complexity` setting, so confirm how your previous
-  tool treats logical operators before carrying a threshold across.
+- `maintainability/cyclomatic-complexity` is renamed `maintainability/decision-complexity`,
+  and a `match` or `switch` now counts **once** rather than once per arm, while a guard on
+  an arm counts for the first time. An exhaustive `match` over an enum is a dispatch table:
+  the reader looks up one variant and reads one arm, and the compiler guarantees no case is
+  missing, so ten one-line arms is one decision rather than ten. Counting per arm also
+  produced a perverse ordering, since a `match` with three guards scored identically to the
+  same `match` with none — guards were not counted at all — and both outscored a `match`
+  with real nested branching. The rule is renamed because counting a multiway branch once
+  is no longer McCabe's cyclomatic complexity; it is closer to Cognitive Complexity, which
+  treats a `switch` as one structure for the same reason. A Python comprehension filter is
+  still not counted; only a `case` guard is.
+- The recommended `max-complexity` drops from 10 to 8 and the strict profile from 8 to 5,
+  measured against this repository rather than inherited. The 10 came from an ESLint
+  `complexity: 10` setting and could not travel with the metric, because ESLint counts
+  every `case`: under the new definition this repository's worst function measures 7 rather
+  than 11, so 10 constrained nothing. Short-circuit `&&`, `||`, `and`, and `or` remain
+  uncounted.
+- Counting a multiway branch uniformly is slightly generous to JavaScript, and knowingly so.
+  "One decision" rests on exhaustiveness, which Rust's `match` has and a JavaScript
+  `switch` — with fallthrough and no exhaustiveness check — does not. Counting `switch` per
+  case in JavaScript alone would make one threshold mean different things in different
+  languages, which is the failure this project exists to avoid.
+- Godlint's first accountable exception is deleted rather than renewed. The suppression on
+  `impl fmt::Display for SuppressionDefect` existed only because the metric counted its
+  arms; answering the question it recorded removed the need for it, and
+  `godlint suppressions` now reports none.
 - `maintainability/return-count` counts every exit path: an explicit `return`, the
   Rust `?` operator, and an implicit trailing expression such as a Rust tail
   expression or a concise arrow or lambda body. The message is now "Function has N

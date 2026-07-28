@@ -51,11 +51,19 @@ fn is_conditional(kind: &str) -> bool {
     kind == "if_expression"
 }
 
-fn is_decision(kind: &str) -> bool {
+fn is_decision(node: Node<'_>) -> bool {
     matches!(
-        kind,
-        "for_expression" | "if_expression" | "match_arm" | "try_expression" | "while_expression"
-    )
+        node.kind(),
+        "for_expression"
+            | "if_expression"
+            | "match_expression"
+            | "try_expression"
+            | "while_expression"
+    ) || is_match_guard(node)
+}
+
+fn is_match_guard(node: Node<'_>) -> bool {
+    node.kind() == "match_pattern" && node.child_by_field_name("condition").is_some()
 }
 
 fn is_return(kind: &str) -> bool {

@@ -16,7 +16,7 @@ rules:
   maintainability/parameter-count:
     severity: error
     max-parameters: 6
-  maintainability/cyclomatic-complexity:
+  maintainability/decision-complexity:
     severity: error
     max-complexity: 10
   maintainability/return-count:

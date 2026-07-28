@@ -1,6 +1,6 @@
 use crate::{
     analyzers::SourceFacts,
-    config::{Config, CyclomaticComplexityRule, Severity},
+    config::{Config, DecisionComplexityRule, Severity},
     facts::FunctionFact,
     rules::{
         Finding, FunctionLimitRule, Metric, Rule, RuleError, evaluate_function_limit_rule,
@@ -8,19 +8,19 @@ use crate::{
     },
 };
 
-pub struct CyclomaticComplexity;
+pub struct DecisionComplexity;
 
-impl Rule for CyclomaticComplexity {
-    const ID: &'static str = "maintainability/cyclomatic-complexity";
+impl Rule for DecisionComplexity {
+    const ID: &'static str = "maintainability/decision-complexity";
 
-    type Configuration = CyclomaticComplexityRule;
+    type Configuration = DecisionComplexityRule;
 
     fn severity(configuration: &Self::Configuration) -> Severity {
         configuration.severity
     }
 }
 
-impl FunctionLimitRule for CyclomaticComplexity {
+impl FunctionLimitRule for DecisionComplexity {
     const METRIC: Metric = Metric::Complexity;
 
     fn measure(
@@ -37,8 +37,7 @@ impl FunctionLimitRule for CyclomaticComplexity {
 }
 
 pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, RuleError> {
-    when_configured(
-        config.rules.cyclomatic_complexity.as_ref(),
-        |configuration| evaluate_function_limit_rule::<CyclomaticComplexity>(facts, configuration),
-    )
+    when_configured(config.rules.decision_complexity.as_ref(), |configuration| {
+        evaluate_function_limit_rule::<DecisionComplexity>(facts, configuration)
+    })
 }

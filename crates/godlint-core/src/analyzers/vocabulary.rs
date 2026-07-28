@@ -8,7 +8,7 @@ pub(crate) struct Vocabulary {
     pub is_nesting: fn(&str) -> bool,
     pub is_block: fn(&str) -> bool,
     pub is_conditional: fn(&str) -> bool,
-    pub is_decision: fn(&str) -> bool,
+    pub is_decision: fn(Node<'_>) -> bool,
     pub is_return: fn(&str) -> bool,
     pub is_placeholder: fn(&str, &str) -> bool,
     pub is_receiver: fn(&str, &str) -> bool,

@@ -107,7 +107,7 @@ measurement receives the configuration, because whether blank lines and commenta
 is part of measuring, not part of comparing.
 
 The registry is a table of evaluators. Adding a rule appends an entry rather than growing
-a branch in a dispatcher, which had previously pushed the dispatcher's own cyclomatic
+a branch in a dispatcher, which had previously pushed the dispatcher's own decision
 complexity to the repository's configured limit.
 
 A finding carries a typed violation rather than a prepared sentence. Reporters other than
