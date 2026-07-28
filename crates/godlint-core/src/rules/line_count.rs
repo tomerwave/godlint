@@ -1,4 +1,4 @@
-use crate::{analyzers::SourceFacts, source::SourceRange};
+use crate::{analyzers::SourceFacts, facts::CommentFact, source::SourceRange};
 
 pub(crate) fn effective_line_count(
     facts: &SourceFacts,
@@ -6,9 +6,9 @@ pub(crate) fn effective_line_count(
     skip_blank_lines: bool,
     skip_comments: bool,
 ) -> u32 {
-    let source = facts.source();
-    let commentary = commentary_within(facts, range);
-    let text = &source.source()[range.start()..range.end()];
+    let comments = facts.comments();
+    let text = &facts.source().source()[range.start()..range.end()];
+    let mut cursor = comments.partition_point(|comment| comment.range().end() <= range.start());
     let mut offset = range.start();
     let mut counted = 0_u32;
 
@@ -17,10 +17,14 @@ pub(crate) fn effective_line_count(
 
         offset += line.len();
 
+        while cursor < comments.len() && comments[cursor].range().end() <= start {
+            cursor += 1;
+        }
+
         if line_is_counted(
             line.trim_end_matches(['\n', '\r']),
             start,
-            &commentary,
+            &comments[cursor..],
             skip_blank_lines,
             skip_comments,
         ) {
@@ -31,19 +35,10 @@ pub(crate) fn effective_line_count(
     counted
 }
 
-fn commentary_within(facts: &SourceFacts, range: SourceRange) -> Vec<SourceRange> {
-    facts
-        .comments()
-        .iter()
-        .map(|comment| comment.range())
-        .filter(|comment| comment.start() < range.end() && comment.end() > range.start())
-        .collect()
-}
-
 fn line_is_counted(
     line: &str,
     start: usize,
-    commentary: &[SourceRange],
+    comments: &[CommentFact],
     skip_blank_lines: bool,
     skip_comments: bool,
 ) -> bool {
@@ -51,10 +46,10 @@ fn line_is_counted(
         return false;
     }
 
-    !(skip_comments && line_is_commentary(line, start, commentary))
+    !(skip_comments && line_is_commentary(line, start, comments))
 }
 
-fn line_is_commentary(line: &str, start: usize, commentary: &[SourceRange]) -> bool {
+fn line_is_commentary(line: &str, start: usize, comments: &[CommentFact]) -> bool {
     let mut has_content = false;
 
     for (index, character) in line.char_indices() {
@@ -64,7 +59,7 @@ fn line_is_commentary(line: &str, start: usize, commentary: &[SourceRange]) -> b
 
         has_content = true;
 
-        if !is_inside(start + index, commentary) {
+        if !is_inside(start + index, comments) {
             return false;
         }
     }
@@ -72,8 +67,9 @@ fn line_is_commentary(line: &str, start: usize, commentary: &[SourceRange]) -> b
     has_content
 }
 
-fn is_inside(offset: usize, commentary: &[SourceRange]) -> bool {
-    commentary
+fn is_inside(offset: usize, comments: &[CommentFact]) -> bool {
+    comments
         .iter()
-        .any(|comment| comment.start() <= offset && offset < comment.end())
+        .take_while(|comment| comment.range().start() <= offset)
+        .any(|comment| offset < comment.range().end())
 }
