@@ -25,12 +25,17 @@ RULES = "/src/rules/"
 # Lines that cannot be executed by any test, with the reason they cannot.
 #
 # Every entry is error propagation from `SourceFile::location`, which fails only for a
-# range that is out of bounds or off a character boundary. Facts validate their ranges
-# when they are constructed, so no fact can carry such a range and the `?` never fires.
+# range that is out of bounds or off a character boundary. Function, comment, call, and
+# access facts validate their ranges when they are constructed, so no fact can carry such
+# a range and the `?` never fires.
 # Removing that plumbing would take this budget to zero; until then it is fixed, so a
 # newly uncovered line pushes the count over and fails.
 BUDGET = {
-    "src/rules/mod.rs": 7,
+    "src/rules/mod.rs": 9,
+    # The call and access evaluators return a location error only for an invalid fact.
+    # CallFact and AccessFact validate their ranges on construction, so these two `?`
+    # propagation lines cannot execute through the public fact contract.
+    "src/rules/direct_environment_read.rs": 2,
     "src/rules/todo_requires_reference.rs": 1,
 }
 

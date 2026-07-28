@@ -69,3 +69,9 @@ rules:
     require-expiry: true
   policy/unused-suppression:
     severity: error
+  architecture/restricted-call:
+    severity: error
+  security/no-dynamic-execution:
+    severity: error
+  security/direct-environment-read:
+    severity: error

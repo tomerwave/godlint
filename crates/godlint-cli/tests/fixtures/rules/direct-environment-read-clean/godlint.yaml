@@ -1,0 +1,5 @@
+version: 1
+
+rules:
+  security/direct-environment-read:
+    severity: error

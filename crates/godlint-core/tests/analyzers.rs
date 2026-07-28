@@ -190,3 +190,74 @@ fn ignores_rust_trait_methods_without_bodies() {
 
     assert!(facts.functions().is_empty());
 }
+
+#[test]
+fn extracts_direct_calls_from_each_language() {
+    let cases = [
+        (
+            "example.ts",
+            "eval(value); Function(value); process.exit(1); console.log(value); console.debug(value);",
+            vec![
+                "eval",
+                "Function",
+                "process.exit",
+                "console.log",
+                "console.debug",
+            ],
+        ),
+        (
+            "example.py",
+            "eval(value)\nexec(value)\nsys.exit(1)\nos._exit(1)\nprint(value)\nos.getenv('VALUE')",
+            vec!["eval", "exec", "sys.exit", "os._exit", "print", "os.getenv"],
+        ),
+        (
+            "example.rs",
+            "std::process::exit(1);\nstd::env::var(\"VALUE\");\ndbg!(value);",
+            vec!["std::process::exit", "std::env::var", "dbg"],
+        ),
+    ];
+
+    for (path, contents, expected) in cases {
+        let facts = analyze(&source(path, contents))
+            .unwrap_or_else(|error| panic!("analyzes {path}: {error}"));
+        let calls: Vec<&str> = facts.calls().iter().map(|call| call.callee()).collect();
+
+        assert_eq!(calls, expected, "{path}");
+    }
+}
+
+#[test]
+fn ignores_indirect_calls() {
+    let facts = analyze(&source(
+        "example.ts",
+        "getHandler()();\nhandlers[name]();\nfactory().run();",
+    ))
+    .unwrap_or_else(|error| panic!("analyzes indirect calls: {error}"));
+    let calls: Vec<&str> = facts.calls().iter().map(|call| call.callee()).collect();
+
+    assert_eq!(calls, vec!["getHandler", "factory"]);
+}
+
+#[test]
+fn extracts_direct_environment_accesses() {
+    let cases = [
+        (
+            "example.ts",
+            "const value = process.env.VALUE;",
+            "process.env",
+        ),
+        ("example.py", "value = os.environ['VALUE']", "os.environ"),
+    ];
+
+    for (path, contents, expected) in cases {
+        let facts = analyze(&source(path, contents))
+            .unwrap_or_else(|error| panic!("analyzes {path}: {error}"));
+        let accesses: Vec<&str> = facts
+            .accesses()
+            .iter()
+            .map(|access| access.target())
+            .collect();
+
+        assert!(accesses.contains(&expected), "{path}");
+    }
+}

@@ -84,7 +84,7 @@ godlint config validate --config path/to/godlint.yaml
 ```
 
 The `check` command evaluates the configured rules across Rust,
-TypeScript/JavaScript, and Python source files. Twelve rules are implemented:
+TypeScript/JavaScript, and Python source files. Fifteen rules are implemented:
 
 - `maintainability/file-size` — effective lines in a file.
 - `maintainability/function-size` — effective lines in a function.
@@ -103,6 +103,12 @@ TypeScript/JavaScript, and Python source files. Twelve rules are implemented:
   themselves.
 - `policy/unused-suppression` — inline suppressions that no longer silence an enabled
   finding.
+- `architecture/restricted-call` — abrupt process exits and debug-only output, plus
+  configured direct callees outside their approved paths.
+- `security/no-dynamic-execution` — JavaScript `eval`/`Function` and Python
+  `eval`/`exec`.
+- `security/direct-environment-read` — environment access outside a configuration
+  boundary.
 
 A function means the same thing in every language: Rust `fn` items and closures,
 Python `def` functions and lambdas, and JavaScript/TypeScript function declarations,

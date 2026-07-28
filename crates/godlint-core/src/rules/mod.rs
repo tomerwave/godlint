@@ -4,13 +4,14 @@ use crate::{
     analyzers::SourceFacts,
     config::{Config, Severity},
     date::Date,
-    facts::{CommentFact, FunctionFact},
+    facts::{AccessFact, CallFact, CommentFact, FunctionFact},
     source::{SourceFile, SourceFileError, SourceRange},
     suppression::{self, Suppression},
 };
 
 pub mod accountable_suppression;
 pub mod decision_complexity;
+pub mod direct_environment_read;
 pub mod empty_function;
 pub mod file_size;
 pub mod function_nesting;
@@ -18,8 +19,10 @@ pub mod function_size;
 pub mod function_statements;
 mod line_count;
 pub mod no_comments;
+pub mod no_dynamic_execution;
 pub mod parameter_count;
 mod registry;
+pub mod restricted_call;
 pub mod return_count;
 pub mod todo_requires_reference;
 pub mod unused_suppression;
@@ -53,6 +56,15 @@ pub enum Violation {
         defect: SuppressionDefect,
     },
     UnusedSuppression,
+    RestrictedCall {
+        callee: String,
+    },
+    DynamicExecution {
+        callee: String,
+    },
+    DirectEnvironmentRead {
+        target: String,
+    },
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -286,6 +298,68 @@ pub fn evaluate_file_limit_rule<R: FileLimitRule>(
     })
 }
 
+pub fn evaluate_call_rule(
+    facts: &[SourceFacts],
+    severity: Severity,
+    rule_id: &'static str,
+    check: impl Fn(&CallFact) -> Option<Violation>,
+) -> Result<Vec<Finding>, RuleError> {
+    if severity == Severity::Off {
+        return Ok(Vec::new());
+    }
+
+    let mut findings = Vec::new();
+
+    for source_facts in facts {
+        for call in source_facts.calls() {
+            let Some(violation) = check(call) else {
+                continue;
+            };
+
+            findings.push(finding(
+                call.source(),
+                call.range(),
+                severity,
+                rule_id,
+                violation,
+            )?);
+        }
+    }
+
+    Ok(findings)
+}
+
+pub fn evaluate_access_rule(
+    facts: &[SourceFacts],
+    severity: Severity,
+    rule_id: &'static str,
+    check: impl Fn(&AccessFact) -> Option<Violation>,
+) -> Result<Vec<Finding>, RuleError> {
+    if severity == Severity::Off {
+        return Ok(Vec::new());
+    }
+
+    let mut findings = Vec::new();
+
+    for source_facts in facts {
+        for access in source_facts.accesses() {
+            let Some(violation) = check(access) else {
+                continue;
+            };
+
+            findings.push(finding(
+                access.source(),
+                access.range(),
+                severity,
+                rule_id,
+                violation,
+            )?);
+        }
+    }
+
+    Ok(findings)
+}
+
 fn evaluate_files(
     facts: &[SourceFacts],
     severity: Severity,
@@ -376,6 +450,9 @@ const EVALUATORS: &[Evaluator] = &[
     return_count::evaluate,
     function_statements::evaluate,
     no_comments::evaluate,
+    restricted_call::evaluate,
+    no_dynamic_execution::evaluate,
+    direct_environment_read::evaluate,
 ];
 
 pub fn evaluate(
@@ -444,6 +521,17 @@ impl fmt::Display for Violation {
             Self::UnusedSuppression => write!(
                 formatter,
                 "Suppression does not silence an enabled finding; remove it or narrow the rule."
+            ),
+            Self::RestrictedCall { callee } => {
+                write!(formatter, "{callee} is restricted by project policy.")
+            }
+            Self::DynamicExecution { callee } => write!(
+                formatter,
+                "{callee} executes dynamically generated code; use an explicit, reviewed boundary instead."
+            ),
+            Self::DirectEnvironmentRead { target } => write!(
+                formatter,
+                "{target} reads environment directly; read configuration through a config boundary instead."
             ),
         }
     }

@@ -245,15 +245,35 @@ semantic capability exists.
 
 | Rule | Confidence | Initial detection | Example policy |
 | --- | --- | --- | --- |
-| `architecture/restricted-call` | High | Direct configured callee match | `loadConfig` only in `config.ts`-like modules |
-| `security/direct-environment-read` | High | Direct platform API match | Require a single configuration boundary |
+| `architecture/restricted-call` | Shipped | High | Direct callee and macro match | Block direct process exits and debug output by default; configure calls such as `loadConfig` with `allow-in` path globs |
+| `security/no-dynamic-execution` | Shipped | High | Direct JavaScript/Python callee match | Block JavaScript `eval`/`Function` and Python `eval`/`exec` |
+| `security/direct-environment-read` | Shipped | High | Direct platform API match | Require a single configuration boundary |
 | `reliability/explicit-timer-delay` | High | Direct timer calls with omitted delay | Require an intentional delay value |
 | `logging/no-production-log` | Medium | Direct configured logging calls | Ban `console.log` / `print` outside approved paths |
 | `reliability/network-timeout-required` | Medium | Configured known client calls | Require explicit timeout argument |
 
-The first rule in this phase should be `architecture/restricted-call`, because it is
-the language-neutral form of the supplied `no-restricted-syntax` policy around
-`loadConfig`.
+`architecture/restricted-call` establishes the direct-call boundary. It detects only
+spelled, direct callee paths: aliases, computed properties, and type-mediated calls wait
+for semantic analysis. Its built-in policy is deliberately narrow: JavaScript
+`process.exit`, Python `sys.exit` and `os._exit`, Rust `std::process::exit`, JavaScript
+`console.log` and `console.debug`, Python `print`, and Rust `dbg!`. It does not ban
+`console.error`, `println!`, file or network I/O, subprocesses, or `unwrap`, because
+those need repository context before a default can remain high-confidence.
+
+`security/no-dynamic-execution` and `security/direct-environment-read` ship with this
+same call fact. The former is an AI-safety default; the latter centralizes global
+configuration dependencies. A project can add its own architecture boundary with:
+
+```yaml
+rules:
+  architecture/restricted-call:
+    severity: error
+    calls:
+      - name: loadConfig
+        allow-in:
+          - "**/config.ts"
+          - "**/config/**"
+```
 
 ### Phase 4 — Imports and repository graph
 

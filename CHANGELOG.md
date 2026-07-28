@@ -66,6 +66,12 @@ releases begin.
 - `policy/unused-suppression` — reports an inline directive that does not silence an
   enabled finding. A directive for an off rule is dormant rather than unused, so staged
   rule adoption does not manufacture exception debt.
+- `architecture/restricted-call` — blocks direct process exits and debug-only output by
+  default, and can restrict configured direct callees to approved path globs.
+- `security/no-dynamic-execution` — blocks JavaScript `eval` and `Function`, plus
+  Python `eval` and `exec`.
+- `security/direct-environment-read` — blocks direct JavaScript, Python, and Rust
+  environment reads outside configured configuration paths.
 - `godlint suppressions [paths...]` — lists every suppression in scope with its location,
   scope, rules, owner, expiry, and reason, then the total. A directive with no reason is
   listed as `(no justification)` rather than omitted.

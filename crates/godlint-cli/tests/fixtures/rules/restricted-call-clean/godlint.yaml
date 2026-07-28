@@ -1,0 +1,9 @@
+version: 1
+
+rules:
+  architecture/restricted-call:
+    severity: error
+    calls:
+      - name: loadConfig
+        allow-in:
+          - config/**

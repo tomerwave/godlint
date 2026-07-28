@@ -9,6 +9,9 @@ mod accountable_suppression;
 #[path = "rules/decision_complexity.rs"]
 mod decision_complexity;
 
+#[path = "rules/direct_environment_read.rs"]
+mod direct_environment_read;
+
 #[path = "rules/errors.rs"]
 mod errors;
 
@@ -30,6 +33,9 @@ mod function_statements;
 #[path = "rules/no_comments.rs"]
 mod no_comments;
 
+#[path = "rules/no_dynamic_execution.rs"]
+mod no_dynamic_execution;
+
 #[path = "rules/parameter_count.rs"]
 mod parameter_count;
 
@@ -38,6 +44,9 @@ mod registry;
 
 #[path = "rules/return_count.rs"]
 mod return_count;
+
+#[path = "rules/restricted_call.rs"]
+mod restricted_call;
 
 #[path = "rules/todo_requires_reference.rs"]
 mod todo_requires_reference;

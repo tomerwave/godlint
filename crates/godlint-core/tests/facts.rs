@@ -4,8 +4,9 @@ use std::path::PathBuf;
 
 use godlint_core::{
     facts::{
-        BlockDepth, CommentFact, CommentFactError, CommentKind, DecisionPoints, FunctionFact,
-        FunctionFactDetails, FunctionFactError, ParameterCount, ReturnPaths, StatementCount,
+        AccessFact, AccessFactError, BlockDepth, CallFact, CallFactError, CommentFact,
+        CommentFactError, CommentKind, DecisionPoints, FunctionFact, FunctionFactDetails,
+        FunctionFactError, ParameterCount, ReturnPaths, StatementCount,
     },
     source::{SourceFile, SourceRange},
 };
@@ -123,5 +124,43 @@ fn rejects_a_comment_range_outside_the_file() {
     assert!(matches!(
         result,
         Err(CommentFactError::InvalidCommentRange { .. })
+    ));
+}
+
+#[test]
+fn records_a_call() {
+    let fact = CallFact::new(source(), range(17, 24), "inner".into())
+        .unwrap_or_else(|error| panic!("creates call fact: {error}"));
+
+    assert_eq!(fact.range(), range(17, 24));
+    assert_eq!(fact.callee(), "inner");
+}
+
+#[test]
+fn rejects_a_call_range_outside_the_file() {
+    let result = CallFact::new(source(), range(0, 999), "inner".into());
+
+    assert!(matches!(
+        result,
+        Err(CallFactError::InvalidCallRange { .. })
+    ));
+}
+
+#[test]
+fn records_an_access() {
+    let fact = AccessFact::new(source(), range(0, 8), "settings.value".into())
+        .unwrap_or_else(|error| panic!("creates access fact: {error}"));
+
+    assert_eq!(fact.range(), range(0, 8));
+    assert_eq!(fact.target(), "settings.value");
+}
+
+#[test]
+fn rejects_an_access_range_outside_the_file() {
+    let result = AccessFact::new(source(), range(0, 999), "settings.value".into());
+
+    assert!(matches!(
+        result,
+        Err(AccessFactError::InvalidAccessRange { .. })
     ));
 }

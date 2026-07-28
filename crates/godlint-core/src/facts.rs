@@ -53,6 +53,20 @@ pub struct CommentFact {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CallFact {
+    source: SourceFile,
+    range: SourceRange,
+    callee: String,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct AccessFact {
+    source: SourceFile,
+    range: SourceRange,
+    target: String,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct FunctionFact {
     source: SourceFile,
     name: Option<String>,
@@ -99,6 +113,16 @@ pub enum CommentFactError {
     InvalidCommentRange { source: SourceFileError },
 }
 
+#[derive(Debug)]
+pub enum CallFactError {
+    InvalidCallRange { source: SourceFileError },
+}
+
+#[derive(Debug)]
+pub enum AccessFactError {
+    InvalidAccessRange { source: SourceFileError },
+}
+
 impl CommentFact {
     pub fn new(
         source: SourceFile,
@@ -130,6 +154,66 @@ impl CommentFact {
 
     pub fn text(&self) -> &str {
         &self.source.source()[self.range.start()..self.range.end()]
+    }
+}
+
+impl CallFact {
+    pub fn new(
+        source: SourceFile,
+        range: SourceRange,
+        callee: String,
+    ) -> Result<Self, CallFactError> {
+        source
+            .validate_range(range)
+            .map_err(|source| CallFactError::InvalidCallRange { source })?;
+
+        Ok(Self {
+            source,
+            range,
+            callee,
+        })
+    }
+
+    pub fn source(&self) -> &SourceFile {
+        &self.source
+    }
+
+    pub fn range(&self) -> SourceRange {
+        self.range
+    }
+
+    pub fn callee(&self) -> &str {
+        &self.callee
+    }
+}
+
+impl AccessFact {
+    pub fn new(
+        source: SourceFile,
+        range: SourceRange,
+        target: String,
+    ) -> Result<Self, AccessFactError> {
+        source
+            .validate_range(range)
+            .map_err(|source| AccessFactError::InvalidAccessRange { source })?;
+
+        Ok(Self {
+            source,
+            range,
+            target,
+        })
+    }
+
+    pub fn source(&self) -> &SourceFile {
+        &self.source
+    }
+
+    pub fn range(&self) -> SourceRange {
+        self.range
+    }
+
+    pub fn target(&self) -> &str {
+        &self.target
     }
 }
 
@@ -258,6 +342,42 @@ impl fmt::Display for CommentFactError {
             Self::InvalidCommentRange { source } => {
                 write!(formatter, "comment range is invalid: {source}")
             }
+        }
+    }
+}
+
+impl fmt::Display for CallFactError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::InvalidCallRange { source } => {
+                write!(formatter, "call range is invalid: {source}")
+            }
+        }
+    }
+}
+
+impl Error for CallFactError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            Self::InvalidCallRange { source } => Some(source),
+        }
+    }
+}
+
+impl fmt::Display for AccessFactError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::InvalidAccessRange { source } => {
+                write!(formatter, "access range is invalid: {source}")
+            }
+        }
+    }
+}
+
+impl Error for AccessFactError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            Self::InvalidAccessRange { source } => Some(source),
         }
     }
 }

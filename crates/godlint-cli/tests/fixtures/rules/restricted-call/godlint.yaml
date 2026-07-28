@@ -1,0 +1,12 @@
+version: 1
+
+exclude:
+  - excluded.ts
+
+rules:
+  architecture/restricted-call:
+    severity: error
+    calls:
+      - name: loadConfig
+        allow-in:
+          - config/**

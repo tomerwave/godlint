@@ -4,8 +4,8 @@ use tree_sitter::{Language as TreeSitterLanguage, Node, Parser};
 
 use crate::{
     facts::{
-        CommentFact, CommentFactError, CommentKind, FunctionFact, FunctionFactDetails,
-        FunctionFactError,
+        AccessFact, AccessFactError, CallFact, CallFactError, CommentFact, CommentFactError,
+        CommentKind, FunctionFact, FunctionFactDetails, FunctionFactError,
     },
     source::{Language, SourceFile, SourceRange, SourceRangeError},
 };
@@ -23,7 +23,9 @@ mod vocabulary;
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SourceFacts {
     source: SourceFile,
+    accesses: Vec<AccessFact>,
     comments: Vec<CommentFact>,
+    calls: Vec<CallFact>,
     functions: Vec<FunctionFact>,
 }
 
@@ -36,8 +38,16 @@ impl SourceFacts {
         &self.functions
     }
 
+    pub fn accesses(&self) -> &[AccessFact] {
+        &self.accesses
+    }
+
     pub fn comments(&self) -> &[CommentFact] {
         &self.comments
+    }
+
+    pub fn calls(&self) -> &[CallFact] {
+        &self.calls
     }
 }
 
@@ -69,6 +79,14 @@ pub enum AnalyzerError {
         path: PathBuf,
         source: CommentFactError,
     },
+    InvalidCall {
+        path: PathBuf,
+        source: CallFactError,
+    },
+    InvalidAccess {
+        path: PathBuf,
+        source: AccessFactError,
+    },
 }
 
 pub fn analyze(source: &SourceFile) -> Result<SourceFacts, AnalyzerError> {
@@ -92,7 +110,9 @@ pub(crate) fn analyze_with(
 
     Ok(SourceFacts {
         source: source.clone(),
+        accesses: collected.accesses,
         comments: collected.comments,
+        calls: collected.calls,
         functions: collected.functions,
     })
 }
@@ -128,8 +148,10 @@ fn parse(
 
 #[derive(Default)]
 struct Collected {
+    accesses: Vec<AccessFact>,
     functions: Vec<FunctionFact>,
     comments: Vec<CommentFact>,
+    calls: Vec<CallFact>,
 }
 
 fn collect_source_facts(
@@ -148,6 +170,14 @@ fn collect_source_facts(
         collected.comments.push(comment_fact(node, source, kind)?);
     }
 
+    if let Some(call) = call_fact(node, source)? {
+        collected.calls.push(call);
+    }
+
+    if let Some(access) = access_fact(node, source)? {
+        collected.accesses.push(access);
+    }
+
     let mut cursor = node.walk();
 
     for child in node.children(&mut cursor) {
@@ -155,6 +185,61 @@ fn collect_source_facts(
     }
 
     Ok(())
+}
+
+fn call_fact(node: Node<'_>, source: &SourceFile) -> Result<Option<CallFact>, AnalyzerError> {
+    let callee = match node.kind() {
+        "call" | "call_expression" => node.child_by_field_name("function"),
+        "macro_invocation" => node.child_by_field_name("macro"),
+        _ => None,
+    };
+    let Some(callee) = callee else {
+        return Ok(None);
+    };
+    let callee_text = source.source().get(callee.byte_range()).unwrap_or_default();
+
+    if !is_direct_path(callee_text) {
+        return Ok(None);
+    }
+
+    let range = node_range(callee, source)?;
+    let fact = CallFact::new(source.clone(), range, callee_text.to_owned()).map_err(|error| {
+        AnalyzerError::InvalidCall {
+            path: source.path().to_path_buf(),
+            source: error,
+        }
+    })?;
+
+    Ok(Some(fact))
+}
+
+fn access_fact(node: Node<'_>, source: &SourceFile) -> Result<Option<AccessFact>, AnalyzerError> {
+    if !matches!(node.kind(), "attribute" | "member_expression") {
+        return Ok(None);
+    }
+
+    let text = source.source().get(node.byte_range()).unwrap_or_default();
+
+    if !is_direct_path(text) {
+        return Ok(None);
+    }
+
+    let range = node_range(node, source)?;
+    let fact = AccessFact::new(source.clone(), range, text.to_owned()).map_err(|error| {
+        AnalyzerError::InvalidAccess {
+            path: source.path().to_path_buf(),
+            source: error,
+        }
+    })?;
+
+    Ok(Some(fact))
+}
+
+fn is_direct_path(text: &str) -> bool {
+    !text.is_empty()
+        && text
+            .chars()
+            .all(|character| character.is_alphanumeric() || "_.:".contains(character))
 }
 
 fn comment_fact(
@@ -250,6 +335,12 @@ impl fmt::Display for AnalyzerError {
             Self::InvalidComment { path, source } => {
                 write!(formatter, "invalid comment in {}: {source}", path.display())
             }
+            Self::InvalidCall { path, source } => {
+                write!(formatter, "invalid call in {}: {source}", path.display())
+            }
+            Self::InvalidAccess { path, source } => {
+                write!(formatter, "invalid access in {}: {source}", path.display())
+            }
         }
     }
 }
@@ -261,6 +352,8 @@ impl Error for AnalyzerError {
             Self::InvalidRange { source, .. } => Some(source),
             Self::InvalidFunction { source, .. } => Some(source),
             Self::InvalidComment { source, .. } => Some(source),
+            Self::InvalidCall { source, .. } => Some(source),
+            Self::InvalidAccess { source, .. } => Some(source),
             Self::MissingSyntaxTree { .. } | Self::InvalidSyntax { .. } => None,
         }
     }

@@ -2,11 +2,13 @@ use crate::{
     config::{Config, Severity},
     rules::{
         Rule, accountable_suppression::AccountableSuppression,
-        decision_complexity::DecisionComplexity, empty_function::EmptyFunction,
-        file_size::FileSize, function_nesting::FunctionNesting, function_size::FunctionSize,
-        function_statements::FunctionStatements, no_comments::NoComments,
-        parameter_count::ParameterCount, return_count::ReturnCount,
-        todo_requires_reference::TodoRequiresReference, unused_suppression::UnusedSuppression,
+        decision_complexity::DecisionComplexity, direct_environment_read::DirectEnvironmentRead,
+        empty_function::EmptyFunction, file_size::FileSize, function_nesting::FunctionNesting,
+        function_size::FunctionSize, function_statements::FunctionStatements,
+        no_comments::NoComments, no_dynamic_execution::NoDynamicExecution,
+        parameter_count::ParameterCount, restricted_call::RestrictedCall,
+        return_count::ReturnCount, todo_requires_reference::TodoRequiresReference,
+        unused_suppression::UnusedSuppression,
     },
 };
 
@@ -60,6 +62,30 @@ severity!(
     UnusedSuppression,
     unused_suppression
 );
+
+fn restricted_call_severity(config: &Config) -> Severity {
+    config
+        .rules
+        .restricted_call
+        .as_ref()
+        .map_or(Severity::Error, RestrictedCall::severity)
+}
+
+fn no_dynamic_execution_severity(config: &Config) -> Severity {
+    config
+        .rules
+        .no_dynamic_execution
+        .as_ref()
+        .map_or(Severity::Error, NoDynamicExecution::severity)
+}
+
+fn direct_environment_read_severity(config: &Config) -> Severity {
+    config
+        .rules
+        .direct_environment_read
+        .as_ref()
+        .map_or(Severity::Error, DirectEnvironmentRead::severity)
+}
 
 const REGISTRATIONS: &[Registration] = &[
     Registration {
@@ -121,6 +147,21 @@ const REGISTRATIONS: &[Registration] = &[
         id: UnusedSuppression::ID,
         severity: unused_suppression_severity,
         suppressible: false,
+    },
+    Registration {
+        id: RestrictedCall::ID,
+        severity: restricted_call_severity,
+        suppressible: true,
+    },
+    Registration {
+        id: NoDynamicExecution::ID,
+        severity: no_dynamic_execution_severity,
+        suppressible: true,
+    },
+    Registration {
+        id: DirectEnvironmentRead::ID,
+        severity: direct_environment_read_severity,
+        suppressible: true,
     },
 ];
 

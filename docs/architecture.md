@@ -31,9 +31,11 @@ expected: read it here.
 ## Facts
 
 Language adapters retain native AST and parser details. They emit a small shared fact
-model that rules consume without a universal AST. Two fact types exist today,
-`FunctionFact` and `CommentFact`; `Import`, `Call`, `EnvironmentRead`, `ErrorHandler`,
-`Assertion`, `Mock`, and `DependencyEdge` are planned and are described in the
+model that rules consume without a universal AST. `FunctionFact`, `CommentFact`,
+`CallFact`, and `AccessFact` exist today. `CallFact` records a direct callee path and
+source range; `AccessFact` does the same for direct member access. Neither resolves
+aliases, types, or dynamically computed properties. `Import`, `EnvironmentRead`,
+`ErrorHandler`, `Assertion`, `Mock`, and `DependencyEdge` are planned and are described in the
 [rule roadmap](rule-roadmap.md).
 
 Source files are identified with repository-relative paths and a shared language enum.

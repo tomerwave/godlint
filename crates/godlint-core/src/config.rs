@@ -61,6 +61,12 @@ pub struct Rules {
     pub accountable_suppression: Option<AccountableSuppressionRule>,
     #[serde(rename = "policy/unused-suppression")]
     pub unused_suppression: Option<UnusedSuppressionRule>,
+    #[serde(rename = "architecture/restricted-call")]
+    pub restricted_call: Option<RestrictedCallRule>,
+    #[serde(rename = "security/no-dynamic-execution")]
+    pub no_dynamic_execution: Option<NoDynamicExecutionRule>,
+    #[serde(rename = "security/direct-environment-read")]
+    pub direct_environment_read: Option<DirectEnvironmentReadRule>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -77,6 +83,36 @@ pub struct AccountableSuppressionRule {
 #[serde(deny_unknown_fields)]
 pub struct UnusedSuppressionRule {
     pub severity: Severity,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RestrictedCallRule {
+    pub severity: Severity,
+    #[serde(default)]
+    pub calls: Vec<RestrictedCall>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RestrictedCall {
+    pub name: String,
+    #[serde(default, rename = "allow-in")]
+    pub allow_in: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct NoDynamicExecutionRule {
+    pub severity: Severity,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct DirectEnvironmentReadRule {
+    pub severity: Severity,
+    #[serde(default, rename = "allow-in")]
+    pub allow_in: Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -186,6 +222,9 @@ pub enum ConfigError {
     InvalidComplexityLimit,
     InvalidTodoMarkers,
     InvalidTodoReferencePrefixes,
+    InvalidRestrictedCallName,
+    InvalidRestrictedCallAllowIn,
+    InvalidDirectEnvironmentReadAllowIn,
     InvalidExclude {
         pattern: String,
     },
@@ -242,7 +281,10 @@ impl Config {
             return Err(ConfigError::InvalidComplexityLimit);
         }
 
-        self.validate_todo_rule()
+        self.validate_todo_rule()?;
+        self.validate_restricted_call_rule()?;
+
+        self.validate_direct_environment_read_rule()
     }
 
     fn validate_todo_rule(&self) -> Result<(), ConfigError> {
@@ -261,6 +303,37 @@ impl Config {
                 .any(|prefix| prefix_is_unusable(prefix))
         {
             return Err(ConfigError::InvalidTodoReferencePrefixes);
+        }
+
+        Ok(())
+    }
+
+    fn validate_restricted_call_rule(&self) -> Result<(), ConfigError> {
+        let Some(rule) = &self.rules.restricted_call else {
+            return Ok(());
+        };
+
+        for call in &rule.calls {
+            if call.name.trim().is_empty() {
+                return Err(ConfigError::InvalidRestrictedCallName);
+            }
+
+            if call.allow_in.iter().any(|path| path.trim().is_empty()) {
+                return Err(ConfigError::InvalidRestrictedCallAllowIn);
+            }
+        }
+
+        Ok(())
+    }
+
+    fn validate_direct_environment_read_rule(&self) -> Result<(), ConfigError> {
+        if self
+            .rules
+            .direct_environment_read
+            .as_ref()
+            .is_some_and(|rule| rule.allow_in.iter().any(|path| path.trim().is_empty()))
+        {
+            return Err(ConfigError::InvalidDirectEnvironmentReadAllowIn);
         }
 
         Ok(())
@@ -299,6 +372,22 @@ impl fmt::Display for ConfigError {
                     "policy/todo-requires-reference reference-prefixes must not be empty or numeric"
                 )
             }
+            Self::InvalidRestrictedCallName => {
+                write!(
+                    formatter,
+                    "architecture/restricted-call call names must not be blank"
+                )
+            }
+            Self::InvalidRestrictedCallAllowIn => {
+                write!(
+                    formatter,
+                    "architecture/restricted-call allow-in paths must not be blank"
+                )
+            }
+            Self::InvalidDirectEnvironmentReadAllowIn => write!(
+                formatter,
+                "security/direct-environment-read allow-in paths must not be blank"
+            ),
             Self::InvalidExclude { pattern } => {
                 write!(formatter, "exclude pattern must not be blank: {pattern:?}")
             }
@@ -315,6 +404,9 @@ impl Error for ConfigError {
             | Self::InvalidComplexityLimit
             | Self::InvalidTodoMarkers
             | Self::InvalidTodoReferencePrefixes
+            | Self::InvalidRestrictedCallName
+            | Self::InvalidRestrictedCallAllowIn
+            | Self::InvalidDirectEnvironmentReadAllowIn
             | Self::InvalidExclude { .. } => None,
         }
     }
