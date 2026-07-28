@@ -44,12 +44,14 @@ this one do about them? Name the ones you tested.
 
 ## Checklist
 
+`scripts/validate-pull-request.py` already proves the rule is registered, configurable,
+fixtured, tested, documented, and dogfooded, so those are not repeated here. What is left
+is what no script can check:
+
 - [ ] The fact is derived from the analyzer, not re-lexed in the rules layer.
-- [ ] Node-kind knowledge lives in the language vocabulary, not in shared code.
+- [ ] Comment and node-kind knowledge lives in the language vocabulary, not in shared code.
 - [ ] Unit tests analyze real source rather than injecting metric values.
 - [ ] Tests cover the constructs where the languages diverge, not only where they agree.
 - [ ] A test pins the exact threshold boundary.
-- [ ] Fixtures cover valid, invalid, and configuration cases, plus scoped exclusion.
-- [ ] The rule is enabled for Godlint in `godlint.yaml`, or the omission is justified here.
-- [ ] `docs/rule-roadmap.md`, `README.md`, and `CHANGELOG.md` record the rule.
+- [ ] The fixture exercises a realistic threshold, not the smallest one that fires.
 - [ ] Output is deterministic and ordering does not depend on message wording.

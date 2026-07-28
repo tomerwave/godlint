@@ -8,8 +8,10 @@
 
 ## Checklist
 
+Adding or changing a rule? Use the `new-rule` template instead: append
+`?template=new-rule.md` to this pull request's URL. For build, CI, tooling, or
+documentation work, use `?template=infrastructure.md`.
+
 - [ ] I kept this change focused and documented user-visible behavior.
-- [ ] I added or updated fixtures for changed rule behavior, when applicable.
-- [ ] I updated rule/configuration documentation, when applicable.
-- [ ] I considered false positives, deterministic output, and suppression behavior.
+- [ ] I considered false positives and deterministic output.
 - [ ] I did not include secrets or sensitive source material.
