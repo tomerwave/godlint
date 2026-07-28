@@ -1,6 +1,8 @@
 #[path = "rules/empty_function.rs"]
 mod empty_function;
 
+#[path = "rules/function_fact_fixture.rs"]
+mod function_fact_fixture;
 #[path = "rules/function_size.rs"]
 mod function_size;
 #[path = "rules/function_statements.rs"]

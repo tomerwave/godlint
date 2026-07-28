@@ -1,33 +1,15 @@
-use std::path::PathBuf;
-
 use godlint_core::{
     config::{FunctionNestingRule, Severity},
-    facts::{FunctionFact, FunctionFactDetails},
+    facts::FunctionFact,
     rules::{Rule, function_nesting::FunctionNesting},
-    source::{SourceFile, SourceRange},
 };
 
-fn function(nesting_depth: u32) -> FunctionFact {
-    let source = SourceFile::new(PathBuf::from("src/example.rs"), "fn example() {}".into())
-        .unwrap_or_else(|error| panic!("creates source file: {error}"));
-    let range = SourceRange::new(0, source.source().len())
-        .unwrap_or_else(|error| panic!("creates source range: {error}"));
+use super::function_fact_fixture::FunctionFactFixture;
 
-    FunctionFact::new(
-        source,
-        Some("example".into()),
-        FunctionFactDetails {
-            range,
-            body_range: range,
-            parameter_count: 0,
-            decision_points: 0,
-            return_count: 0,
-            statement_count: 0,
-            body_is_empty: false,
-            nesting_depth,
-        },
-    )
-    .unwrap_or_else(|error| panic!("creates function fact: {error}"))
+fn function(nesting_depth: u32) -> FunctionFact {
+    FunctionFactFixture::new()
+        .with_nesting_depth(nesting_depth)
+        .build()
 }
 
 fn configuration(max_depth: u32) -> FunctionNestingRule {
