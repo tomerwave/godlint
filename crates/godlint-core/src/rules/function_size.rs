@@ -1,83 +1,45 @@
 use crate::{
     analyzers::SourceFacts,
-    config::{FunctionSizeRule, Severity},
+    config::{Config, LineLimitRule, Severity},
     facts::FunctionFact,
-    rules::{Finding, Rule, RuleError, line_count},
+    rules::{
+        Finding, FunctionRule, Rule, RuleError, Violation, evaluate_function_rule, line_count,
+        when_configured,
+    },
 };
 
 pub struct FunctionSize;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct FunctionSizeViolation {
-    pub effective_line_count: usize,
-}
-
-pub fn evaluate(
-    facts: &[SourceFacts],
-    configuration: &FunctionSizeRule,
-) -> Result<Vec<Finding>, RuleError> {
-    let mut findings = Vec::new();
-
-    for source_facts in facts {
-        for function in source_facts.functions() {
-            let Some(violation) = FunctionSize::evaluate(function, configuration) else {
-                continue;
-            };
-
-            findings.push(finding(function, violation, configuration)?);
-        }
-    }
-
-    Ok(findings)
-}
-
 impl Rule for FunctionSize {
-    type Input = FunctionFact;
-    type Configuration = FunctionSizeRule;
-    type Violation = FunctionSizeViolation;
-
     const ID: &'static str = "maintainability/function-size";
 
-    fn evaluate(
-        function: &Self::Input,
-        configuration: &Self::Configuration,
-    ) -> Option<Self::Violation> {
-        if configuration.severity == Severity::Off {
-            return None;
-        }
+    type Configuration = LineLimitRule;
 
-        let effective_line_count = line_count::effective_line_count(
-            function.source(),
+    fn severity(configuration: &Self::Configuration) -> Severity {
+        configuration.severity
+    }
+}
+
+impl FunctionRule for FunctionSize {
+    fn check(
+        function: &FunctionFact,
+        facts: &SourceFacts,
+        configuration: &Self::Configuration,
+    ) -> Option<Violation> {
+        let actual = line_count::effective_line_count(
+            facts,
             function.range(),
             configuration.skip_blank_lines,
             configuration.skip_comments,
         );
+        let max = configuration.max_lines.get();
 
-        (effective_line_count > configuration.max_lines as usize).then_some(FunctionSizeViolation {
-            effective_line_count,
-        })
+        (actual > max).then_some(Violation::FunctionLines { actual, max })
     }
 }
 
-fn finding(
-    function: &FunctionFact,
-    violation: FunctionSizeViolation,
-    configuration: &FunctionSizeRule,
-) -> Result<Finding, RuleError> {
-    let location = function
-        .source()
-        .location(function.range())
-        .map_err(|source| RuleError::LocatesSource { source })?;
-
-    Ok(Finding {
-        path: function.source().path().to_path_buf(),
-        line: location.start.line,
-        column: location.start.column,
-        severity: configuration.severity,
-        rule_id: FunctionSize::ID,
-        message: format!(
-            "Function has {} effective lines (max {}).",
-            violation.effective_line_count, configuration.max_lines
-        ),
+pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, RuleError> {
+    when_configured(config.rules.function_size.as_ref(), |configuration| {
+        evaluate_function_rule::<FunctionSize>(facts, configuration)
     })
 }

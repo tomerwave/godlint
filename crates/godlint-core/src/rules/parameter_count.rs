@@ -1,78 +1,39 @@
 use crate::{
     analyzers::SourceFacts,
-    config::{ParameterCountRule, Severity},
+    config::{Config, ParameterCountRule, Severity},
     facts::FunctionFact,
-    rules::{Finding, Rule, RuleError},
+    rules::{
+        Finding, FunctionRule, Rule, RuleError, Violation, evaluate_function_rule, when_configured,
+    },
 };
 
 pub struct ParameterCount;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct ParameterCountViolation {
-    pub parameter_count: u32,
-}
-
-pub fn evaluate(
-    facts: &[SourceFacts],
-    configuration: &ParameterCountRule,
-) -> Result<Vec<Finding>, RuleError> {
-    let mut findings = Vec::new();
-
-    for source_facts in facts {
-        for function in source_facts.functions() {
-            let Some(violation) = ParameterCount::evaluate(function, configuration) else {
-                continue;
-            };
-
-            findings.push(finding(function, violation, configuration)?);
-        }
-    }
-
-    Ok(findings)
-}
-
 impl Rule for ParameterCount {
-    type Input = FunctionFact;
-    type Configuration = ParameterCountRule;
-    type Violation = ParameterCountViolation;
-
     const ID: &'static str = "maintainability/parameter-count";
 
-    fn evaluate(
-        function: &Self::Input,
-        configuration: &Self::Configuration,
-    ) -> Option<Self::Violation> {
-        if configuration.severity == Severity::Off {
-            return None;
-        }
+    type Configuration = ParameterCountRule;
 
-        (function.parameter_count() > configuration.max_parameters).then_some(
-            ParameterCountViolation {
-                parameter_count: function.parameter_count(),
-            },
-        )
+    fn severity(configuration: &Self::Configuration) -> Severity {
+        configuration.severity
     }
 }
 
-fn finding(
-    function: &FunctionFact,
-    violation: ParameterCountViolation,
-    configuration: &ParameterCountRule,
-) -> Result<Finding, RuleError> {
-    let location = function
-        .source()
-        .location(function.range())
-        .map_err(|source| RuleError::LocatesSource { source })?;
+impl FunctionRule for ParameterCount {
+    fn check(
+        function: &FunctionFact,
+        _facts: &SourceFacts,
+        configuration: &Self::Configuration,
+    ) -> Option<Violation> {
+        let actual = function.parameter_count().value();
+        let max = configuration.limit();
 
-    Ok(Finding {
-        path: function.source().path().to_path_buf(),
-        line: location.start.line,
-        column: location.start.column,
-        severity: configuration.severity,
-        rule_id: ParameterCount::ID,
-        message: format!(
-            "Function has {} parameters (max {}).",
-            violation.parameter_count, configuration.max_parameters
-        ),
+        (actual > max).then_some(Violation::ParameterCount { actual, max })
+    }
+}
+
+pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, RuleError> {
+    when_configured(config.rules.parameter_count.as_ref(), |configuration| {
+        evaluate_function_rule::<ParameterCount>(facts, configuration)
     })
 }

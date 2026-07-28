@@ -1,94 +1,92 @@
-use crate::source::{Language, SourceFile, SourceRange};
+//! Effective-line accounting for the two size rules.
+//!
+//! Commentary is identified from the comment facts the analyzer already produced rather
+//! than by re-scanning text for `//` and `#`. Re-lexing here would duplicate the parser,
+//! put language knowledge in the rules layer, and get string literals, nested block
+//! comments, and Python docstrings wrong.
 
+use crate::{analyzers::SourceFacts, source::SourceRange};
+
+/// Counts the lines of `range` that carry code under the configured policy.
 pub(crate) fn effective_line_count(
-    source_file: &SourceFile,
+    facts: &SourceFacts,
     range: SourceRange,
     skip_blank_lines: bool,
     skip_comments: bool,
-) -> usize {
-    let source = &source_file.source()[range.start()..range.end()];
-    let mut block_comment = false;
+) -> u32 {
+    let source = facts.source();
+    let commentary = commentary_within(facts, range);
+    let text = &source.source()[range.start()..range.end()];
+    let mut offset = range.start();
+    let mut counted = 0_u32;
 
-    source
-        .lines()
-        .filter(|line| {
-            line_is_effective(
-                line,
-                source_file.language(),
-                skip_blank_lines,
-                skip_comments,
-                &mut block_comment,
-            )
-        })
-        .count()
+    for line in text.split_inclusive('\n') {
+        let start = offset;
+
+        offset += line.len();
+
+        if line_is_counted(
+            line.trim_end_matches(['\n', '\r']),
+            start,
+            &commentary,
+            skip_blank_lines,
+            skip_comments,
+        ) {
+            counted += 1;
+        }
+    }
+
+    counted
 }
 
-fn line_is_effective(
+/// Collects the comment ranges that can affect `range`, in source order.
+fn commentary_within(facts: &SourceFacts, range: SourceRange) -> Vec<SourceRange> {
+    facts
+        .comments()
+        .iter()
+        .map(|comment| comment.range())
+        .filter(|comment| comment.start() < range.end() && comment.end() > range.start())
+        .collect()
+}
+
+fn line_is_counted(
     line: &str,
-    language: Language,
+    start: usize,
+    commentary: &[SourceRange],
     skip_blank_lines: bool,
     skip_comments: bool,
-    block_comment: &mut bool,
 ) -> bool {
     if skip_blank_lines && line.trim().is_empty() {
         return false;
     }
 
-    if !skip_comments {
-        return true;
-    }
-
-    !is_comment_only(line, language, block_comment)
+    !(skip_comments && line_is_commentary(line, start, commentary))
 }
 
-fn is_comment_only(line: &str, language: Language, block_comment: &mut bool) -> bool {
-    let mut remaining = line.trim_start();
+/// Reports whether every non-blank character of the line sits inside a comment.
+///
+/// A line holding both code and a trailing comment still counts, which is what a reader
+/// means by a line of code.
+fn line_is_commentary(line: &str, start: usize, commentary: &[SourceRange]) -> bool {
+    let mut has_content = false;
 
-    loop {
-        if *block_comment {
-            let Some(end) = remaining.find("*/") else {
-                return true;
-            };
-
-            remaining = remaining[end + 2..].trim_start();
-            *block_comment = false;
-
-            if remaining.is_empty() {
-                return true;
-            }
-
+    for (index, character) in line.char_indices() {
+        if character.is_whitespace() {
             continue;
         }
 
-        if remaining.is_empty() {
+        has_content = true;
+
+        if !is_inside(start + index, commentary) {
             return false;
         }
-
-        if line_comment_marker(language).is_some_and(|marker| remaining.starts_with(marker)) {
-            return true;
-        }
-
-        if supports_block_comments(language) && remaining.starts_with("/*") {
-            remaining = &remaining[2..];
-            *block_comment = true;
-
-            continue;
-        }
-
-        return false;
     }
+
+    has_content
 }
 
-fn line_comment_marker(language: Language) -> Option<&'static str> {
-    match language {
-        Language::JavaScript | Language::Rust | Language::TypeScript => Some("//"),
-        Language::Python => Some("#"),
-    }
-}
-
-fn supports_block_comments(language: Language) -> bool {
-    matches!(
-        language,
-        Language::JavaScript | Language::Rust | Language::TypeScript
-    )
+fn is_inside(offset: usize, commentary: &[SourceRange]) -> bool {
+    commentary
+        .iter()
+        .any(|comment| comment.start() <= offset && offset < comment.end())
 }
