@@ -5,8 +5,9 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use crate::source::Language;
+
 const IGNORED_DIRECTORY_NAMES: [&str; 3] = [".git", "node_modules", "target"];
-const SUPPORTED_EXTENSIONS: [&str; 7] = ["js", "jsx", "py", "pyi", "rs", "ts", "tsx"];
 
 #[derive(Debug)]
 pub enum DiscoveryError {
@@ -78,11 +79,7 @@ fn discover_directory(
 }
 
 fn add_supported_file(path: &Path, files: &mut BTreeSet<PathBuf>) {
-    if path
-        .extension()
-        .and_then(|extension| extension.to_str())
-        .is_some_and(|extension| SUPPORTED_EXTENSIONS.contains(&extension))
-    {
+    if Language::from_path(path).is_some() {
         files.insert(path.to_path_buf());
     }
 }

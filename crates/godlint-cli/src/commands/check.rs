@@ -25,63 +25,39 @@ pub fn run(arguments: &[String]) -> Option<ExitCode> {
 }
 
 fn check(paths: &[String]) -> ExitCode {
-    let current_directory = match std::env::current_dir() {
-        Ok(directory) => directory,
-        Err(error) => {
-            eprintln!("Unable to determine the scan root: {error}");
-            return ExitCode::from(2);
+    match run_check(paths) {
+        Ok(exit_code) => exit_code,
+        Err(message) => {
+            eprintln!("{message}");
+            ExitCode::from(2)
         }
-    };
-    let requested_paths = match requested_paths(paths, &current_directory) {
-        Ok(paths) => paths,
-        Err(error) => {
-            eprintln!("Invalid scan path: {error}");
-            return ExitCode::from(2);
-        }
-    };
-    let root = match config_root(&requested_paths) {
-        Ok(root) => root,
-        Err(error) => {
-            eprintln!("Unable to determine the configuration root: {error}");
-            return ExitCode::from(2);
-        }
-    };
-    let paths = match scan_paths(&requested_paths, &root) {
-        Ok(paths) => paths,
-        Err(error) => {
-            eprintln!("Invalid scan path: {error}");
-            return ExitCode::from(2);
-        }
-    };
-    let config = match Config::load(root.join("godlint.yaml")) {
-        Ok(config) => config,
-        Err(error) => {
-            eprintln!("Configuration is invalid: {error}");
-            return ExitCode::from(2);
-        }
-    };
+    }
+}
 
-    let report = match scan(&root, &paths) {
-        Ok(report) => report,
-        Err(error) => {
-            eprintln!("Unable to scan source files: {error}");
-            return ExitCode::from(2);
-        }
-    };
-    let findings = match evaluate(&report.facts, &config) {
-        Ok(findings) => findings,
-        Err(error) => {
-            eprintln!("Unable to evaluate rules: {error}");
-            return ExitCode::from(2);
-        }
-    };
+/// Reports findings for `paths`, returning the process exit code.
+///
+/// Every setup failure is returned as the operator-facing message to print, so the
+/// caller owns both the reporting and the failure exit code.
+fn run_check(paths: &[String]) -> Result<ExitCode, String> {
+    let current_directory = std::env::current_dir()
+        .map_err(|error| format!("Unable to determine the scan root: {error}"))?;
+    let requested_paths = requested_paths(paths, &current_directory)
+        .map_err(|error| format!("Invalid scan path: {error}"))?;
+    let root = config_root(&requested_paths)
+        .map_err(|error| format!("Unable to determine the configuration root: {error}"))?;
+    let paths = scan_paths(&requested_paths, &root)
+        .map_err(|error| format!("Invalid scan path: {error}"))?;
+    let config = Config::load(root.join("godlint.yaml"))
+        .map_err(|error| format!("Configuration is invalid: {error}"))?;
+    let report =
+        scan(&root, &paths).map_err(|error| format!("Unable to scan source files: {error}"))?;
+    let findings = evaluate(&report.facts, &config)
+        .map_err(|error| format!("Unable to evaluate rules: {error}"))?;
 
     if findings.is_empty() && report.issues.is_empty() {
         println!("No findings.");
-        return ExitCode::SUCCESS;
+        return Ok(ExitCode::SUCCESS);
     }
-
-    let exit_code = scan_exit_code(&report.issues);
 
     for finding in findings {
         println!(
@@ -95,11 +71,15 @@ fn check(paths: &[String]) -> ExitCode {
         );
     }
 
-    for issue in report.issues {
+    for issue in &report.issues {
         eprintln!("{}: {}", issue.path.display(), issue.message);
     }
 
-    exit_code
+    if report.issues.is_empty() {
+        Ok(ExitCode::from(1))
+    } else {
+        Ok(ExitCode::from(2))
+    }
 }
 
 fn requested_paths(arguments: &[String], current_directory: &Path) -> Result<Vec<PathBuf>, String> {
@@ -209,14 +189,6 @@ fn scan_path(root: &Path, path: PathBuf) -> Result<PathBuf, String> {
     }
 
     Ok(path)
-}
-
-fn scan_exit_code(issues: &[godlint_core::scan::ScanIssue]) -> ExitCode {
-    if !issues.is_empty() {
-        return ExitCode::from(2);
-    }
-
-    ExitCode::from(1)
 }
 
 fn severity_name(severity: Severity) -> &'static str {

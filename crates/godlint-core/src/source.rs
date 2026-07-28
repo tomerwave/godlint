@@ -97,7 +97,16 @@ impl SourceFile {
         })
     }
 
-    fn position(&self, offset: usize) -> Result<SourcePosition, SourceFileError> {
+    /// Confirms a range addresses real character boundaries without deriving positions.
+    ///
+    /// Line and column numbers are derived only at reporting boundaries, so callers that
+    /// merely need to validate offsets use this instead of discarding a [`SourceLocation`].
+    pub(crate) fn validate_range(&self, range: SourceRange) -> Result<(), SourceFileError> {
+        self.validate_offset(range.start)?;
+        self.validate_offset(range.end)
+    }
+
+    fn validate_offset(&self, offset: usize) -> Result<(), SourceFileError> {
         if offset > self.source.len() {
             return Err(SourceFileError::InvalidRange {
                 range: SourceRange {
@@ -110,6 +119,12 @@ impl SourceFile {
         if !self.source.is_char_boundary(offset) {
             return Err(SourceFileError::InvalidUtf8Boundary { offset });
         }
+
+        Ok(())
+    }
+
+    fn position(&self, offset: usize) -> Result<SourcePosition, SourceFileError> {
+        self.validate_offset(offset)?;
 
         let prefix = &self.source[..offset];
         let line = prefix.bytes().filter(|byte| *byte == b'\n').count() + 1;

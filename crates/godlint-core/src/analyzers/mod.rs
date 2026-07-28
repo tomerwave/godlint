@@ -7,6 +7,7 @@ use crate::{
     source::{Language, SourceFile, SourceRange, SourceRangeError},
 };
 
+mod ecmascript;
 mod javascript;
 mod python;
 mod rust;
@@ -64,11 +65,13 @@ pub(super) fn analyze_with(
     is_function_node: fn(&str) -> bool,
 ) -> Result<SourceFacts, AnalyzerError> {
     let mut parser = Parser::new();
-    let path = source.path().to_path_buf();
 
     parser
         .set_language(&language)
-        .map_err(|source| AnalyzerError::ConfiguresParser { path, source })?;
+        .map_err(|error| AnalyzerError::ConfiguresParser {
+            path: source.path().to_path_buf(),
+            source: error,
+        })?;
 
     let tree =
         parser
@@ -140,17 +143,22 @@ fn function_fact(
         .child_by_field_name("name")
         .and_then(|name| source.source().get(name.byte_range()))
         .map(str::to_owned);
-    let path = source.path().to_path_buf();
 
-    FunctionFact::new(source.clone(), name, range, body_range, nesting_depth)
-        .map_err(|source| AnalyzerError::InvalidFunction { path, source })
+    FunctionFact::new(source.clone(), name, range, body_range, nesting_depth).map_err(|error| {
+        AnalyzerError::InvalidFunction {
+            path: source.path().to_path_buf(),
+            source: error,
+        }
+    })
 }
 
 fn node_range(node: Node<'_>, source: &SourceFile) -> Result<SourceRange, AnalyzerError> {
-    let path = source.path().to_path_buf();
-
-    SourceRange::new(node.start_byte(), node.end_byte())
-        .map_err(|source| AnalyzerError::InvalidRange { path, source })
+    SourceRange::new(node.start_byte(), node.end_byte()).map_err(|error| {
+        AnalyzerError::InvalidRange {
+            path: source.path().to_path_buf(),
+            source: error,
+        }
+    })
 }
 
 impl fmt::Display for AnalyzerError {
