@@ -142,6 +142,10 @@ releases begin.
 
 ### Fixed
 
+- A Python docstring following a shebang is recognised as a docstring. The shebang counted
+  as the block's first statement, so the docstring below it was read as an ordinary string:
+  `skip-comments` counted it as code and `policy/todo-requires-reference` did not scan it.
+
 - Configuration discovery stops at a repository boundary, meaning a directory
   containing `.git`. It previously walked to the filesystem root, so a stray
   `godlint.yaml` in a parent or home directory could silently govern an unrelated

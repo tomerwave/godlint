@@ -27,5 +27,13 @@ pub(crate) fn is_leading_block_statement(node: Node<'_>, block_kinds: &[&str]) -
 
     block_kinds.contains(&block.kind())
         && statement.named_child(0) == Some(node)
-        && block.named_child(0) == Some(statement)
+        && first_statement(block) == Some(statement)
+}
+
+fn first_statement(block: Node<'_>) -> Option<Node<'_>> {
+    let mut cursor = block.walk();
+
+    block
+        .named_children(&mut cursor)
+        .find(|child| !child.is_extra())
 }
