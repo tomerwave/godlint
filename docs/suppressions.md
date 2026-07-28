@@ -106,7 +106,9 @@ knowing. A directive inside an outer function also covers every nested closure d
 it, and where two functions share a line — `const a = () => {…}; const b = () => {};` —
 a directive justifying one silences the named rule for the other. Both follow from findings
 carrying a line rather than an offset. Prefer one declaration per line where an exception
-is in play; a byte-range scope is a later change.
+is in play; [#35](https://github.com/tomerwave/godlint/issues/35) tracks moving the
+containment test to byte ranges, and the open policy question of whether an `enclosing`
+directive should reach a closure declared inside the declaration it names.
 
 `enclosing` needs a function to enclose it. At the top level of a file there is none, and
 Godlint reports the directive rather than silently ignoring it.
