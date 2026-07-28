@@ -1,0 +1,30 @@
+name: Coverage
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rules:
+    name: Require every rule line to be tested
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: rustup toolchain install 1.97.1 --profile minimal
+
+      - run: rustup component add llvm-tools-preview --toolchain 1.97.1
+
+      - uses: Swatinem/rust-cache@v2
+
+      - run: cargo +1.97.1 install cargo-llvm-cov --locked
+
+      - run: cargo +1.97.1 llvm-cov --workspace --json --output-path coverage.json
+
+      - run: python3 scripts/check-rule-coverage.py coverage.json

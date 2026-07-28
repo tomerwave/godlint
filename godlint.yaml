@@ -20,6 +20,10 @@ exclude:
   - target
   - vendor
   - crates/godlint-cli/tests/fixtures
+  # Maintenance scripts are tooling rather than product source. The no-comments policy was
+  # adopted for the Rust codebase, where the reasoning lives in docs/architecture.md
+  # instead; a script that encodes a budget should carry the reason beside the number.
+  - scripts
 
 rules:
   maintainability/function-size:

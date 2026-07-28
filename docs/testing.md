@@ -80,9 +80,25 @@ It is not a proof of coverage, and should not be read as one. A newly added bran
 still be untested while every mutant of it is caught, because altering the line can break
 behaviour that other tests do cover, and that failure is enough to mark the mutant caught.
 This was measured: adding an unexercised exemption to `empty-function` produced three
-mutants, all caught, and the exemption itself remained untested. Mutation testing raises
-the floor and names real gaps; deciding that a new case deserves a fixture is still a
-reviewer's job, which is why the rule template asks for it.
+mutants, all caught, and the exemption itself remained untested. Coverage closes that particular hole, because it asks the narrower question: was this
+line ever executed? An unexercised branch is an uncovered line however well the rest of
+the file is tested.
+
+```bash
+cargo llvm-cov --workspace --json --output-path coverage.json
+python3 scripts/check-rule-coverage.py coverage.json
+```
+
+The budget is a count of lines rather than a percentage, because a percentage loose enough
+to tolerate the known residue is also loose enough to hide a new two-line branch. The
+residue is error propagation from `SourceFile::location`, which cannot fail for a range a
+fact carries, since facts validate their ranges when constructed. Removing that plumbing
+would take the budget to zero.
+
+The two mechanisms answer different questions and neither replaces the other. Coverage
+asks whether a line ran; mutation testing asks whether anything would notice if it changed.
+Deciding that a new case deserves a fixture is still a reviewer's job, which is why the
+rule template asks for it.
 
 The validation stack is:
 
