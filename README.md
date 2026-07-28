@@ -105,8 +105,8 @@ TypeScript/JavaScript, and Python source files. Fifteen rules are implemented:
   finding.
 - `architecture/restricted-call` — abrupt process exits and debug-only output, plus
   configured direct callees outside their approved paths.
-- `security/no-dynamic-execution` — JavaScript `eval` and `Function`, Python `eval` and
-  `exec`.
+- `security/no-dynamic-execution` — JavaScript `eval`, `Function`, and `new Function`;
+  Python `eval` and `exec`.
 - `security/direct-environment-read` — environment access outside a configuration
   boundary.
 

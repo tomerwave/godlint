@@ -167,3 +167,47 @@ fn a_function_is_not_the_macro_that_shares_its_name() {
         "the macro is still restricted"
     );
 }
+
+#[test]
+fn a_configured_name_keeps_the_macro_distinction() {
+    let source = concat!(
+        "fn dbg(value: u32) -> u32 {\n",
+        "    value\n",
+        "}\n",
+        "\n",
+        "pub fn run(v: u32) -> u32 {\n",
+        "    dbg(v);\n",
+        "    dbg!(v)\n",
+        "}\n"
+    );
+    let allows_macro = concat!(
+        "version: 1\n",
+        "rules:\n",
+        "  architecture/restricted-call:\n",
+        "    severity: error\n",
+        "    calls:\n",
+        "      - name: \"dbg!\"\n",
+        "        allow-in:\n",
+        "          - src/example.rs\n"
+    );
+
+    assert!(
+        violations("src/example.rs", source, allows_macro).is_empty(),
+        "naming the macro with its ! scopes the macro and leaves a function alone"
+    );
+
+    let restricts_function = concat!(
+        "version: 1\n",
+        "rules:\n",
+        "  architecture/restricted-call:\n",
+        "    severity: error\n",
+        "    calls:\n",
+        "      - name: dbg\n"
+    );
+
+    assert_eq!(
+        violations("src/example.rs", source, restricts_function).len(),
+        2,
+        "naming the function restricts it, and the macro stays restricted by default"
+    );
+}

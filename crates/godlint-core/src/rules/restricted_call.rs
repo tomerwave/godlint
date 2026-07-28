@@ -13,7 +13,7 @@ const PYTHON_RESTRICTIONS: &[&str] = &["sys.exit", "os._exit", "print"];
 
 const RUST_RESTRICTIONS: &[&str] = &["std::process::exit"];
 
-const RUST_MACRO_RESTRICTIONS: &[&str] = &["dbg"];
+const RUST_MACRO_RESTRICTIONS: &[&str] = &["dbg!"];
 
 pub struct RestrictedCall;
 
@@ -35,25 +35,33 @@ pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, 
             RestrictedCall::ID,
             |call| {
                 is_restricted(call, &rule.calls).then(|| Violation::RestrictedCall {
-                    callee: call.callee().to_owned(),
+                    callee: spelled(call),
                 })
             },
         )
     })
 }
 
-fn is_restricted(call: &CallFact, restrictions: &[RestrictedCallConfiguration]) -> bool {
-    match restrictions
-        .iter()
-        .find(|restriction| restriction.name == call.callee())
-    {
-        Some(restriction) => !is_allowed(call, &restriction.allow_in),
-        None => is_default_restriction(call),
+fn spelled(call: &CallFact) -> String {
+    let callee = call.callee();
+
+    if call.is_macro() {
+        format!("{callee}!")
+    } else {
+        callee.to_owned()
     }
 }
 
-fn is_default_restriction(call: &CallFact) -> bool {
-    default_restrictions(call).contains(&call.callee())
+fn is_restricted(call: &CallFact, restrictions: &[RestrictedCallConfiguration]) -> bool {
+    let name = spelled(call);
+
+    match restrictions
+        .iter()
+        .find(|restriction| restriction.name == name)
+    {
+        Some(restriction) => !is_allowed(call, &restriction.allow_in),
+        None => default_restrictions(call).contains(&name.as_str()),
+    }
 }
 
 fn default_restrictions(call: &CallFact) -> &'static [&'static str] {

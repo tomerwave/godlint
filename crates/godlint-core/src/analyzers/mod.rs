@@ -246,7 +246,7 @@ fn access_fact(
     source: &SourceFile,
     vocabulary: &Vocabulary,
 ) -> Result<Option<AccessFact>, AnalyzerError> {
-    if !node.is_named() || !(vocabulary.is_access)(node.kind()) {
+    if !(vocabulary.is_access)(node.kind()) {
         return Ok(None);
     }
 

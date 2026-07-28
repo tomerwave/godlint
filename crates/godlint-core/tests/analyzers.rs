@@ -261,3 +261,62 @@ fn extracts_direct_environment_accesses() {
         assert!(accesses.contains(&expected), "{path}");
     }
 }
+
+#[test]
+fn records_whether_a_call_was_a_macro_invocation() {
+    let facts = analyze(&source(
+        "example.rs",
+        "fn dbg(v: u32) -> u32 { v }\npub fn run(v: u32) -> u32 {\n    dbg(v);\n    dbg!(v)\n}\n",
+    ))
+    .unwrap_or_else(|error| panic!("analyzes: {error}"));
+    let calls: Vec<(&str, bool)> = facts
+        .calls()
+        .iter()
+        .map(|call| (call.callee(), call.is_macro()))
+        .collect();
+
+    assert_eq!(
+        calls,
+        vec![("dbg", false), ("dbg", true)],
+        "a macro and a function that share a name must be distinguishable"
+    );
+}
+
+#[test]
+fn a_call_is_never_a_macro_outside_rust() {
+    for (path, contents) in [
+        ("example.py", "eval(value)\nos.getenv('V')\n"),
+        (
+            "example.ts",
+            "eval(\"x\");\nconst f = new Function(\"y\");\n",
+        ),
+    ] {
+        let facts = analyze(&source(path, contents))
+            .unwrap_or_else(|error| panic!("analyzes {path}: {error}"));
+
+        assert!(
+            !facts.calls().is_empty(),
+            "{path} should record calls to check"
+        );
+        assert!(
+            facts.calls().iter().all(|call| !call.is_macro()),
+            "{path} has no macro form"
+        );
+    }
+}
+
+#[test]
+fn a_constructed_call_records_its_constructor() {
+    let facts = analyze(&source(
+        "example.ts",
+        "const f = new Function(\"return 1\");\nconst d = new Date();\n",
+    ))
+    .unwrap_or_else(|error| panic!("analyzes: {error}"));
+    let calls: Vec<&str> = facts.calls().iter().map(|call| call.callee()).collect();
+
+    assert_eq!(
+        calls,
+        vec!["Function", "Date"],
+        "new expressions are calls, so a constructed Function can be reported"
+    );
+}

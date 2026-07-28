@@ -69,7 +69,11 @@ releases begin.
 - `architecture/restricted-call` — restricts direct process exits and debug-only output
   once enabled, and restricts configured direct callees to approved path globs. Naming a
   built-in restriction under `calls` lets its `allow-in` boundary apply to it, which is how
-  a CLI permits `console.log` in its entry point.
+  a CLI permits `console.log` in its entry point. A Rust macro is named with its `!` —
+  `dbg!` restricts the macro, `dbg` restricts a function of that name — which is both how
+  Rust spells them and how a finding reports them, so the name a reader sees is the name
+  they configure. Listing one callee twice is a configuration error rather than a silent
+  choice between the two entries.
 - `security/no-dynamic-execution` — reports JavaScript `eval`, `Function`, and
   `new Function`, plus Python `eval` and `exec`.
 - `security/direct-environment-read` — reports direct JavaScript, Python, and Rust

@@ -32,9 +32,16 @@ expected: read it here.
 
 Language adapters retain native AST and parser details. They emit a small shared fact
 model that rules consume without a universal AST. `FunctionFact`, `CommentFact`,
-`CallFact`, and `AccessFact` exist today. `CallFact` records a direct callee path and
-source range; `AccessFact` does the same for direct member access. Neither resolves
-aliases, types, or dynamically computed properties. `Import`, `EnvironmentRead`,
+`CallFact`, and `AccessFact` exist today. `CallFact` records a direct callee path, a
+source range, and whether the call site was a macro invocation; `AccessFact` does the same
+for direct member access. Neither resolves aliases, types, or dynamically computed
+properties.
+
+The macro flag exists because a name is not enough to identify a callee in Rust. A grammar
+names a macro without its `!`, so a `fn dbg` and the `dbg!` macro reach a rule as the same
+string, and restricting one restricted the other. Rules spell a macro callee with its `!`,
+which is both how Rust writes it and the name a finding reports, so the name a reader sees
+is the name they configure. `Import`, `EnvironmentRead`,
 `ErrorHandler`, `Assertion`, `Mock`, and `DependencyEdge` are planned and are described in the
 [rule roadmap](rule-roadmap.md).
 
@@ -116,6 +123,11 @@ A finding carries a typed violation rather than a prepared sentence. Reporters o
 the terminal need the numbers, and a rendered message must never be load-bearing:
 findings are ordered by path, line, column, and rule identifier, so output order cannot
 depend on wording.
+
+Calls and accesses share one driver in `rules::reference`. Both answer the same question of
+a different fact slice — does this reference violate a policy — so the loop that walks them,
+honours the severity gate, and turns a violation into a finding is written once. A rule that
+consumes both, as the environment-read rule does, gets consistent ordering for free.
 
 `rules::line_count` identifies commentary from the comment facts the analyzer already
 produced rather than by re-scanning text for `//` and `#`. Re-lexing there would
