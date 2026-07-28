@@ -134,6 +134,24 @@ godlint check
 godlint check crates
 ```
 
+## Policy suites
+
+A suite names a set of rules and their thresholds so a repository adopts a standard in one
+line rather than fifteen:
+
+```yaml
+version: 1
+suites:
+  - recommended@1
+```
+
+`recommended@1` enables every rule at `error`. Its thresholds are measured rather than
+borrowed — see [the rule roadmap](docs/rule-roadmap.md) for each number and why.
+
+Suites are opt-in: a configuration that names none enforces nothing. A `rules:` entry
+overrides the suite for that rule, in either direction, so a repository can loosen one
+threshold, tighten it, or decline a rule with `severity: off` without abandoning the rest.
+
 ## Accountable exceptions
 
 A single site can be exempted from a rule by a comment that says why, who owns it, and

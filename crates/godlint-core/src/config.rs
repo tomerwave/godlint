@@ -8,6 +8,8 @@ use std::{
 
 use serde::Deserialize;
 
+use crate::suites;
+
 pub const DEFAULT_EXCLUDES: [&str; 12] = [
     ".git",
     ".mypy_cache",
@@ -31,6 +33,8 @@ pub struct Config {
     pub fail_on: Severity,
     #[serde(default)]
     pub exclude: Vec<String>,
+    #[serde(default)]
+    pub suites: Vec<String>,
     #[serde(default)]
     pub rules: Rules,
 }
@@ -227,6 +231,9 @@ pub enum ConfigError {
     InvalidComplexityLimit,
     InvalidTodoMarkers,
     InvalidTodoReferencePrefixes,
+    UnknownSuite {
+        name: String,
+    },
     InvalidRestrictedCallName,
     DuplicateRestrictedCallName {
         name: String,
@@ -246,12 +253,14 @@ impl Config {
             path: path.to_path_buf(),
             source,
         })?;
-        let config: Self = yaml_serde::from_str(&source).map_err(|source| ConfigError::Parse {
-            path: path.to_path_buf(),
-            source,
-        })?;
+        let mut config: Self =
+            yaml_serde::from_str(&source).map_err(|source| ConfigError::Parse {
+                path: path.to_path_buf(),
+                source,
+            })?;
 
         config.validate()?;
+        config.expand_suites();
 
         Ok(config)
     }
@@ -264,7 +273,21 @@ impl Config {
         self.exclude.clone()
     }
 
+    fn expand_suites(&mut self) {
+        for name in &self.suites {
+            suites::apply(name, &mut self.rules);
+        }
+    }
+
     fn validate(&self) -> Result<(), ConfigError> {
+        if let Some(name) = self
+            .suites
+            .iter()
+            .find(|name| !suites::NAMES.contains(&name.as_str()))
+        {
+            return Err(ConfigError::UnknownSuite { name: name.clone() });
+        }
+
         if self.version != 1 {
             return Err(ConfigError::UnsupportedVersion {
                 version: self.version,
@@ -397,6 +420,11 @@ impl fmt::Display for ConfigError {
                     "policy/todo-requires-reference reference-prefixes must not be empty or numeric"
                 )
             }
+            Self::UnknownSuite { name } => write!(
+                formatter,
+                "unknown suite {name}; available suites are {}",
+                suites::NAMES.join(", ")
+            ),
             Self::InvalidRestrictedCallName => {
                 write!(
                     formatter,
@@ -429,6 +457,7 @@ impl Error for ConfigError {
             | Self::InvalidComplexityLimit
             | Self::InvalidTodoMarkers
             | Self::InvalidTodoReferencePrefixes
+            | Self::UnknownSuite { .. }
             | Self::InvalidRestrictedCallName
             | Self::DuplicateRestrictedCallName { .. }
             | Self::BlankAllowIn { .. }

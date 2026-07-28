@@ -10,6 +10,15 @@ releases begin.
 
 ### Added
 
+- Policy suites. `suites: [recommended@1]` adopts a named standard in one line instead of
+  fifteen rule blocks with hand-picked numbers. `recommended@1` enables every rule at
+  `error`, because a standard a repository can partly ignore is a suggestion. Suites are
+  opt-in — a configuration naming none enforces nothing — and a `rules:` entry overrides the
+  suite for that rule in either direction, including `severity: off`, which is what lets a
+  rule be adopted as a warning first. An unknown suite name is a configuration error that
+  lists the available ones. Godlint's own configuration is now the suite and nothing else,
+  since an override here would be this project exempting itself from its own standard.
+
 - Open-source project foundations, community guidance, security reporting guidance,
   and project brand assets.
 - A local CLI with `godlint config validate` and `godlint check`, source discovery for

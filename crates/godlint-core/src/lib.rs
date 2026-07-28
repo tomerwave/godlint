@@ -8,6 +8,7 @@ pub mod paths;
 pub mod rules;
 pub mod scan;
 pub mod source;
+pub mod suites;
 pub mod suppression;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

@@ -30,6 +30,7 @@ CONFIG = Path("crates/godlint-core/src/config.rs")
 DOGFOOD = Path("godlint.yaml")
 WORKFLOWS = Path(".github/workflows")
 MUTANTS = Path(".cargo/mutants.toml")
+SUITES = Path("crates/godlint-core/src/suites.rs")
 
 ROADMAP = Path("docs/rule-roadmap.md")
 README = Path("README.md")
@@ -123,9 +124,18 @@ def check_rule(report: Report, module: Path, identifier: str) -> None:
             f"{document}: does not mention {identifier}",
         )
 
+    # A repository adopts rules by naming them or by naming a suite. Godlint does the
+    # latter, so the dogfood check follows the suite: the rule must be one the suite sets.
+    # That the suite sets every rule at error is asserted in tests/suites.rs, where it
+    # cannot drift from the code that expands it.
+    dogfooded = identifier in read(DOGFOOD) or (
+        "suites:" in read(DOGFOOD)
+        and f"rules.{name}.get_or_insert" in re.sub(r"\s+", "", read(SUITES))
+    )
     report.check(
-        identifier in read(DOGFOOD),
-        f"{DOGFOOD}: {identifier} is not enabled, so Godlint does not dogfood it",
+        dogfooded,
+        f"{DOGFOOD}: {identifier} is enabled by neither a rules entry nor the adopted suite, "
+        "so Godlint does not dogfood it",
     )
 
     check_rule_coverage(report, identifier)
