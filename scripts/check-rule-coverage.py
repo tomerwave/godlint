@@ -24,12 +24,12 @@ RULES = "/src/rules/"
 
 # Lines that cannot be executed by any test, with the reason they cannot.
 #
-# Every entry is error propagation from `SourceFile::location`, which fails only for a
+# Most entries are error propagation from `SourceFile::location`, which fails only for a
 # range that is out of bounds or off a character boundary. Function, comment, call, and
 # access facts validate their ranges when they are constructed, so no fact can carry such
-# a range and the `?` never fires.
-# Removing that plumbing would take this budget to zero; until then it is fixed, so a
-# newly uncovered line pushes the count over and fails.
+# a range and the `?` never fires. One entry is a match arm kept for exhaustiveness, noted
+# beside it. The budget is fixed either way, so a newly uncovered line pushes the count
+# over and fails.
 BUDGET = {
     "src/rules/mod.rs": 7,
     # A rule that evaluates two fact kinds propagates a location error from each, and the
