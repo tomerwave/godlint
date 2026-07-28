@@ -143,6 +143,12 @@ the terminal need the numbers, and a rendered message must never be load-bearing
 findings are ordered by path, line, column, and rule identifier, so output order cannot
 depend on wording.
 
+A call and an access carry a range and read their text from it, the way `CommentFact`
+already does, rather than storing a copy of the text beside the range. Two fields for one
+truth can disagree, and a test asserting a callee of `inner` for a range spelling `inner()`
+is what that drift looks like. `SourceFile` holds its path behind an `Arc` because a fact
+clones the file it came from, and an owned path allocated on every one of those clones.
+
 `AccessFact` is produced for JavaScript, TypeScript and Python only. Rust states in its
 vocabulary that it has no member-read form of the constructs these rules police — it reads
 the environment through a call — so a reader can tell the difference between "Rust is not

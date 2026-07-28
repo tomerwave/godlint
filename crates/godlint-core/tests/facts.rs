@@ -129,16 +129,21 @@ fn rejects_a_comment_range_outside_the_file() {
 
 #[test]
 fn records_a_call() {
-    let fact = CallFact::new(source(), range(17, 24), "inner".into(), false)
+    let fact = CallFact::new(source(), range(17, 22), false)
         .unwrap_or_else(|error| panic!("creates call fact: {error}"));
 
-    assert_eq!(fact.range(), range(17, 24));
-    assert_eq!(fact.callee(), "inner");
+    assert_eq!(fact.range(), range(17, 22));
+    assert_eq!(
+        fact.callee(),
+        "inner",
+        "a callee is read from the range rather than stored beside it"
+    );
+    assert!(!fact.is_macro());
 }
 
 #[test]
 fn rejects_a_call_range_outside_the_file() {
-    let result = CallFact::new(source(), range(0, 999), "inner".into(), false);
+    let result = CallFact::new(source(), range(0, 999), false);
 
     assert!(matches!(
         result,
@@ -148,16 +153,20 @@ fn rejects_a_call_range_outside_the_file() {
 
 #[test]
 fn records_an_access() {
-    let fact = AccessFact::new(source(), range(0, 8), "settings.value".into())
+    let fact = AccessFact::new(source(), range(3, 8))
         .unwrap_or_else(|error| panic!("creates access fact: {error}"));
 
-    assert_eq!(fact.range(), range(0, 8));
-    assert_eq!(fact.target(), "settings.value");
+    assert_eq!(fact.range(), range(3, 8));
+    assert_eq!(
+        fact.target(),
+        "outer",
+        "a target is read from the range rather than stored beside it"
+    );
 }
 
 #[test]
 fn rejects_an_access_range_outside_the_file() {
-    let result = AccessFact::new(source(), range(0, 999), "settings.value".into());
+    let result = AccessFact::new(source(), range(0, 999));
 
     assert!(matches!(
         result,

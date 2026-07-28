@@ -250,6 +250,11 @@ releases begin.
 
 ### Fixed
 
+- A call or access fact reads its callee or target from the range it already carries instead
+  of storing a second copy, and `SourceFile` holds its path behind an `Arc` so cloning a file
+  into a fact no longer allocates one. Both cut the memory a scan holds, since every fact for
+  every file is live at once, and the first removes state that could disagree with itself.
+
 - `godlint-ignore-enclosing` covers a byte range rather than a line range, and excludes
   declarations nested inside the one it resolves to. It previously silenced the named rule
   for anything sharing the declaration's lines, so a second arrow function on the same line

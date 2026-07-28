@@ -85,7 +85,6 @@ pub struct CommentFact {
 pub struct CallFact {
     source: SourceFile,
     range: SourceRange,
-    callee: String,
     is_macro: bool,
 }
 
@@ -93,7 +92,6 @@ pub struct CallFact {
 pub struct AccessFact {
     source: SourceFile,
     range: SourceRange,
-    target: String,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -182,7 +180,6 @@ impl CallFact {
     pub fn new(
         source: SourceFile,
         range: SourceRange,
-        callee: String,
         is_macro: bool,
     ) -> Result<Self, CallFactError> {
         source
@@ -192,7 +189,6 @@ impl CallFact {
         Ok(Self {
             source,
             range,
-            callee,
             is_macro,
         })
     }
@@ -206,7 +202,7 @@ impl CallFact {
     }
 
     pub fn callee(&self) -> &str {
-        &self.callee
+        &self.source.source()[self.range.start()..self.range.end()]
     }
 
     pub fn is_macro(&self) -> bool {
@@ -215,20 +211,12 @@ impl CallFact {
 }
 
 impl AccessFact {
-    pub fn new(
-        source: SourceFile,
-        range: SourceRange,
-        target: String,
-    ) -> Result<Self, AccessFactError> {
+    pub fn new(source: SourceFile, range: SourceRange) -> Result<Self, AccessFactError> {
         source
             .validate_range(range)
             .map_err(|source| AccessFactError::InvalidAccessRange { source })?;
 
-        Ok(Self {
-            source,
-            range,
-            target,
-        })
+        Ok(Self { source, range })
     }
 
     pub fn source(&self) -> &SourceFile {
@@ -240,7 +228,7 @@ impl AccessFact {
     }
 
     pub fn target(&self) -> &str {
-        &self.target
+        &self.source.source()[self.range.start()..self.range.end()]
     }
 }
 

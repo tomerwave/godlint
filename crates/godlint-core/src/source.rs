@@ -17,7 +17,7 @@ pub enum Language {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SourceFile {
-    path: PathBuf,
+    path: Arc<Path>,
     language: Language,
     source: Arc<str>,
     line_starts: Arc<[usize]>,
@@ -80,7 +80,7 @@ impl SourceFile {
             .map_or(source.as_str(), |stripped| stripped);
 
         Ok(Self {
-            path,
+            path: Arc::from(path),
             language,
             line_starts: line_starts(source),
             source: Arc::from(source),

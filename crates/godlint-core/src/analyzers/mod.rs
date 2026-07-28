@@ -197,19 +197,16 @@ fn call_fact(
     let Some(callee) = (vocabulary.callee)(node) else {
         return Ok(None);
     };
-    let Some(callee_text) = direct_path(callee.node, source) else {
+    if direct_path(callee.node, source).is_none() {
         return Ok(None);
-    };
+    }
+
     let range = node_range(callee.node, source)?;
-    let fact = CallFact::new(
-        source.clone(),
-        range,
-        callee_text.to_owned(),
-        callee.is_macro,
-    )
-    .map_err(|error| AnalyzerError::InvalidCall {
-        path: source.path().to_path_buf(),
-        source: error,
+    let fact = CallFact::new(source.clone(), range, callee.is_macro).map_err(|error| {
+        AnalyzerError::InvalidCall {
+            path: source.path().to_path_buf(),
+            source: error,
+        }
     })?;
 
     Ok(Some(fact))
@@ -224,16 +221,16 @@ fn access_fact(
         return Ok(None);
     }
 
-    let Some(text) = direct_path(node, source) else {
+    if direct_path(node, source).is_none() {
         return Ok(None);
-    };
+    }
+
     let range = node_range(node, source)?;
-    let fact = AccessFact::new(source.clone(), range, text.to_owned()).map_err(|error| {
-        AnalyzerError::InvalidAccess {
+    let fact =
+        AccessFact::new(source.clone(), range).map_err(|error| AnalyzerError::InvalidAccess {
             path: source.path().to_path_buf(),
             source: error,
-        }
-    })?;
+        })?;
 
     Ok(Some(fact))
 }
