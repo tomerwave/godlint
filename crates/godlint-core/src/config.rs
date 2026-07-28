@@ -31,6 +31,8 @@ pub struct Rules {
     pub parameter_count: Option<ParameterCountRule>,
     #[serde(rename = "maintainability/cyclomatic-complexity")]
     pub cyclomatic_complexity: Option<CyclomaticComplexityRule>,
+    #[serde(rename = "maintainability/return-count")]
+    pub return_count: Option<ReturnCountRule>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -95,6 +97,14 @@ pub struct CyclomaticComplexityRule {
     pub severity: Severity,
     #[serde(rename = "max-complexity")]
     pub max_complexity: u32,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ReturnCountRule {
+    pub severity: Severity,
+    #[serde(rename = "max-returns")]
+    pub max_returns: u32,
 }
 
 fn default_reference_prefixes() -> Vec<String> {

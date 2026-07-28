@@ -94,6 +94,15 @@ fn accepts_the_cyclomatic_complexity_rule() {
 }
 
 #[test]
+fn accepts_the_return_count_rule() {
+    let result = load(
+        "version: 1\nrules:\n  maintainability/return-count:\n    severity: warning\n    max-returns: 3\n",
+    );
+
+    assert!(result.is_ok());
+}
+
+#[test]
 fn rejects_an_unknown_rule() {
     let result = load("version: 1\nrules:\n  maintainability/unknown: {}\n");
 

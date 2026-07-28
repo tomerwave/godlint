@@ -21,6 +21,7 @@ fn function(path: &str, source: &str) -> FunctionFact {
             body_range: range,
             parameter_count: 0,
             decision_points: 0,
+            return_count: 0,
             body_is_empty: false,
             nesting_depth: 0,
         },

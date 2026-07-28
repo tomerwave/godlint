@@ -201,6 +201,7 @@ fn function_fact(
         .is_some_and(|body| body_is_empty(body, source.language()));
     let parameter_count = parameter_count(node);
     let decision_points = decision_points(node, source.language(), is_function_node);
+    let return_count = return_count(node, source.language(), is_function_node);
     let name = node
         .child_by_field_name("name")
         .and_then(|name| source.source().get(name.byte_range()))
@@ -214,6 +215,7 @@ fn function_fact(
             body_range,
             parameter_count,
             decision_points,
+            return_count,
             body_is_empty,
             nesting_depth,
         },
@@ -289,6 +291,38 @@ fn decision_point(kind: &str, language: Language) -> u32 {
     };
 
     u32::from(is_decision)
+}
+
+fn return_count(function: Node<'_>, language: Language, is_function_node: fn(&str) -> bool) -> u32 {
+    let mut cursor = function.walk();
+
+    function
+        .children(&mut cursor)
+        .map(|child| return_count_in(child, language, is_function_node))
+        .sum()
+}
+
+fn return_count_in(node: Node<'_>, language: Language, is_function_node: fn(&str) -> bool) -> u32 {
+    if is_function_node(node.kind()) {
+        return 0;
+    }
+
+    let mut cursor = node.walk();
+
+    u32::from(is_return(node.kind(), language))
+        + node
+            .children(&mut cursor)
+            .map(|child| return_count_in(child, language, is_function_node))
+            .sum::<u32>()
+}
+
+fn is_return(kind: &str, language: Language) -> bool {
+    match language {
+        Language::JavaScript | Language::Python | Language::TypeScript => {
+            kind == "return_statement"
+        }
+        Language::Rust => kind == "return_expression",
+    }
 }
 
 fn parameter_count(node: Node<'_>) -> u32 {
