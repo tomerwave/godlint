@@ -1,0 +1,6 @@
+version: 1
+
+rules:
+  maintainability/parameter-count:
+    severity: error
+    max-parameters: 3

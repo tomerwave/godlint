@@ -1,6 +1,12 @@
 version: 1
 
 rules:
+  maintainability/cyclomatic-complexity:
+    severity: warning
+    max-complexity: 10
+  maintainability/parameter-count:
+    severity: warning
+    max-parameters: 6
   policy/todo-requires-reference:
     severity: warning
     reference-prefixes:

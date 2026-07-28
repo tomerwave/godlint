@@ -14,8 +14,20 @@ pub struct FunctionFact {
     name: Option<String>,
     range: SourceRange,
     body_range: SourceRange,
+    parameter_count: u32,
+    decision_points: u32,
     body_is_empty: bool,
     nesting_depth: u32,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct FunctionFactDetails {
+    pub range: SourceRange,
+    pub body_range: SourceRange,
+    pub parameter_count: u32,
+    pub decision_points: u32,
+    pub body_is_empty: bool,
+    pub nesting_depth: u32,
 }
 
 #[derive(Debug)]
@@ -63,32 +75,31 @@ impl FunctionFact {
     pub fn new(
         source: SourceFile,
         name: Option<String>,
-        range: SourceRange,
-        body_range: SourceRange,
-        body_is_empty: bool,
-        nesting_depth: u32,
+        details: FunctionFactDetails,
     ) -> Result<Self, FunctionFactError> {
         source
-            .validate_range(range)
+            .validate_range(details.range)
             .map_err(|source| FunctionFactError::InvalidFunctionRange { source })?;
         source
-            .validate_range(body_range)
+            .validate_range(details.body_range)
             .map_err(|source| FunctionFactError::InvalidBodyRange { source })?;
 
-        if !range_contains(range, body_range) {
+        if !range_contains(details.range, details.body_range) {
             return Err(FunctionFactError::BodyOutsideFunction {
-                function_range: range,
-                body_range,
+                function_range: details.range,
+                body_range: details.body_range,
             });
         }
 
         Ok(Self {
             source,
             name,
-            range,
-            body_range,
-            body_is_empty,
-            nesting_depth,
+            range: details.range,
+            body_range: details.body_range,
+            parameter_count: details.parameter_count,
+            decision_points: details.decision_points,
+            body_is_empty: details.body_is_empty,
+            nesting_depth: details.nesting_depth,
         })
     }
 
@@ -106,6 +117,14 @@ impl FunctionFact {
 
     pub fn body_range(&self) -> SourceRange {
         self.body_range
+    }
+
+    pub fn parameter_count(&self) -> u32 {
+        self.parameter_count
+    }
+
+    pub fn decision_points(&self) -> u32 {
+        self.decision_points
     }
 
     pub fn body_is_empty(&self) -> bool {

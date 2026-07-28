@@ -85,15 +85,14 @@ requiring a new parser capability.
 
 Extend `FunctionFact` only when the same data will serve multiple rules.
 
-| New field or fact | Rules unlocked | Confidence | Notes |
-| --- | --- | --- | --- |
-| `parameter_count` | `maintainability/parameter-count` | High | Count declared parameters only; do not infer types or defaults initially |
-| `decision_points` | `maintainability/cyclomatic-complexity` | High | Count language-defined branch points; fixture each language explicitly |
-| `return_count` | `maintainability/return-count` | Medium | Keep opt-in because early returns are often clearer |
-| `statement_count` | `maintainability/function-statements` | Medium | Useful only after corpus calibration |
+| New field or fact | Rules unlocked | Status | Confidence | Notes |
+| --- | --- | --- | --- | --- |
+| `parameter_count` | `maintainability/parameter-count` | Shipped | High | Count declared parameters only; do not infer types or defaults initially |
+| `decision_points` | `maintainability/cyclomatic-complexity` | Shipped | High | Count language-defined branch points; fixture each language explicitly |
+| `return_count` | `maintainability/return-count` | Optional | Medium | Keep opt-in because early returns are often clearer |
+| `statement_count` | `maintainability/function-statements` | Optional | Medium | Useful only after corpus calibration |
 
-Priority order: parameter count, then cyclomatic complexity. This keeps the next fact
-additions small and reuses them across future policy.
+Phase 2 is complete. Its fact additions stay small and reusable for future policy.
 
 ### Phase 3 — Calls and organization policy
 
