@@ -64,7 +64,11 @@ impl FunctionSize {
             return false;
         }
 
-        !configuration.skip_comments || !Self::is_comment_only(line, language, block_comment)
+        if !configuration.skip_comments {
+            return true;
+        }
+
+        !Self::is_comment_only(line, language, block_comment)
     }
 
     fn is_comment_only(line: &str, language: Language, block_comment: &mut bool) -> bool {

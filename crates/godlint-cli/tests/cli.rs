@@ -13,10 +13,9 @@ fn godlint() -> Command {
 }
 
 fn run(command: &mut Command) -> std::process::Output {
-    match command.output() {
-        Ok(output) => output,
-        Err(error) => panic!("runs godlint: {error}"),
-    }
+    command
+        .output()
+        .unwrap_or_else(|error| panic!("runs godlint: {error}"))
 }
 
 fn config_file(contents: &str) -> PathBuf {
