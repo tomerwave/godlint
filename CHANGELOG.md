@@ -235,6 +235,11 @@ releases begin.
   discarded. Containment compares whole ranges rather than the position a finding starts at,
   so a declaration beginning where another ends is not inside it, and a file-level finding —
   which spans the whole file — remains unsuppressible inline as documented.
+  Because the exclusion is by range rather than by declaration identity, it also drops
+  findings that are not about a declaration: a comment inside a closure now escapes a
+  directive on the enclosing function, for `style/no-comments` and
+  `policy/todo-requires-reference`. This is a narrowing, so an existing directive may begin
+  reporting findings it previously hid; move it to the declaration the finding sits in.
 
 - Quoted prose is no longer a live suppression. `is_furniture` stripped `"` and `'` on every
   line of every comment so that a Python docstring's delimiter could open a directive, which

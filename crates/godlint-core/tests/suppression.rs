@@ -243,6 +243,33 @@ fn an_enclosing_directive_does_not_reach_a_neighbour_on_its_line() {
 }
 
 #[test]
+fn an_enclosing_directive_does_not_reach_a_comment_inside_a_nested_declaration() {
+    let source = concat!(
+        "fn outer() {\n",
+        "    // godlint-ignore-enclosing style/no-comments -- outer is generated\n",
+        "    let inner = || {\n",
+        "        // reported, because it is inside the closure\n",
+        "        1\n",
+        "    };\n",
+        "    let _ = inner;\n",
+        "}\n"
+    );
+    let body = concat!(
+        "version: 1\n",
+        "rules:\n",
+        "  style/no-comments:\n",
+        "    severity: error\n",
+        "    allow-doc-comments: false\n"
+    );
+
+    assert_eq!(
+        surviving("src/example.rs", source, body).len(),
+        1,
+        "the exclusion is by range, so it covers any finding inside a nested declaration"
+    );
+}
+
+#[test]
 fn an_enclosing_directive_stops_where_its_declaration_ends() {
     let directive = "/* godlint-ignore-enclosing maintainability/empty-function -- a */";
     let body = format!("fn a() {{{directive}}}fn b() {{}}\n");
@@ -467,25 +494,45 @@ fn a_docstring_delimiter_still_opens_a_directive() {
 
 #[test]
 fn stacked_directives_all_reach_the_code_below_them() {
-    let source = "// godlint-ignore-next-line maintainability/empty-function -- first\n\
-                  // godlint-ignore-next-line policy/todo-requires-reference -- second\n\
-                  fn example() {}\n";
-    let body = "version: 1\nrules:\n  maintainability/empty-function:\n    severity: error\n";
+    let source = concat!(
+        "// godlint-ignore-next-line maintainability/empty-function -- first\n",
+        "// godlint-ignore-next-line policy/todo-requires-reference -- second\n",
+        "fn example() {} // TODO unreferenced\n"
+    );
+    let body = concat!(
+        "version: 1\n",
+        "rules:\n",
+        "  maintainability/empty-function:\n",
+        "    severity: error\n",
+        "  policy/todo-requires-reference:\n",
+        "    severity: error\n"
+    );
 
     assert_eq!(suppressions("src/example.rs", source).len(), 2);
     assert_eq!(
         surviving("src/example.rs", source, body),
         Vec::new(),
-        "a directive stacked above another must reach the code, not its neighbour"
+        "both directives of a stack must reach the code, not each other"
     );
 }
 
 #[test]
 fn stacked_directives_inside_one_comment_reach_the_code_below_them() {
-    let source = "/*\ngodlint-ignore-next-line maintainability/empty-function -- first\n\
-                  godlint-ignore-next-line policy/todo-requires-reference -- second\n*/\n\
-                  fn example() {}\n";
-    let body = "version: 1\nrules:\n  maintainability/empty-function:\n    severity: error\n";
+    let source = concat!(
+        "/*\n",
+        "godlint-ignore-next-line maintainability/empty-function -- first\n",
+        "godlint-ignore-next-line policy/todo-requires-reference -- second\n",
+        "*/\n",
+        "fn example() {} // TODO unreferenced\n"
+    );
+    let body = concat!(
+        "version: 1\n",
+        "rules:\n",
+        "  maintainability/empty-function:\n",
+        "    severity: error\n",
+        "  policy/todo-requires-reference:\n",
+        "    severity: error\n"
+    );
 
     assert_eq!(suppressions("src/example.rs", source).len(), 2);
     assert_eq!(surviving("src/example.rs", source, body), Vec::new());

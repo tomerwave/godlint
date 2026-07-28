@@ -128,6 +128,26 @@ function metrics follow, where a nested function is measured on its own body rat
 folded into its parent. To except the closure, put a directive inside the closure; it then
 resolves to the closure, because resolution picks the innermost declaration.
 
+The exclusion is by range, so it applies to any finding inside a nested declaration and not
+only to findings about the declaration itself. A comment inside a closure escapes a
+directive on the enclosing function, for `style/no-comments` and
+`policy/todo-requires-reference` alike:
+
+```rust
+fn outer() {
+    // godlint-ignore-enclosing style/no-comments -- outer is generated
+    let inner = || {
+        // this comment is reported
+        1
+    };
+}
+```
+
+That is deliberate — the justification is about `outer`, and a comment inside `inner` is not
+covered by it — but it is a narrowing, so a directive written before this behaviour existed
+may start reporting findings it used to hide. The remedy is the same: move the directive to
+the declaration the finding is in.
+
 `enclosing` needs a function to enclose it. At the top level of a file there is none, and
 Godlint reports the directive rather than silently ignoring it.
 

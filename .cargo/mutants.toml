@@ -1,4 +1,11 @@
-examine_globs = ["crates/godlint-core/src/rules/*.rs"]
+# The rules layer decides what is reported. `suppression.rs` decides what is silenced, so a
+# surviving mutant there hides findings rather than changing them, which is the failure a
+# reader cannot see. It earned its place: an off-by-one in the containment test shipped past
+# review, and a `<=` to `<` mutant is exactly the shape of it.
+examine_globs = [
+    "crates/godlint-core/src/rules/*.rs",
+    "crates/godlint-core/src/suppression.rs",
+]
 
 # The whole workspace's tests decide whether a mutant is caught. Scoping to the mutated
 # package alone would omit the CLI fixture corpus, which is what catches most rule
