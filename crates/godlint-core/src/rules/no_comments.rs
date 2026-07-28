@@ -1,7 +1,7 @@
 use crate::{
     analyzers::SourceFacts,
     config::{Config, NoCommentsRule, Severity},
-    facts::CommentFact,
+    facts::{CommentFact, CommentKind},
     rules::{
         CommentRule, Finding, Rule, RuleError, Violation, evaluate_comment_rule, when_configured,
     },
@@ -9,8 +9,6 @@ use crate::{
 };
 
 pub struct NoComments;
-
-const SHEBANG: &str = "#!";
 
 impl Rule for NoComments {
     const ID: &'static str = "style/no-comments";
@@ -27,7 +25,7 @@ impl CommentRule for NoComments {
         comment: &CommentFact,
         configuration: &Self::Configuration,
     ) -> Vec<(SourceRange, Violation)> {
-        if is_shebang(comment) || is_permitted(comment, configuration) {
+        if is_permitted(comment.kind(), configuration) {
             return Vec::new();
         }
 
@@ -35,12 +33,12 @@ impl CommentRule for NoComments {
     }
 }
 
-fn is_shebang(comment: &CommentFact) -> bool {
-    comment.range().start() == 0 && comment.text().starts_with(SHEBANG)
-}
-
-fn is_permitted(comment: &CommentFact, configuration: &NoCommentsRule) -> bool {
-    configuration.allow_doc_comments && comment.kind().is_documentation()
+fn is_permitted(kind: CommentKind, configuration: &NoCommentsRule) -> bool {
+    match kind {
+        CommentKind::Shebang => true,
+        CommentKind::Doc | CommentKind::Docstring => configuration.allow_doc_comments,
+        CommentKind::Line | CommentKind::Block => false,
+    }
 }
 
 pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, RuleError> {

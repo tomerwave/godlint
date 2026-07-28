@@ -49,11 +49,19 @@ body range, and the function metrics. Each metric is its own type rather than a 
 transposed at a construction site without the compiler objecting.
 
 `CommentFact` records a range and a kind: a line comment, a block comment, a
-documentation comment, or a Python docstring. A docstring is a string expression rather
-than a comment token, but it plays the role a block comment plays elsewhere, so policy
-that skips or inspects commentary has to be able to see it. Keeping the kind on the fact
-is what lets one rule skip commentary while another distinguishes documentation from an
-explanatory aside.
+documentation comment, a Python docstring, or an interpreter shebang. A docstring is a
+string expression rather than a comment token, but it plays the role a block comment plays
+elsewhere, so policy that skips or inspects commentary has to be able to see it. A shebang
+is a comment token that is not commentary at all, and classifying it once means no rule
+has to recognise it again: without that, one rule exempts it and the next silently does
+not.
+
+Which syntax counts as documentation is a per-language judgement and belongs to the
+language module. Rust documents with `///`, `//!`, `/**` and `/*!`. JavaScript and
+TypeScript document with JSDoc `/** */` only — `///` there introduces a compiler
+directive such as `/// <reference types="node" />`, which is a line comment and not
+documentation. Python documents with a docstring. Deciding this centrally would have
+exempted TypeScript directives from comment policy as though they were prose.
 
 ## The language boundary
 
@@ -61,7 +69,7 @@ Rules consume language-neutral facts, and the extractor that builds them is
 language-neutral too. Every judgement about what a given node *means* is answered by the
 owning language module through `analyzers::vocabulary::Vocabulary`: whether a node is a
 function, a block, a conditional, a branch point, an exit, a placeholder body, a
-receiver parameter, an abstract declaration, or a docstring.
+receiver parameter, an abstract declaration, or a kind of commentary.
 
 Nothing in `analyzers::metrics` names a grammar node kind. A new language is added by
 describing it in one module rather than by editing the walks, and no walk can quietly

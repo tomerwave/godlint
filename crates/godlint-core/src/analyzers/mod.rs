@@ -144,7 +144,7 @@ fn collect_source_facts(
             .push(function_fact(node, source, vocabulary)?);
     }
 
-    if let Some(kind) = comment_kind(node, source, vocabulary) {
+    if let Some(kind) = (vocabulary.comment_kind)(node, source.source()) {
         collected.comments.push(comment_fact(node, source, kind)?);
     }
 
@@ -155,40 +155,6 @@ fn collect_source_facts(
     }
 
     Ok(())
-}
-
-fn comment_kind(
-    node: Node<'_>,
-    source: &SourceFile,
-    vocabulary: &Vocabulary,
-) -> Option<CommentKind> {
-    if (vocabulary.is_docstring)(node) {
-        return Some(CommentKind::Docstring);
-    }
-
-    if !node.is_extra() {
-        return None;
-    }
-
-    let text = source.source().get(node.byte_range())?;
-
-    if text.starts_with("///") || text.starts_with("//!") {
-        return Some(CommentKind::Doc);
-    }
-
-    if text.starts_with("//") || text.starts_with('#') {
-        return Some(CommentKind::Line);
-    }
-
-    if is_block_documentation(text) {
-        return Some(CommentKind::Doc);
-    }
-
-    text.starts_with("/*").then_some(CommentKind::Block)
-}
-
-fn is_block_documentation(text: &str) -> bool {
-    (text.starts_with("/**") && !text.starts_with("/**/")) || text.starts_with("/*!")
 }
 
 fn comment_fact(

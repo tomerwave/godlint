@@ -47,13 +47,13 @@ pub enum Violation {
 impl Metric {
     fn parts(self) -> (&'static str, &'static str) {
         match self {
-            Self::FunctionLines => ("Function has", " effective lines"),
-            Self::FileLines => ("File has", " effective lines"),
-            Self::BlockDepth => ("Function nests blocks", " levels deep"),
-            Self::ParameterCount => ("Function has", " parameters"),
+            Self::FunctionLines => ("Function has", "effective lines"),
+            Self::FileLines => ("File has", "effective lines"),
+            Self::BlockDepth => ("Function nests blocks", "levels deep"),
+            Self::ParameterCount => ("Function has", "parameters"),
             Self::Complexity => ("Function has cyclomatic complexity", ""),
-            Self::ReturnPaths => ("Function has", " return paths"),
-            Self::StatementCount => ("Function has", " statements"),
+            Self::ReturnPaths => ("Function has", "return paths"),
+            Self::StatementCount => ("Function has", "statements"),
         }
     }
 }
@@ -264,7 +264,11 @@ impl fmt::Display for Violation {
             } => {
                 let (subject, measure) = metric.parts();
 
-                write!(formatter, "{subject} {actual}{measure} (max {max}).")
+                if measure.is_empty() {
+                    return write!(formatter, "{subject} {actual} (max {max}).");
+                }
+
+                write!(formatter, "{subject} {actual} {measure} (max {max}).")
             }
             Self::EmptyBody => write!(formatter, "Function has an empty body."),
             Self::MissingReference { marker } => {

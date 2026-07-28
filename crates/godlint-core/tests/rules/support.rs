@@ -4,6 +4,7 @@ use godlint_core::source::SourceFile;
 use godlint_core::{
     analyzers::{SourceFacts, analyze},
     facts::FunctionFact,
+    rules::{CommentRule, Violation},
 };
 
 pub(super) fn facts(path: &str, source: &str) -> SourceFacts {
@@ -30,4 +31,17 @@ pub(super) fn function(path: &str, source: &str) -> (SourceFacts, FunctionFact) 
 
 pub(super) fn limit(value: u32) -> NonZeroU32 {
     NonZeroU32::new(value).unwrap_or_else(|| panic!("{value} is not a valid limit"))
+}
+
+pub(super) fn comment_violations<R: CommentRule>(
+    path: &str,
+    source: &str,
+    configuration: &R::Configuration,
+) -> Vec<Violation> {
+    facts(path, source)
+        .comments()
+        .iter()
+        .flat_map(|comment| R::check(comment, configuration))
+        .map(|(_, violation)| violation)
+        .collect()
 }

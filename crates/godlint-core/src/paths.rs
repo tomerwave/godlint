@@ -53,10 +53,6 @@ pub fn climbs(path: &Path) -> bool {
         .any(|component| matches!(component, Component::ParentDir))
 }
 
-pub fn is_repository_relative(path: &Path) -> bool {
-    path.is_relative() && !climbs(path)
-}
-
 pub fn find_upward(start: &Path, marker: &str, boundary: &str) -> Option<PathBuf> {
     for directory in start.ancestors() {
         if directory.join(marker).is_file() {

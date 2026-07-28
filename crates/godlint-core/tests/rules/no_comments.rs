@@ -1,9 +1,9 @@
 use godlint_core::{
     config::{NoCommentsRule, Severity},
-    rules::{CommentRule, Rule, no_comments::NoComments},
+    rules::{Rule, no_comments::NoComments},
 };
 
-use super::support::facts;
+use super::support::comment_violations;
 
 fn configuration(allow_doc_comments: bool) -> NoCommentsRule {
     NoCommentsRule {
@@ -13,14 +13,7 @@ fn configuration(allow_doc_comments: bool) -> NoCommentsRule {
 }
 
 fn violations(path: &str, source: &str, allow_doc_comments: bool) -> usize {
-    let facts = facts(path, source);
-    let configuration = configuration(allow_doc_comments);
-
-    facts
-        .comments()
-        .iter()
-        .flat_map(|comment| NoComments::check(comment, &configuration))
-        .count()
+    comment_violations::<NoComments>(path, source, &configuration(allow_doc_comments)).len()
 }
 
 #[test]
@@ -103,6 +96,30 @@ fn reports_documentation_when_configured() {
             "src/example.py",
             "def example():\n    \"\"\"Documented.\"\"\"\n",
             false
+        ),
+        1
+    );
+}
+
+#[test]
+fn honours_each_language_documentation_convention() {
+    assert_eq!(
+        violations("src/a.rs", "/// Documented.\nfn a() {}\n", true),
+        0
+    );
+    assert_eq!(
+        violations("src/b.rs", "//! Documented.\nfn b() {}\n", true),
+        0
+    );
+    assert_eq!(
+        violations("src/c.ts", "/** Documented. */\nfunction c() {}\n", true),
+        0
+    );
+    assert_eq!(
+        violations(
+            "src/d.ts",
+            "/// <reference types=\"node\" />\nfunction d() {}\n",
+            true
         ),
         1
     );

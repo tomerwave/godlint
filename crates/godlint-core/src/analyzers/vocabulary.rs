@@ -1,5 +1,7 @@
 use tree_sitter::Node;
 
+use crate::facts::CommentKind;
+
 #[derive(Clone, Copy)]
 pub(crate) struct Vocabulary {
     pub is_function: fn(&str) -> bool,
@@ -11,7 +13,7 @@ pub(crate) struct Vocabulary {
     pub is_placeholder: fn(&str, &str) -> bool,
     pub is_receiver: fn(&str, &str) -> bool,
     pub is_abstract: fn(Node<'_>, &str) -> bool,
-    pub is_docstring: fn(Node<'_>) -> bool,
+    pub comment_kind: fn(Node<'_>, &str) -> Option<CommentKind>,
     pub has_implicit_tail_return: fn(Node<'_>) -> bool,
 }
 

@@ -2,6 +2,7 @@ use tree_sitter::Node;
 
 use crate::{
     analyzers::{Analyzer, AnalyzerError, SourceFacts, vocabulary::Vocabulary},
+    facts::CommentKind,
     source::SourceFile,
 };
 
@@ -23,7 +24,7 @@ const VOCABULARY: Vocabulary = Vocabulary {
     is_placeholder,
     is_receiver,
     is_abstract,
-    is_docstring,
+    comment_kind,
     has_implicit_tail_return,
 };
 
@@ -73,8 +74,26 @@ fn is_abstract(_node: Node<'_>, _source: &str) -> bool {
     false
 }
 
-fn is_docstring(_node: Node<'_>) -> bool {
-    false
+fn comment_kind(node: Node<'_>, source: &str) -> Option<CommentKind> {
+    if !node.is_extra() {
+        return None;
+    }
+
+    let text = source.get(node.byte_range())?;
+
+    if text.starts_with("//!") || text.starts_with("///") {
+        return Some(CommentKind::Doc);
+    }
+
+    if text.starts_with("//") {
+        return Some(CommentKind::Line);
+    }
+
+    if text.starts_with("/*!") || (text.starts_with("/**") && !text.starts_with("/**/")) {
+        return Some(CommentKind::Doc);
+    }
+
+    text.starts_with("/*").then_some(CommentKind::Block)
 }
 
 fn has_implicit_tail_return(node: Node<'_>) -> bool {

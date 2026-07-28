@@ -5,6 +5,7 @@ use crate::{
         Analyzer, AnalyzerError, SourceFacts,
         vocabulary::{Vocabulary, is_leading_block_statement},
     },
+    facts::CommentKind,
     source::SourceFile,
 };
 
@@ -26,7 +27,7 @@ const VOCABULARY: Vocabulary = Vocabulary {
     is_placeholder,
     is_receiver,
     is_abstract,
-    is_docstring,
+    comment_kind,
     has_implicit_tail_return,
 };
 
@@ -105,8 +106,26 @@ fn is_abstract(node: Node<'_>, source: &str) -> bool {
         })
 }
 
-fn is_docstring(node: Node<'_>) -> bool {
-    node.kind() == "string" && is_leading_block_statement(node, &DOCSTRING_BLOCKS)
+fn comment_kind(node: Node<'_>, source: &str) -> Option<CommentKind> {
+    if node.kind() == "string" && is_leading_block_statement(node, &DOCSTRING_BLOCKS) {
+        return Some(CommentKind::Docstring);
+    }
+
+    if !node.is_extra() {
+        return None;
+    }
+
+    let text = source.get(node.byte_range())?;
+
+    if !text.starts_with('#') {
+        return None;
+    }
+
+    if node.start_byte() == 0 && text.starts_with("#!") {
+        return Some(CommentKind::Shebang);
+    }
+
+    Some(CommentKind::Line)
 }
 
 fn has_implicit_tail_return(node: Node<'_>) -> bool {

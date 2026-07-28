@@ -69,6 +69,29 @@ fn classifies_a_python_docstring_as_commentary() {
 }
 
 #[test]
+fn classifies_documentation_per_language_convention() {
+    let rust = analyze(&source("a.rs", "/// Doc.\nfn a() {}\n"))
+        .unwrap_or_else(|error| panic!("analyzes rust: {error}"));
+    let typescript = analyze(&source("a.ts", "/// Directive.\nfunction a() {}\n"))
+        .unwrap_or_else(|error| panic!("analyzes typescript: {error}"));
+    let jsdoc = analyze(&source("b.ts", "/** Doc. */\nfunction b() {}\n"))
+        .unwrap_or_else(|error| panic!("analyzes jsdoc: {error}"));
+
+    assert_eq!(rust.comments()[0].kind(), CommentKind::Doc);
+    assert_eq!(typescript.comments()[0].kind(), CommentKind::Line);
+    assert_eq!(jsdoc.comments()[0].kind(), CommentKind::Doc);
+}
+
+#[test]
+fn classifies_a_shebang_separately_from_commentary() {
+    let facts = analyze(&source("a.py", "#!/usr/bin/env python3\n# aside\n"))
+        .unwrap_or_else(|error| panic!("analyzes shebang: {error}"));
+
+    assert_eq!(facts.comments()[0].kind(), CommentKind::Shebang);
+    assert_eq!(facts.comments()[1].kind(), CommentKind::Line);
+}
+
+#[test]
 fn does_not_treat_every_python_string_as_commentary() {
     let facts = analyze(&source(
         "example.py",

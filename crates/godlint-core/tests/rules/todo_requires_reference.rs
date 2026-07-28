@@ -1,9 +1,9 @@
 use godlint_core::{
     config::{Severity, TodoRequiresReferenceRule},
-    rules::{CommentRule, Rule, Violation, todo_requires_reference::TodoRequiresReference},
+    rules::{Rule, Violation, todo_requires_reference::TodoRequiresReference},
 };
 
-use super::support::facts;
+use super::support::{comment_violations, facts};
 
 fn configuration(markers: &[&str], prefixes: &[&str]) -> TodoRequiresReferenceRule {
     TodoRequiresReferenceRule {
@@ -14,15 +14,11 @@ fn configuration(markers: &[&str], prefixes: &[&str]) -> TodoRequiresReferenceRu
 }
 
 fn violations(path: &str, source: &str, prefixes: &[&str]) -> Vec<Violation> {
-    let facts = facts(path, source);
-    let configuration = configuration(&["TODO", "FIXME"], prefixes);
-
-    facts
-        .comments()
-        .iter()
-        .flat_map(|comment| TodoRequiresReference::check(comment, &configuration))
-        .map(|(_, violation)| violation)
-        .collect()
+    comment_violations::<TodoRequiresReference>(
+        path,
+        source,
+        &configuration(&["TODO", "FIXME"], prefixes),
+    )
 }
 
 fn markers_reported(path: &str, source: &str, prefixes: &[&str]) -> Vec<String> {
@@ -129,6 +125,18 @@ fn reads_a_python_docstring() {
             &["#"]
         ),
         vec!["TODO".to_owned()]
+    );
+}
+
+#[test]
+fn ignores_a_marker_in_a_shebang() {
+    assert!(
+        markers_reported(
+            "src/example.py",
+            "#!/usr/bin/env python3 TODO\ndef f():\n    pass\n",
+            &["#"]
+        )
+        .is_empty()
     );
 }
 

@@ -1,7 +1,7 @@
 use crate::{
     analyzers::SourceFacts,
     config::{Config, Severity, TodoRequiresReferenceRule},
-    facts::CommentFact,
+    facts::{CommentFact, CommentKind},
     rules::{
         CommentRule, Finding, Rule, RuleError, Violation, evaluate_comment_rule, when_configured,
     },
@@ -31,6 +31,10 @@ impl CommentRule for TodoRequiresReference {
         comment: &CommentFact,
         configuration: &Self::Configuration,
     ) -> Vec<(SourceRange, Violation)> {
+        if comment.kind() == CommentKind::Shebang {
+            return Vec::new();
+        }
+
         let text = comment.text();
         let markers = markers(text, &configuration.markers);
 

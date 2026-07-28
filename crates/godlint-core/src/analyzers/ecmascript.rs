@@ -1,6 +1,7 @@
 use tree_sitter::Node;
 
 use super::vocabulary::Vocabulary;
+use crate::facts::CommentKind;
 
 pub(super) const VOCABULARY: Vocabulary = Vocabulary {
     is_function,
@@ -12,7 +13,7 @@ pub(super) const VOCABULARY: Vocabulary = Vocabulary {
     is_placeholder,
     is_receiver,
     is_abstract,
-    is_docstring,
+    comment_kind,
     has_implicit_tail_return,
 };
 
@@ -110,8 +111,22 @@ fn parameter_carries_modifier(parameter: Node<'_>, source: &str) -> bool {
     })
 }
 
-fn is_docstring(_node: Node<'_>) -> bool {
-    false
+fn comment_kind(node: Node<'_>, source: &str) -> Option<CommentKind> {
+    if !node.is_extra() {
+        return None;
+    }
+
+    let text = source.get(node.byte_range())?;
+
+    if text.starts_with("//") {
+        return Some(CommentKind::Line);
+    }
+
+    if text.starts_with("/**") && !text.starts_with("/**/") {
+        return Some(CommentKind::Doc);
+    }
+
+    text.starts_with("/*").then_some(CommentKind::Block)
 }
 
 fn has_implicit_tail_return(node: Node<'_>) -> bool {

@@ -42,12 +42,7 @@ pub enum CommentKind {
     Block,
     Doc,
     Docstring,
-}
-
-impl CommentKind {
-    pub fn is_documentation(self) -> bool {
-        matches!(self, Self::Doc | Self::Docstring)
-    }
+    Shebang,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
