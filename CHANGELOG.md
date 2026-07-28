@@ -232,6 +232,17 @@ releases begin.
   containing `.git`. It previously walked to the filesystem root, so a stray
   `godlint.yaml` in a parent or home directory could silently govern an unrelated
   repository and relocate the reported path root.
+- Scan discovery stops at the same boundary, so walking a directory no longer descends
+  into an embedded repository or submodule. A parent repository previously reported
+  findings inside a submodule it does not own, and a linked worktree created inside the
+  repository was scanned twice. Both the configuration and the scan boundary now come from
+  one predicate, `paths::is_repository_root`, rather than each hardcoding `.git`.
+  **This can stop reporting files you were seeing findings for.** If a nested repository
+  holds first-party code you want scanned under the parent's policy, name the parent
+  first — `godlint check . nested` — because the first requested path decides the
+  configuration root. `godlint check nested` on its own asks for a repository that must
+  carry its own `godlint.yaml`. A skipped nested repository is silent, like an `exclude`
+  entry.
 - A file that cannot be read, for example because it is not valid UTF-8, is reported
   as an issue against that file. It previously aborted the whole run and discarded
   every other finding.

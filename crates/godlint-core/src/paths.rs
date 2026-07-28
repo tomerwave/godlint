@@ -3,6 +3,8 @@ use std::{
     path::{Component, Path, PathBuf},
 };
 
+const REPOSITORY_MARKER: &str = ".git";
+
 pub fn normalize(path: &Path) -> Option<PathBuf> {
     let mut normalized = PathBuf::new();
 
@@ -53,13 +55,17 @@ pub fn climbs(path: &Path) -> bool {
         .any(|component| matches!(component, Component::ParentDir))
 }
 
-pub fn find_upward(start: &Path, marker: &str, boundary: &str) -> Option<PathBuf> {
+pub fn is_repository_root(path: &Path) -> bool {
+    path.join(REPOSITORY_MARKER).exists()
+}
+
+pub fn find_upward(start: &Path, marker: &str) -> Option<PathBuf> {
     for directory in start.ancestors() {
         if directory.join(marker).is_file() {
             return Some(directory.to_path_buf());
         }
 
-        if directory.join(boundary).exists() {
+        if is_repository_root(directory) {
             return None;
         }
     }
