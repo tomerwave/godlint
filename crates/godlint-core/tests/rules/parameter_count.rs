@@ -1,9 +1,9 @@
 use godlint_core::{
     config::{ParameterCountRule, Severity},
-    rules::{FunctionRule, Metric, Rule, Violation, parameter_count::ParameterCount},
+    rules::{Metric, Rule, Violation, parameter_count::ParameterCount},
 };
 
-use super::support::function;
+use super::support::{function, function_limits};
 
 fn configuration(max_parameters: u32) -> ParameterCountRule {
     ParameterCountRule {
@@ -65,24 +65,24 @@ fn excludes_a_python_class_receiver() {
 
 #[test]
 fn reports_a_function_over_its_limit() {
-    let (facts, wide) = function("src/example.rs", "fn example(a: u32, b: u32, c: u32) {}");
-
     assert_eq!(
-        ParameterCount::check(&wide, &facts, &configuration(2)),
-        Some(Violation::Limit {
-            metric: Metric::ParameterCount,
-            actual: 3,
-            max: 2
-        })
+        function_limits::<ParameterCount>(
+            "src/example.rs",
+            "fn example(a: u32, b: u32, c: u32) {}",
+            &configuration(2),
+        ),
+        vec![Violation::limit(Metric::ParameterCount, 3, 2)]
     );
 }
 
 #[test]
 fn accepts_a_function_at_its_limit() {
-    let (facts, wide) = function("src/example.rs", "fn example(a: u32, b: u32) {}");
-
-    assert_eq!(
-        ParameterCount::check(&wide, &facts, &configuration(2)),
-        None
+    assert!(
+        function_limits::<ParameterCount>(
+            "src/example.rs",
+            "fn example(a: u32, b: u32) {}",
+            &configuration(2),
+        )
+        .is_empty()
     );
 }

@@ -139,6 +139,11 @@ releases begin.
 - Every rule must now have a fixture that reports it and a fixture that configures it
   without reporting it, so a rule cannot be left with nothing proving it stays silent on
   conforming code. `style/no-comments` was missing the second and now has it.
+- A rule that compares one measurement against one ceiling now declares the metric it
+  reports under, how to measure it, and how to read the ceiling, and no longer expresses
+  the comparison. The comparison lives in the driver, so a rule cannot invert the test,
+  and pairing the metric with the rule as an associated constant means it cannot report
+  under another rule's metric. Behaviour and output are unchanged.
 
 ### Fixed
 

@@ -133,12 +133,62 @@ pub trait CommentRule: Rule {
     ) -> Vec<(SourceRange, Violation)>;
 }
 
+pub trait FunctionLimitRule: Rule {
+    const METRIC: Metric;
+
+    fn measure(
+        function: &FunctionFact,
+        facts: &SourceFacts,
+        configuration: &Self::Configuration,
+    ) -> u32;
+
+    fn max(configuration: &Self::Configuration) -> u32;
+}
+
+pub trait FileLimitRule: Rule {
+    const METRIC: Metric;
+
+    fn measure(facts: &SourceFacts, configuration: &Self::Configuration) -> u32;
+
+    fn max(configuration: &Self::Configuration) -> u32;
+}
+
 pub fn evaluate_function_rule<R: FunctionRule>(
     facts: &[SourceFacts],
     configuration: &R::Configuration,
 ) -> Result<Vec<Finding>, RuleError> {
-    let severity = R::severity(configuration);
+    evaluate_functions(
+        facts,
+        R::severity(configuration),
+        R::ID,
+        |function, source| R::check(function, source, configuration),
+    )
+}
 
+pub fn evaluate_function_limit_rule<R: FunctionLimitRule>(
+    facts: &[SourceFacts],
+    configuration: &R::Configuration,
+) -> Result<Vec<Finding>, RuleError> {
+    let max = R::max(configuration);
+
+    evaluate_functions(
+        facts,
+        R::severity(configuration),
+        R::ID,
+        |function, source| {
+            let actual = R::measure(function, source, configuration);
+
+            (actual > max).then_some(Violation::limit(R::METRIC, actual, max))
+        },
+    )
+}
+
+fn evaluate_functions(
+    facts: &[SourceFacts],
+    severity: Severity,
+    rule_id: &'static str,
+    check: impl Fn(&FunctionFact, &SourceFacts) -> Option<Violation>,
+) -> Result<Vec<Finding>, RuleError> {
     if severity == Severity::Off {
         return Ok(Vec::new());
     }
@@ -147,7 +197,7 @@ pub fn evaluate_function_rule<R: FunctionRule>(
 
     for source_facts in facts {
         for function in source_facts.functions() {
-            let Some(violation) = R::check(function, source_facts, configuration) else {
+            let Some(violation) = check(function, source_facts) else {
                 continue;
             };
 
@@ -155,7 +205,7 @@ pub fn evaluate_function_rule<R: FunctionRule>(
                 source_facts.source(),
                 function.range(),
                 severity,
-                R::ID,
+                rule_id,
                 violation,
             )?);
         }
@@ -168,8 +218,30 @@ pub fn evaluate_file_rule<R: FileRule>(
     facts: &[SourceFacts],
     configuration: &R::Configuration,
 ) -> Result<Vec<Finding>, RuleError> {
-    let severity = R::severity(configuration);
+    evaluate_files(facts, R::severity(configuration), R::ID, |source| {
+        R::check(source, configuration)
+    })
+}
 
+pub fn evaluate_file_limit_rule<R: FileLimitRule>(
+    facts: &[SourceFacts],
+    configuration: &R::Configuration,
+) -> Result<Vec<Finding>, RuleError> {
+    let max = R::max(configuration);
+
+    evaluate_files(facts, R::severity(configuration), R::ID, |source| {
+        let actual = R::measure(source, configuration);
+
+        (actual > max).then_some(Violation::limit(R::METRIC, actual, max))
+    })
+}
+
+fn evaluate_files(
+    facts: &[SourceFacts],
+    severity: Severity,
+    rule_id: &'static str,
+    check: impl Fn(&SourceFacts) -> Option<Violation>,
+) -> Result<Vec<Finding>, RuleError> {
     if severity == Severity::Off {
         return Ok(Vec::new());
     }
@@ -177,12 +249,12 @@ pub fn evaluate_file_rule<R: FileRule>(
     facts
         .iter()
         .filter_map(|source_facts| {
-            R::check(source_facts, configuration).map(|violation| {
+            check(source_facts).map(|violation| {
                 finding(
                     source_facts.source(),
                     source_facts.source().full_range(),
                     severity,
-                    R::ID,
+                    rule_id,
                     violation,
                 )
             })

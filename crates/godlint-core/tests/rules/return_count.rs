@@ -1,9 +1,9 @@
 use godlint_core::{
     config::{ReturnCountRule, Severity},
-    rules::{FunctionRule, Metric, Rule, Violation, return_count::ReturnCount},
+    rules::{Metric, Rule, Violation, return_count::ReturnCount},
 };
 
-use super::support::function;
+use super::support::{function, function_limits};
 
 fn configuration(max_returns: u32) -> ReturnCountRule {
     ReturnCountRule {
@@ -56,27 +56,24 @@ fn counts_the_rust_try_operator() {
 
 #[test]
 fn reports_a_function_over_its_limit() {
-    let (facts, exits) = function(
-        "src/example.ts",
-        "function example(a: boolean): number {\n  if (a) {\n    return 1;\n  }\n\n  return 2;\n}",
-    );
-
     assert_eq!(
-        ReturnCount::check(&exits, &facts, &configuration(1)),
-        Some(Violation::Limit {
-            metric: Metric::ReturnPaths,
-            actual: 2,
-            max: 1
-        })
+        function_limits::<ReturnCount>(
+            "src/example.ts",
+            "function example(a: boolean): number {\n  if (a) {\n    return 1;\n  }\n\n  return 2;\n}",
+            &configuration(1),
+        ),
+        vec![Violation::limit(Metric::ReturnPaths, 2, 1)]
     );
 }
 
 #[test]
 fn accepts_a_function_at_its_limit() {
-    let (facts, exits) = function(
-        "src/example.ts",
-        "function example(a: boolean): number {\n  if (a) {\n    return 1;\n  }\n\n  return 2;\n}",
+    assert!(
+        function_limits::<ReturnCount>(
+            "src/example.ts",
+            "function example(a: boolean): number {\n  if (a) {\n    return 1;\n  }\n\n  return 2;\n}",
+            &configuration(2),
+        )
+        .is_empty()
     );
-
-    assert_eq!(ReturnCount::check(&exits, &facts, &configuration(2)), None);
 }

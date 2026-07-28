@@ -4,7 +4,10 @@ use godlint_core::source::SourceFile;
 use godlint_core::{
     analyzers::{SourceFacts, analyze},
     facts::FunctionFact,
-    rules::{CommentRule, Violation},
+    rules::{
+        CommentRule, FileLimitRule, FunctionLimitRule, Violation, evaluate_file_limit_rule,
+        evaluate_function_limit_rule,
+    },
 };
 
 pub(super) fn facts(path: &str, source: &str) -> SourceFacts {
@@ -43,5 +46,33 @@ pub(super) fn comment_violations<R: CommentRule>(
         .iter()
         .flat_map(|comment| R::check(comment, configuration))
         .map(|(_, violation)| violation)
+        .collect()
+}
+
+pub(super) fn function_limits<R: FunctionLimitRule>(
+    path: &str,
+    source: &str,
+    configuration: &R::Configuration,
+) -> Vec<Violation> {
+    let facts = facts(path, source);
+
+    evaluate_function_limit_rule::<R>(std::slice::from_ref(&facts), configuration)
+        .unwrap_or_else(|error| panic!("evaluates {}: {error}", R::ID))
+        .into_iter()
+        .map(|finding| finding.violation)
+        .collect()
+}
+
+pub(super) fn file_limits<R: FileLimitRule>(
+    path: &str,
+    source: &str,
+    configuration: &R::Configuration,
+) -> Vec<Violation> {
+    let facts = facts(path, source);
+
+    evaluate_file_limit_rule::<R>(std::slice::from_ref(&facts), configuration)
+        .unwrap_or_else(|error| panic!("evaluates {}: {error}", R::ID))
+        .into_iter()
+        .map(|finding| finding.violation)
         .collect()
 }

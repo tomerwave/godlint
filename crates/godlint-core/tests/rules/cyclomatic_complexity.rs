@@ -1,9 +1,9 @@
 use godlint_core::{
     config::{CyclomaticComplexityRule, Severity},
-    rules::{FunctionRule, Metric, Rule, Violation, cyclomatic_complexity::CyclomaticComplexity},
+    rules::{Metric, Rule, Violation, cyclomatic_complexity::CyclomaticComplexity},
 };
 
-use super::support::function;
+use super::support::{function, function_limits};
 
 fn configuration(max_complexity: u32) -> CyclomaticComplexityRule {
     CyclomaticComplexityRule {
@@ -79,27 +79,24 @@ fn attributes_closure_branching_to_the_closure() {
 
 #[test]
 fn reports_a_function_over_its_limit() {
-    let (facts, branchy) = function(
-        "src/example.rs",
-        "fn example(a: bool, b: bool) {\n    if a {}\n    if b {}\n}",
-    );
-
     assert_eq!(
-        CyclomaticComplexity::check(&branchy, &facts, &configuration(2)),
-        Some(Violation::Limit {
-            metric: Metric::Complexity,
-            actual: 3,
-            max: 2
-        })
+        function_limits::<CyclomaticComplexity>(
+            "src/example.rs",
+            "fn example(a: bool, b: bool) {\n    if a {}\n    if b {}\n}",
+            &configuration(2),
+        ),
+        vec![Violation::limit(Metric::Complexity, 3, 2)]
     );
 }
 
 #[test]
 fn accepts_a_function_at_its_limit() {
-    let (facts, branchy) = function("src/example.rs", "fn example(a: bool) {\n    if a {}\n}");
-
-    assert_eq!(
-        CyclomaticComplexity::check(&branchy, &facts, &configuration(2)),
-        None
+    assert!(
+        function_limits::<CyclomaticComplexity>(
+            "src/example.rs",
+            "fn example(a: bool) {\n    if a {}\n}",
+            &configuration(2),
+        )
+        .is_empty()
     );
 }

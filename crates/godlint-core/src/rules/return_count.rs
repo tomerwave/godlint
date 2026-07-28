@@ -3,7 +3,7 @@ use crate::{
     config::{Config, ReturnCountRule, Severity},
     facts::FunctionFact,
     rules::{
-        Finding, FunctionRule, Metric, Rule, RuleError, Violation, evaluate_function_rule,
+        Finding, FunctionLimitRule, Metric, Rule, RuleError, evaluate_function_limit_rule,
         when_configured,
     },
 };
@@ -20,21 +20,24 @@ impl Rule for ReturnCount {
     }
 }
 
-impl FunctionRule for ReturnCount {
-    fn check(
+impl FunctionLimitRule for ReturnCount {
+    const METRIC: Metric = Metric::ReturnPaths;
+
+    fn measure(
         function: &FunctionFact,
         _facts: &SourceFacts,
-        configuration: &Self::Configuration,
-    ) -> Option<Violation> {
-        let actual = function.return_paths().value();
-        let max = configuration.limit();
+        _configuration: &Self::Configuration,
+    ) -> u32 {
+        function.return_paths().value()
+    }
 
-        (actual > max).then_some(Violation::limit(Metric::ReturnPaths, actual, max))
+    fn max(configuration: &Self::Configuration) -> u32 {
+        configuration.limit()
     }
 }
 
 pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, RuleError> {
     when_configured(config.rules.return_count.as_ref(), |configuration| {
-        evaluate_function_rule::<ReturnCount>(facts, configuration)
+        evaluate_function_limit_rule::<ReturnCount>(facts, configuration)
     })
 }

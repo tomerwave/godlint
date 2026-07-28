@@ -1,9 +1,9 @@
 use godlint_core::{
     config::{FunctionNestingRule, Severity},
-    rules::{FunctionRule, Metric, Rule, Violation, function_nesting::FunctionNesting},
+    rules::{Metric, Rule, Violation, function_nesting::FunctionNesting},
 };
 
-use super::support::function;
+use super::support::{function, function_limits};
 
 fn configuration(max_depth: u32) -> FunctionNestingRule {
     FunctionNestingRule {
@@ -96,30 +96,24 @@ fn attributes_nesting_inside_a_closure_to_the_closure() {
 
 #[test]
 fn reports_a_function_deeper_than_its_limit() {
-    let (facts, deep) = function(
-        "src/example.rs",
-        "fn example() {\n    if a {\n        if b {\n            run();\n        }\n    }\n}",
-    );
-
     assert_eq!(
-        FunctionNesting::check(&deep, &facts, &configuration(1)),
-        Some(Violation::Limit {
-            metric: Metric::BlockDepth,
-            actual: 2,
-            max: 1
-        })
+        function_limits::<FunctionNesting>(
+            "src/example.rs",
+            "fn example() {\n    if a {\n        if b {\n            run();\n        }\n    }\n}",
+            &configuration(1),
+        ),
+        vec![Violation::limit(Metric::BlockDepth, 2, 1)]
     );
 }
 
 #[test]
 fn accepts_a_function_at_its_limit() {
-    let (facts, deep) = function(
-        "src/example.rs",
-        "fn example() {\n    if a {\n        if b {\n            run();\n        }\n    }\n}",
-    );
-
-    assert_eq!(
-        FunctionNesting::check(&deep, &facts, &configuration(2)),
-        None
+    assert!(
+        function_limits::<FunctionNesting>(
+            "src/example.rs",
+            "fn example() {\n    if a {\n        if b {\n            run();\n        }\n    }\n}",
+            &configuration(2),
+        )
+        .is_empty()
     );
 }

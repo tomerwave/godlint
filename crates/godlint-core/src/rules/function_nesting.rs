@@ -3,7 +3,7 @@ use crate::{
     config::{Config, FunctionNestingRule, Severity},
     facts::FunctionFact,
     rules::{
-        Finding, FunctionRule, Metric, Rule, RuleError, Violation, evaluate_function_rule,
+        Finding, FunctionLimitRule, Metric, Rule, RuleError, evaluate_function_limit_rule,
         when_configured,
     },
 };
@@ -20,21 +20,24 @@ impl Rule for FunctionNesting {
     }
 }
 
-impl FunctionRule for FunctionNesting {
-    fn check(
+impl FunctionLimitRule for FunctionNesting {
+    const METRIC: Metric = Metric::BlockDepth;
+
+    fn measure(
         function: &FunctionFact,
         _facts: &SourceFacts,
-        configuration: &Self::Configuration,
-    ) -> Option<Violation> {
-        let actual = function.block_depth().value();
-        let max = configuration.limit();
+        _configuration: &Self::Configuration,
+    ) -> u32 {
+        function.block_depth().value()
+    }
 
-        (actual > max).then_some(Violation::limit(Metric::BlockDepth, actual, max))
+    fn max(configuration: &Self::Configuration) -> u32 {
+        configuration.limit()
     }
 }
 
 pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, RuleError> {
     when_configured(config.rules.function_nesting.as_ref(), |configuration| {
-        evaluate_function_rule::<FunctionNesting>(facts, configuration)
+        evaluate_function_limit_rule::<FunctionNesting>(facts, configuration)
     })
 }

@@ -3,7 +3,7 @@ use crate::{
     config::{Config, LineLimitRule, Severity},
     facts::FunctionFact,
     rules::{
-        Finding, FunctionRule, Metric, Rule, RuleError, Violation, evaluate_function_rule,
+        Finding, FunctionLimitRule, Metric, Rule, RuleError, evaluate_function_limit_rule,
         line_count, when_configured,
     },
 };
@@ -20,26 +20,29 @@ impl Rule for FunctionSize {
     }
 }
 
-impl FunctionRule for FunctionSize {
-    fn check(
+impl FunctionLimitRule for FunctionSize {
+    const METRIC: Metric = Metric::FunctionLines;
+
+    fn measure(
         function: &FunctionFact,
         facts: &SourceFacts,
         configuration: &Self::Configuration,
-    ) -> Option<Violation> {
-        let actual = line_count::effective_line_count(
+    ) -> u32 {
+        line_count::effective_line_count(
             facts,
             function.range(),
             configuration.skip_blank_lines,
             configuration.skip_comments,
-        );
-        let max = configuration.max_lines.get();
+        )
+    }
 
-        (actual > max).then_some(Violation::limit(Metric::FunctionLines, actual, max))
+    fn max(configuration: &Self::Configuration) -> u32 {
+        configuration.max_lines.get()
     }
 }
 
 pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, RuleError> {
     when_configured(config.rules.function_size.as_ref(), |configuration| {
-        evaluate_function_rule::<FunctionSize>(facts, configuration)
+        evaluate_function_limit_rule::<FunctionSize>(facts, configuration)
     })
 }
