@@ -66,7 +66,8 @@ handling explicit for function-size metrics.
 
 ### Phase 1 — Existing facts and file metrics
 
-These rules need no new language fact beyond `SourceFile` and `FunctionFact`.
+These rules use source-level `CommentFact` and `SourceFile` data alongside
+`FunctionFact`; they need no semantic or repository-graph capability.
 
 | Rule | Status | Confidence | Languages | Configuration | Dogfood default |
 | --- | --- | --- | --- | --- | --- |
