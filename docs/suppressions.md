@@ -135,6 +135,12 @@ work whether or not `policy/accountable-suppression` is configured. That is a
 configuration choice like any severity, and the rule is enabled in Godlint's own
 `godlint.yaml` and belongs in any suite that promotes rules to blocking.
 
+`policy/unused-suppression` reports a directive that names an enabled, suppressible rule
+but does not silence any finding. It is how exceptions disappear once the code is fixed.
+A directive for an off rule is dormant, not unused: enabling a rule gradually must not
+turn the inactive parts of a policy into failures. Like
+`policy/accountable-suppression`, this rule cannot be suppressed.
+
 Because expiry compares against the current date, `godlint check` is time-dependent by
 design. It is the only such input, it is passed in explicitly rather than read inside a
 rule, and the fixtures pin dates far in the past and future so the corpus stays
@@ -173,12 +179,3 @@ guard on an arm counts, which it previously did not — and the exception was de
 than renewed. An exception with an expiry and a stated reason is a question someone can
 answer. That is the difference between it and a widened threshold, which is an answer
 nobody will revisit.
-
-## What is not implemented
-
-`policy/unused-suppression` — a directive that silences nothing today, because the
-finding was fixed or the code moved. It is the mechanism that stops suppressions
-accumulating as dead weight, and it needs one thing this change does not have: a lookup
-from rule ID to configured severity, so that a directive naming a disabled rule is
-reported as dormant rather than unused. It is a follow-up, not part of the roadmap's
-requirements for this feature.

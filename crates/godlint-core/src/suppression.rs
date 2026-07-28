@@ -96,7 +96,7 @@ impl Suppression {
             .is_some_and(|lines| lines.contains(&line))
     }
 
-    fn covers(&self, finding: &Finding) -> bool {
+    pub fn covers(&self, finding: &Finding) -> bool {
         self.source.path() == finding.path
             && self.covers_line(finding.line)
             && self.rules.iter().any(|rule| rule == finding.rule_id)

@@ -101,6 +101,8 @@ TypeScript/JavaScript, and Python source files. Eleven rules are implemented:
 - `style/no-comments` — commentary where the code should speak for itself.
 - `policy/accountable-suppression` — inline suppressions that cannot account for
   themselves.
+- `policy/unused-suppression` — inline suppressions that no longer silence an enabled
+  finding.
 
 A function means the same thing in every language: Rust `fn` items and closures,
 Python `def` functions and lambdas, and JavaScript/TypeScript function declarations,
@@ -126,8 +128,9 @@ fn long_function() {
 
 `godlint-ignore-enclosing` applies to the whole function containing it. There is no
 file-wide form — that is what `exclude` is for. `policy/accountable-suppression` reports
-a directive with no reason, an unknown rule, or an expiry in the past, and cannot itself
-be suppressed. List every exemption in the repository with:
+a directive with no reason, an unknown rule, or an expiry in the past; and
+`policy/unused-suppression` reports one that no longer hides an enabled finding. Neither
+policy rule can be suppressed. List every exemption in the repository with:
 
 ```bash
 godlint suppressions

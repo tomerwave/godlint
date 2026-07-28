@@ -63,6 +63,9 @@ releases begin.
   account. A defective directive still silences what it names and is reported against
   itself, so a lapsed expiry fails the build with one clear finding rather than an
   avalanche of unrelated ones.
+- `policy/unused-suppression` — reports an inline directive that does not silence an
+  enabled finding. A directive for an off rule is dormant rather than unused, so staged
+  rule adoption does not manufacture exception debt.
 - `godlint suppressions [paths...]` — lists every suppression in scope with its location,
   scope, rules, owner, expiry, and reason, then the total. A directive with no reason is
   listed as `(no justification)` rather than omitted.
@@ -77,6 +80,17 @@ releases begin.
   time-dependent input, and fixtures pin dates far in the past and future.
 
 ### Changed
+
+- One registry is the single list of rules. `rules::registry` already had to know every
+  rule to answer "is this rule enabled", which `policy/unused-suppression` needs, and
+  `RULE_IDS` was a second list of the same rules used to answer "does this rule exist".
+  Keeping both invited a silent disagreement: a rule present in `RULE_IDS` but missing from
+  the registry made every suppression naming it report `NotSuppressible`, and the reverse
+  made one report `UnknownRule`. `RULE_IDS` is gone; `is_known_rule`, `is_suppressible_rule`,
+  `configured_severity` and `rule_ids` all read the registry, and
+  `scripts/validate-pull-request.py` now requires a new rule to appear there.
+- `policy/unused-suppression` builds its finding with the shared helper the other rules use
+  rather than its own copy, which also takes the rule-coverage budget back down by one.
 
 - `style/no-comments` no longer reports a comment that is **only** suppression directives.
   A directive is machine-readable policy metadata rather than prose beside the code, and

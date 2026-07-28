@@ -23,6 +23,7 @@ RULES_DIR = Path("crates/godlint-core/src/rules")
 RULE_TESTS_DIR = Path("crates/godlint-core/tests/rules")
 RULE_TESTS_INDEX = Path("crates/godlint-core/tests/rules.rs")
 REGISTRY = RULES_DIR / "mod.rs"
+REGISTRATIONS = RULES_DIR / "registry.rs"
 FIXTURES_DIR = Path("crates/godlint-cli/tests/fixtures/rules")
 E2E = Path("crates/godlint-cli/tests/e2e.rs")
 CONFIG = Path("crates/godlint-core/src/config.rs")
@@ -62,6 +63,11 @@ def rule_id(module: Path) -> str | None:
     return match.group(1) if match else None
 
 
+def struct_name(module: Path) -> str:
+    match = re.search(r"pub struct (\w+);", read(module))
+    return match.group(1) if match else ""
+
+
 def rule_modules() -> list[Path]:
     return sorted(p for p in RULES_DIR.glob("*.rs") if rule_id(p) is not None)
 
@@ -84,14 +90,13 @@ def check_rule(report: Report, module: Path, identifier: str) -> None:
         f'{CONFIG}: no field renamed "{identifier}", so the rule cannot be configured',
     )
 
-    # RULE_IDS is what a suppression directive is validated against. A rule missing from
-    # it cannot be suppressed, and the directive naming it is reported as a typo instead.
+    # The registry is what a suppression directive is validated against, and what tells
+    # policy/unused-suppression whether a named rule is enabled. A rule missing from it is
+    # reported as a typo when a directive names it, and its suppressions never count as
+    # used, so both failures are silent.
     report.check(
-        re.search(
-            rf"RULE_IDS[^;]*<{name}::\w+ as Rule>::ID", registry, re.DOTALL
-        )
-        is not None,
-        f"{REGISTRY}: {name} is not in RULE_IDS, so a suppression cannot name {identifier}",
+        f'id: {struct_name(module)}::ID' in read(REGISTRATIONS),
+        f"{REGISTRATIONS}: {name} is not registered, so a suppression cannot name {identifier}",
     )
 
     fixture = FIXTURES_DIR / slug

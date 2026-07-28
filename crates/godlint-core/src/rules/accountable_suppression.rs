@@ -2,8 +2,8 @@ use crate::{
     config::{AccountableSuppressionRule, Config, Severity},
     date::Date,
     rules::{
-        Finding, RULE_IDS, Rule, RuleError, SuppressionDefect, SuppressionRule, Violation,
-        evaluate_suppression_rule, when_configured,
+        Finding, Rule, RuleError, SuppressionDefect, SuppressionRule, Violation,
+        evaluate_suppression_rule, is_known_rule, is_suppressible_rule, when_configured,
     },
     suppression::Suppression,
 };
@@ -76,19 +76,19 @@ fn named_rules(suppression: &Suppression) -> Vec<SuppressionDefect> {
 }
 
 fn named_rule(rule: &str) -> Option<SuppressionDefect> {
-    if rule == AccountableSuppression::ID {
+    if !is_known_rule(rule) {
+        return Some(SuppressionDefect::UnknownRule {
+            rule: rule.to_owned(),
+        });
+    }
+
+    if !is_suppressible_rule(rule) {
         return Some(SuppressionDefect::NotSuppressible {
             rule: rule.to_owned(),
         });
     }
 
-    if RULE_IDS.contains(&rule) {
-        return None;
-    }
-
-    Some(SuppressionDefect::UnknownRule {
-        rule: rule.to_owned(),
-    })
+    None
 }
 
 fn expiry(

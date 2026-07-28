@@ -12,10 +12,11 @@ the scan. Shared rules need equivalent Rust, TypeScript/JavaScript, and Python c
 when the concept applies. Repository rules need miniature realistic repositories rather
 than mocked dependency graphs.
 
-Inline suppression is planned but not implemented, so no rule can carry a suppression
-fixture yet. Its requirements are recorded under accountable exceptions in the
-[rule roadmap](rule-roadmap.md). When it lands, suppression cases become a fourth
-required fixture class and every shipped rule is backfilled in the same change.
+Inline suppression is a fourth fixture class for every rule it can reach. The fixture
+must show a directive silencing the rule at one site, while
+`policy/unused-suppression` ensures a directive that no longer hides a finding is not
+left behind. File-level findings remain unsuppressible inline because their location has
+no preceding declaration; test their configured path exclusion instead.
 
 Keep test code outside production `src/` modules. Public crate contracts belong in
 `crates/<crate>/tests/`. Rule fixtures belong in

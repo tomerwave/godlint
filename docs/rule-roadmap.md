@@ -220,10 +220,9 @@ yet. It also unblocks the fourth fixture class that
 [the testing strategy](testing.md) previously had to defer, and the accountable-exception
 row in the policy mapping below.
 
-`policy/unused-suppression` — a directive that silences nothing — is the natural
-follow-up. It is not one of the requirements above, and it needs a lookup from rule ID to
-configured severity so a directive naming a disabled rule reads as dormant rather than
-unused.
+`policy/unused-suppression` is shipped. It reports a directive that names an enabled,
+suppressible rule but silences no finding. A directive for a disabled rule is dormant,
+not unused, so projects can adopt a rule gradually without manufacturing exception debt.
 
 ### Phase 3 — Calls and organization policy
 
