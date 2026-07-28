@@ -33,6 +33,8 @@ Read the linked documents relevant to the task before changing code or policy.
 - A rule change is not covered because a fixture exists; it is covered when altering the
   rule breaks a test. Run `cargo mutants --file 'crates/godlint-core/src/rules/*.rs'` and
   leave no surviving mutant in a rule you touched.
+- Every line of a rule must be reached by a test. `cargo llvm-cov --workspace --json
+  --output-path coverage.json && python3 scripts/check-rule-coverage.py coverage.json`.
 - Run `python3 scripts/validate-pull-request.py` before opening a pull request. It checks
   that a rule is registered, configurable, fixtured, tested, documented, and dogfooded,
   and names the file to edit for anything missing.

@@ -128,6 +128,14 @@ releases begin.
   deserves a fixture.
 - Three cases the first mutation run showed were unexercised: code that begins at the byte
   a block comment ends, and the two error-reporting paths of `RuleError`.
+- `scripts` is excluded from Godlint's own scan. The no-comments policy was adopted for
+  the Rust codebase, where the reasoning moved into the architecture guide; a maintenance
+  script that encodes a budget should carry the reason beside the number.
+- A coverage gate over the rules layer, budgeted in uncovered lines rather than as a
+  percentage. This closes the hole mutation testing leaves: an unexercised branch shows up
+  as an uncovered line even when every mutant of it is caught. It found four such cases on
+  its first run, including all three severity gates and a reference prefix followed by a
+  non-digit.
 - Every rule must now have a fixture that reports it and a fixture that configures it
   without reporting it, so a rule cannot be left with nothing proving it stays silent on
   conforming code. `style/no-comments` was missing the second and now has it.
