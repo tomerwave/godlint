@@ -224,6 +224,16 @@ releases begin.
 
 ### Fixed
 
+- `godlint-ignore-enclosing` covers a byte range rather than a line range, and excludes
+  declarations nested inside the one it resolves to. It previously silenced the named rule
+  for anything sharing the declaration's lines, so a second arrow function on the same line
+  escaped a justification written for the first, and a closure inside a function was covered
+  by a reason that described only its parent. Both were widening failures: they hid findings
+  with no output saying so. A directive for a nested declaration goes inside that
+  declaration, which resolution already handles by picking the innermost. `Finding` carries
+  the byte offset it is derived from to make this possible; it was previously computed and
+  discarded.
+
 - Quoted prose is no longer a live suppression. `is_furniture` stripped `"` and `'` on every
   line of every comment so that a Python docstring's delimiter could open a directive, which
   also meant `// 'godlint-ignore-next-line maintainability/empty-function -- only prose'`

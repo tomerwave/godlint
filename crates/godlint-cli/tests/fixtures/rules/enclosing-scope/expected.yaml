@@ -1,0 +1,7 @@
+exit-code: 1
+
+stdout: |
+  neighbour.ts:1:203: error[maintainability/empty-function] Function has an empty body.
+  nested.rs:3:17: error[maintainability/empty-function] Function has an empty body.
+
+stderr: ""

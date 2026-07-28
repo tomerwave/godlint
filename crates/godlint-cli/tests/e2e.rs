@@ -40,6 +40,7 @@ fixture_tests! {
     documented_empty_body => "documented-empty-body",
     else_if_chain => "else-if-chain",
     empty_function => "empty-function",
+    enclosing_scope => "enclosing-scope",
     excluded_path => "excluded-path",
     file_size => "file-size",
     function_nesting => "function-nesting",

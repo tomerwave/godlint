@@ -1,4 +1,4 @@
-use std::{collections::BTreeSet, ops::RangeInclusive};
+use std::collections::BTreeSet;
 
 use crate::{
     analyzers::SourceFacts,
@@ -20,6 +20,15 @@ const EXPIRES: &str = "expires";
 const DIRECTIVES: [(&str, Scope); 2] =
     [(NEXT_LINE, Scope::NextLine), (ENCLOSING, Scope::Enclosing)];
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+enum Covers {
+    Line(usize),
+    Declaration {
+        range: SourceRange,
+        nested: Vec<SourceRange>,
+    },
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Scope {
     NextLine,
@@ -38,7 +47,7 @@ pub struct Suppression {
     expires: Option<String>,
     unknown_options: Vec<String>,
     repeated_options: Vec<String>,
-    covers: Option<RangeInclusive<usize>>,
+    covers: Option<Covers>,
 }
 
 impl Scope {
@@ -95,16 +104,21 @@ impl Suppression {
         self.covers.is_some()
     }
 
-    pub fn covers_line(&self, line: usize) -> bool {
-        self.covers
-            .as_ref()
-            .is_some_and(|lines| lines.contains(&line))
-    }
-
     pub fn covers(&self, finding: &Finding) -> bool {
         self.source.path() == finding.path
-            && self.covers_line(finding.line)
             && self.rules.iter().any(|rule| rule == finding.rule_id)
+            && self.reaches(finding)
+    }
+
+    fn reaches(&self, finding: &Finding) -> bool {
+        match &self.covers {
+            Some(Covers::Line(line)) => *line == finding.line,
+            Some(Covers::Declaration { range, nested }) => {
+                contains(*range, finding.offset)
+                    && !nested.iter().any(|inner| contains(*inner, finding.offset))
+            }
+            None => false,
+        }
     }
 }
 
@@ -377,13 +391,17 @@ fn is_standalone(text: &str, index: usize) -> bool {
     before.is_none_or(char::is_whitespace) && after.is_none_or(char::is_whitespace)
 }
 
+fn contains(range: SourceRange, offset: usize) -> bool {
+    range.start() <= offset && offset <= range.end()
+}
+
 fn coverage(
     scope: Scope,
     line: usize,
     occupied: &BTreeSet<usize>,
     range: SourceRange,
     facts: &SourceFacts,
-) -> Option<RangeInclusive<usize>> {
+) -> Option<Covers> {
     match scope {
         Scope::NextLine => {
             let mut target = line + 1;
@@ -392,22 +410,32 @@ fn coverage(
                 target += 1;
             }
 
-            Some(target..=target)
+            Some(Covers::Line(target))
         }
-        Scope::Enclosing => enclosing(range, facts).map(|function| {
-            let source = facts.source();
-
-            source.line(function.range().start())..=source.line(function.range().end())
+        Scope::Enclosing => enclosing(range, facts).map(|function| Covers::Declaration {
+            range: function.range(),
+            nested: nested_functions(function.range(), facts),
         }),
     }
+}
+
+fn nested_functions(declaration: SourceRange, facts: &SourceFacts) -> Vec<SourceRange> {
+    facts
+        .functions()
+        .iter()
+        .map(FunctionFact::range)
+        .filter(|inner| inner != &declaration && encloses(declaration, *inner))
+        .collect()
+}
+
+fn encloses(outer: SourceRange, inner: SourceRange) -> bool {
+    outer.start() <= inner.start() && inner.end() <= outer.end()
 }
 
 fn enclosing(range: SourceRange, facts: &SourceFacts) -> Option<&FunctionFact> {
     facts
         .functions()
         .iter()
-        .filter(|function| {
-            function.range().start() <= range.start() && range.end() <= function.range().end()
-        })
+        .filter(|function| encloses(function.range(), range))
         .min_by_key(|function| function.range().end() - function.range().start())
 }

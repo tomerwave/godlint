@@ -35,6 +35,19 @@ fn config(body: &str) -> Config {
     yaml_serde::from_str(body).unwrap_or_else(|error| panic!("reads configuration: {error}"))
 }
 
+fn surviving(path: &str, source: &str, body: &str) -> Vec<(usize, usize)> {
+    let facts = facts(path, source);
+
+    evaluate(std::slice::from_ref(&facts), &config(body), today())
+        .unwrap_or_else(|error| panic!("evaluates: {error}"))
+        .iter()
+        .map(|finding| (finding.line, finding.column))
+        .collect()
+}
+
+const EMPTY_FUNCTION: &str =
+    "version: 1\nrules:\n  maintainability/empty-function:\n    severity: error\n";
+
 fn today() -> Date {
     Date::parse("2026-07-28").unwrap_or_else(|error| panic!("parses date: {error}"))
 }
@@ -180,13 +193,52 @@ fn reports_directives_in_source_order() {
 
 #[test]
 fn an_enclosing_directive_resolves_to_the_innermost_function() {
-    let source = "fn outer() {\n    let inner = || {\n        // godlint-ignore-enclosing a/b -- inner\n    };\n    let _ = inner;\n}\n";
-    let suppression = only("src/example.rs", source);
+    let directive =
+        "        // godlint-ignore-enclosing maintainability/empty-function -- inner is a stub\n";
+    let body = "fn outer() {\n    let inner = || {\nBODY    };\n    let _ = inner;\n}\n";
 
-    assert!(suppression.resolves());
-    assert!(
-        !suppression.covers_line(1),
-        "the enclosing closure does not extend to the outer function"
+    assert_eq!(
+        surviving("src/a.rs", &body.replace("BODY", ""), EMPTY_FUNCTION),
+        vec![(2, 17)],
+        "without a directive the closure is reported"
+    );
+    assert_eq!(
+        surviving("src/b.rs", &body.replace("BODY", directive), EMPTY_FUNCTION),
+        Vec::new(),
+        "a directive inside the closure covers the closure"
+    );
+}
+
+#[test]
+fn an_enclosing_directive_does_not_reach_a_nested_declaration() {
+    let directive =
+        "    // godlint-ignore-enclosing maintainability/empty-function -- outer is a stub\n";
+    let body = "fn outer() {\nBODY    let inner = || {};\n    let _ = inner;\n}\n";
+    let without = surviving("src/a.rs", &body.replace("BODY", ""), EMPTY_FUNCTION);
+    let with = surviving("src/b.rs", &body.replace("BODY", directive), EMPTY_FUNCTION);
+
+    assert_eq!(without.len(), 1, "the closure is reported: {without:?}");
+    assert_eq!(
+        with.len(),
+        1,
+        "a justification for the enclosing function does not describe a closure inside it: \
+         {with:?}"
+    );
+}
+
+#[test]
+fn an_enclosing_directive_does_not_reach_a_neighbour_on_its_line() {
+    let directive =
+        " /* godlint-ignore-enclosing maintainability/empty-function -- a is a no-op */ ";
+    let body = "export const a = (): void => {BODY}; export const b = (): void => {};\n";
+    let without = surviving("src/a.ts", &body.replace("BODY", ""), EMPTY_FUNCTION);
+    let with = surviving("src/b.ts", &body.replace("BODY", directive), EMPTY_FUNCTION);
+
+    assert_eq!(without.len(), 2, "both arrows are reported: {without:?}");
+    assert_eq!(
+        with.len(),
+        1,
+        "b shares a line with a but is not the declaration a justified: {with:?}"
     );
 }
 
@@ -379,28 +431,29 @@ fn a_docstring_delimiter_still_opens_a_directive() {
 }
 
 #[test]
-fn stacked_directives_all_reach_the_same_line() {
-    let found = suppressions(
-        "src/example.rs",
-        "// godlint-ignore-next-line a/b -- first\n         // godlint-ignore-next-line c/d -- second\nfn example() {}\n",
-    );
+fn stacked_directives_all_reach_the_code_below_them() {
+    let source = "// godlint-ignore-next-line maintainability/empty-function -- first\n\
+                  // godlint-ignore-next-line policy/todo-requires-reference -- second\n\
+                  fn example() {}\n";
+    let body = "version: 1\nrules:\n  maintainability/empty-function:\n    severity: error\n";
 
-    assert_eq!(found.len(), 2);
-    assert!(
-        found.iter().all(|suppression| suppression.covers_line(3)),
+    assert_eq!(suppressions("src/example.rs", source).len(), 2);
+    assert_eq!(
+        surviving("src/example.rs", source, body),
+        Vec::new(),
         "a directive stacked above another must reach the code, not its neighbour"
     );
 }
 
 #[test]
-fn stacked_directives_inside_one_comment_reach_the_same_line() {
-    let found = suppressions(
-        "src/example.rs",
-        "/*\ngodlint-ignore-next-line a/b -- first\ngodlint-ignore-next-line c/d -- second\n*/\nfn example() {}\n",
-    );
+fn stacked_directives_inside_one_comment_reach_the_code_below_them() {
+    let source = "/*\ngodlint-ignore-next-line maintainability/empty-function -- first\n\
+                  godlint-ignore-next-line policy/todo-requires-reference -- second\n*/\n\
+                  fn example() {}\n";
+    let body = "version: 1\nrules:\n  maintainability/empty-function:\n    severity: error\n";
 
-    assert_eq!(found.len(), 2);
-    assert!(found.iter().all(|suppression| suppression.covers_line(5)));
+    assert_eq!(suppressions("src/example.rs", source).len(), 2);
+    assert_eq!(surviving("src/example.rs", source, body), Vec::new());
 }
 
 #[test]
