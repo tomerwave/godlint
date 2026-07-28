@@ -24,6 +24,7 @@ pub mod empty_function;
 pub mod file_size;
 pub mod function_nesting;
 pub mod function_size;
+pub mod function_statements;
 mod line_count;
 pub mod parameter_count;
 pub mod return_count;
@@ -77,6 +78,10 @@ pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, 
 
     if let Some(configuration) = &config.rules.return_count {
         findings.extend(return_count::evaluate(facts, configuration)?);
+    }
+
+    if let Some(configuration) = &config.rules.function_statements {
+        findings.extend(function_statements::evaluate(facts, configuration)?);
     }
 
     findings.sort_by(|left, right| {

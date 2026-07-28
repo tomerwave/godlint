@@ -30,6 +30,7 @@ fn extracts_function_facts_from_every_supported_language() {
         assert_eq!(facts.functions()[0].parameter_count(), 0, "{path}");
         assert_eq!(facts.functions()[0].decision_points(), 0, "{path}");
         assert_eq!(facts.functions()[0].return_count(), 0, "{path}");
+        assert_eq!(facts.functions()[0].statement_count(), 1, "{path}");
         assert!(!facts.functions()[0].body_is_empty(), "{path}");
     }
 }
@@ -99,6 +100,37 @@ fn extracts_return_counts_from_every_supported_language() {
             .unwrap_or_else(|error| panic!("extracts returns from {path}: {error}"));
 
         assert_eq!(facts.functions()[0].return_count(), 1, "{path}");
+    }
+}
+
+#[test]
+fn extracts_direct_statement_counts_from_every_supported_language() {
+    let cases = [
+        (
+            "example.rs",
+            "fn example() {\n    work();\n    more_work();\n}",
+        ),
+        (
+            "example.js",
+            "function example() {\n  work();\n  moreWork();\n}",
+        ),
+        (
+            "example.ts",
+            "function example() {\n  work();\n  moreWork();\n}",
+        ),
+        (
+            "example.tsx",
+            "function example() {\n  work();\n  moreWork();\n}",
+        ),
+        ("example.py", "def example():\n    work()\n    more_work()"),
+        ("example.pyi", "def example():\n    work()\n    more_work()"),
+    ];
+
+    for (path, contents) in cases {
+        let facts = analyze(&source(path, contents))
+            .unwrap_or_else(|error| panic!("extracts statements from {path}: {error}"));
+
+        assert_eq!(facts.functions()[0].statement_count(), 2, "{path}");
     }
 }
 

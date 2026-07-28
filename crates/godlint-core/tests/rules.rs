@@ -3,6 +3,8 @@ mod empty_function;
 
 #[path = "rules/function_size.rs"]
 mod function_size;
+#[path = "rules/function_statements.rs"]
+mod function_statements;
 
 #[path = "rules/cyclomatic_complexity.rs"]
 mod cyclomatic_complexity;

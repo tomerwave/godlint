@@ -202,6 +202,7 @@ fn function_fact(
     let parameter_count = parameter_count(node);
     let decision_points = decision_points(node, source.language(), is_function_node);
     let return_count = return_count(node, source.language(), is_function_node);
+    let statement_count = statement_count(node);
     let name = node
         .child_by_field_name("name")
         .and_then(|name| source.source().get(name.byte_range()))
@@ -216,6 +217,7 @@ fn function_fact(
             parameter_count,
             decision_points,
             return_count,
+            statement_count,
             body_is_empty,
             nesting_depth,
         },
@@ -323,6 +325,12 @@ fn is_return(kind: &str, language: Language) -> bool {
         }
         Language::Rust => kind == "return_expression",
     }
+}
+
+fn statement_count(function: Node<'_>) -> u32 {
+    function
+        .child_by_field_name("body")
+        .map_or(0, |body| body.named_child_count() as u32)
 }
 
 fn parameter_count(node: Node<'_>) -> u32 {
