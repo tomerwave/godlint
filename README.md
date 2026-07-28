@@ -84,7 +84,7 @@ godlint config validate --config path/to/godlint.yaml
 ```
 
 The `check` command evaluates the configured rules across Rust,
-TypeScript/JavaScript, and Python source files. Eleven rules are implemented:
+TypeScript/JavaScript, and Python source files. Twelve rules are implemented:
 
 - `maintainability/file-size` — effective lines in a file.
 - `maintainability/function-size` — effective lines in a function.

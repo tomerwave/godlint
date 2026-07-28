@@ -17,8 +17,15 @@ godlint-ignore-next-line <rule-id>[,<rule-id>...] [owner=<name>] [expires=<YYYY-
 godlint-ignore-enclosing <rule-id>[,<rule-id>...] [owner=<name>] [expires=<YYYY-MM-DD>] -- <reason>
 ```
 
-The directive must open its line, ignoring leading whitespace and comment punctuation, so
-prose that merely mentions a directive is not one. It works in every comment syntax
+The directive must open its line, ignoring leading whitespace and the comment's own
+punctuation, so prose that merely mentions a directive is not one. Which punctuation counts
+depends on the comment: `/`, `#`, `*` and `!` always, and a quote only where a quote opens
+the comment, which is a Python docstring. Without that restriction `// 'godlint-ignore-next-line …'`
+would be a live suppression rather than a sentence about one.
+
+An option given twice keeps its first value and is reported. Otherwise an expiry could be
+renewed by appending a second one, invisibly to both `check` and the audit. An option with
+an empty value, `owner=`, reads as absent rather than as satisfied. It works in every comment syntax
 Godlint reads, including Python docstrings, because it is resolved from `CommentFact`
 rather than by re-scanning the file:
 
@@ -88,6 +95,13 @@ reaches it with `next-line`. A finding anchored inside a body — a comment, a n
 declaration line, so a directive inside a function can silence a finding about the
 function itself.
 
+`enclosing` covers a line range, not a byte range, which has two consequences worth
+knowing. A directive inside an outer function also covers every nested closure declared in
+it, and where two functions share a line — `const a = () => {…}; const b = () => {};` —
+a directive justifying one silences the named rule for the other. Both follow from findings
+carrying a line rather than an offset. Prefer one declaration per line where an exception
+is in play; a byte-range scope is a later change.
+
 `enclosing` needs a function to enclose it. At the top level of a file there is none, and
 Godlint reports the directive rather than silently ignoring it.
 
@@ -107,6 +121,7 @@ Suppression is only trustworthy if the suppressions themselves are checked, so
 | An unknown rule ID | Fix the typo; the directive was silencing nothing |
 | `policy/accountable-suppression` named | It cannot be suppressed; nothing else would hold suppressions to account |
 | An unrecognised option or stray word | Fix the directive |
+| The same option set twice | Keep one value; the first is the one that applies |
 | `expires` that is not a calendar date | Write it `YYYY-MM-DD` |
 | `expires` in the past | Fix the code, or renew the exception deliberately |
 | No `owner`, when `require-owner` is set | Name someone accountable |

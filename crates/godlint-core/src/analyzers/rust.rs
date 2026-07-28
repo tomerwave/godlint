@@ -60,10 +60,15 @@ fn is_decision(node: Node<'_>) -> bool {
             | "try_expression"
             | "while_expression"
     ) || is_match_guard(node)
+        || is_refutable_let(node)
 }
 
 fn is_match_guard(node: Node<'_>) -> bool {
     node.kind() == "match_pattern" && node.child_by_field_name("condition").is_some()
+}
+
+fn is_refutable_let(node: Node<'_>) -> bool {
+    node.kind() == "let_declaration" && node.child_by_field_name("alternative").is_some()
 }
 
 fn is_return(kind: &str) -> bool {

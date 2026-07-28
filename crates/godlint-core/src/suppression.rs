@@ -1,8 +1,8 @@
-use std::ops::RangeInclusive;
+use std::{collections::BTreeSet, ops::RangeInclusive};
 
 use crate::{
     analyzers::SourceFacts,
-    facts::FunctionFact,
+    facts::{CommentKind, FunctionFact},
     rules::Finding,
     source::{SourceFile, SourceRange},
 };
@@ -37,6 +37,7 @@ pub struct Suppression {
     owner: Option<String>,
     expires: Option<String>,
     unknown_options: Vec<String>,
+    repeated_options: Vec<String>,
     covers: Option<RangeInclusive<usize>>,
 }
 
@@ -86,6 +87,10 @@ impl Suppression {
         &self.unknown_options
     }
 
+    pub fn repeated_options(&self) -> &[String] {
+        &self.repeated_options
+    }
+
     pub fn resolves(&self) -> bool {
         self.covers.is_some()
     }
@@ -107,10 +112,17 @@ pub fn collect(facts: &[SourceFacts]) -> Vec<Suppression> {
     let mut suppressions: Vec<Suppression> = facts
         .iter()
         .flat_map(|source_facts| {
-            source_facts
-                .comments()
-                .iter()
-                .flat_map(|comment| in_comment(comment.range(), comment.text(), source_facts))
+            let occupied = directive_lines(source_facts);
+
+            source_facts.comments().iter().flat_map(move |comment| {
+                in_comment(
+                    comment.range(),
+                    comment.text(),
+                    comment.kind(),
+                    &occupied,
+                    source_facts,
+                )
+            })
         })
         .collect();
 
@@ -121,13 +133,13 @@ pub fn collect(facts: &[SourceFacts]) -> Vec<Suppression> {
     suppressions
 }
 
-pub fn is_directive_only(text: &str) -> bool {
+pub fn is_directive_only(text: &str, kind: CommentKind) -> bool {
     let mut directives = 0;
 
-    for (_, line) in lines(text) {
-        if directive(line).is_some() {
+    for (index, (_, line)) in lines(text).enumerate() {
+        if directive(line, kind, index == 0).is_some() {
             directives += 1;
-        } else if !is_furniture_only(line) {
+        } else if !is_furniture_only(line, kind, index == 0) {
             return false;
         }
     }
@@ -135,8 +147,13 @@ pub fn is_directive_only(text: &str) -> bool {
     directives > 0
 }
 
-fn is_furniture_only(line: &str) -> bool {
-    line.trim_start_matches(is_furniture).is_empty()
+fn is_furniture_only(line: &str, kind: CommentKind, opens: bool) -> bool {
+    line.trim_start_matches(|character| is_furniture(character, quotes_delimit(kind, opens)))
+        .is_empty()
+}
+
+fn quotes_delimit(kind: CommentKind, opens: bool) -> bool {
+    opens && kind == CommentKind::Docstring
 }
 
 pub fn apply(findings: Vec<Finding>, suppressions: &[Suppression]) -> Vec<Finding> {
@@ -150,30 +167,55 @@ pub fn apply(findings: Vec<Finding>, suppressions: &[Suppression]) -> Vec<Findin
         .collect()
 }
 
-fn in_comment(comment_range: SourceRange, text: &str, facts: &SourceFacts) -> Vec<Suppression> {
+fn directive_lines(facts: &SourceFacts) -> BTreeSet<usize> {
+    let source = facts.source();
+
+    facts
+        .comments()
+        .iter()
+        .flat_map(|comment| {
+            lines(comment.text())
+                .enumerate()
+                .filter(|(index, (_, line))| directive(line, comment.kind(), *index == 0).is_some())
+                .map(|(_, (offset, _))| source.line(comment.range().start() + offset))
+                .collect::<Vec<_>>()
+        })
+        .collect()
+}
+
+fn in_comment(
+    comment_range: SourceRange,
+    text: &str,
+    kind: CommentKind,
+    occupied: &BTreeSet<usize>,
+    facts: &SourceFacts,
+) -> Vec<Suppression> {
     let numbered: Vec<(usize, &str)> = lines(text).collect();
 
     numbered
         .iter()
         .enumerate()
         .filter_map(|(index, (offset, line))| {
-            let found = directive(line)?;
+            let found = directive(line, kind, index == 0)?;
             let start = comment_range.start() + offset + found.offset;
 
             Some(suppression(
                 found.scope,
                 found.arguments,
                 SourceRange::new(start, start + found.length).ok()?,
-                closing_lines(&numbered[index + 1..]),
+                spent_lines(&numbered[index + 1..], kind),
+                occupied,
                 facts,
             ))
         })
         .collect()
 }
 
-fn closing_lines(rest: &[(usize, &str)]) -> usize {
+fn spent_lines(rest: &[(usize, &str)], kind: CommentKind) -> usize {
     rest.iter()
-        .take_while(|(_, line)| is_furniture_only(line))
+        .take_while(|(_, line)| {
+            is_furniture_only(line, kind, false) || directive(line, kind, false).is_some()
+        })
         .count()
 }
 
@@ -196,10 +238,11 @@ struct Directive<'a> {
     length: usize,
 }
 
-fn directive(line: &str) -> Option<Directive<'_>> {
-    let opened = line.trim_start_matches(is_furniture);
+fn directive(line: &str, kind: CommentKind, opens: bool) -> Option<Directive<'_>> {
+    let quotes = quotes_delimit(kind, opens);
+    let opened = line.trim_start_matches(|character| is_furniture(character, quotes));
     let offset = line.len() - opened.len();
-    let body = opened.trim_end_matches(is_closing);
+    let body = opened.trim_end_matches(|character| is_closing(character, quotes));
 
     DIRECTIVES.into_iter().find_map(|(keyword, scope)| {
         let arguments = body.strip_prefix(keyword)?;
@@ -213,19 +256,20 @@ fn directive(line: &str) -> Option<Directive<'_>> {
     })
 }
 
-fn is_closing(character: char) -> bool {
-    character.is_whitespace() || "*/\"'".contains(character)
+fn is_closing(character: char, quotes: bool) -> bool {
+    character.is_whitespace() || "*/".contains(character) || (quotes && "\"'".contains(character))
 }
 
-fn is_furniture(character: char) -> bool {
-    character.is_whitespace() || "/#*\"'!".contains(character)
+fn is_furniture(character: char, quotes: bool) -> bool {
+    character.is_whitespace() || "/#*!".contains(character) || (quotes && "\"'".contains(character))
 }
 
 fn suppression(
     scope: Scope,
     arguments: &str,
     range: SourceRange,
-    closing: usize,
+    spent: usize,
+    occupied: &BTreeSet<usize>,
     facts: &SourceFacts,
 ) -> Suppression {
     let source = facts.source();
@@ -247,7 +291,8 @@ fn suppression(
         owner: parsed.owner,
         expires: parsed.expires,
         unknown_options: parsed.unknown_options,
-        covers: coverage(scope, line + closing, range, facts),
+        repeated_options: parsed.repeated_options,
+        covers: coverage(scope, line + spent, occupied, range, facts),
     }
 }
 
@@ -257,6 +302,7 @@ struct Arguments {
     owner: Option<String>,
     expires: Option<String>,
     unknown_options: Vec<String>,
+    repeated_options: Vec<String>,
 }
 
 impl Arguments {
@@ -271,10 +317,24 @@ impl Arguments {
             return;
         };
 
-        match key {
-            OWNER => self.owner = Some(value.to_owned()),
-            EXPIRES => self.expires = Some(value.to_owned()),
-            _ => self.unknown_options.push(key.to_owned()),
+        let slot = match key {
+            OWNER => &mut self.owner,
+            EXPIRES => &mut self.expires,
+            _ => {
+                self.unknown_options.push(key.to_owned());
+
+                return;
+            }
+        };
+
+        if slot.is_some() {
+            self.repeated_options.push(key.to_owned());
+
+            return;
+        }
+
+        if !value.is_empty() {
+            *slot = Some(value.to_owned());
         }
     }
 }
@@ -316,11 +376,20 @@ fn is_standalone(text: &str, index: usize) -> bool {
 fn coverage(
     scope: Scope,
     line: usize,
+    occupied: &BTreeSet<usize>,
     range: SourceRange,
     facts: &SourceFacts,
 ) -> Option<RangeInclusive<usize>> {
     match scope {
-        Scope::NextLine => Some(line + 1..=line + 1),
+        Scope::NextLine => {
+            let mut target = line + 1;
+
+            while occupied.contains(&target) {
+                target += 1;
+            }
+
+            Some(target..=target)
+        }
         Scope::Enclosing => enclosing(range, facts).map(|function| {
             let source = facts.source();
 

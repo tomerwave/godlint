@@ -97,12 +97,25 @@ and this is a decision, not an oversight: they read as one access with a fallbac
 than as a branch a reader has to trace. A Python comprehension filter is likewise not
 counted; only a `case` guard is.
 
-One consequence is uneven across languages and accepted knowingly. "The construct is one
-decision" rests on exhaustiveness, which Rust's `match` has and JavaScript's `switch` — with
-fallthrough and no exhaustiveness check — does not. Counting `switch` per case in
-JavaScript alone would make the same threshold mean different things in different
-languages, which is the failure this project exists to avoid, so the uniform rule wins and
-a JavaScript `switch` is scored slightly generously.
+The justification is that a reader looks up one arm rather than tracing every arm, which
+holds in all three languages. It is *not* exhaustiveness: only Rust's `match` is checked
+for that. A JavaScript `switch` has fallthrough and no exhaustiveness check, and a Python
+`match` without a `case _` falls through silently in the same way, so both are scored
+slightly generously — a six-way Python `if`/`elif` chain measures 7 while the same six
+branches written as a `match` with no `case _` measure 2. Counting per arm for those two
+languages alone would make one threshold mean different things in different languages,
+which is the failure this project exists to avoid, so the uniform rule wins and the
+generosity is accepted knowingly.
+
+One multiway construct is still counted per arm, deliberately: a Python `except` chain.
+Four handlers measure 5 where a Rust `match` over an error enum measures 1. Handlers are
+ordered, are not exhaustive, and are tried in sequence until one matches, so each is a
+decision a reader traces — the shape of an `else if` chain rather than of a dispatch
+table. A `try`/`catch` in JavaScript has one handler and so cannot diverge.
+
+A refutable `let` — Rust's `let … else` — counts as one decision, like the `if let` it
+replaces. It was counted as zero until the arm rule landed, which made the idiomatic form
+measure less than the nested form it is meant to replace.
 
 Nesting depth is likewise a property of control flow, not of declarations.
 `maintainability/function-nesting` measures how deeply `if`, `for`, `while`, `match`,

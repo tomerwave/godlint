@@ -33,6 +33,9 @@ mod no_comments;
 #[path = "rules/parameter_count.rs"]
 mod parameter_count;
 
+#[path = "rules/registry.rs"]
+mod registry;
+
 #[path = "rules/return_count.rs"]
 mod return_count;
 

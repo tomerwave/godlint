@@ -13,6 +13,8 @@ stdout: |
   example.rs:34:8: error[policy/accountable-suppression] Suppression has no expiry; set one with `expires=YYYY-MM-DD`.
   example.rs:37:4: error[policy/accountable-suppression] Suppression has no enclosing declaration; place it inside the declaration it applies to.
   example.rs:38:1: error[maintainability/empty-function] Function has an empty body.
+  example.rs:41:8: error[policy/accountable-suppression] Suppression sets expires more than once; only one value can be accountable.
+  example.rs:41:8: error[policy/accountable-suppression] Suppression expired on 2020-01-01.
   mixed.rs:1:1: error[style/no-comments] Comment is not permitted; express the intent in the code.
 
 stderr: ""
