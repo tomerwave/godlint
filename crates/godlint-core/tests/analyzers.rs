@@ -92,6 +92,18 @@ fn classifies_a_shebang_separately_from_commentary() {
 }
 
 #[test]
+fn recognises_a_docstring_that_follows_a_shebang() {
+    let facts = analyze(&source(
+        "a.py",
+        "#!/usr/bin/env python3\n\"\"\"Module detail.\"\"\"\ndef example():\n    work()",
+    ))
+    .unwrap_or_else(|error| panic!("analyzes shebang and docstring: {error}"));
+    let kinds: Vec<CommentKind> = facts.comments().iter().map(|c| c.kind()).collect();
+
+    assert_eq!(kinds, vec![CommentKind::Shebang, CommentKind::Docstring]);
+}
+
+#[test]
 fn does_not_treat_every_python_string_as_commentary() {
     let facts = analyze(&source(
         "example.py",
