@@ -25,6 +25,4 @@ jobs:
 
       - name: Check what this change touched
         if: github.event_name == 'pull_request'
-        run: |
-          git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
-          python3 scripts/validate-pull-request.py --base "origin/${{ github.base_ref }}"
+        run: python3 scripts/validate-pull-request.py --base "origin/${{ github.base_ref }}"

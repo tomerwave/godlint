@@ -33,8 +33,11 @@ ROADMAP = Path("docs/rule-roadmap.md")
 README = Path("README.md")
 CHANGELOG = Path("CHANGELOG.md")
 
-BEHAVIOUR_PATHS = ("crates/godlint-core/src/rules/", "crates/godlint-core/src/analyzers/")
-SCHEMA_PATHS = ("crates/godlint-core/src/config.rs",)
+NEEDS_CHANGELOG = (
+    f"{RULES_DIR}/",
+    "crates/godlint-core/src/analyzers/",
+    str(CONFIG),
+)
 
 
 @dataclass
@@ -114,7 +117,7 @@ def check_fixtures(report: Report) -> None:
 
 
 def check_workflows(report: Report) -> None:
-    toolchains: dict[str, set[str]] = {}
+    versions: set[str] = set()
 
     for workflow in sorted(WORKFLOWS.glob("*.yml")):
         body = read(workflow)
@@ -122,11 +125,8 @@ def check_workflows(report: Report) -> None:
             "permissions:" in body,
             f"{workflow}: declares no `permissions`",
         )
-        found = set(re.findall(r"rustup toolchain install (\S+)", body))
-        if found:
-            toolchains[str(workflow)] = found
+        versions.update(re.findall(r"rustup toolchain install (\S+)", body))
 
-    versions = {version for found in toolchains.values() for version in found}
     report.check(
         len(versions) <= 1,
         f"workflows pin different Rust toolchains: {sorted(versions)}",
@@ -134,41 +134,40 @@ def check_workflows(report: Report) -> None:
 
 
 def changed_files(base: str) -> list[str]:
-    try:
-        diff = subprocess.run(
-            ["git", "diff", "--name-only", f"{base}...HEAD"],
-            capture_output=True,
-            text=True,
-            check=True,
+    diff = subprocess.run(
+        ["git", "diff", "--name-only", f"{base}...HEAD"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    if diff.returncode != 0:
+        raise SystemExit(
+            f"cannot diff against {base}: {diff.stderr.strip()}\n"
+            "The change-scoped checks did not run, which is a failure and not a pass."
         )
-    except subprocess.CalledProcessError as error:
-        print(f"unable to diff against {base}: {error.stderr.strip()}", file=sys.stderr)
-        return []
 
     return [line for line in diff.stdout.splitlines() if line]
 
 
 def check_change(report: Report, base: str) -> None:
     changed = changed_files(base)
+
     if not changed:
         return
 
-    touches_behaviour = any(
-        path.startswith(BEHAVIOUR_PATHS) or path.startswith(SCHEMA_PATHS)
-        for path in changed
-    )
     report.check(
-        not touches_behaviour or "CHANGELOG.md" in changed,
-        "CHANGELOG.md: rule behaviour or configuration schema changed without an entry",
+        not any(path.startswith(NEEDS_CHANGELOG) for path in changed)
+        or str(CHANGELOG) in changed,
+        f"{CHANGELOG}: rule behaviour or configuration schema changed without an entry",
     )
 
-    new_rules = [
-        path
+    touches_a_rule = any(
+        path.startswith(f"{RULES_DIR}/") and rule_id(Path(path)) is not None
         for path in changed
-        if path.startswith(str(RULES_DIR)) and rule_id(Path(path)) is not None
-    ]
+    )
     report.check(
-        not new_rules or any(path.startswith(str(FIXTURES_DIR)) for path in changed),
+        not touches_a_rule or any(path.startswith(str(FIXTURES_DIR)) for path in changed),
         f"{FIXTURES_DIR}: rule modules changed without touching any fixture",
     )
 
