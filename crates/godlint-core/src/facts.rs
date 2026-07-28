@@ -2,10 +2,66 @@ use std::{error::Error, fmt};
 
 use crate::source::{SourceFile, SourceFileError, SourceRange};
 
+/// Declares the parser-independent function metrics as distinct types.
+///
+/// Every metric is a bare count, so a single `u32` per metric would let any two of them
+/// be transposed at a construction site without the compiler objecting.
+macro_rules! function_metrics {
+    ($($(#[$documentation:meta])* $name:ident),+ $(,)?) => {
+        $(
+            $(#[$documentation])*
+            #[derive(Clone, Copy, Debug, Default, Eq, Ord, PartialEq, PartialOrd)]
+            pub struct $name(u32);
+
+            impl $name {
+                pub const fn new(value: u32) -> Self {
+                    Self(value)
+                }
+
+                pub const fn value(self) -> u32 {
+                    self.0
+                }
+            }
+
+            impl fmt::Display for $name {
+                fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+                    write!(formatter, "{}", self.0)
+                }
+            }
+        )+
+    };
+}
+
+function_metrics! {
+    /// Parameters the author declared, excluding a method receiver such as `self`.
+    ParameterCount,
+    /// Branch points inside the function, excluding those owned by nested functions.
+    DecisionPoints,
+    /// Paths that leave the function, including `?` and an implicit tail expression.
+    ReturnPaths,
+    /// Statements in the body, counted through nested blocks but not nested functions.
+    StatementCount,
+    /// Deepest run of nested control-flow blocks inside the body.
+    BlockDepth,
+}
+
+/// Distinguishes the comment syntaxes so cross-language policy can treat them alike.
+///
+/// A Python docstring is a string expression rather than a comment token, but it plays
+/// the role that a block comment plays elsewhere, so rules that skip commentary must be
+/// able to see it.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CommentKind {
+    Line,
+    Block,
+    Docstring,
+}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CommentFact {
     source: SourceFile,
     range: SourceRange,
+    kind: CommentKind,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -14,24 +70,34 @@ pub struct FunctionFact {
     name: Option<String>,
     range: SourceRange,
     body_range: SourceRange,
-    parameter_count: u32,
-    decision_points: u32,
-    return_count: u32,
-    statement_count: u32,
+    parameter_count: ParameterCount,
+    decision_points: DecisionPoints,
+    return_paths: ReturnPaths,
+    statement_count: StatementCount,
+    block_depth: BlockDepth,
     body_is_empty: bool,
-    nesting_depth: u32,
+    is_abstract: bool,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct FunctionFactDetails {
     pub range: SourceRange,
     pub body_range: SourceRange,
-    pub parameter_count: u32,
-    pub decision_points: u32,
-    pub return_count: u32,
-    pub statement_count: u32,
+    pub parameter_count: ParameterCount,
+    pub decision_points: DecisionPoints,
+    pub return_paths: ReturnPaths,
+    pub statement_count: StatementCount,
+    pub block_depth: BlockDepth,
+    /// Whether the body declares no work at all, ignoring placeholders like `pass`.
+    ///
+    /// A body holding only comments is not empty: the comment is the author stating
+    /// that emptiness is deliberate.
     pub body_is_empty: bool,
-    pub nesting_depth: u32,
+    /// Whether the declaration intentionally has no implementation.
+    ///
+    /// Covers abstract and overload signatures plus constructors whose parameters carry
+    /// the assignment, all of which are empty by design.
+    pub is_abstract: bool,
 }
 
 #[derive(Debug)]
@@ -54,12 +120,20 @@ pub enum CommentFactError {
 }
 
 impl CommentFact {
-    pub fn new(source: SourceFile, range: SourceRange) -> Result<Self, CommentFactError> {
+    pub fn new(
+        source: SourceFile,
+        range: SourceRange,
+        kind: CommentKind,
+    ) -> Result<Self, CommentFactError> {
         source
             .validate_range(range)
             .map_err(|source| CommentFactError::InvalidCommentRange { source })?;
 
-        Ok(Self { source, range })
+        Ok(Self {
+            source,
+            range,
+            kind,
+        })
     }
 
     pub fn source(&self) -> &SourceFile {
@@ -68,6 +142,10 @@ impl CommentFact {
 
     pub fn range(&self) -> SourceRange {
         self.range
+    }
+
+    pub fn kind(&self) -> CommentKind {
+        self.kind
     }
 
     pub fn text(&self) -> &str {
@@ -102,10 +180,11 @@ impl FunctionFact {
             body_range: details.body_range,
             parameter_count: details.parameter_count,
             decision_points: details.decision_points,
-            return_count: details.return_count,
+            return_paths: details.return_paths,
             statement_count: details.statement_count,
+            block_depth: details.block_depth,
             body_is_empty: details.body_is_empty,
-            nesting_depth: details.nesting_depth,
+            is_abstract: details.is_abstract,
         })
     }
 
@@ -125,28 +204,32 @@ impl FunctionFact {
         self.body_range
     }
 
-    pub fn parameter_count(&self) -> u32 {
+    pub fn parameter_count(&self) -> ParameterCount {
         self.parameter_count
     }
 
-    pub fn decision_points(&self) -> u32 {
+    pub fn decision_points(&self) -> DecisionPoints {
         self.decision_points
     }
 
-    pub fn return_count(&self) -> u32 {
-        self.return_count
+    pub fn return_paths(&self) -> ReturnPaths {
+        self.return_paths
     }
 
-    pub fn statement_count(&self) -> u32 {
+    pub fn statement_count(&self) -> StatementCount {
         self.statement_count
+    }
+
+    pub fn block_depth(&self) -> BlockDepth {
+        self.block_depth
     }
 
     pub fn body_is_empty(&self) -> bool {
         self.body_is_empty
     }
 
-    pub fn nesting_depth(&self) -> u32 {
-        self.nesting_depth
+    pub fn is_abstract(&self) -> bool {
+        self.is_abstract
     }
 }
 
