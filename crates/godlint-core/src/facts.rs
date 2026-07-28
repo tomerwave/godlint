@@ -17,6 +17,7 @@ pub struct FunctionFact {
     parameter_count: u32,
     decision_points: u32,
     return_count: u32,
+    statement_count: u32,
     body_is_empty: bool,
     nesting_depth: u32,
 }
@@ -28,6 +29,7 @@ pub struct FunctionFactDetails {
     pub parameter_count: u32,
     pub decision_points: u32,
     pub return_count: u32,
+    pub statement_count: u32,
     pub body_is_empty: bool,
     pub nesting_depth: u32,
 }
@@ -101,6 +103,7 @@ impl FunctionFact {
             parameter_count: details.parameter_count,
             decision_points: details.decision_points,
             return_count: details.return_count,
+            statement_count: details.statement_count,
             body_is_empty: details.body_is_empty,
             nesting_depth: details.nesting_depth,
         })
@@ -132,6 +135,10 @@ impl FunctionFact {
 
     pub fn return_count(&self) -> u32 {
         self.return_count
+    }
+
+    pub fn statement_count(&self) -> u32 {
+        self.statement_count
     }
 
     pub fn body_is_empty(&self) -> bool {

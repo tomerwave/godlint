@@ -22,6 +22,7 @@ fn function(decision_points: u32) -> FunctionFact {
             parameter_count: 0,
             decision_points,
             return_count: 0,
+            statement_count: 0,
             body_is_empty: false,
             nesting_depth: 0,
         },

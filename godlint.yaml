@@ -1,6 +1,9 @@
 version: 1
 
 rules:
+  maintainability/function-statements:
+    severity: warning
+    max-statements: 30
   maintainability/return-count:
     severity: warning
     max-returns: 5

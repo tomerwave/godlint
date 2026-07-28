@@ -1,0 +1,6 @@
+version: 1
+
+rules:
+  maintainability/function-statements:
+    severity: error
+    max-statements: 1

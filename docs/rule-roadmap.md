@@ -90,7 +90,7 @@ Extend `FunctionFact` only when the same data will serve multiple rules.
 | `parameter_count` | `maintainability/parameter-count` | Shipped | High | Count declared parameters only; do not infer types or defaults initially |
 | `decision_points` | `maintainability/cyclomatic-complexity` | Shipped | High | Count language-defined branch points; fixture each language explicitly |
 | `return_count` | `maintainability/return-count` | Shipped | Medium | Keep opt-in because early returns are often clearer |
-| `statement_count` | `maintainability/function-statements` | Optional | Medium | Useful only after corpus calibration |
+| `statement_count` | `maintainability/function-statements` | Shipped | Medium | Count direct body statements only; do not include nested function bodies |
 
 Phase 2 is complete. Its fact additions stay small and reusable for future policy.
 

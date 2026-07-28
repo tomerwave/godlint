@@ -1,0 +1,47 @@
+exit-code: 1
+
+findings:
+  - path: example.js
+    line: 1
+    column: 1
+    severity: error
+    rule-id: maintainability/function-statements
+    message: Function has 2 statements (max 1).
+  - path: example.jsx
+    line: 1
+    column: 1
+    severity: error
+    rule-id: maintainability/function-statements
+    message: Function has 2 statements (max 1).
+  - path: example.py
+    line: 1
+    column: 1
+    severity: error
+    rule-id: maintainability/function-statements
+    message: Function has 2 statements (max 1).
+  - path: example.pyi
+    line: 1
+    column: 1
+    severity: error
+    rule-id: maintainability/function-statements
+    message: Function has 2 statements (max 1).
+  - path: example.rs
+    line: 1
+    column: 1
+    severity: error
+    rule-id: maintainability/function-statements
+    message: Function has 2 statements (max 1).
+  - path: example.ts
+    line: 1
+    column: 1
+    severity: error
+    rule-id: maintainability/function-statements
+    message: Function has 2 statements (max 1).
+  - path: example.tsx
+    line: 1
+    column: 1
+    severity: error
+    rule-id: maintainability/function-statements
+    message: Function has 2 statements (max 1).
+
+stderr: []

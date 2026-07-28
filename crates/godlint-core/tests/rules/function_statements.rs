@@ -1,13 +1,13 @@
 use std::path::PathBuf;
 
 use godlint_core::{
-    config::{FunctionNestingRule, Severity},
+    config::{FunctionStatementsRule, Severity},
     facts::{FunctionFact, FunctionFactDetails},
-    rules::{Rule, function_nesting::FunctionNesting},
+    rules::{Rule, function_statements::FunctionStatements},
     source::{SourceFile, SourceRange},
 };
 
-fn function(nesting_depth: u32) -> FunctionFact {
+fn function(statement_count: u32) -> FunctionFact {
     let source = SourceFile::new(PathBuf::from("src/example.rs"), "fn example() {}".into())
         .unwrap_or_else(|error| panic!("creates source file: {error}"));
     let range = SourceRange::new(0, source.source().len())
@@ -22,46 +22,52 @@ fn function(nesting_depth: u32) -> FunctionFact {
             parameter_count: 0,
             decision_points: 0,
             return_count: 0,
-            statement_count: 0,
+            statement_count,
             body_is_empty: false,
-            nesting_depth,
+            nesting_depth: 0,
         },
     )
     .unwrap_or_else(|error| panic!("creates function fact: {error}"))
 }
 
-fn configuration(max_depth: u32) -> FunctionNestingRule {
-    FunctionNestingRule {
+fn configuration(max_statements: u32) -> FunctionStatementsRule {
+    FunctionStatementsRule {
         severity: Severity::Error,
-        max_depth,
+        max_statements,
     }
 }
 
 #[test]
-fn reports_a_function_deeper_than_its_limit() {
-    let violation = FunctionNesting::evaluate(&function(1), &configuration(0));
+fn reports_a_function_with_more_statements_than_its_limit() {
+    let violation = FunctionStatements::evaluate(&function(2), &configuration(1));
 
-    assert_eq!(FunctionNesting::ID, "maintainability/function-nesting");
-    assert_eq!(violation.map(|violation| violation.nesting_depth), Some(1));
+    assert_eq!(
+        FunctionStatements::ID,
+        "maintainability/function-statements"
+    );
+    assert_eq!(
+        violation.map(|violation| violation.statement_count),
+        Some(2)
+    );
 }
 
 #[test]
 fn accepts_a_function_at_its_limit() {
     assert_eq!(
-        FunctionNesting::evaluate(&function(1), &configuration(1)),
+        FunctionStatements::evaluate(&function(1), &configuration(1)),
         None
     );
 }
 
 #[test]
 fn disables_evaluation_when_the_rule_is_off() {
-    let configuration = FunctionNestingRule {
+    let configuration = FunctionStatementsRule {
         severity: Severity::Off,
-        max_depth: 0,
+        max_statements: 0,
     };
 
     assert_eq!(
-        FunctionNesting::evaluate(&function(1), &configuration),
+        FunctionStatements::evaluate(&function(1), &configuration),
         None
     );
 }

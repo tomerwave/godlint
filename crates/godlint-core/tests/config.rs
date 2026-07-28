@@ -103,6 +103,15 @@ fn accepts_the_return_count_rule() {
 }
 
 #[test]
+fn accepts_the_function_statements_rule() {
+    let result = load(
+        "version: 1\nrules:\n  maintainability/function-statements:\n    severity: warning\n    max-statements: 30\n",
+    );
+
+    assert!(result.is_ok());
+}
+
+#[test]
 fn rejects_an_unknown_rule() {
     let result = load("version: 1\nrules:\n  maintainability/unknown: {}\n");
 
