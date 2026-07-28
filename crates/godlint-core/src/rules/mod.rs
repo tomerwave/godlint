@@ -19,8 +19,12 @@ pub mod function_statements;
 mod line_count;
 pub mod no_comments;
 pub mod parameter_count;
+mod registry;
 pub mod return_count;
 pub mod todo_requires_reference;
+pub mod unused_suppression;
+
+pub use registry::{configured_severity, is_suppressible_rule};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Metric {
@@ -48,6 +52,7 @@ pub enum Violation {
     UnaccountableSuppression {
         defect: SuppressionDefect,
     },
+    UnusedSuppression,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -382,6 +387,7 @@ pub const RULE_IDS: &[&str] = &[
     <parameter_count::ParameterCount as Rule>::ID,
     <return_count::ReturnCount as Rule>::ID,
     <todo_requires_reference::TodoRequiresReference as Rule>::ID,
+    <unused_suppression::UnusedSuppression as Rule>::ID,
 ];
 
 pub fn evaluate(
@@ -396,12 +402,19 @@ pub fn evaluate(
         findings.extend(evaluate_rule(facts, config)?);
     }
 
-    let mut findings = suppression::apply(findings, &suppressions);
+    let raw_findings = findings;
+    let mut findings = suppression::apply(raw_findings.clone(), &suppressions);
 
     findings.extend(accountable_suppression::evaluate(
         &suppressions,
         config,
         today,
+    )?);
+
+    findings.extend(unused_suppression::evaluate(
+        &suppressions,
+        &raw_findings,
+        config,
     )?);
 
     findings.sort_by(|left, right| {
@@ -440,6 +453,10 @@ impl fmt::Display for Violation {
                 "Comment is not permitted; express the intent in the code."
             ),
             Self::UnaccountableSuppression { defect } => defect.fmt(formatter),
+            Self::UnusedSuppression => write!(
+                formatter,
+                "Suppression does not silence an enabled finding; remove it or narrow the rule."
+            ),
         }
     }
 }

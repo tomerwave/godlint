@@ -63,6 +63,9 @@ releases begin.
   account. A defective directive still silences what it names and is reported against
   itself, so a lapsed expiry fails the build with one clear finding rather than an
   avalanche of unrelated ones.
+- `policy/unused-suppression` — reports an inline directive that does not silence an
+  enabled finding. A directive for an off rule is dormant rather than unused, so staged
+  rule adoption does not manufacture exception debt.
 - `godlint suppressions [paths...]` — lists every suppression in scope with its location,
   scope, rules, owner, expiry, and reason, then the total. A directive with no reason is
   listed as `(no justification)` rather than omitted.

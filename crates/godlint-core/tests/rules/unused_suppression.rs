@@ -1,0 +1,80 @@
+use std::path::PathBuf;
+
+use godlint_core::{
+    analyzers::analyze,
+    date::Date,
+    rules::{Rule, Violation, evaluate, unused_suppression::UnusedSuppression},
+    source::SourceFile,
+};
+
+const TODAY: &str = "2026-07-28";
+
+fn findings(
+    source: &str,
+    empty_function_severity: &str,
+    unused_suppression_severity: &str,
+) -> Vec<Violation> {
+    let source = SourceFile::new(PathBuf::from("src/example.rs"), source.into())
+        .unwrap_or_else(|error| panic!("creates source file: {error}"));
+    let facts = analyze(&source).unwrap_or_else(|error| panic!("analyzes source: {error}"));
+    let config = yaml_serde::from_str(&format!(
+        "version: 1\nrules:\n  maintainability/empty-function:\n    severity: {empty_function_severity}\n  policy/unused-suppression:\n    severity: {unused_suppression_severity}\n"
+    ))
+    .unwrap_or_else(|error| panic!("reads configuration: {error}"));
+    let today = Date::parse(TODAY).unwrap_or_else(|error| panic!("parses {TODAY}: {error}"));
+
+    evaluate(&[facts], &config, today)
+        .unwrap_or_else(|error| panic!("evaluates rules: {error}"))
+        .into_iter()
+        .map(|finding| finding.violation)
+        .collect()
+}
+
+#[test]
+fn reports_a_directive_that_silences_no_enabled_finding() {
+    assert_eq!(UnusedSuppression::ID, "policy/unused-suppression");
+    assert_eq!(
+        findings(
+            "// godlint-ignore-next-line maintainability/empty-function -- obsolete\nfn example() {\n    work();\n}\n",
+            "error",
+            "error",
+        ),
+        vec![Violation::UnusedSuppression]
+    );
+}
+
+#[test]
+fn accepts_a_directive_that_silences_an_enabled_finding() {
+    assert!(
+        findings(
+            "// godlint-ignore-next-line maintainability/empty-function -- needed\nfn example() {}\n",
+            "error",
+            "error",
+        )
+        .is_empty()
+    );
+}
+
+#[test]
+fn treats_a_directive_for_a_disabled_rule_as_dormant() {
+    assert!(
+        findings(
+            "// godlint-ignore-next-line maintainability/empty-function -- dormant\nfn example() {\n    work();\n}\n",
+            "off",
+            "error",
+        )
+        .is_empty()
+    );
+}
+
+#[test]
+fn stays_silent_when_disabled() {
+    assert!(
+        findings(
+            "// godlint-ignore-next-line maintainability/empty-function -- obsolete\nfn example() {\n    work();\n}\n",
+            "error",
+            "off",
+        )
+        .is_empty()
+    );
+}

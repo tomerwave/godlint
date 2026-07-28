@@ -69,6 +69,13 @@ fn accepts_the_empty_function_rule() {
 }
 
 #[test]
+fn accepts_the_unused_suppression_rule() {
+    let configuration = "version: 1\nrules:\n  policy/unused-suppression:\n    severity: error\n";
+
+    assert!(load(configuration).is_ok());
+}
+
+#[test]
 fn accepts_the_todo_reference_rule() {
     let result = load(
         "version: 1\nrules:\n  policy/todo-requires-reference:\n    severity: warning\n    reference-prefixes:\n      - GH-\n      - '#'\n",

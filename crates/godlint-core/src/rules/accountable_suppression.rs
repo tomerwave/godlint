@@ -76,19 +76,19 @@ fn named_rules(suppression: &Suppression) -> Vec<SuppressionDefect> {
 }
 
 fn named_rule(rule: &str) -> Option<SuppressionDefect> {
-    if rule == AccountableSuppression::ID {
+    if !RULE_IDS.contains(&rule) {
+        return Some(SuppressionDefect::UnknownRule {
+            rule: rule.to_owned(),
+        });
+    }
+
+    if !crate::rules::is_suppressible_rule(rule) {
         return Some(SuppressionDefect::NotSuppressible {
             rule: rule.to_owned(),
         });
     }
 
-    if RULE_IDS.contains(&rule) {
-        return None;
-    }
-
-    Some(SuppressionDefect::UnknownRule {
-        rule: rule.to_owned(),
-    })
+    None
 }
 
 fn expiry(

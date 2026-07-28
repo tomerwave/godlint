@@ -57,6 +57,8 @@ fixture_tests! {
     severity_below_threshold => "severity-below-threshold",
     suppression_applies => "suppression-applies",
     todo_requires_reference => "todo-requires-reference",
+    unused_suppression => "unused-suppression",
+    unused_suppression_clean => "unused-suppression-clean",
 }
 
 #[test]

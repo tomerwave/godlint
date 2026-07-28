@@ -59,6 +59,8 @@ pub struct Rules {
     pub no_comments: Option<NoCommentsRule>,
     #[serde(rename = "policy/accountable-suppression")]
     pub accountable_suppression: Option<AccountableSuppressionRule>,
+    #[serde(rename = "policy/unused-suppression")]
+    pub unused_suppression: Option<UnusedSuppressionRule>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -69,6 +71,12 @@ pub struct AccountableSuppressionRule {
     pub require_owner: bool,
     #[serde(default, rename = "require-expiry")]
     pub require_expiry: bool,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct UnusedSuppressionRule {
+    pub severity: Severity,
 }
 
 #[derive(Debug, Deserialize)]

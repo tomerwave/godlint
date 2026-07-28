@@ -67,3 +67,5 @@ rules:
     severity: error
     require-owner: true
     require-expiry: true
+  policy/unused-suppression:
+    severity: error

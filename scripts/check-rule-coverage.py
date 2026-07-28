@@ -27,11 +27,12 @@ RULES = "/src/rules/"
 # Every entry is error propagation from `SourceFile::location`, which fails only for a
 # range that is out of bounds or off a character boundary. Facts validate their ranges
 # when they are constructed, so no fact can carry such a range and the `?` never fires.
-# Removing that error plumbing would take this budget to zero; until then it is fixed, so
-# a newly uncovered line pushes the count over and fails.
+# Removing that plumbing would take this budget to zero; until then it is fixed, so a
+# newly uncovered line pushes the count over and fails.
 BUDGET = {
-    "src/rules/mod.rs": 6,
+    "src/rules/mod.rs": 7,
     "src/rules/todo_requires_reference.rs": 1,
+    "src/rules/unused_suppression.rs": 1,
 }
 
 

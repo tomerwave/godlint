@@ -38,3 +38,6 @@ mod return_count;
 
 #[path = "rules/todo_requires_reference.rs"]
 mod todo_requires_reference;
+
+#[path = "rules/unused_suppression.rs"]
+mod unused_suppression;

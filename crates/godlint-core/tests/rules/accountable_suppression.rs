@@ -3,7 +3,8 @@ use godlint_core::{
     date::Date,
     rules::{
         RULE_IDS, Rule, SuppressionDefect, SuppressionRule, Violation,
-        accountable_suppression::AccountableSuppression,
+        accountable_suppression::AccountableSuppression, is_suppressible_rule,
+        unused_suppression::UnusedSuppression,
     },
 };
 
@@ -105,6 +106,16 @@ fn refuses_to_suppress_the_rule_that_holds_suppressions_to_account() {
         enclosing("policy/accountable-suppression -- circular"),
         vec![SuppressionDefect::NotSuppressible {
             rule: "policy/accountable-suppression".to_owned()
+        }]
+    );
+}
+
+#[test]
+fn refuses_to_suppress_the_rule_that_removes_stale_exceptions() {
+    assert_eq!(
+        enclosing("policy/unused-suppression -- circular"),
+        vec![SuppressionDefect::NotSuppressible {
+            rule: "policy/unused-suppression".to_owned()
         }]
     );
 }
@@ -218,9 +229,14 @@ fn a_next_line_directive_always_resolves() {
 #[test]
 fn every_registered_rule_can_be_named_by_a_suppression() {
     for identifier in RULE_IDS {
-        if *identifier == AccountableSuppression::ID {
+        if *identifier == AccountableSuppression::ID || *identifier == UnusedSuppression::ID {
             continue;
         }
+
+        assert!(
+            is_suppressible_rule(identifier),
+            "{identifier} is registered but missing from the suppression registry"
+        );
 
         assert!(
             enclosing(&format!("{identifier} -- registered")).is_empty(),
