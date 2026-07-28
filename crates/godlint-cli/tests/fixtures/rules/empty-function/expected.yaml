@@ -1,0 +1,47 @@
+exit-code: 1
+
+findings:
+  - path: example.js
+    line: 3
+    column: 1
+    severity: error
+    rule-id: maintainability/empty-function
+    message: Function has an empty body.
+  - path: example.jsx
+    line: 3
+    column: 1
+    severity: error
+    rule-id: maintainability/empty-function
+    message: Function has an empty body.
+  - path: example.py
+    line: 4
+    column: 1
+    severity: error
+    rule-id: maintainability/empty-function
+    message: Function has an empty body.
+  - path: example.pyi
+    line: 4
+    column: 1
+    severity: error
+    rule-id: maintainability/empty-function
+    message: Function has an empty body.
+  - path: example.rs
+    line: 3
+    column: 1
+    severity: error
+    rule-id: maintainability/empty-function
+    message: Function has an empty body.
+  - path: example.ts
+    line: 3
+    column: 1
+    severity: error
+    rule-id: maintainability/empty-function
+    message: Function has an empty body.
+  - path: example.tsx
+    line: 3
+    column: 1
+    severity: error
+    rule-id: maintainability/empty-function
+    message: Function has an empty body.
+
+stderr: []

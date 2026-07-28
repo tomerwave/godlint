@@ -73,7 +73,7 @@ These rules need no new language fact beyond `SourceFile` and `FunctionFact`.
 | `maintainability/function-size` | Shipped | High | All seven supported extensions | `max-lines`, blank/comment policy | Error, 300 while Godlint is young |
 | `maintainability/function-nesting` | Shipped | High | All seven supported extensions | `max-depth` | Error, 5 |
 | `maintainability/file-size` | Shipped | High | All seven supported extensions | `max-lines`, blank/comment policy | Warning, 500 |
-| `maintainability/empty-function` | Next | High with explicit allow-list | All seven supported extensions | `allow-names`, `allow-trait-or-interface-members` | Warning |
+| `maintainability/empty-function` | Shipped | High with explicit allow-list | All seven supported extensions | `allow-names` | Warning |
 | `policy/todo-requires-reference` | Next | High | All comment syntaxes | issue pattern, expiration requirement | Warning |
 
 `file-size` establishes that Godlint can evaluate file-level facts alongside
@@ -91,8 +91,8 @@ Extend `FunctionFact` only when the same data will serve multiple rules.
 | `return_count` | `maintainability/return-count` | Medium | Keep opt-in because early returns are often clearer |
 | `statement_count` | `maintainability/function-statements` | Medium | Useful only after corpus calibration |
 
-Priority order: parameter count, cyclomatic complexity, then empty function. This
-keeps the next fact additions small and reuses them across future policy.
+Priority order: parameter count, then cyclomatic complexity. This keeps the next fact
+additions small and reuses them across future policy.
 
 ### Phase 3 — Calls and organization policy
 

@@ -13,8 +13,15 @@ fn function(nesting_depth: u32) -> FunctionFact {
     let range = SourceRange::new(0, source.source().len())
         .unwrap_or_else(|error| panic!("creates source range: {error}"));
 
-    FunctionFact::new(source, Some("example".into()), range, range, nesting_depth)
-        .unwrap_or_else(|error| panic!("creates function fact: {error}"))
+    FunctionFact::new(
+        source,
+        Some("example".into()),
+        range,
+        range,
+        false,
+        nesting_depth,
+    )
+    .unwrap_or_else(|error| panic!("creates function fact: {error}"))
 }
 
 fn configuration(max_depth: u32) -> FunctionNestingRule {
