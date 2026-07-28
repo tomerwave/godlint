@@ -1,0 +1,1 @@
+export const justified = (): void => { /* godlint-ignore-enclosing maintainability/empty-function owner=tomer expires=2999-12-31 -- justified is a deliberate no-op, #35 */ }; export const unjustified = (): void => {};

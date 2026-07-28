@@ -104,6 +104,7 @@ impl Metric {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Finding {
     pub path: PathBuf,
+    pub range: SourceRange,
     pub line: usize,
     pub column: usize,
     pub severity: Severity,
@@ -353,6 +354,7 @@ fn finding(
 
     Ok(Finding {
         path: source.path().to_path_buf(),
+        range,
         line: location.start.line,
         column: location.start.column,
         severity,

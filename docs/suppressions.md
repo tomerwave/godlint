@@ -77,7 +77,7 @@ with an exception goes in the justification after `--`, where the audit can see 
 | Directive | Silences findings on |
 | --- | --- |
 | `godlint-ignore-next-line` | the first line after the directive that is not the rest of its own comment |
-| `godlint-ignore-enclosing` | every line of the innermost function containing the directive |
+| `godlint-ignore-enclosing` | the innermost declaration containing the directive, excluding any declaration nested inside it |
 
 There is deliberately no file-wide directive. A file-wide suppression is an `exclude`
 entry with less visibility, and the point of this feature is visibility.
@@ -101,14 +101,52 @@ reaches it with `next-line`. A finding anchored inside a body — a comment, a n
 declaration line, so a directive inside a function can silence a finding about the
 function itself.
 
-`enclosing` covers a line range, not a byte range, which has two consequences worth
-knowing. A directive inside an outer function also covers every nested closure declared in
-it, and where two functions share a line — `const a = () => {…}; const b = () => {};` —
-a directive justifying one silences the named rule for the other. Both follow from findings
-carrying a line rather than an offset. Prefer one declaration per line where an exception
-is in play; [#35](https://github.com/tomerwave/godlint/issues/35) tracks moving the
-containment test to byte ranges, and the open policy question of whether an `enclosing`
-directive should reach a closure declared inside the declaration it names.
+`enclosing` covers a byte range, not a line range, and it excludes declarations nested
+inside the one it resolves to. Both matter:
+
+```ts
+export const a = (): void => { /* godlint-ignore-enclosing … -- a is a no-op */ }; export const b = (): void => {};
+```
+
+`b` shares a line with `a` and is still reported, because it is a different declaration.
+
+```rust
+fn outer() {
+    // godlint-ignore-enclosing maintainability/empty-function -- outer is a stub
+    let inner = || {};
+}
+```
+
+`fn a() {…}fn b() {}` behaves the same way even with no separator between them: containment
+compares whole ranges, not the position a finding starts at, so a declaration that begins
+where another ends is not inside it. That is also why a file-level finding stays
+unsuppressible — it spans the whole file, which no declaration encloses.
+
+The closure is still reported. A justification describes one site, and a declaration nested
+inside the one it names is a different site with a reason of its own — the same rule the
+function metrics follow, where a nested function is measured on its own body rather than
+folded into its parent. To except the closure, put a directive inside the closure; it then
+resolves to the closure, because resolution picks the innermost declaration.
+
+The exclusion is by range, so it applies to any finding inside a nested declaration and not
+only to findings about the declaration itself. A comment inside a closure escapes a
+directive on the enclosing function, for `style/no-comments` and
+`policy/todo-requires-reference` alike:
+
+```rust
+fn outer() {
+    // godlint-ignore-enclosing style/no-comments -- outer is generated
+    let inner = || {
+        // this comment is reported
+        1
+    };
+}
+```
+
+That is deliberate — the justification is about `outer`, and a comment inside `inner` is not
+covered by it — but it is a narrowing, so a directive written before this behaviour existed
+may start reporting findings it used to hide. The remedy is the same: move the directive to
+the declaration the finding is in.
 
 `enclosing` needs a function to enclose it. At the top level of a file there is none, and
 Godlint reports the directive rather than silently ignoring it.
