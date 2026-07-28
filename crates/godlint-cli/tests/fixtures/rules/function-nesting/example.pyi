@@ -1,3 +1,0 @@
-def outer():
-    def inner():
-        ...

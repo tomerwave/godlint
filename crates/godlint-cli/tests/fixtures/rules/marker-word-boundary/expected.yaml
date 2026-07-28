@@ -1,0 +1,8 @@
+exit-code: 1
+
+stdout: |
+  docstring.py:2:8: error[policy/todo-requires-reference] TODO comment requires an issue reference.
+  markers.rs:5:4: error[policy/todo-requires-reference] TODO comment requires an issue reference.
+  markers.rs:6:4: error[policy/todo-requires-reference] FIXME comment requires an issue reference.
+
+stderr: ""

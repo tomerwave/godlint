@@ -1,7 +1,10 @@
-# intentional no-op is configured below
 def fixtureAllowed():
     pass
-def fixtureViolation():
+
+
+def fixtureReported():
     pass
+
+
 def active():
     work()

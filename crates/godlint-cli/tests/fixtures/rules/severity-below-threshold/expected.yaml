@@ -1,0 +1,6 @@
+exit-code: 0
+
+stdout: |
+  example.rs:1:1: warning[maintainability/empty-function] Function has an empty body.
+
+stderr: ""

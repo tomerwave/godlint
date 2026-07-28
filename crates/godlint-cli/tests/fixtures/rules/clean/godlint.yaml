@@ -1,0 +1,31 @@
+version: 1
+
+exclude:
+  - target
+
+rules:
+  maintainability/function-size:
+    severity: error
+    max-lines: 50
+  maintainability/file-size:
+    severity: warning
+    max-lines: 500
+  maintainability/function-nesting:
+    severity: error
+    max-depth: 3
+  maintainability/parameter-count:
+    severity: error
+    max-parameters: 6
+  maintainability/cyclomatic-complexity:
+    severity: error
+    max-complexity: 10
+  maintainability/return-count:
+    severity: warning
+    max-returns: 5
+  maintainability/function-statements:
+    severity: warning
+    max-statements: 30
+  maintainability/empty-function:
+    severity: warning
+  policy/todo-requires-reference:
+    severity: warning

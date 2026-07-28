@@ -1,67 +1,77 @@
-use std::path::PathBuf;
-
 use godlint_core::{
-    analyzers::analyze,
-    config::{FileSizeRule, Severity},
-    rules::{Rule, file_size::FileSize},
-    source::SourceFile,
+    config::{LineLimitRule, Severity},
+    rules::{FileRule, Rule, Violation, file_size::FileSize},
 };
 
-fn facts(path: &str, source: &str) -> godlint_core::analyzers::SourceFacts {
-    let source = SourceFile::new(PathBuf::from(path), source.into())
-        .unwrap_or_else(|error| panic!("creates source file: {error}"));
+use super::support::{facts, limit};
 
-    analyze(&source).unwrap_or_else(|error| panic!("analyzes source: {error}"))
-}
-
-fn configuration(max_lines: u32, skip_blank_lines: bool, skip_comments: bool) -> FileSizeRule {
-    FileSizeRule {
+fn configuration(max_lines: u32, skip_blank_lines: bool, skip_comments: bool) -> LineLimitRule {
+    LineLimitRule {
         severity: Severity::Error,
-        max_lines,
+        max_lines: limit(max_lines),
         skip_blank_lines,
         skip_comments,
     }
 }
 
 #[test]
-fn reports_a_file_that_exceeds_its_limit() {
+fn reports_a_file_over_its_limit() {
     let facts = facts(
         "src/example.rs",
         "// detail\n\nfn example() {\n    run();\n}",
     );
-    let violation = FileSize::evaluate(&facts, &configuration(2, true, true));
 
     assert_eq!(FileSize::ID, "maintainability/file-size");
     assert_eq!(
-        violation.map(|violation| violation.effective_line_count),
-        Some(3)
+        FileSize::check(&facts, &configuration(2, true, true)),
+        Some(Violation::FileLines { actual: 3, max: 2 })
     );
+}
+
+#[test]
+fn accepts_a_file_at_its_limit() {
+    let facts = facts(
+        "src/example.rs",
+        "// detail\n\nfn example() {\n    run();\n}",
+    );
+
+    assert_eq!(FileSize::check(&facts, &configuration(3, true, true)), None);
 }
 
 #[test]
 fn applies_comment_and_blank_line_configuration() {
     let facts = facts("src/example.py", "# detail\n\ndef example():\n    run()\n");
 
+    assert_eq!(FileSize::check(&facts, &configuration(2, true, true)), None);
     assert_eq!(
-        FileSize::evaluate(&facts, &configuration(2, true, true)),
-        None
-    );
-    assert_eq!(
-        FileSize::evaluate(&facts, &configuration(2, false, false))
-            .map(|violation| violation.effective_line_count),
-        Some(4)
+        FileSize::check(&facts, &configuration(2, false, false)),
+        Some(Violation::FileLines { actual: 4, max: 2 })
     );
 }
 
+/// A byte-order mark is invisible and must not change the accounting.
 #[test]
-fn disables_evaluation_when_the_rule_is_off() {
-    let facts = facts("src/example.ts", "function example() {\n  run();\n}");
-    let configuration = FileSizeRule {
-        severity: Severity::Off,
-        max_lines: 1,
-        skip_blank_lines: true,
-        skip_comments: true,
-    };
+fn ignores_a_byte_order_mark() {
+    let plain = facts("src/plain.rs", "// detail\nfn example() {}\n");
+    let marked = facts("src/marked.rs", "\u{feff}// detail\nfn example() {}\n");
 
-    assert_eq!(FileSize::evaluate(&facts, &configuration), None);
+    assert_eq!(
+        FileSize::check(&plain, &configuration(1, true, true)),
+        FileSize::check(&marked, &configuration(1, true, true))
+    );
+}
+
+/// CRLF endings and a missing final newline describe the same number of lines.
+#[test]
+fn counts_line_endings_consistently() {
+    let unix = facts("src/unix.rs", "fn a() {}\nfn b() {}\n");
+    let windows = facts("src/windows.rs", "fn a() {}\r\nfn b() {}\r\n");
+    let unterminated = facts("src/unterminated.rs", "fn a() {}\nfn b() {}");
+
+    for subject in [&unix, &windows, &unterminated] {
+        assert_eq!(
+            FileSize::check(subject, &configuration(1, true, true)),
+            Some(Violation::FileLines { actual: 2, max: 1 })
+        );
+    }
 }

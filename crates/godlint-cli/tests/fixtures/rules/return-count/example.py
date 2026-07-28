@@ -1,5 +1,8 @@
 def example(value):
-    if value:
-        return
+    if value == 1:
+        return 10
 
-    return
+    if value == 2:
+        return 20
+
+    return 30

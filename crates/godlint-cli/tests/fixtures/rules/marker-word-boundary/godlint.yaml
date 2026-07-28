@@ -1,0 +1,11 @@
+version: 1
+
+rules:
+  policy/todo-requires-reference:
+    severity: error
+    markers:
+      - TODO
+      - FIXME
+    reference-prefixes:
+      - '#'
+      - GH-

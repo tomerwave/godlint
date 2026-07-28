@@ -1,3 +1,5 @@
+#![allow(clippy::expect_used, clippy::unwrap_used)]
+
 use std::path::{Path, PathBuf};
 
 use godlint_core::source::{

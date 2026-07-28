@@ -1,0 +1,9 @@
+version: 1
+
+rules:
+  maintainability/cyclomatic-complexity:
+    severity: error
+    max-complexity: 3
+  maintainability/return-count:
+    severity: error
+    max-returns: 3

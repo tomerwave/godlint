@@ -1,7 +1,11 @@
-function example(value: boolean) {
-  if (value) {
-    return;
+function example(value: number): number {
+  if (value === 1) {
+    return 10;
   }
 
-  return;
+  if (value === 2) {
+    return 20;
+  }
+
+  return 30;
 }

@@ -1,0 +1,8 @@
+exit-code: 1
+
+stdout: |
+  documented.py:13:1: error[maintainability/empty-function] Function has an empty body.
+  documented.rs:5:1: error[maintainability/empty-function] Function has an empty body.
+  documented.ts:6:1: error[maintainability/empty-function] Function has an empty body.
+
+stderr: ""

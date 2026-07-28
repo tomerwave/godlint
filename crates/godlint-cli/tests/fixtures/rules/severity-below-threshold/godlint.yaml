@@ -1,0 +1,8 @@
+version: 1
+
+# The finding is reported but must not fail the command.
+fail-on: error
+
+rules:
+  maintainability/empty-function:
+    severity: warning

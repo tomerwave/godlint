@@ -1,3 +1,5 @@
+#![allow(clippy::expect_used, clippy::unwrap_used)]
+
 use std::{
     fs,
     path::PathBuf,
@@ -141,7 +143,7 @@ fn rejects_a_zero_function_size_limit() {
         "version: 1\nrules:\n  maintainability/function-size:\n    severity: error\n    max-lines: 0\n    skip-blank-lines: true\n    skip-comments: true\n",
     );
 
-    assert!(matches!(result, Err(ConfigError::InvalidFunctionSizeLimit)));
+    assert!(matches!(result, Err(ConfigError::Parse { .. })));
 }
 
 #[test]
@@ -150,7 +152,7 @@ fn rejects_a_zero_file_size_limit() {
         "version: 1\nrules:\n  maintainability/file-size:\n    severity: error\n    max-lines: 0\n    skip-blank-lines: true\n    skip-comments: true\n",
     );
 
-    assert!(matches!(result, Err(ConfigError::InvalidFileSizeLimit)));
+    assert!(matches!(result, Err(ConfigError::Parse { .. })));
 }
 
 #[test]

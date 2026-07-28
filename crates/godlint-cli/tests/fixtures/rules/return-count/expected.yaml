@@ -1,47 +1,15 @@
 exit-code: 1
 
-findings:
-  - path: example.js
-    line: 1
-    column: 1
-    severity: error
-    rule-id: maintainability/return-count
-    message: Function has 2 returns (max 1).
-  - path: example.jsx
-    line: 1
-    column: 1
-    severity: error
-    rule-id: maintainability/return-count
-    message: Function has 2 returns (max 1).
-  - path: example.py
-    line: 1
-    column: 1
-    severity: error
-    rule-id: maintainability/return-count
-    message: Function has 2 returns (max 1).
-  - path: example.pyi
-    line: 1
-    column: 1
-    severity: error
-    rule-id: maintainability/return-count
-    message: Function has 2 returns (max 1).
-  - path: example.rs
-    line: 1
-    column: 1
-    severity: error
-    rule-id: maintainability/return-count
-    message: Function has 2 returns (max 1).
-  - path: example.ts
-    line: 1
-    column: 1
-    severity: error
-    rule-id: maintainability/return-count
-    message: Function has 2 returns (max 1).
-  - path: example.tsx
-    line: 1
-    column: 1
-    severity: error
-    rule-id: maintainability/return-count
-    message: Function has 2 returns (max 1).
+stdout: |
+  example.cjs:1:1: error[maintainability/return-count] Function has 3 return paths (max 2).
+  example.cts:1:1: error[maintainability/return-count] Function has 3 return paths (max 2).
+  example.js:1:1: error[maintainability/return-count] Function has 3 return paths (max 2).
+  example.jsx:1:1: error[maintainability/return-count] Function has 3 return paths (max 2).
+  example.mjs:1:1: error[maintainability/return-count] Function has 3 return paths (max 2).
+  example.mts:1:1: error[maintainability/return-count] Function has 3 return paths (max 2).
+  example.py:1:1: error[maintainability/return-count] Function has 3 return paths (max 2).
+  example.rs:1:1: error[maintainability/return-count] Function has 3 return paths (max 2).
+  example.ts:1:1: error[maintainability/return-count] Function has 3 return paths (max 2).
+  example.tsx:1:1: error[maintainability/return-count] Function has 3 return paths (max 2).
 
-stderr: []
+stderr: ""

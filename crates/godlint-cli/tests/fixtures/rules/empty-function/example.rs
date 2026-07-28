@@ -1,6 +1,5 @@
-// intentional no-op is configured below
 fn fixtureAllowed() {}
-fn fixtureViolation() {}
+fn fixtureReported() {}
 fn active() {
     work();
 }

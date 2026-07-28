@@ -1,0 +1,9 @@
+exit-code: 1
+
+stdout: |
+  explicit.ts:1:1: error[maintainability/cyclomatic-complexity] Function has cyclomatic complexity 4 (max 3).
+  explicit.ts:1:1: error[maintainability/return-count] Function has 4 return paths (max 3).
+  try.rs:1:1: error[maintainability/cyclomatic-complexity] Function has cyclomatic complexity 4 (max 3).
+  try.rs:1:1: error[maintainability/return-count] Function has 4 return paths (max 3).
+
+stderr: ""

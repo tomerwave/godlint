@@ -1,3 +1,5 @@
-def outer():
-    def fixtureNested():
-        pass
+def example():
+    if first:
+        for item in items:
+            while ready:
+                work()
