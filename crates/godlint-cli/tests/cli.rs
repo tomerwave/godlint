@@ -221,6 +221,53 @@ fn lists_a_suppression_that_cannot_account_for_itself() {
     );
 }
 
+#[test]
+fn does_not_apply_parent_policy_to_a_nested_repository() {
+    let repository = Repository::new();
+
+    repository.write(
+        "godlint.yaml",
+        "version: 1\nrules:\n  maintainability/empty-function:\n    severity: error\n",
+    );
+    repository.write("outer.rs", "fn active() {\n    work();\n}\n");
+    repository.write("nested/.git/HEAD", "ref: refs/heads/main\n");
+    repository.write("nested/inner.rs", "fn ignored() {}\n");
+
+    let output = run(godlint()
+        .arg("check")
+        .arg(".")
+        .current_dir(repository.path()));
+
+    assert_eq!(output.status.code(), Some(0));
+    assert_eq!(String::from_utf8_lossy(&output.stdout), "No findings.\n");
+    assert!(output.stderr.is_empty());
+}
+
+#[test]
+fn checks_a_nested_repository_when_it_has_its_own_configuration() {
+    let repository = Repository::new();
+
+    repository.write(
+        "godlint.yaml",
+        "version: 1\nrules:\n  maintainability/empty-function:\n    severity: error\n",
+    );
+    repository.write("nested/.git/HEAD", "ref: refs/heads/main\n");
+    repository.write(
+        "nested/godlint.yaml",
+        "version: 1\nrules:\n  maintainability/empty-function:\n    severity: error\n",
+    );
+    repository.write("nested/inner.rs", "fn reported() {}\n");
+
+    let output = run(godlint()
+        .arg("check")
+        .arg(".")
+        .current_dir(repository.path().join("nested")));
+
+    assert_eq!(output.status.code(), Some(1));
+    assert!(String::from_utf8_lossy(&output.stdout).contains("inner.rs:1:1"));
+    assert!(output.stderr.is_empty());
+}
+
 struct Repository {
     path: PathBuf,
 }

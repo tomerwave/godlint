@@ -157,6 +157,10 @@ unrelated repository and relocate the reported path root.
 repository" or "is a symlink involved" in several modules invites them to disagree, and
 this is the boundary that keeps analysis inside the tree the operator pointed at.
 
+Discovery also stops at a nested `.git` boundary. A parent repository must not apply its
+policy to an embedded repository or submodule; a child is scanned only when it is an
+explicit requested root.
+
 ## Failure handling
 
 A failure specific to one file — unreadable bytes, invalid syntax — is recorded against

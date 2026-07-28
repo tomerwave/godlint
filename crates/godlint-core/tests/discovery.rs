@@ -46,8 +46,16 @@ impl Repository {
     }
 
     fn discover_excluding(&self, excludes: &[String]) -> Result<Vec<PathBuf>, DiscoveryError> {
+        self.discover_paths(std::slice::from_ref(&self.path), excludes)
+    }
+
+    fn discover_paths(
+        &self,
+        paths: &[PathBuf],
+        excludes: &[String],
+    ) -> Result<Vec<PathBuf>, DiscoveryError> {
         discover(
-            std::slice::from_ref(&self.path),
+            paths,
             &Scope {
                 root: &self.path,
                 excludes,
@@ -167,4 +175,32 @@ fn scans_everything_when_nothing_is_excluded() {
         .unwrap_or_else(|error| panic!("discovers source files: {error}"));
 
     assert_eq!(relative_paths(&repository, discovered).len(), 2);
+}
+
+#[test]
+fn skips_a_nested_repository_unless_it_is_explicitly_requested() {
+    let repository = Repository::new();
+
+    repository.create_file("outer.rs");
+    repository.create_file("nested/.git");
+    repository.create_file("nested/inner.rs");
+
+    let discovered = repository
+        .discover()
+        .unwrap_or_else(|error| panic!("discovers parent repository: {error}"));
+
+    assert_eq!(
+        relative_paths(&repository, discovered),
+        vec![Path::new("outer.rs").to_path_buf()]
+    );
+
+    let nested = repository.path.join("nested");
+    let discovered = repository
+        .discover_paths(std::slice::from_ref(&nested), &defaults())
+        .unwrap_or_else(|error| panic!("discovers requested nested repository: {error}"));
+
+    assert_eq!(
+        relative_paths(&repository, discovered),
+        vec![Path::new("nested/inner.rs").to_path_buf()]
+    );
 }

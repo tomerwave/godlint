@@ -28,7 +28,7 @@ pub fn discover(paths: &[PathBuf], scope: &Scope<'_>) -> Result<Vec<PathBuf>, Di
     let mut files = BTreeSet::new();
 
     for path in paths {
-        discover_path(path, scope, &mut files)?;
+        discover_path(path, scope, &mut files, true)?;
     }
 
     Ok(files.into_iter().collect())
@@ -38,6 +38,7 @@ fn discover_path(
     path: &Path,
     scope: &Scope<'_>,
     files: &mut BTreeSet<PathBuf>,
+    is_requested_root: bool,
 ) -> Result<(), DiscoveryError> {
     let metadata = fs::symlink_metadata(path).map_err(|source| DiscoveryError::ReadMetadata {
         path: path.to_path_buf(),
@@ -51,6 +52,10 @@ fn discover_path(
     if metadata.is_file() {
         add_supported_file(path, files);
     } else if metadata.is_dir() {
+        if !is_requested_root && is_repository(path) {
+            return Ok(());
+        }
+
         discover_directory(path, scope, files)?;
     }
 
@@ -92,10 +97,14 @@ fn discover_directory(
     paths.sort();
 
     for path in paths {
-        discover_path(&path, scope, files)?;
+        discover_path(&path, scope, files, false)?;
     }
 
     Ok(())
+}
+
+fn is_repository(path: &Path) -> bool {
+    path.join(".git").exists()
 }
 
 fn add_supported_file(path: &Path, files: &mut BTreeSet<PathBuf>) {
