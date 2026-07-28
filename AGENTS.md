@@ -27,7 +27,7 @@ Read the linked documents relevant to the task before changing code or policy.
 
 ## Current implementation status
 
-The workspace, CLI shell, configuration validation, and deterministic source discovery
-are implemented. Build the first rule as small vertical slices: shared source and
-diagnostic contracts, language extractors, the rule evaluator, then reports and
-dogfooding. Do not add semantic workers or new crate boundaries without a proven need.
+The workspace, CLI shell, configuration validation, source discovery, and the shared
+function-size rule are implemented. The current slice connects language extractors and
+the CLI so Godlint can dogfood the rule against this repository. Do not add semantic
+workers or new crate boundaries without a proven need.

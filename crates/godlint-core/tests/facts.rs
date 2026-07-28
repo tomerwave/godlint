@@ -82,6 +82,22 @@ fn rejects_ranges_that_are_invalid_for_the_source_file() {
 }
 
 #[test]
+fn rejects_a_range_that_splits_a_multi_byte_character() {
+    let source = SourceFile::new(
+        PathBuf::from("src/example.rs"),
+        "fn é() {\n    inner();\n}\n".into(),
+    )
+    .unwrap_or_else(|error| panic!("creates source file: {error}"));
+
+    let result = FunctionFact::new(source, Some("é".into()), range(0, 4), range(0, 4), 0);
+
+    assert!(matches!(
+        result,
+        Err(FunctionFactError::InvalidFunctionRange { .. })
+    ));
+}
+
+#[test]
 fn rejects_a_body_range_that_is_invalid_for_the_source_file() {
     let result = FunctionFact::new(
         source(),

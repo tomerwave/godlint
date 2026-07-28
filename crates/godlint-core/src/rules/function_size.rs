@@ -1,7 +1,8 @@
 use crate::{
+    analyzers::SourceFacts,
     config::{FunctionSizeRule, Severity},
     facts::FunctionFact,
-    rules::Rule,
+    rules::{Finding, Rule, RuleError},
     source::Language,
 };
 
@@ -10,6 +11,25 @@ pub struct FunctionSize;
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct FunctionSizeViolation {
     pub effective_line_count: usize,
+}
+
+pub fn evaluate(
+    facts: &[SourceFacts],
+    configuration: &FunctionSizeRule,
+) -> Result<Vec<Finding>, RuleError> {
+    let mut findings = Vec::new();
+
+    for source_facts in facts {
+        for function in source_facts.functions() {
+            let Some(violation) = FunctionSize::evaluate(function, configuration) else {
+                continue;
+            };
+
+            findings.push(finding(function, violation, configuration)?);
+        }
+    }
+
+    Ok(findings)
 }
 
 impl Rule for FunctionSize {
@@ -64,7 +84,11 @@ impl FunctionSize {
             return false;
         }
 
-        !configuration.skip_comments || !Self::is_comment_only(line, language, block_comment)
+        if !configuration.skip_comments {
+            return true;
+        }
+
+        !Self::is_comment_only(line, language, block_comment)
     }
 
     fn is_comment_only(line: &str, language: Language, block_comment: &mut bool) -> bool {
@@ -120,4 +144,27 @@ impl FunctionSize {
             Language::JavaScript | Language::Rust | Language::TypeScript
         )
     }
+}
+
+fn finding(
+    function: &FunctionFact,
+    violation: FunctionSizeViolation,
+    configuration: &FunctionSizeRule,
+) -> Result<Finding, RuleError> {
+    let location = function
+        .source()
+        .location(function.range())
+        .map_err(|source| RuleError::LocatesSource { source })?;
+
+    Ok(Finding {
+        path: function.source().path().to_path_buf(),
+        line: location.start.line,
+        column: location.start.column,
+        severity: configuration.severity,
+        rule_id: FunctionSize::ID,
+        message: format!(
+            "Function has {} effective lines (max {}).",
+            violation.effective_line_count, configuration.max_lines
+        ),
+    })
 }

@@ -1,0 +1,4 @@
+function example() {
+  one();
+  two();
+}

@@ -34,10 +34,10 @@ impl FunctionFact {
         nesting_depth: u32,
     ) -> Result<Self, FunctionFactError> {
         source
-            .location(range)
+            .validate_range(range)
             .map_err(|source| FunctionFactError::InvalidFunctionRange { source })?;
         source
-            .location(body_range)
+            .validate_range(body_range)
             .map_err(|source| FunctionFactError::InvalidBodyRange { source })?;
 
         if !range_contains(range, body_range) {
