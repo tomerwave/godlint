@@ -35,9 +35,14 @@ ROADMAP = Path("docs/rule-roadmap.md")
 README = Path("README.md")
 CHANGELOG = Path("CHANGELOG.md")
 
+# Behaviour a user can observe. Scan and path discovery belong here because a change to
+# either can stop reporting files that were reported before, which is exactly the kind of
+# change a reader of the changelog is looking for.
 NEEDS_CHANGELOG = (
     f"{RULES_DIR}/",
     "crates/godlint-core/src/analyzers/",
+    "crates/godlint-core/src/discovery.rs",
+    "crates/godlint-core/src/paths.rs",
     str(CONFIG),
 )
 
@@ -227,7 +232,7 @@ def check_change(report: Report, base: str) -> None:
     report.check(
         not any(path.startswith(NEEDS_CHANGELOG) for path in changed)
         or str(CHANGELOG) in changed,
-        f"{CHANGELOG}: rule behaviour or configuration schema changed without an entry",
+        f"{CHANGELOG}: observable behaviour — a rule, the configuration schema, or which files are scanned — changed without an entry",
     )
 
 

@@ -204,3 +204,44 @@ fn skips_a_nested_repository_unless_it_is_explicitly_requested() {
         vec![Path::new("nested/inner.rs").to_path_buf()]
     );
 }
+
+#[test]
+fn skips_a_repository_nested_several_levels_deep() {
+    let repository = Repository::new();
+
+    repository.create_file("outer.rs");
+    repository.create_file("a/b/.git");
+    repository.create_file("a/b/inner.rs");
+    repository.create_file("a/kept.rs");
+
+    let discovered = repository
+        .discover()
+        .unwrap_or_else(|error| panic!("discovers parent repository: {error}"));
+
+    assert_eq!(
+        relative_paths(&repository, discovered),
+        vec![
+            Path::new("a/kept.rs").to_path_buf(),
+            Path::new("outer.rs").to_path_buf()
+        ]
+    );
+}
+
+#[test]
+fn treats_a_git_directory_and_a_git_file_alike() {
+    let repository = Repository::new();
+
+    repository.create_file("as_file/.git");
+    repository.create_file("as_file/inner.rs");
+    repository.create_file("as_directory/.git/HEAD");
+    repository.create_file("as_directory/inner.rs");
+
+    let discovered = repository
+        .discover()
+        .unwrap_or_else(|error| panic!("discovers parent repository: {error}"));
+
+    assert!(
+        relative_paths(&repository, discovered).is_empty(),
+        "a worktree or submodule .git file marks a boundary exactly as a directory does"
+    );
+}

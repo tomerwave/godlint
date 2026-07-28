@@ -157,9 +157,30 @@ unrelated repository and relocate the reported path root.
 repository" or "is a symlink involved" in several modules invites them to disagree, and
 this is the boundary that keeps analysis inside the tree the operator pointed at.
 
-Discovery also stops at a nested `.git` boundary. A parent repository must not apply its
-policy to an embedded repository or submodule; a child is scanned only when it is an
-explicit requested root.
+Discovery also stops at a nested `.git` boundary, so walking a parent does not descend
+into an embedded repository or submodule. `paths::is_repository_root` answers what counts
+as a repository for both configuration discovery and scan discovery; deciding it twice is
+how the two would come to disagree about where a repository ends.
+
+The rule is about recursion, not about policy ownership: a child reached by walking is
+skipped, while a child named as a requested path is scanned under whatever configuration
+`config_root` resolves. `godlint check . nested` therefore does scan `nested` under the
+parent's policy, because the first requested path decides the configuration root. What a
+user cannot do is `godlint check nested` from a parent whose configuration it would need,
+since configuration discovery stops at the same boundary — that invocation asks for a
+repository that must carry its own `godlint.yaml`.
+
+Two properties of the test are deliberate rather than incidental. It is `exists`, so any
+entry named `.git` marks a boundary whether or not git would agree, which keeps the check
+independent of git's on-disk formats; a `.git` file for a worktree or submodule counts
+exactly as a `.git` directory does. And it fails open: an unreadable or dangling `.git`
+reads as "not a boundary" and the subtree is walked, because a linter that scans too much
+reports something a reader can dismiss, while one that scans too little reports nothing at
+all.
+
+Skipping is silent. A nested repository produces no finding and no issue, which is the
+same shape as an `exclude` entry and the reason both belong in documentation rather than
+only in output.
 
 ## Failure handling
 

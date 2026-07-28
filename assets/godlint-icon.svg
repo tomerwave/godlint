@@ -15,6 +15,6 @@
   <path d="M406 347L250 500C241 509 241 523 250 532L406 685" stroke="#232831" stroke-width="72" stroke-linecap="square" stroke-linejoin="miter"/>
   <path d="M618 347L774 500C783 509 783 523 774 532L618 685" stroke="#232831" stroke-width="72" stroke-linecap="square" stroke-linejoin="miter"/>
 
-  <!-- Symmetric V mark -->
-  <path d="M436 486L518 568L600 486" stroke="#4A86C5" stroke-width="44" stroke-linecap="square" stroke-linejoin="miter"/>
+  <!-- Check mark: smaller and pulled inward for more padding -->
+  <path d="M458 518L518 578L608 488" stroke="#4A86C5" stroke-width="44" stroke-linecap="square" stroke-linejoin="miter"/>
 </svg>

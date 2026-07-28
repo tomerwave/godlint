@@ -5,7 +5,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::{glob, source::Language};
+use crate::{glob, paths, source::Language};
 
 #[derive(Debug)]
 pub enum DiscoveryError {
@@ -52,7 +52,7 @@ fn discover_path(
     if metadata.is_file() {
         add_supported_file(path, files);
     } else if metadata.is_dir() {
-        if !is_requested_root && is_repository(path) {
+        if !is_requested_root && paths::is_repository_root(path) {
             return Ok(());
         }
 
@@ -101,10 +101,6 @@ fn discover_directory(
     }
 
     Ok(())
-}
-
-fn is_repository(path: &Path) -> bool {
-    path.join(".git").exists()
 }
 
 fn add_supported_file(path: &Path, files: &mut BTreeSet<PathBuf>) {

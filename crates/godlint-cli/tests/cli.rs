@@ -268,6 +268,103 @@ fn checks_a_nested_repository_when_it_has_its_own_configuration() {
     assert!(output.stderr.is_empty());
 }
 
+#[test]
+fn scans_a_nested_repository_when_the_parent_is_requested_first() {
+    let repository = Repository::new();
+
+    repository.write(
+        "godlint.yaml",
+        "version: 1\nrules:\n  maintainability/empty-function:\n    severity: error\n",
+    );
+    repository.write("nested/.git", "gitdir: ../.git/modules/nested\n");
+    repository.write("nested/inner.rs", "fn reported() {}\n");
+
+    let output = run(godlint()
+        .arg("check")
+        .arg(".")
+        .arg("nested")
+        .current_dir(repository.path()));
+
+    assert_eq!(output.status.code(), Some(1));
+    assert!(
+        String::from_utf8_lossy(&output.stdout).contains("nested/inner.rs:1:1"),
+        "naming the parent first is the documented way to scan a child: {}",
+        String::from_utf8_lossy(&output.stdout)
+    );
+}
+
+#[test]
+fn explains_that_a_nested_repository_needs_its_own_configuration() {
+    let repository = Repository::new();
+
+    repository.write(
+        "godlint.yaml",
+        "version: 1\nrules:\n  maintainability/empty-function:\n    severity: error\n",
+    );
+    repository.write("nested/.git", "gitdir: ../.git/modules/nested\n");
+    repository.write("nested/inner.rs", "fn reported() {}\n");
+
+    let output = run(godlint()
+        .arg("check")
+        .arg(".")
+        .current_dir(repository.path().join("nested")));
+
+    assert_eq!(output.status.code(), Some(2));
+    assert!(
+        String::from_utf8_lossy(&output.stderr).contains("No godlint.yaml found"),
+        "unexpected stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
+#[test]
+fn treats_a_gitdir_file_as_a_repository_boundary() {
+    let repository = Repository::new();
+
+    repository.write(
+        "godlint.yaml",
+        "version: 1\nrules:\n  maintainability/empty-function:\n    severity: error\n",
+    );
+    repository.write("worktree/.git", "gitdir: /elsewhere/.git/worktrees/wt\n");
+    repository.write("worktree/inner.rs", "fn ignored() {}\n");
+
+    let output = run(godlint()
+        .arg("check")
+        .arg(".")
+        .current_dir(repository.path()));
+
+    assert_eq!(output.status.code(), Some(0));
+    assert_eq!(String::from_utf8_lossy(&output.stdout), "No findings.\n");
+}
+
+#[test]
+fn skips_a_nested_repository_that_has_its_own_configuration() {
+    let repository = Repository::new();
+
+    repository.write(
+        "godlint.yaml",
+        "version: 1\nrules:\n  maintainability/empty-function:\n    severity: error\n",
+    );
+    repository.write("nested/.git/HEAD", "ref: refs/heads/main\n");
+    repository.write(
+        "nested/godlint.yaml",
+        "version: 1\nrules:\n  maintainability/empty-function:\n    severity: error\n",
+    );
+    repository.write("nested/inner.rs", "fn ignored() {}\n");
+
+    let output = run(godlint()
+        .arg("check")
+        .arg(".")
+        .current_dir(repository.path()));
+
+    assert_eq!(output.status.code(), Some(0));
+    assert_eq!(
+        String::from_utf8_lossy(&output.stdout),
+        "No findings.\n",
+        "a child owning a configuration is still not the parent's to scan"
+    );
+}
+
 struct Repository {
     path: PathBuf,
 }

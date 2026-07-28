@@ -8,8 +8,6 @@ use godlint_core::{
 
 const CONFIG_NAME: &str = "godlint.yaml";
 
-const REPOSITORY_MARKER: &str = ".git";
-
 pub struct Workspace {
     pub config: Config,
     root: PathBuf,
@@ -75,7 +73,7 @@ fn config_root(requested: &[PathBuf]) -> Result<PathBuf, String> {
         path.as_path()
     };
 
-    paths::find_upward(directory, CONFIG_NAME, REPOSITORY_MARKER).ok_or_else(|| {
+    paths::find_upward(directory, CONFIG_NAME).ok_or_else(|| {
         format!(
             "No {CONFIG_NAME} found in {} or any parent directory within the repository.",
             directory.display()
