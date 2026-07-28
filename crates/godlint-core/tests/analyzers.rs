@@ -127,6 +127,32 @@ fn treats_closures_and_lambdas_as_functions() {
 }
 
 #[test]
+fn reports_comments_in_ascending_source_order() {
+    let facts = analyze(&source(
+        "a.rs",
+        "// one
+fn a() {
+    /* two */
+    run(); // three
+}
+/* four */
+",
+    ))
+    .unwrap_or_else(|error| panic!("analyzes comments: {error}"));
+    let starts: Vec<usize> = facts
+        .comments()
+        .iter()
+        .map(|comment| comment.range().start())
+        .collect();
+    let mut sorted = starts.clone();
+
+    sorted.sort_unstable();
+
+    assert_eq!(starts.len(), 4);
+    assert_eq!(starts, sorted);
+}
+
+#[test]
 fn rejects_malformed_source() {
     let result = analyze(&source("example.rs", "fn example( {"));
 

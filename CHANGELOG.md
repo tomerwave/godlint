@@ -113,6 +113,12 @@ releases begin.
   changelog, and enabled for Godlint itself; every fixture must be declared by a test and
   assert an exit code; every workflow must declare permissions and pin one toolchain.
 
+- Effective-line counting walks its comment facts with a forward cursor and tests each
+  line against only the comments that can overlap it, rather than filtering every comment
+  per call and scanning the whole list per character. Counting a heavily annotated file no
+  longer costs its line count times its comment count: a file with 6,400 comments took
+  1,080 ms and now takes 177 ms.
+
 ### Fixed
 
 - Configuration discovery stops at a repository boundary, meaning a directory

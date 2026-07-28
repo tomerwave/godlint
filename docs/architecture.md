@@ -111,6 +111,13 @@ produced rather than by re-scanning text for `//` and `#`. Re-lexing there would
 duplicate the parser, put language knowledge in the rules layer, and get string
 literals, nested block comments, and Python docstrings wrong.
 
+It relies on comments being reported in ascending source order, which the extractor's
+pre-order walk guarantees and a test pins. That ordering is what lets the line walk carry
+a cursor forward instead of re-examining every comment: a comment that ends before the
+current line cannot matter to any later line. Without it, counting a file costs its line
+count times its comment count, which is invisible on ordinary source and pronounced on a
+heavily annotated file.
+
 ## Configuration
 
 Two rules share `LineLimitRule` because `function-size` and `file-size` ask the same
