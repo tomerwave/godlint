@@ -1,9 +1,3 @@
-//! Converts language-specific syntax trees into shared source facts.
-//!
-//! Each language module owns its grammar and function-node vocabulary. This module
-//! owns only the traversal and conversion into [`FunctionFact`], so rules never
-//! depend on a parser's node types or names.
-
 use std::{error::Error, fmt, path::PathBuf};
 
 use tree_sitter::{Language as TreeSitterLanguage, Node, Parser};
@@ -17,6 +11,21 @@ mod javascript;
 mod python;
 mod rust;
 mod typescript;
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SourceFacts {
+    functions: Vec<FunctionFact>,
+}
+
+impl SourceFacts {
+    pub fn functions(&self) -> &[FunctionFact] {
+        &self.functions
+    }
+}
+
+pub trait Analyzer {
+    fn analyze(&self, source: &SourceFile) -> Result<SourceFacts, AnalyzerError>;
+}
 
 #[derive(Debug)]
 pub enum AnalyzerError {
@@ -40,20 +49,20 @@ pub enum AnalyzerError {
     },
 }
 
-pub fn extract_functions(source: &SourceFile) -> Result<Vec<FunctionFact>, AnalyzerError> {
+pub fn analyze(source: &SourceFile) -> Result<SourceFacts, AnalyzerError> {
     match source.language() {
-        Language::JavaScript => javascript::extract_functions(source),
-        Language::Python => python::extract_functions(source),
-        Language::Rust => rust::extract_functions(source),
-        Language::TypeScript => typescript::extract_functions(source),
+        Language::JavaScript => javascript::JavaScript.analyze(source),
+        Language::Python => python::Python.analyze(source),
+        Language::Rust => rust::Rust.analyze(source),
+        Language::TypeScript => typescript::TypeScript.analyze(source),
     }
 }
 
-pub(super) fn extract_functions_with(
+pub(super) fn analyze_with(
     source: &SourceFile,
     language: TreeSitterLanguage,
     is_function_node: fn(&str) -> bool,
-) -> Result<Vec<FunctionFact>, AnalyzerError> {
+) -> Result<SourceFacts, AnalyzerError> {
     let mut parser = Parser::new();
     let path = source.path().to_path_buf();
 
@@ -84,7 +93,7 @@ pub(super) fn extract_functions_with(
         &mut functions,
     )?;
 
-    Ok(functions)
+    Ok(SourceFacts { functions })
 }
 
 fn collect_functions(

@@ -1,4 +1,5 @@
 use crate::{
+    analyzers::SourceFacts,
     config::{FunctionSizeRule, Severity},
     facts::FunctionFact,
     rules::{Finding, Rule, RuleError},
@@ -13,17 +14,19 @@ pub struct FunctionSizeViolation {
 }
 
 pub fn evaluate(
-    functions: &[FunctionFact],
+    facts: &[SourceFacts],
     configuration: &FunctionSizeRule,
 ) -> Result<Vec<Finding>, RuleError> {
     let mut findings = Vec::new();
 
-    for function in functions {
-        let Some(violation) = FunctionSize::evaluate(function, configuration) else {
-            continue;
-        };
+    for source_facts in facts {
+        for function in source_facts.functions() {
+            let Some(violation) = FunctionSize::evaluate(function, configuration) else {
+                continue;
+            };
 
-        findings.push(finding(function, violation, configuration)?);
+            findings.push(finding(function, violation, configuration)?);
+        }
     }
 
     Ok(findings)

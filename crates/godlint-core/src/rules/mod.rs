@@ -1,8 +1,8 @@
 use std::{error::Error, fmt, path::PathBuf};
 
 use crate::{
+    analyzers::SourceFacts,
     config::{Config, Severity},
-    facts::FunctionFact,
     source::SourceFileError,
 };
 
@@ -36,13 +36,12 @@ pub enum RuleError {
     LocatesSource { source: SourceFileError },
 }
 
-/// Evaluates every configured rule against the language-neutral facts.
-pub fn evaluate(functions: &[FunctionFact], config: &Config) -> Result<Vec<Finding>, RuleError> {
+pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, RuleError> {
     let Some(configuration) = &config.rules.function_size else {
         return Ok(Vec::new());
     };
 
-    let mut findings = function_size::evaluate(functions, configuration)?;
+    let mut findings = function_size::evaluate(facts, configuration)?;
 
     findings.sort_by(|left, right| {
         (

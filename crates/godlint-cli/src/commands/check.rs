@@ -7,7 +7,7 @@ use std::{
 use godlint_core::{
     config::{Config, Severity},
     rules::evaluate,
-    scan::analyze,
+    scan::scan,
 };
 
 pub const USAGE: &str = "check [paths...]";
@@ -61,14 +61,14 @@ fn check(paths: &[String]) -> ExitCode {
         }
     };
 
-    let report = match analyze(&root, &paths) {
+    let report = match scan(&root, &paths) {
         Ok(report) => report,
         Err(error) => {
             eprintln!("Unable to scan source files: {error}");
             return ExitCode::from(2);
         }
     };
-    let findings = match evaluate(&report.functions, &config) {
+    let findings = match evaluate(&report.facts, &config) {
         Ok(findings) => findings,
         Err(error) => {
             eprintln!("Unable to evaluate rules: {error}");
@@ -211,7 +211,7 @@ fn scan_path(root: &Path, path: PathBuf) -> Result<PathBuf, String> {
     Ok(path)
 }
 
-fn scan_exit_code(issues: &[godlint_core::scan::AnalysisIssue]) -> ExitCode {
+fn scan_exit_code(issues: &[godlint_core::scan::ScanIssue]) -> ExitCode {
     if !issues.is_empty() {
         return ExitCode::from(2);
     }
