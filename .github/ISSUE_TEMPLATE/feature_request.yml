@@ -1,0 +1,72 @@
+name: Feature request
+description: Propose a capability that is not a rule.
+title: "feat: "
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For a new policy rule, use the rule proposal template instead. Do not include
+        proprietary code.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: >-
+        What can a user not do today, and what do they do instead? Describe the situation,
+        not the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed capability
+      description: >-
+        What should Godlint do? Name the command, configuration key, or output involved.
+    validations:
+      required: true
+  - type: textarea
+    id: contract
+    attributes:
+      label: Observable contract
+      description: >-
+        What exactly does a user see? Include the command line, the output, and the exit
+        code. Determinism is a product requirement, so state what makes the result stable
+        across runs and machines.
+      placeholder: |
+        Command:
+        Output:
+        Exit code:
+        What keeps it deterministic:
+    validations:
+      required: true
+  - type: dropdown
+    id: scope
+    attributes:
+      label: What this needs
+      options:
+        - Existing facts only
+        - A new fact or analyzer capability
+        - A new CLI command or reporter
+        - Configuration schema change
+        - External tool or semantic worker
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: >-
+        What else would solve the problem, including doing nothing or using an existing
+        tool? Godlint delegates deliberately; see docs/rule-roadmap.md for the boundary.
+    validations:
+      required: true
+  - type: textarea
+    id: breakage
+    attributes:
+      label: Compatibility
+      description: >-
+        Would this change existing output, exit codes, or configuration? Say so plainly,
+        including "no".
+    validations:
+      required: true

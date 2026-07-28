@@ -1,0 +1,56 @@
+name: Research question
+description: Investigate an open question before committing to a design.
+title: "research: "
+labels: [research]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this when the answer is not yet known. If you already know what to build, use
+        the feature request or rule proposal template instead.
+  - type: textarea
+    id: question
+    attributes:
+      label: The question
+      description: >-
+        State it as a question with a knowable answer. "Should the complexity metric count
+        an exhaustive match arm whose body is a single expression?" not "look into
+        complexity".
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: What decision depends on it
+      description: >-
+        Name the choice this unblocks. Research with no downstream decision is reading,
+        which needs no issue.
+    validations:
+      required: true
+  - type: textarea
+    id: hypotheses
+    attributes:
+      label: Candidate answers
+      description: >-
+        The plausible answers and what each would imply. Include the option of changing
+        nothing.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: How it would be decided
+      description: >-
+        What evidence settles it — a corpus measurement, a fixture, prior art in another
+        linter, a benchmark? Say what result would change your mind.
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: What closing this issue produces
+      description: >-
+        Research finishes with an artifact: a decision recorded in docs/, a roadmap entry,
+        or a rejection with the reason. Name which.
+    validations:
+      required: true
