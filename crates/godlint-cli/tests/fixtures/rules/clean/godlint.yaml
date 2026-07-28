@@ -18,7 +18,7 @@ rules:
     max-parameters: 6
   maintainability/decision-complexity:
     severity: error
-    max-complexity: 10
+    max-complexity: 8
   maintainability/return-count:
     severity: warning
     max-returns: 5
