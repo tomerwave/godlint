@@ -38,9 +38,13 @@ rules:
   maintainability/parameter-count:
     severity: warning
     max-parameters: 6
-  maintainability/cyclomatic-complexity:
+  # Recalibrated against this repository once a multiway branch stopped counting once per
+  # arm: the worst function measures 7 and the 90th percentile is 4, so 10 no longer
+  # constrained anything. The old 10 came from an ESLint `complexity` setting, and ESLint
+  # counts every `case`, so the number did not transfer with the metric.
+  maintainability/decision-complexity:
     severity: warning
-    max-complexity: 10
+    max-complexity: 8
   # Counting `?` as an exit path raises Rust counts relative to a language that must
   # write `return`, so this threshold is calibrated above the roadmap's recommended 5.
   maintainability/return-count:

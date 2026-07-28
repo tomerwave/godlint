@@ -50,15 +50,15 @@ fn is_conditional(kind: &str) -> bool {
     kind == "if_statement"
 }
 
-fn is_decision(kind: &str) -> bool {
+fn is_decision(node: Node<'_>) -> bool {
     matches!(
-        kind,
+        node.kind(),
         "catch_clause"
             | "do_statement"
             | "for_in_statement"
             | "for_statement"
             | "if_statement"
-            | "switch_case"
+            | "switch_statement"
             | "ternary_expression"
             | "while_statement"
     )

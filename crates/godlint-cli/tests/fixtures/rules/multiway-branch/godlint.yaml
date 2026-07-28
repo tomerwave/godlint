@@ -4,6 +4,3 @@ rules:
   maintainability/decision-complexity:
     severity: error
     max-complexity: 3
-  maintainability/return-count:
-    severity: error
-    max-returns: 3

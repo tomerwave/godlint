@@ -49,8 +49,8 @@ pub struct Rules {
     pub todo_requires_reference: Option<TodoRequiresReferenceRule>,
     #[serde(rename = "maintainability/parameter-count")]
     pub parameter_count: Option<ParameterCountRule>,
-    #[serde(rename = "maintainability/cyclomatic-complexity")]
-    pub cyclomatic_complexity: Option<CyclomaticComplexityRule>,
+    #[serde(rename = "maintainability/decision-complexity")]
+    pub decision_complexity: Option<DecisionComplexityRule>,
     #[serde(rename = "maintainability/return-count")]
     pub return_count: Option<ReturnCountRule>,
     #[serde(rename = "maintainability/function-statements")]
@@ -106,7 +106,7 @@ macro_rules! count_limit_rules {
 count_limit_rules! {
     FunctionNestingRule { "max-depth" => max_depth },
     ParameterCountRule { "max-parameters" => max_parameters },
-    CyclomaticComplexityRule { "max-complexity" => max_complexity },
+    DecisionComplexityRule { "max-complexity" => max_complexity },
     ReturnCountRule { "max-returns" => max_returns },
     FunctionStatementsRule { "max-statements" => max_statements },
 }
@@ -227,7 +227,7 @@ impl Config {
 
         if self
             .rules
-            .cyclomatic_complexity
+            .decision_complexity
             .as_ref()
             .is_some_and(|rule| rule.limit() == 0)
         {
@@ -276,7 +276,7 @@ impl fmt::Display for ConfigError {
             Self::InvalidComplexityLimit => {
                 write!(
                     formatter,
-                    "maintainability/cyclomatic-complexity max-complexity must be at least 1"
+                    "maintainability/decision-complexity max-complexity must be at least 1"
                 )
             }
             Self::InvalidTodoMarkers => {

@@ -91,7 +91,8 @@ TypeScript/JavaScript, and Python source files. Eleven rules are implemented:
 - `maintainability/function-nesting` — how deeply control-flow blocks nest inside a
   function.
 - `maintainability/parameter-count` — declared parameters, excluding a method receiver.
-- `maintainability/cyclomatic-complexity` — branch points in a function.
+- `maintainability/decision-complexity` — branch points in a function. A `match` or
+  `switch` counts once rather than once per arm, and a guard on an arm counts.
 - `maintainability/return-count` — exit paths from a function, explicit or implicit.
 - `maintainability/function-statements` — statements in a function, through nested
   blocks but not into nested functions.
