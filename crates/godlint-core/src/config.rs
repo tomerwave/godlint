@@ -19,6 +19,8 @@ pub struct Config {
 pub struct Rules {
     #[serde(rename = "maintainability/function-size")]
     pub function_size: Option<FunctionSizeRule>,
+    #[serde(rename = "maintainability/function-nesting")]
+    pub function_nesting: Option<FunctionNestingRule>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -31,6 +33,14 @@ pub struct FunctionSizeRule {
     pub skip_blank_lines: bool,
     #[serde(rename = "skip-comments")]
     pub skip_comments: bool,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct FunctionNestingRule {
+    pub severity: Severity,
+    #[serde(rename = "max-depth")]
+    pub max_depth: u32,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq)]

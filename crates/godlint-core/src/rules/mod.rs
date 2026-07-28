@@ -19,6 +19,7 @@ pub trait Rule {
     ) -> Option<Self::Violation>;
 }
 
+pub mod function_nesting;
 pub mod function_size;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -37,11 +38,15 @@ pub enum RuleError {
 }
 
 pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, RuleError> {
-    let Some(configuration) = &config.rules.function_size else {
-        return Ok(Vec::new());
-    };
+    let mut findings = Vec::new();
 
-    let mut findings = function_size::evaluate(facts, configuration)?;
+    if let Some(configuration) = &config.rules.function_size {
+        findings.extend(function_size::evaluate(facts, configuration)?);
+    }
+
+    if let Some(configuration) = &config.rules.function_nesting {
+        findings.extend(function_nesting::evaluate(facts, configuration)?);
+    }
 
     findings.sort_by(|left, right| {
         (

@@ -40,6 +40,15 @@ fn accepts_the_function_size_rule() {
 }
 
 #[test]
+fn accepts_the_function_nesting_rule() {
+    let result = load(
+        "version: 1\nrules:\n  maintainability/function-nesting:\n    severity: error\n    max-depth: 0\n",
+    );
+
+    assert!(result.is_ok());
+}
+
+#[test]
 fn rejects_an_unknown_rule() {
     let result = load("version: 1\nrules:\n  maintainability/unknown: {}\n");
 
