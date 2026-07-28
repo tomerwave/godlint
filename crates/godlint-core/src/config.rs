@@ -1,4 +1,5 @@
 use std::{
+    collections::BTreeSet,
     error::Error,
     fmt, fs,
     num::NonZeroU32,
@@ -223,6 +224,9 @@ pub enum ConfigError {
     InvalidTodoMarkers,
     InvalidTodoReferencePrefixes,
     InvalidRestrictedCallName,
+    DuplicateRestrictedCallName {
+        name: String,
+    },
     InvalidRestrictedCallAllowIn,
     InvalidDirectEnvironmentReadAllowIn,
     InvalidExclude {
@@ -313,6 +317,8 @@ impl Config {
             return Ok(());
         };
 
+        let mut seen = BTreeSet::new();
+
         for call in &rule.calls {
             if call.name.trim().is_empty() {
                 return Err(ConfigError::InvalidRestrictedCallName);
@@ -320,6 +326,12 @@ impl Config {
 
             if call.allow_in.iter().any(|path| path.trim().is_empty()) {
                 return Err(ConfigError::InvalidRestrictedCallAllowIn);
+            }
+
+            if !seen.insert(call.name.as_str()) {
+                return Err(ConfigError::DuplicateRestrictedCallName {
+                    name: call.name.clone(),
+                });
             }
         }
 
@@ -378,6 +390,13 @@ impl fmt::Display for ConfigError {
                     "architecture/restricted-call call names must not be blank"
                 )
             }
+            Self::DuplicateRestrictedCallName { name } => {
+                write!(
+                    formatter,
+                    "architecture/restricted-call lists {name} more than once; \
+                     one entry decides its allow-in boundary"
+                )
+            }
             Self::InvalidRestrictedCallAllowIn => {
                 write!(
                     formatter,
@@ -405,6 +424,7 @@ impl Error for ConfigError {
             | Self::InvalidTodoMarkers
             | Self::InvalidTodoReferencePrefixes
             | Self::InvalidRestrictedCallName
+            | Self::DuplicateRestrictedCallName { .. }
             | Self::InvalidRestrictedCallAllowIn
             | Self::InvalidDirectEnvironmentReadAllowIn
             | Self::InvalidExclude { .. } => None,

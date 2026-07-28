@@ -247,3 +247,30 @@ fn rejects_a_blank_direct_environment_read_allow_in_path() {
         Err(ConfigError::InvalidDirectEnvironmentReadAllowIn)
     ));
 }
+
+#[test]
+fn rejects_a_restricted_call_listed_twice() {
+    let result = load(concat!(
+        "version: 1\n",
+        "rules:\n",
+        "  architecture/restricted-call:\n",
+        "    severity: error\n",
+        "    calls:\n",
+        "      - name: console.log\n",
+        "        allow-in:\n",
+        "          - a.ts\n",
+        "      - name: console.log\n",
+        "        allow-in:\n",
+        "          - b.ts\n"
+    ));
+
+    let Err(error) = result else {
+        panic!("two entries for one callee leave its boundary ambiguous");
+    };
+    let message = error.to_string();
+
+    assert!(
+        message.contains("console.log") && message.contains("more than once"),
+        "{message}"
+    );
+}
