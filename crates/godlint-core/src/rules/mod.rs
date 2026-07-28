@@ -122,10 +122,6 @@ pub trait FunctionRule: Rule {
     ) -> Option<Violation>;
 }
 
-pub trait FileRule: Rule {
-    fn check(facts: &SourceFacts, configuration: &Self::Configuration) -> Option<Violation>;
-}
-
 pub trait CommentRule: Rule {
     fn check(
         comment: &CommentFact,
@@ -212,15 +208,6 @@ fn evaluate_functions(
     }
 
     Ok(findings)
-}
-
-pub fn evaluate_file_rule<R: FileRule>(
-    facts: &[SourceFacts],
-    configuration: &R::Configuration,
-) -> Result<Vec<Finding>, RuleError> {
-    evaluate_files(facts, R::severity(configuration), R::ID, |source| {
-        R::check(source, configuration)
-    })
 }
 
 pub fn evaluate_file_limit_rule<R: FileLimitRule>(

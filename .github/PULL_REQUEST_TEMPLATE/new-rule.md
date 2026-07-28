@@ -54,4 +54,5 @@ is what no script can check:
 - [ ] Tests cover the constructs where the languages diverge, not only where they agree.
 - [ ] A test pins the exact threshold boundary.
 - [ ] The fixture exercises a realistic threshold, not the smallest one that fires.
+- [ ] Behaviour change is reflected in a fixture; a refactor leaves every fixture untouched.
 - [ ] Output is deterministic and ordering does not depend on message wording.

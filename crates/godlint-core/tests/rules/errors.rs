@@ -6,7 +6,8 @@ use godlint_core::{
     },
     rules::{
         Finding, RuleError, empty_function::EmptyFunction, evaluate_comment_rule,
-        evaluate_file_rule, evaluate_function_rule, file_size::FileSize, no_comments::NoComments,
+        evaluate_file_limit_rule, evaluate_function_rule, file_size::FileSize,
+        no_comments::NoComments,
     },
     source::SourceFileError,
 };
@@ -72,7 +73,7 @@ fn a_file_rule_set_to_off_reports_nothing() {
     let source = facts("src/example.rs", "fn a() {}\nfn b() {}\n");
 
     assert!(
-        evaluated(evaluate_file_rule::<FileSize>(
+        evaluated(evaluate_file_limit_rule::<FileSize>(
             std::slice::from_ref(&source),
             &line_limit(Severity::Off)
         ))
