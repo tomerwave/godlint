@@ -74,8 +74,11 @@ releases begin.
   Rust spells them and how a finding reports them, so the name a reader sees is the name
   they configure. A built-in name stays bound to the language that defines it, so scoping
   Python's `print` does not restrict a TypeScript function of that name, while a name the
-  project invents applies wherever it is called. Listing one callee twice is a configuration
-  error rather than a silent choice between the two entries.
+  project invents applies wherever it is called. The consequence is that a callee of your own
+  whose name a built-in already claims cannot be restricted: naming `print` reaches Python's
+  and not a TypeScript function of that name, and there is no language key yet to say which
+  was meant, so such a policy is silent rather than wrong. Listing one callee twice is a
+  configuration error rather than a silent choice between the two entries.
 - `security/no-dynamic-execution` — reports JavaScript `eval`, `Function`, and
   `new Function`, plus Python `eval` and `exec`.
 - `security/direct-environment-read` — reports direct JavaScript, Python, and Rust

@@ -118,6 +118,12 @@ analysis, so a local binding that shadows a restricted name is reported: a Pytho
 called `exec`, or a `const process = …` in TypeScript. Enable them deliberately; each is
 off until a repository configures it.
 
+One consequence of built-in restrictions being language-bound is worth knowing before you
+write a policy: a name a built-in already claims belongs to that built-in's language. Naming
+`print` restricts Python's, and a TypeScript function of your own called `print` cannot be
+restricted at all — there is no language key to say which you meant, so the policy is silent
+rather than wrong. Pick a name no built-in claims, or wait for that key.
+
 A function means the same thing in every language: Rust `fn` items and closures,
 Python `def` functions and lambdas, and JavaScript/TypeScript function declarations,
 function expressions, methods, and arrow functions. Findings below the configured

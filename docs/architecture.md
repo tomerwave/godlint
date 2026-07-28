@@ -49,6 +49,12 @@ Python's `print` an `allow-in` boundary leaves a TypeScript function of that nam
 name the project invents belongs to no language and applies wherever it is called, which is
 what a policy about `loadConfig` means.
 
+The unstated cost is that a project cannot restrict a callee of its own whose name a built-in
+already claims, and the failure is silence rather than a diagnostic. Resolving it needs a
+language key in the configuration, which is a schema addition rather than a restructuring:
+the table already carries the dialect, so the key would narrow a configured entry the same
+way the table narrows a built-in.
+
 One table pairs each built-in callee with the dialect that speaks it, and both questions the
 rule asks — is this name a built-in anywhere, and is it restricted in this call's dialect —
 are answered from that table. Splitting them across a list per language meant a new
