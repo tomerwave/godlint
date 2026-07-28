@@ -10,6 +10,10 @@ releases begin.
 
 ### Added
 
+- `reliability/explicit-timer-delay` — requires an explicit delay for JavaScript and
+  TypeScript `setTimeout` and `setInterval` calls, where omission silently defaults to
+  immediate execution.
+
 - Open-source project foundations, community guidance, security reporting guidance,
   and project brand assets.
 - A local CLI with `godlint config validate` and `godlint check`, source discovery for

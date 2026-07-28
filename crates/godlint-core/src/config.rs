@@ -68,6 +68,8 @@ pub struct Rules {
     pub no_dynamic_execution: Option<NoDynamicExecutionRule>,
     #[serde(rename = "security/direct-environment-read")]
     pub direct_environment_read: Option<DirectEnvironmentReadRule>,
+    #[serde(rename = "reliability/explicit-timer-delay")]
+    pub explicit_timer_delay: Option<ExplicitTimerDelayRule>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -114,6 +116,12 @@ pub struct DirectEnvironmentReadRule {
     pub severity: Severity,
     #[serde(default = "default_configuration_paths", rename = "allow-in")]
     pub allow_in: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ExplicitTimerDelayRule {
+    pub severity: Severity,
 }
 
 #[derive(Debug, Deserialize)]

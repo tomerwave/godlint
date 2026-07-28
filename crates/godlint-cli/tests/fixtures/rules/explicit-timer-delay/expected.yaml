@@ -1,0 +1,7 @@
+exit-code: 1
+
+stdout: |
+  example.js:1:1: error[reliability/explicit-timer-delay] setTimeout needs an explicit delay; pass the intended delay in milliseconds.
+  example.ts:1:1: error[reliability/explicit-timer-delay] setInterval needs an explicit delay; pass the intended delay in milliseconds.
+
+stderr: ""

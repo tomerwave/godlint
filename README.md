@@ -84,7 +84,7 @@ godlint config validate --config path/to/godlint.yaml
 ```
 
 The `check` command evaluates the configured rules across Rust,
-TypeScript/JavaScript, and Python source files. Fifteen rules are implemented:
+TypeScript/JavaScript, and Python source files. Sixteen rules are implemented:
 
 - `maintainability/file-size` — effective lines in a file.
 - `maintainability/function-size` — effective lines in a function.
@@ -109,8 +109,10 @@ TypeScript/JavaScript, and Python source files. Fifteen rules are implemented:
   Python `eval` and `exec`.
 - `security/direct-environment-read` — environment access outside a configuration
   boundary.
+- `reliability/explicit-timer-delay` — JavaScript/TypeScript timers that omit their
+  explicit millisecond delay.
 
-These three read the callee exactly as it is spelled. `std::env::var` is matched and the
+These four read the callee exactly as it is spelled. `std::env::var` is matched and the
 aliased `env::var` after `use std::env` is not, because knowing they name the same function
 needs resolution Godlint does not have yet — see
 [the rule roadmap](docs/rule-roadmap.md) for what that defers. They also have no scope

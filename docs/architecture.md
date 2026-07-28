@@ -33,7 +33,7 @@ expected: read it here.
 Language adapters retain native AST and parser details. They emit a small shared fact
 model that rules consume without a universal AST. `FunctionFact`, `CommentFact`,
 `CallFact`, and `AccessFact` exist today. `CallFact` records a direct callee path, a
-source range, and whether the call site was a macro invocation; `AccessFact` does the same
+source range, argument count, and whether the call site was a macro invocation; `AccessFact` does the same
 for direct member access. Neither resolves aliases, types, or dynamically computed
 properties.
 

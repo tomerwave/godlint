@@ -3,12 +3,12 @@ use crate::{
     rules::{
         Rule, accountable_suppression::AccountableSuppression,
         decision_complexity::DecisionComplexity, direct_environment_read::DirectEnvironmentRead,
-        empty_function::EmptyFunction, file_size::FileSize, function_nesting::FunctionNesting,
-        function_size::FunctionSize, function_statements::FunctionStatements,
-        no_comments::NoComments, no_dynamic_execution::NoDynamicExecution,
-        parameter_count::ParameterCount, restricted_call::RestrictedCall,
-        return_count::ReturnCount, todo_requires_reference::TodoRequiresReference,
-        unused_suppression::UnusedSuppression,
+        empty_function::EmptyFunction, explicit_timer_delay::ExplicitTimerDelay,
+        file_size::FileSize, function_nesting::FunctionNesting, function_size::FunctionSize,
+        function_statements::FunctionStatements, no_comments::NoComments,
+        no_dynamic_execution::NoDynamicExecution, parameter_count::ParameterCount,
+        restricted_call::RestrictedCall, return_count::ReturnCount,
+        todo_requires_reference::TodoRequiresReference, unused_suppression::UnusedSuppression,
     },
 };
 
@@ -73,6 +73,11 @@ severity!(
     direct_environment_read_severity,
     DirectEnvironmentRead,
     direct_environment_read
+);
+severity!(
+    explicit_timer_delay_severity,
+    ExplicitTimerDelay,
+    explicit_timer_delay
 );
 
 const REGISTRATIONS: &[Registration] = &[
@@ -149,6 +154,11 @@ const REGISTRATIONS: &[Registration] = &[
     Registration {
         id: DirectEnvironmentRead::ID,
         severity: direct_environment_read_severity,
+        suppressible: true,
+    },
+    Registration {
+        id: ExplicitTimerDelay::ID,
+        severity: explicit_timer_delay_severity,
         suppressible: true,
     },
 ];

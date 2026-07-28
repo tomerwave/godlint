@@ -202,14 +202,18 @@ fn call_fact(
     }
 
     let range = node_range(callee.node, source)?;
-    let fact = CallFact::new(source.clone(), range, callee.is_macro).map_err(|error| {
-        AnalyzerError::InvalidCall {
+    let fact = CallFact::new(source.clone(), range, callee.is_macro, argument_count(node))
+        .map_err(|error| AnalyzerError::InvalidCall {
             path: source.path().to_path_buf(),
             source: error,
-        }
-    })?;
+        })?;
 
     Ok(Some(fact))
+}
+
+fn argument_count(node: Node<'_>) -> usize {
+    node.child_by_field_name("arguments")
+        .map_or(0, |arguments| arguments.named_child_count())
 }
 
 fn access_fact(

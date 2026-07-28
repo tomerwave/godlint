@@ -248,7 +248,7 @@ semantic capability exists.
 | `architecture/restricted-call` | Shipped | High | Direct callee and macro match | Block direct process exits and debug output by default; configure calls such as `loadConfig` with `allow-in` path globs |
 | `security/no-dynamic-execution` | Shipped | High | Direct JavaScript/Python callee match | Block JavaScript `eval`/`Function` and Python `eval`/`exec` |
 | `security/direct-environment-read` | Shipped | High | Direct platform API match | Require a single configuration boundary |
-| `reliability/explicit-timer-delay` | High | Direct timer calls with omitted delay | Require an intentional delay value |
+| `reliability/explicit-timer-delay` | Shipped | High | Direct JavaScript/TypeScript timer calls with fewer than two arguments | Require an intentional delay value |
 | `logging/no-production-log` | Medium | Direct configured logging calls | Ban `console.log` / `print` outside approved paths |
 | `reliability/network-timeout-required` | Medium | Configured known client calls | Require explicit timeout argument |
 
@@ -274,6 +274,12 @@ rules:
           - "**/config.ts"
           - "**/config/**"
 ```
+
+`reliability/explicit-timer-delay` covers JavaScript and TypeScript only. Omitting the
+second argument from `setTimeout` or `setInterval` is valid code that schedules immediate
+execution; Python and Rust timer APIs require their delay argument, so treating their
+invalid calls as a shared policy finding would duplicate the language checker rather than
+enforce an organization policy.
 
 ### Phase 4 — Imports and repository graph
 

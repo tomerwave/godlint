@@ -75,3 +75,5 @@ rules:
     severity: error
   security/direct-environment-read:
     severity: error
+  reliability/explicit-timer-delay:
+    severity: error

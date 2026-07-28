@@ -227,6 +227,22 @@ fn extracts_direct_calls_from_each_language() {
 }
 
 #[test]
+fn counts_direct_call_arguments() {
+    let facts = analyze(&source(
+        "example.ts",
+        "setTimeout(work); setInterval(work, 100);",
+    ))
+    .unwrap_or_else(|error| panic!("analyzes call arguments: {error}"));
+    let counts: Vec<usize> = facts
+        .calls()
+        .iter()
+        .map(|call| call.argument_count())
+        .collect();
+
+    assert_eq!(counts, vec![1, 2]);
+}
+
+#[test]
 fn ignores_indirect_calls() {
     let facts = analyze(&source(
         "example.ts",
