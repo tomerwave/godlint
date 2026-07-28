@@ -13,9 +13,9 @@ when the concept applies. Repository rules need miniature realistic repositories
 than mocked dependency graphs.
 
 Inline suppression is planned but not implemented, so no rule can carry a suppression
-fixture yet, and accountable per-rule exceptions are still ahead of it. When a
-suppression mechanism lands, suppression cases become a fourth required fixture class
-and every shipped rule is backfilled in the same change.
+fixture yet. Its requirements are recorded under accountable exceptions in the
+[rule roadmap](rule-roadmap.md). When it lands, suppression cases become a fourth
+required fixture class and every shipped rule is backfilled in the same change.
 
 Keep test code outside production `src/` modules. Public crate contracts belong in
 `crates/<crate>/tests/`. Rule fixtures belong in

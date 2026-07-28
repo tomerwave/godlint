@@ -70,7 +70,9 @@ points — `if`, `else if`, loops, `match` and `switch` arms, `catch` and `excep
 handlers, conditional expressions, and the Rust `?` operator — but deliberately does
 not count short-circuit `&&`, `||`, `and`, or `or`. A boolean guard is one decision a
 reader makes at one place, and counting its operands penalizes writing the condition
-plainly. The recommended threshold of 10 was borrowed from an existing ESLint
+plainly. JavaScript and TypeScript `?.` and `??` are excluded on the same grounds and
+this is a decision, not an oversight: they read as one access with a fallback rather
+than as a branch a reader has to trace. The recommended threshold of 10 was borrowed from an existing ESLint
 `complexity` setting, and tools differ on whether logical operators contribute, so a
 threshold migrated from another linter should be re-checked against Godlint's own metric
 rather than assumed equivalent.
@@ -139,6 +141,45 @@ Extend `FunctionFact` only when the same data will serve multiple rules.
 | `statement_count` | `maintainability/function-statements` | Shipped | Medium | All eleven supported extensions | `max-statements` | Warning, 30 | Count statements through nested blocks but not into nested functions, which are measured as functions in their own right; comments are not statements, and an expression-bodied arrow or lambda is one |
 
 Phase 2 is complete. Its fact additions stay small and reusable for future policy.
+
+### Accountable exceptions
+
+Godlint can currently narrow a rule two ways, and neither can carry accountability. The
+`exclude` globs remove a path from the scan, which suits generated code and deliberately
+non-conforming test data. `allow-names` on `maintainability/empty-function` names a
+function, and it applies repository-wide.
+
+Neither expresses "this one site is a known exception". That matters because
+[dogfooding policy](dogfooding.md) requires every exception to record a reason, an owner,
+an issue reference, and an expiry, and none of those can be attached to a glob or to an
+entry in a name list. The gap has a cost already visible in practice: an unavoidable
+exception forces a rule to be weakened for the whole repository, which is how a
+fixture-shaped allow-list entry can end up load-bearing for CI.
+
+Inline suppression closes it. A comment at the site names the rule and carries the
+justification, for example:
+
+```text
+godlint-ignore-next-line maintainability/function-size -- splitting this in #482
+```
+
+Requirements, before implementation:
+
+1. A stable directive syntax in every supported comment syntax, including Python
+   docstrings, resolved from `CommentFact` rather than by re-scanning text.
+2. A required justification, so an unexplained suppression is itself a finding.
+3. Scope limited to the following line or the enclosing declaration; never a whole file,
+   because a file-wide directive is an `exclude` entry with less visibility.
+4. Optional owner and expiry, with an expired suppression reported so exceptions cannot
+   accumulate silently.
+5. A report of every active suppression, so the total is auditable rather than discovered
+   one grep at a time.
+
+This precedes the strict suites and the baseline work: promoting a rule to blocking is
+only reasonable once a project has an accountable way to record the cases it cannot fix
+yet. It also unblocks the fourth fixture class that
+[the testing strategy](testing.md) currently has to defer, and the accountable-exception
+row in the policy mapping below.
 
 ### Phase 3 — Calls and organization policy
 

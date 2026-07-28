@@ -20,7 +20,8 @@ Read the linked documents relevant to the task before changing code or policy.
 - Keep language-specific parser details inside their analyzer boundaries; rules consume
   small, language-neutral facts.
 - Add a rule only with valid, invalid, and configuration fixtures plus scoped-exclusion
-  coverage. Inline suppression is not implemented yet; suppression fixtures become
+  coverage. Inline suppression is not implemented yet; its requirements are recorded
+  under accountable exceptions in the rule roadmap, and suppression fixtures become
   required in the change that adds it.
 - Dogfood every shipped rule: Godlint must run it against this repository in CI.
 - Do not add dependencies, public APIs, configuration schema, or crate boundaries
