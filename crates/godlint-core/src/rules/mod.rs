@@ -445,7 +445,7 @@ impl fmt::Display for Violation {
 }
 
 impl fmt::Display for SuppressionDefect {
-    // godlint-ignore-next-line maintainability/cyclomatic-complexity owner=tomerwave expires=2027-01-31 -- An exhaustive match whose every arm is a single write! is a formatting table, not eleven decisions a reader traces; whether the metric should count such an arm is a roadmap question, and splitting this impl to satisfy the number would be worse code
+    // godlint-ignore-next-line maintainability/cyclomatic-complexity owner=tomerwave expires=2027-01-31 -- An exhaustive match whose every arm is a single write! is a formatting table, not eleven decisions a reader traces; splitting this impl to satisfy the number would be worse code. Whether the metric should count such an arm is #30
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::NoRules => write!(

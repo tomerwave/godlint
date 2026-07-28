@@ -125,6 +125,17 @@ expiry, and reason, then the total. A suppression with no reason is listed as
 listing the roadmap asks for: the total is a number someone can look at, rather than
 something discovered one grep at a time.
 
+## Godlint's own exceptions
+
+The repository has one, and it is the worked example. `impl fmt::Display for
+SuppressionDefect` is an eleven-arm exhaustive `match` in which every arm is a single
+`write!`, which `maintainability/cyclomatic-complexity` reports at 11 against a limit of
+10. Raising the limit would weaken the rule everywhere to accommodate one site; splitting
+the impl would make it less readable purely to move a number. So the site carries a
+directive with an owner, an expiry, and a reason, and
+[#30](https://github.com/tomerwave/godlint/issues/30) records the question the exception
+rests on. `godlint suppressions` shows it, and it is the whole inventory.
+
 ## What is not implemented
 
 `policy/unused-suppression` — a directive that silences nothing today, because the
