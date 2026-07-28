@@ -1,33 +1,15 @@
-use std::path::PathBuf;
-
 use godlint_core::{
     config::{ReturnCountRule, Severity},
-    facts::{FunctionFact, FunctionFactDetails},
+    facts::FunctionFact,
     rules::{Rule, return_count::ReturnCount},
-    source::{SourceFile, SourceRange},
 };
 
-fn function(return_count: u32) -> FunctionFact {
-    let source = SourceFile::new(PathBuf::from("src/example.rs"), "fn example() {}".into())
-        .unwrap_or_else(|error| panic!("creates source file: {error}"));
-    let range = SourceRange::new(0, source.source().len())
-        .unwrap_or_else(|error| panic!("creates source range: {error}"));
+use super::function_fact_fixture::FunctionFactFixture;
 
-    FunctionFact::new(
-        source,
-        Some("example".into()),
-        FunctionFactDetails {
-            range,
-            body_range: range,
-            parameter_count: 0,
-            decision_points: 0,
-            return_count,
-            statement_count: 0,
-            body_is_empty: false,
-            nesting_depth: 0,
-        },
-    )
-    .unwrap_or_else(|error| panic!("creates function fact: {error}"))
+fn function(return_count: u32) -> FunctionFact {
+    FunctionFactFixture::new()
+        .with_return_count(return_count)
+        .build()
 }
 
 fn configuration(max_returns: u32) -> ReturnCountRule {
