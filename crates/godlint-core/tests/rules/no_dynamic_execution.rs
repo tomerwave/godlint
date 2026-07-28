@@ -1,20 +1,9 @@
-use godlint_core::{
-    config::Config,
-    rules::{Violation, no_dynamic_execution},
-};
+use godlint_core::rules::{Violation, no_dynamic_execution};
 
-use super::support::facts;
-
-fn config(body: &str) -> Config {
-    yaml_serde::from_str(body).unwrap_or_else(|error| panic!("reads configuration: {error}"))
-}
+use super::support::rule_violations;
 
 fn violations(path: &str, source: &str, configuration: &str) -> Vec<Violation> {
-    no_dynamic_execution::evaluate(&[facts(path, source)], &config(configuration))
-        .unwrap_or_else(|error| panic!("evaluates dynamic execution: {error}"))
-        .into_iter()
-        .map(|finding| finding.violation)
-        .collect()
+    rule_violations(no_dynamic_execution::evaluate, path, source, configuration)
 }
 
 #[test]

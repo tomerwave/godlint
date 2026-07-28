@@ -137,7 +137,15 @@ the terminal need the numbers, and a rendered message must never be load-bearing
 findings are ordered by path, line, column, and rule identifier, so output order cannot
 depend on wording.
 
-Calls and accesses share one driver in `rules::reference`. Both answer the same question of
+`AccessFact` is produced for JavaScript, TypeScript and Python only. Rust states in its
+vocabulary that it has no member-read form of the constructs these rules police — it reads
+the environment through a call — so a reader can tell the difference between "Rust is not
+violated" and "Rust is not seen".
+
+Calls and accesses share one driver in `rules::reference`, which also owns the `CallRule`
+and `AccessRule` traits, so a reference rule declares what it looks for and the driver reads
+its identity and severity. That is what stops a rule naming another rule's identifier or
+ignoring the severity gate. Both answer the same question of
 a different fact slice — does this reference violate a policy — so the loop that walks them,
 honours the severity gate, and turns a violation into a finding is written once. A rule that
 consumes both, as the environment-read rule does, gets consistent ordering for free.

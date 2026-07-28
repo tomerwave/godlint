@@ -3,13 +3,31 @@ use std::{num::NonZeroU32, path::PathBuf};
 use godlint_core::source::SourceFile;
 use godlint_core::{
     analyzers::{SourceFacts, analyze},
+    config::Config,
     facts::FunctionFact,
     rules::{
-        CommentRule, FileLimitRule, FunctionLimitRule, Violation, evaluate_file_limit_rule,
-        evaluate_function_limit_rule,
+        CommentRule, FileLimitRule, Finding, FunctionLimitRule, RuleError, Violation,
+        evaluate_file_limit_rule, evaluate_function_limit_rule,
     },
     suppression::{Suppression, collect},
 };
+
+pub(super) fn config(body: &str) -> Config {
+    yaml_serde::from_str(body).unwrap_or_else(|error| panic!("reads configuration: {error}"))
+}
+
+pub(super) fn rule_violations(
+    evaluate: fn(&[SourceFacts], &Config) -> Result<Vec<Finding>, RuleError>,
+    path: &str,
+    source: &str,
+    configuration: &str,
+) -> Vec<Violation> {
+    evaluate(&[facts(path, source)], &config(configuration))
+        .unwrap_or_else(|error| panic!("evaluates {path}: {error}"))
+        .into_iter()
+        .map(|finding| finding.violation)
+        .collect()
+}
 
 pub(super) fn facts(path: &str, source: &str) -> SourceFacts {
     let source = SourceFile::new(PathBuf::from(path), source.into())

@@ -79,8 +79,9 @@ releases begin.
 - `security/no-dynamic-execution` — reports JavaScript `eval`, `Function`, and
   `new Function`, plus Python `eval` and `exec`.
 - `security/direct-environment-read` — reports direct JavaScript, Python, and Rust
-  environment reads outside a configuration boundary. `**/config.*` and `**/config/**` are
-  allowed without configuration, and `allow-in` widens that set rather than replacing it.
+  environment reads outside a configuration boundary. `allow-in` defaults to `**/config.*`
+  and `**/config/**`, and setting it replaces that default rather than adding to it, so a
+  repository can narrow the exemption as well as widen it.
 - All three read a callee exactly as spelled, and are off until a repository configures
   them, like every other rule. `std::env::var` is matched where the aliased `env::var` after
   `use std::env` is not, because knowing they name the same function needs resolution that

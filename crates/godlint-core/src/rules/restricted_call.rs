@@ -3,7 +3,7 @@ use crate::{
     config::{Config, RestrictedCall as RestrictedCallConfiguration, RestrictedCallRule, Severity},
     facts::CallFact,
     glob,
-    rules::{Finding, Rule, RuleError, Violation, evaluate_call_rule, when_configured},
+    rules::{CallRule, Finding, Rule, RuleError, Violation, evaluate_call_rule, when_configured},
     source::Language,
 };
 
@@ -12,7 +12,6 @@ enum Dialect {
     JavaScript,
     Python,
     Rust,
-    RustMacro,
 }
 
 const DEFAULTS: &[(&str, Dialect)] = &[
@@ -23,7 +22,7 @@ const DEFAULTS: &[(&str, Dialect)] = &[
     ("os._exit", Dialect::Python),
     ("print", Dialect::Python),
     ("std::process::exit", Dialect::Rust),
-    ("dbg!", Dialect::RustMacro),
+    ("dbg!", Dialect::Rust),
 ];
 
 pub struct RestrictedCall;
@@ -38,18 +37,17 @@ impl Rule for RestrictedCall {
     }
 }
 
+impl CallRule for RestrictedCall {
+    fn check(call: &CallFact, configuration: &Self::Configuration) -> Option<Violation> {
+        is_restricted(call, &configuration.calls).then(|| Violation::RestrictedCall {
+            callee: spelled(call),
+        })
+    }
+}
+
 pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, RuleError> {
     when_configured(config.rules.restricted_call.as_ref(), |rule| {
-        evaluate_call_rule(
-            facts,
-            RestrictedCall::severity(rule),
-            RestrictedCall::ID,
-            |call| {
-                is_restricted(call, &rule.calls).then(|| Violation::RestrictedCall {
-                    callee: spelled(call),
-                })
-            },
-        )
+        evaluate_call_rule::<RestrictedCall>(facts, rule)
     })
 }
 
@@ -65,41 +63,41 @@ fn spelled(call: &CallFact) -> String {
 
 fn is_restricted(call: &CallFact, restrictions: &[RestrictedCallConfiguration]) -> bool {
     let name = spelled(call);
-    let restricted_here = is_default_restriction(call, &name);
-
-    match restrictions
+    let configured = restrictions
         .iter()
-        .find(|restriction| restriction.name == name)
-    {
-        Some(_) if is_built_in(&name) && !restricted_here => false,
-        Some(restriction) => !is_allowed(call, &restriction.allow_in),
-        None => restricted_here,
-    }
+        .find(|restriction| restriction.name == name);
+    let restricted = if is_built_in(&name) {
+        is_built_in_of(call, &name)
+    } else {
+        configured.is_some()
+    };
+
+    restricted && !configured.is_some_and(|restriction| is_allowed(call, &restriction.allow_in))
 }
 
 fn is_built_in(name: &str) -> bool {
     DEFAULTS.iter().any(|(default, _)| *default == name)
 }
 
-fn is_default_restriction(call: &CallFact, name: &str) -> bool {
-    let dialect = dialect(call);
+fn is_built_in_of(call: &CallFact, name: &str) -> bool {
+    let dialect = dialect(call.source().language());
 
     DEFAULTS
         .iter()
         .any(|(default, spoken)| *default == name && *spoken == dialect)
 }
 
-fn dialect(call: &CallFact) -> Dialect {
-    match call.source().language() {
+fn dialect(language: Language) -> Dialect {
+    match language {
         Language::JavaScript | Language::TypeScript => Dialect::JavaScript,
         Language::Python => Dialect::Python,
-        Language::Rust if call.is_macro() => Dialect::RustMacro,
         Language::Rust => Dialect::Rust,
     }
 }
 
 fn is_allowed(call: &CallFact, paths: &[String]) -> bool {
-    let path = call.source().path().to_string_lossy();
-
-    paths.iter().any(|pattern| glob::matches(pattern, &path))
+    glob::matches_any(
+        paths.iter().map(String::as_str),
+        &call.source().path().to_string_lossy(),
+    )
 }

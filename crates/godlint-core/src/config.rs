@@ -112,7 +112,7 @@ pub struct NoDynamicExecutionRule {
 #[serde(deny_unknown_fields)]
 pub struct DirectEnvironmentReadRule {
     pub severity: Severity,
-    #[serde(default, rename = "allow-in")]
+    #[serde(default = "default_configuration_paths", rename = "allow-in")]
     pub allow_in: Vec<String>,
 }
 
@@ -190,6 +190,10 @@ fn default_markers() -> Vec<String> {
     vec!["TODO".into(), "FIXME".into(), "HACK".into(), "XXX".into()]
 }
 
+fn default_configuration_paths() -> Vec<String> {
+    vec!["**/config.*".into(), "**/config/**".into()]
+}
+
 const fn default_fail_on() -> Severity {
     Severity::Error
 }
@@ -227,8 +231,9 @@ pub enum ConfigError {
     DuplicateRestrictedCallName {
         name: String,
     },
-    InvalidRestrictedCallAllowIn,
-    InvalidDirectEnvironmentReadAllowIn,
+    BlankAllowIn {
+        rule: &'static str,
+    },
     InvalidExclude {
         pattern: String,
     },
@@ -296,7 +301,7 @@ impl Config {
             return Ok(());
         };
 
-        if rule.markers.is_empty() || rule.markers.iter().any(|marker| marker.trim().is_empty()) {
+        if rule.markers.is_empty() || any_blank(&rule.markers) {
             return Err(ConfigError::InvalidTodoMarkers);
         }
 
@@ -324,8 +329,10 @@ impl Config {
                 return Err(ConfigError::InvalidRestrictedCallName);
             }
 
-            if call.allow_in.iter().any(|path| path.trim().is_empty()) {
-                return Err(ConfigError::InvalidRestrictedCallAllowIn);
+            if any_blank(&call.allow_in) {
+                return Err(ConfigError::BlankAllowIn {
+                    rule: "architecture/restricted-call",
+                });
             }
 
             if !seen.insert(call.name.as_str()) {
@@ -343,13 +350,19 @@ impl Config {
             .rules
             .direct_environment_read
             .as_ref()
-            .is_some_and(|rule| rule.allow_in.iter().any(|path| path.trim().is_empty()))
+            .is_some_and(|rule| any_blank(&rule.allow_in))
         {
-            return Err(ConfigError::InvalidDirectEnvironmentReadAllowIn);
+            return Err(ConfigError::BlankAllowIn {
+                rule: "security/direct-environment-read",
+            });
         }
 
         Ok(())
     }
+}
+
+fn any_blank(values: &[String]) -> bool {
+    values.iter().any(|value| value.trim().is_empty())
 }
 
 fn prefix_is_unusable(prefix: &str) -> bool {
@@ -397,16 +410,9 @@ impl fmt::Display for ConfigError {
                      one entry decides its allow-in boundary"
                 )
             }
-            Self::InvalidRestrictedCallAllowIn => {
-                write!(
-                    formatter,
-                    "architecture/restricted-call allow-in paths must not be blank"
-                )
+            Self::BlankAllowIn { rule } => {
+                write!(formatter, "{rule} allow-in paths must not be blank")
             }
-            Self::InvalidDirectEnvironmentReadAllowIn => write!(
-                formatter,
-                "security/direct-environment-read allow-in paths must not be blank"
-            ),
             Self::InvalidExclude { pattern } => {
                 write!(formatter, "exclude pattern must not be blank: {pattern:?}")
             }
@@ -425,8 +431,7 @@ impl Error for ConfigError {
             | Self::InvalidTodoReferencePrefixes
             | Self::InvalidRestrictedCallName
             | Self::DuplicateRestrictedCallName { .. }
-            | Self::InvalidRestrictedCallAllowIn
-            | Self::InvalidDirectEnvironmentReadAllowIn
+            | Self::BlankAllowIn { .. }
             | Self::InvalidExclude { .. } => None,
         }
     }

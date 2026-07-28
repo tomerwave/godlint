@@ -2,33 +2,67 @@ use crate::{
     analyzers::SourceFacts,
     config::Severity,
     facts::{AccessFact, CallFact},
-    rules::{Finding, RuleError, Violation, finding},
+    rules::{Finding, Rule, RuleError, Violation, finding},
     source::{SourceFile, SourceRange},
 };
 
-pub trait Reference {
-    fn source(&self) -> &SourceFile;
+pub trait CallRule: Rule {
+    fn check(call: &CallFact, configuration: &Self::Configuration) -> Option<Violation>;
+}
 
-    fn range(&self) -> SourceRange;
+pub trait AccessRule: Rule {
+    fn check(access: &AccessFact, configuration: &Self::Configuration) -> Option<Violation>;
+}
+
+pub fn evaluate_call_rule<R: CallRule>(
+    facts: &[SourceFacts],
+    configuration: &R::Configuration,
+) -> Result<Vec<Finding>, RuleError> {
+    evaluate(
+        facts,
+        R::severity(configuration),
+        R::ID,
+        SourceFacts::calls,
+        |call| R::check(call, configuration),
+    )
+}
+
+pub fn evaluate_access_rule<R: AccessRule>(
+    facts: &[SourceFacts],
+    configuration: &R::Configuration,
+) -> Result<Vec<Finding>, RuleError> {
+    evaluate(
+        facts,
+        R::severity(configuration),
+        R::ID,
+        SourceFacts::accesses,
+        |access| R::check(access, configuration),
+    )
+}
+
+pub trait Reference {
+    fn source_file(&self) -> &SourceFile;
+
+    fn source_range(&self) -> SourceRange;
 }
 
 impl Reference for CallFact {
-    fn source(&self) -> &SourceFile {
-        CallFact::source(self)
+    fn source_file(&self) -> &SourceFile {
+        self.source()
     }
 
-    fn range(&self) -> SourceRange {
-        CallFact::range(self)
+    fn source_range(&self) -> SourceRange {
+        self.range()
     }
 }
 
 impl Reference for AccessFact {
-    fn source(&self) -> &SourceFile {
-        AccessFact::source(self)
+    fn source_file(&self) -> &SourceFile {
+        self.source()
     }
 
-    fn range(&self) -> SourceRange {
-        AccessFact::range(self)
+    fn source_range(&self) -> SourceRange {
+        self.range()
     }
 }
 
@@ -52,8 +86,8 @@ pub fn evaluate<R: Reference>(
             };
 
             findings.push(finding(
-                Reference::source(reference),
-                Reference::range(reference),
+                reference.source_file(),
+                reference.source_range(),
                 severity,
                 rule_id,
                 violation,

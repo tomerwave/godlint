@@ -1,20 +1,14 @@
-use godlint_core::{
-    config::Config,
-    rules::{Violation, direct_environment_read},
-};
+use godlint_core::rules::{Violation, direct_environment_read};
 
-use super::support::facts;
-
-fn config(body: &str) -> Config {
-    yaml_serde::from_str(body).unwrap_or_else(|error| panic!("reads configuration: {error}"))
-}
+use super::support::rule_violations;
 
 fn violations(path: &str, source: &str, configuration: &str) -> Vec<Violation> {
-    direct_environment_read::evaluate(&[facts(path, source)], &config(configuration))
-        .unwrap_or_else(|error| panic!("evaluates environment reads: {error}"))
-        .into_iter()
-        .map(|finding| finding.violation)
-        .collect()
+    rule_violations(
+        direct_environment_read::evaluate,
+        path,
+        source,
+        configuration,
+    )
 }
 
 #[test]

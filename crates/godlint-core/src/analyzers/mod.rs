@@ -5,7 +5,7 @@ use tree_sitter::{Language as TreeSitterLanguage, Node, Parser};
 use crate::{
     facts::{
         AccessFact, AccessFactError, CallFact, CallFactError, CommentFact, CommentFactError,
-        CommentKind, FunctionFact, FunctionFactDetails, FunctionFactError,
+        FunctionFact, FunctionFactDetails, FunctionFactError,
     },
     source::{Language, SourceFile, SourceRange, SourceRangeError},
 };
@@ -155,37 +155,18 @@ struct Collected {
 }
 
 impl Collected {
-    fn absorb_declarations(
+    fn absorb(
         &mut self,
         node: Node<'_>,
         source: &SourceFile,
         vocabulary: &Vocabulary,
     ) -> Result<(), AnalyzerError> {
-        if metrics::is_function(node, vocabulary) {
-            self.functions
-                .push(function_fact(node, source, vocabulary)?);
-        }
-
-        if let Some(kind) = (vocabulary.comment_kind)(node, source.source()) {
-            self.comments.push(comment_fact(node, source, kind)?);
-        }
-
-        Ok(())
-    }
-
-    fn absorb_references(
-        &mut self,
-        node: Node<'_>,
-        source: &SourceFile,
-        vocabulary: &Vocabulary,
-    ) -> Result<(), AnalyzerError> {
-        if let Some(call) = call_fact(node, source, vocabulary)? {
-            self.calls.push(call);
-        }
-
-        if let Some(access) = access_fact(node, source, vocabulary)? {
-            self.accesses.push(access);
-        }
+        self.functions
+            .extend(function_fact(node, source, vocabulary)?);
+        self.comments
+            .extend(comment_fact(node, source, vocabulary)?);
+        self.calls.extend(call_fact(node, source, vocabulary)?);
+        self.accesses.extend(access_fact(node, source, vocabulary)?);
 
         Ok(())
     }
@@ -197,8 +178,7 @@ fn collect_source_facts(
     vocabulary: &Vocabulary,
     collected: &mut Collected,
 ) -> Result<(), AnalyzerError> {
-    collected.absorb_declarations(node, source, vocabulary)?;
-    collected.absorb_references(node, source, vocabulary)?;
+    collected.absorb(node, source, vocabulary)?;
 
     let mut cursor = node.walk();
 
@@ -217,15 +197,9 @@ fn call_fact(
     let Some(callee) = (vocabulary.callee)(node) else {
         return Ok(None);
     };
-    let callee_text = source
-        .source()
-        .get(callee.node.byte_range())
-        .unwrap_or_default();
-
-    if !is_direct_path(callee_text) {
+    let Some(callee_text) = direct_path(callee.node, source) else {
         return Ok(None);
-    }
-
+    };
     let range = node_range(callee.node, source)?;
     let fact = CallFact::new(
         source.clone(),
@@ -250,12 +224,9 @@ fn access_fact(
         return Ok(None);
     }
 
-    let text = source.source().get(node.byte_range()).unwrap_or_default();
-
-    if !is_direct_path(text) {
+    let Some(text) = direct_path(node, source) else {
         return Ok(None);
-    }
-
+    };
     let range = node_range(node, source)?;
     let fact = AccessFact::new(source.clone(), range, text.to_owned()).map_err(|error| {
         AnalyzerError::InvalidAccess {
@@ -265,6 +236,13 @@ fn access_fact(
     })?;
 
     Ok(Some(fact))
+}
+
+fn direct_path<'source>(node: Node<'_>, source: &'source SourceFile) -> Option<&'source str> {
+    source
+        .source()
+        .get(node.byte_range())
+        .filter(|text| is_direct_path(text))
 }
 
 fn is_direct_path(text: &str) -> bool {
@@ -277,21 +255,30 @@ fn is_direct_path(text: &str) -> bool {
 fn comment_fact(
     node: Node<'_>,
     source: &SourceFile,
-    kind: CommentKind,
-) -> Result<CommentFact, AnalyzerError> {
+    vocabulary: &Vocabulary,
+) -> Result<Option<CommentFact>, AnalyzerError> {
+    let Some(kind) = (vocabulary.comment_kind)(node, source.source()) else {
+        return Ok(None);
+    };
     let range = node_range(node, source)?;
 
-    CommentFact::new(source.clone(), range, kind).map_err(|error| AnalyzerError::InvalidComment {
-        path: source.path().to_path_buf(),
-        source: error,
-    })
+    CommentFact::new(source.clone(), range, kind)
+        .map(Some)
+        .map_err(|error| AnalyzerError::InvalidComment {
+            path: source.path().to_path_buf(),
+            source: error,
+        })
 }
 
 fn function_fact(
     node: Node<'_>,
     source: &SourceFile,
     vocabulary: &Vocabulary,
-) -> Result<FunctionFact, AnalyzerError> {
+) -> Result<Option<FunctionFact>, AnalyzerError> {
+    if !metrics::is_function(node, vocabulary) {
+        return Ok(None);
+    }
+
     let range = node_range(node, source)?;
     let body_range = node
         .child_by_field_name("body")
@@ -319,6 +306,7 @@ fn function_fact(
             is_abstract: (vocabulary.is_abstract)(node, text),
         },
     )
+    .map(Some)
     .map_err(|error| AnalyzerError::InvalidFunction {
         path: source.path().to_path_buf(),
         source: error,

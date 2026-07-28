@@ -1,6 +1,9 @@
 exit-code: 1
 
 stdout: |
+  config/config.py:1:1: error[security/direct-environment-read] os.getenv reads environment directly; read configuration through a config boundary instead.
+  config/config.rs:1:1: error[security/direct-environment-read] std::env::var reads environment directly; read configuration through a config boundary instead.
+  config/config.ts:1:1: error[security/direct-environment-read] process.env reads environment directly; read configuration through a config boundary instead.
   example.js:1:1: error[security/direct-environment-read] process.env reads environment directly; read configuration through a config boundary instead.
   example.py:1:1: error[security/direct-environment-read] os.getenv reads environment directly; read configuration through a config boundary instead.
   example.py:2:1: error[security/direct-environment-read] os.environ reads environment directly; read configuration through a config boundary instead.

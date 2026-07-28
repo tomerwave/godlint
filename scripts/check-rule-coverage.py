@@ -35,7 +35,11 @@ BUDGET = {
     # A rule that evaluates two fact kinds propagates a location error from each, and the
     # shared reference driver propagates one of its own. CallFact and AccessFact validate
     # their ranges on construction, so none of these can execute through the fact contract.
-    "src/rules/direct_environment_read.rs": 2,
+    # Two are the rule's own `?` propagations. The third is `Language::Rust => false` in
+    # `is_environment_access`: Rust states in its vocabulary that it has no member-access
+    # form, so no Rust file produces an access fact and the arm exists to make the compiler
+    # demand a decision when a language is added.
+    "src/rules/direct_environment_read.rs": 3,
     "src/rules/reference.rs": 1,
     "src/rules/todo_requires_reference.rs": 1,
 }

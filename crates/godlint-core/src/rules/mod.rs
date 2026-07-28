@@ -4,7 +4,7 @@ use crate::{
     analyzers::SourceFacts,
     config::{Config, Severity},
     date::Date,
-    facts::{AccessFact, CallFact, CommentFact, FunctionFact},
+    facts::{CommentFact, FunctionFact},
     source::{SourceFile, SourceFileError, SourceRange},
     suppression::{self, Suppression},
 };
@@ -22,6 +22,8 @@ pub mod no_comments;
 pub mod no_dynamic_execution;
 pub mod parameter_count;
 mod reference;
+
+pub use reference::{AccessRule, CallRule, evaluate_access_rule, evaluate_call_rule};
 mod registry;
 pub mod restricted_call;
 pub mod return_count;
@@ -297,24 +299,6 @@ pub fn evaluate_file_limit_rule<R: FileLimitRule>(
 
         (actual > max).then_some(Violation::limit(R::METRIC, actual, max))
     })
-}
-
-pub fn evaluate_call_rule(
-    facts: &[SourceFacts],
-    severity: Severity,
-    rule_id: &'static str,
-    check: impl Fn(&CallFact) -> Option<Violation>,
-) -> Result<Vec<Finding>, RuleError> {
-    reference::evaluate(facts, severity, rule_id, SourceFacts::calls, check)
-}
-
-pub fn evaluate_access_rule(
-    facts: &[SourceFacts],
-    severity: Severity,
-    rule_id: &'static str,
-    check: impl Fn(&AccessFact) -> Option<Violation>,
-) -> Result<Vec<Finding>, RuleError> {
-    reference::evaluate(facts, severity, rule_id, SourceFacts::accesses, check)
 }
 
 fn evaluate_files(

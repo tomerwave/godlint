@@ -232,7 +232,9 @@ fn rejects_a_blank_restricted_call_allow_in_path() {
 
     assert!(matches!(
         result,
-        Err(ConfigError::InvalidRestrictedCallAllowIn)
+        Err(ConfigError::BlankAllowIn {
+            rule: "architecture/restricted-call"
+        })
     ));
 }
 
@@ -244,7 +246,9 @@ fn rejects_a_blank_direct_environment_read_allow_in_path() {
 
     assert!(matches!(
         result,
-        Err(ConfigError::InvalidDirectEnvironmentReadAllowIn)
+        Err(ConfigError::BlankAllowIn {
+            rule: "security/direct-environment-read"
+        })
     ));
 }
 
