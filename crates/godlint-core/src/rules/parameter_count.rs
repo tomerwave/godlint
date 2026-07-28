@@ -3,7 +3,7 @@ use crate::{
     config::{Config, ParameterCountRule, Severity},
     facts::FunctionFact,
     rules::{
-        Finding, FunctionRule, Metric, Rule, RuleError, Violation, evaluate_function_rule,
+        Finding, FunctionLimitRule, Metric, Rule, RuleError, evaluate_function_limit_rule,
         when_configured,
     },
 };
@@ -20,21 +20,24 @@ impl Rule for ParameterCount {
     }
 }
 
-impl FunctionRule for ParameterCount {
-    fn check(
+impl FunctionLimitRule for ParameterCount {
+    const METRIC: Metric = Metric::ParameterCount;
+
+    fn measure(
         function: &FunctionFact,
         _facts: &SourceFacts,
-        configuration: &Self::Configuration,
-    ) -> Option<Violation> {
-        let actual = function.parameter_count().value();
-        let max = configuration.limit();
+        _configuration: &Self::Configuration,
+    ) -> u32 {
+        function.parameter_count().value()
+    }
 
-        (actual > max).then_some(Violation::limit(Metric::ParameterCount, actual, max))
+    fn max(configuration: &Self::Configuration) -> u32 {
+        configuration.limit()
     }
 }
 
 pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, RuleError> {
     when_configured(config.rules.parameter_count.as_ref(), |configuration| {
-        evaluate_function_rule::<ParameterCount>(facts, configuration)
+        evaluate_function_limit_rule::<ParameterCount>(facts, configuration)
     })
 }

@@ -1,9 +1,9 @@
 use godlint_core::{
     config::{LineLimitRule, Severity},
-    rules::{FunctionRule, Metric, Rule, Violation, function_size::FunctionSize},
+    rules::{Metric, Rule, Violation, function_size::FunctionSize},
 };
 
-use super::support::{function, limit};
+use super::support::{function_limits, limit};
 
 fn configuration(max_lines: u32, skip_blank_lines: bool, skip_comments: bool) -> LineLimitRule {
     LineLimitRule {
@@ -14,19 +14,23 @@ fn configuration(max_lines: u32, skip_blank_lines: bool, skip_comments: bool) ->
     }
 }
 
-fn lines(path: &str, source: &str, skip_blank_lines: bool, skip_comments: bool) -> u32 {
-    let (facts, subject) = function(path, source);
+fn violations(path: &str, source: &str, configuration: &LineLimitRule) -> Vec<Violation> {
+    function_limits::<FunctionSize>(path, source, configuration)
+}
 
-    match FunctionSize::check(
-        &subject,
-        &facts,
+fn lines(path: &str, source: &str, skip_blank_lines: bool, skip_comments: bool) -> u32 {
+    match violations(
+        path,
+        source,
         &configuration(1, skip_blank_lines, skip_comments),
-    ) {
+    )
+    .first()
+    {
         Some(Violation::Limit {
             metric: Metric::FunctionLines,
             actual,
             ..
-        }) => actual,
+        }) => *actual,
         _ => 1,
     }
 }
@@ -59,23 +63,22 @@ fn skips_comment_only_lines() {
         (
             "src/example.rs",
             "fn example() {\n    // explanation\n    run();\n    /*\n     * detail\n     */\n}",
+            3,
         ),
         (
             "src/example.ts",
             "function example() {\n  // explanation\n  run();\n  /* detail */\n}",
+            3,
         ),
         (
             "src/example.py",
             "def example():\n    # explanation\n    run()",
+            2,
         ),
     ];
 
-    for (path, source) in cases {
-        assert_eq!(
-            lines(path, source, true, true),
-            if path.ends_with(".py") { 2 } else { 3 },
-            "{path}"
-        );
+    for (path, source, expected) in cases {
+        assert_eq!(lines(path, source, true, true), expected, "{path}");
     }
 }
 
@@ -146,24 +149,24 @@ fn counts_a_line_holding_both_code_and_a_comment() {
 
 #[test]
 fn reports_a_function_over_its_limit() {
-    let (facts, big) = function("src/example.rs", "fn example() {\n    run();\n}");
-
     assert_eq!(
-        FunctionSize::check(&big, &facts, &configuration(2, true, true)),
-        Some(Violation::Limit {
-            metric: Metric::FunctionLines,
-            actual: 3,
-            max: 2
-        })
+        violations(
+            "src/example.rs",
+            "fn example() {\n    run();\n}",
+            &configuration(2, true, true)
+        ),
+        vec![Violation::limit(Metric::FunctionLines, 3, 2)]
     );
 }
 
 #[test]
 fn accepts_a_function_at_its_limit() {
-    let (facts, big) = function("src/example.rs", "fn example() {\n    run();\n}");
-
-    assert_eq!(
-        FunctionSize::check(&big, &facts, &configuration(3, true, true)),
-        None
+    assert!(
+        violations(
+            "src/example.rs",
+            "fn example() {\n    run();\n}",
+            &configuration(3, true, true)
+        )
+        .is_empty()
     );
 }

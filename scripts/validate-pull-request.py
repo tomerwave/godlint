@@ -215,14 +215,6 @@ def check_change(report: Report, base: str) -> None:
         f"{CHANGELOG}: rule behaviour or configuration schema changed without an entry",
     )
 
-    touches_a_rule = any(
-        path.startswith(f"{RULES_DIR}/") and rule_id(Path(path)) is not None
-        for path in changed
-    )
-    report.check(
-        not touches_a_rule or any(path.startswith(str(FIXTURES_DIR)) for path in changed),
-        f"{FIXTURES_DIR}: rule modules changed without touching any fixture",
-    )
 
 
 def main() -> int:

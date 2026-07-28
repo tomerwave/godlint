@@ -2,7 +2,7 @@ use crate::{
     analyzers::SourceFacts,
     config::{Config, LineLimitRule, Severity},
     rules::{
-        FileRule, Finding, Metric, Rule, RuleError, Violation, evaluate_file_rule, line_count,
+        FileLimitRule, Finding, Metric, Rule, RuleError, evaluate_file_limit_rule, line_count,
         when_configured,
     },
 };
@@ -19,22 +19,25 @@ impl Rule for FileSize {
     }
 }
 
-impl FileRule for FileSize {
-    fn check(facts: &SourceFacts, configuration: &Self::Configuration) -> Option<Violation> {
-        let actual = line_count::effective_line_count(
+impl FileLimitRule for FileSize {
+    const METRIC: Metric = Metric::FileLines;
+
+    fn measure(facts: &SourceFacts, configuration: &Self::Configuration) -> u32 {
+        line_count::effective_line_count(
             facts,
             facts.source().full_range(),
             configuration.skip_blank_lines,
             configuration.skip_comments,
-        );
-        let max = configuration.max_lines.get();
+        )
+    }
 
-        (actual > max).then_some(Violation::limit(Metric::FileLines, actual, max))
+    fn max(configuration: &Self::Configuration) -> u32 {
+        configuration.max_lines.get()
     }
 }
 
 pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, RuleError> {
     when_configured(config.rules.file_size.as_ref(), |configuration| {
-        evaluate_file_rule::<FileSize>(facts, configuration)
+        evaluate_file_limit_rule::<FileSize>(facts, configuration)
     })
 }

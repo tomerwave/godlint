@@ -139,6 +139,19 @@ releases begin.
 - Every rule must now have a fixture that reports it and a fixture that configures it
   without reporting it, so a rule cannot be left with nothing proving it stays silent on
   conforming code. `style/no-comments` was missing the second and now has it.
+- A rule that compares one measurement against one ceiling now declares the metric it
+  reports under, how to measure it, and how to read the ceiling, and no longer expresses
+  the comparison. The comparison lives in the driver, so a rule cannot invert the test,
+  and pairing the metric with the rule as an associated constant means it cannot report
+  under another rule's metric. Behaviour and output are unchanged. The `FileRule` trait and
+  its driver go with the change, having no implementors left once the one file rule became a
+  limit rule; the coverage gate is what noticed.
+
+- The pull request validator no longer requires a fixture change whenever a rule module
+  changes. A behaviour-preserving refactor should leave every fixture untouched, and
+  byte-identical output is the evidence that it is correct, so the check penalised exactly
+  the change it should have welcomed. Whether a fixture is owed is a judgement, and the
+  template asks for it there.
 
 ### Fixed
 

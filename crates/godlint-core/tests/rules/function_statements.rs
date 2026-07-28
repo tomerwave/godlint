@@ -1,9 +1,9 @@
 use godlint_core::{
     config::{FunctionStatementsRule, Severity},
-    rules::{FunctionRule, Metric, Rule, Violation, function_statements::FunctionStatements},
+    rules::{Metric, Rule, Violation, function_statements::FunctionStatements},
 };
 
-use super::support::function;
+use super::support::{function, function_limits};
 
 fn configuration(max_statements: u32) -> FunctionStatementsRule {
     FunctionStatementsRule {
@@ -77,30 +77,24 @@ fn counts_an_expression_body_as_one_statement() {
 
 #[test]
 fn reports_a_function_over_its_limit() {
-    let (facts, busy) = function(
-        "src/example.rs",
-        "fn example() {\n    one();\n    two();\n}",
-    );
-
     assert_eq!(
-        FunctionStatements::check(&busy, &facts, &configuration(1)),
-        Some(Violation::Limit {
-            metric: Metric::StatementCount,
-            actual: 2,
-            max: 1
-        })
+        function_limits::<FunctionStatements>(
+            "src/example.rs",
+            "fn example() {\n    one();\n    two();\n}",
+            &configuration(1),
+        ),
+        vec![Violation::limit(Metric::StatementCount, 2, 1)]
     );
 }
 
 #[test]
 fn accepts_a_function_at_its_limit() {
-    let (facts, busy) = function(
-        "src/example.rs",
-        "fn example() {\n    one();\n    two();\n}",
-    );
-
-    assert_eq!(
-        FunctionStatements::check(&busy, &facts, &configuration(2)),
-        None
+    assert!(
+        function_limits::<FunctionStatements>(
+            "src/example.rs",
+            "fn example() {\n    one();\n    two();\n}",
+            &configuration(2),
+        )
+        .is_empty()
     );
 }

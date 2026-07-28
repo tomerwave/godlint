@@ -3,7 +3,7 @@ use crate::{
     config::{Config, FunctionStatementsRule, Severity},
     facts::FunctionFact,
     rules::{
-        Finding, FunctionRule, Metric, Rule, RuleError, Violation, evaluate_function_rule,
+        Finding, FunctionLimitRule, Metric, Rule, RuleError, evaluate_function_limit_rule,
         when_configured,
     },
 };
@@ -20,21 +20,24 @@ impl Rule for FunctionStatements {
     }
 }
 
-impl FunctionRule for FunctionStatements {
-    fn check(
+impl FunctionLimitRule for FunctionStatements {
+    const METRIC: Metric = Metric::StatementCount;
+
+    fn measure(
         function: &FunctionFact,
         _facts: &SourceFacts,
-        configuration: &Self::Configuration,
-    ) -> Option<Violation> {
-        let actual = function.statement_count().value();
-        let max = configuration.limit();
+        _configuration: &Self::Configuration,
+    ) -> u32 {
+        function.statement_count().value()
+    }
 
-        (actual > max).then_some(Violation::limit(Metric::StatementCount, actual, max))
+    fn max(configuration: &Self::Configuration) -> u32 {
+        configuration.limit()
     }
 }
 
 pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, RuleError> {
     when_configured(config.rules.function_statements.as_ref(), |configuration| {
-        evaluate_function_rule::<FunctionStatements>(facts, configuration)
+        evaluate_function_limit_rule::<FunctionStatements>(facts, configuration)
     })
 }

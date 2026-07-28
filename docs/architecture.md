@@ -97,6 +97,15 @@ fact scope: a function rule, a file rule, or a comment rule. A shared driver per
 runs it over the fact set. This is why the severity gate is evaluated once rather than
 per function, and why no rule can forget to honour it.
 
+Most rules compare one measurement against one ceiling, and those implement a limit
+trait instead: they declare the metric they report under, how to measure it, and how to
+read the ceiling from configuration. They do not express the comparison. Writing
+`actual > max` once in the driver rather than once per rule means a rule cannot invert
+the test, and pairing the metric with the rule as an associated constant means it cannot
+report under another rule's metric — neither mistake is available to make. The
+measurement receives the configuration, because whether blank lines and commentary count
+is part of measuring, not part of comparing.
+
 The registry is a table of evaluators. Adding a rule appends an entry rather than growing
 a branch in a dispatcher, which had previously pushed the dispatcher's own cyclomatic
 complexity to the repository's configured limit.
