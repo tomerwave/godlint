@@ -1,7 +1,7 @@
 use crate::{
     config::{Config, Severity, UnusedSuppressionRule},
     rules::{
-        Finding, Rule, RuleError, Violation, configured_severity, is_suppressible_rule,
+        Finding, Reporting, Rule, RuleError, Violation, configured_severity, is_suppressible_rule,
         when_configured,
     },
     suppression::Suppression,
@@ -25,9 +25,9 @@ pub fn evaluate(
     config: &Config,
 ) -> Result<Vec<Finding>, RuleError> {
     when_configured(config.rules.unused_suppression.as_ref(), |configuration| {
-        let severity = UnusedSuppression::severity(configuration);
+        let reporting = Reporting::of::<UnusedSuppression>(configuration);
 
-        if severity == Severity::Off {
+        if reporting.severity == Severity::Off {
             return Ok(Vec::new());
         }
 
@@ -38,8 +38,7 @@ pub fn evaluate(
                 super::finding(
                     suppression.source(),
                     suppression.range(),
-                    severity,
-                    UnusedSuppression::ID,
+                    reporting,
                     Violation::UnusedSuppression,
                 )
             })

@@ -204,9 +204,9 @@ pub fn evaluate_suppression_rule<R: SuppressionRule>(
     configuration: &R::Configuration,
     today: Date,
 ) -> Result<Vec<Finding>, RuleError> {
-    let severity = R::severity(configuration);
+    let reporting = Reporting::of::<R>(configuration);
 
-    if severity == Severity::Off {
+    if reporting.severity == Severity::Off {
         return Ok(Vec::new());
     }
 
@@ -217,8 +217,7 @@ pub fn evaluate_suppression_rule<R: SuppressionRule>(
             findings.push(finding(
                 suppression.source(),
                 suppression.range(),
-                severity,
-                R::ID,
+                reporting,
                 violation,
             )?);
         }
@@ -233,8 +232,7 @@ pub fn evaluate_function_rule<R: FunctionRule>(
 ) -> Result<Vec<Finding>, RuleError> {
     evaluate_functions(
         facts,
-        R::severity(configuration),
-        R::ID,
+        Reporting::of::<R>(configuration),
         |function, source| R::check(function, source, configuration),
     )
 }
@@ -247,8 +245,7 @@ pub fn evaluate_function_limit_rule<R: FunctionLimitRule>(
 
     evaluate_functions(
         facts,
-        R::severity(configuration),
-        R::ID,
+        Reporting::of::<R>(configuration),
         |function, source| {
             let actual = R::measure(function, source, configuration);
 
@@ -259,11 +256,10 @@ pub fn evaluate_function_limit_rule<R: FunctionLimitRule>(
 
 fn evaluate_functions(
     facts: &[SourceFacts],
-    severity: Severity,
-    rule_id: &'static str,
+    reporting: Reporting,
     check: impl Fn(&FunctionFact, &SourceFacts) -> Option<Violation>,
 ) -> Result<Vec<Finding>, RuleError> {
-    if severity == Severity::Off {
+    if reporting.severity == Severity::Off {
         return Ok(Vec::new());
     }
 
@@ -278,8 +274,7 @@ fn evaluate_functions(
             findings.push(finding(
                 source_facts.source(),
                 function.range(),
-                severity,
-                rule_id,
+                reporting,
                 violation,
             )?);
         }
@@ -294,7 +289,7 @@ pub fn evaluate_file_limit_rule<R: FileLimitRule>(
 ) -> Result<Vec<Finding>, RuleError> {
     let max = R::max(configuration);
 
-    evaluate_files(facts, R::severity(configuration), R::ID, |source| {
+    evaluate_files(facts, Reporting::of::<R>(configuration), |source| {
         let actual = R::measure(source, configuration);
 
         (actual > max).then_some(Violation::limit(R::METRIC, actual, max))
@@ -303,11 +298,10 @@ pub fn evaluate_file_limit_rule<R: FileLimitRule>(
 
 fn evaluate_files(
     facts: &[SourceFacts],
-    severity: Severity,
-    rule_id: &'static str,
+    reporting: Reporting,
     check: impl Fn(&SourceFacts) -> Option<Violation>,
 ) -> Result<Vec<Finding>, RuleError> {
-    if severity == Severity::Off {
+    if reporting.severity == Severity::Off {
         return Ok(Vec::new());
     }
 
@@ -318,8 +312,7 @@ fn evaluate_files(
                 finding(
                     source_facts.source(),
                     source_facts.source().full_range(),
-                    severity,
-                    rule_id,
+                    reporting,
                     violation,
                 )
             })
@@ -331,9 +324,9 @@ pub fn evaluate_comment_rule<R: CommentRule>(
     facts: &[SourceFacts],
     configuration: &R::Configuration,
 ) -> Result<Vec<Finding>, RuleError> {
-    let severity = R::severity(configuration);
+    let reporting = Reporting::of::<R>(configuration);
 
-    if severity == Severity::Off {
+    if reporting.severity == Severity::Off {
         return Ok(Vec::new());
     }
 
@@ -342,13 +335,7 @@ pub fn evaluate_comment_rule<R: CommentRule>(
     for source_facts in facts {
         for comment in source_facts.comments() {
             for (range, violation) in R::check(comment, configuration) {
-                findings.push(finding(
-                    source_facts.source(),
-                    range,
-                    severity,
-                    R::ID,
-                    violation,
-                )?);
+                findings.push(finding(source_facts.source(), range, reporting, violation)?);
             }
         }
     }
@@ -356,11 +343,25 @@ pub fn evaluate_comment_rule<R: CommentRule>(
     Ok(findings)
 }
 
+#[derive(Clone, Copy)]
+pub struct Reporting {
+    pub severity: Severity,
+    pub rule_id: &'static str,
+}
+
+impl Reporting {
+    pub fn of<R: Rule>(configuration: &R::Configuration) -> Self {
+        Self {
+            severity: R::severity(configuration),
+            rule_id: R::ID,
+        }
+    }
+}
+
 fn finding(
     source: &SourceFile,
     range: SourceRange,
-    severity: Severity,
-    rule_id: &'static str,
+    reporting: Reporting,
     violation: Violation,
 ) -> Result<Finding, RuleError> {
     let location = source
@@ -372,8 +373,8 @@ fn finding(
         range,
         line: location.start.line,
         column: location.start.column,
-        severity,
-        rule_id,
+        severity: reporting.severity,
+        rule_id: reporting.rule_id,
         violation,
     })
 }

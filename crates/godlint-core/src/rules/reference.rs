@@ -2,7 +2,7 @@ use crate::{
     analyzers::SourceFacts,
     config::Severity,
     facts::{AccessFact, CallFact},
-    rules::{Finding, Rule, RuleError, Violation, finding},
+    rules::{Finding, Reporting, Rule, RuleError, Violation, finding},
     source::{SourceFile, SourceRange},
 };
 
@@ -20,8 +20,7 @@ pub fn evaluate_call_rule<R: CallRule>(
 ) -> Result<Vec<Finding>, RuleError> {
     evaluate(
         facts,
-        R::severity(configuration),
-        R::ID,
+        Reporting::of::<R>(configuration),
         SourceFacts::calls,
         |call| R::check(call, configuration),
     )
@@ -33,8 +32,7 @@ pub fn evaluate_access_rule<R: AccessRule>(
 ) -> Result<Vec<Finding>, RuleError> {
     evaluate(
         facts,
-        R::severity(configuration),
-        R::ID,
+        Reporting::of::<R>(configuration),
         SourceFacts::accesses,
         |access| R::check(access, configuration),
     )
@@ -68,12 +66,11 @@ impl Reference for AccessFact {
 
 pub fn evaluate<R: Reference>(
     facts: &[SourceFacts],
-    severity: Severity,
-    rule_id: &'static str,
+    reporting: Reporting,
     references: impl Fn(&SourceFacts) -> &[R],
     check: impl Fn(&R) -> Option<Violation>,
 ) -> Result<Vec<Finding>, RuleError> {
-    if severity == Severity::Off {
+    if reporting.severity == Severity::Off {
         return Ok(Vec::new());
     }
 
@@ -88,8 +85,7 @@ pub fn evaluate<R: Reference>(
             findings.push(finding(
                 reference.source_file(),
                 reference.source_range(),
-                severity,
-                rule_id,
+                reporting,
                 violation,
             )?);
         }

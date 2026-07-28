@@ -18,6 +18,12 @@ pub fn apply(name: &str, rules: &mut Rules) {
 }
 
 fn recommended(rules: &mut Rules) {
+    maintainability(rules);
+    policy(rules);
+    security(rules);
+}
+
+fn maintainability(rules: &mut Rules) {
     let error = Severity::Error;
 
     rules.function_size.get_or_insert(LineLimitRule {
@@ -60,6 +66,11 @@ fn recommended(rules: &mut Rules) {
         severity: error,
         allow_names: Vec::new(),
     });
+}
+
+fn policy(rules: &mut Rules) {
+    let error = Severity::Error;
+
     rules
         .todo_requires_reference
         .get_or_insert(TodoRequiresReferenceRule {
@@ -81,6 +92,11 @@ fn recommended(rules: &mut Rules) {
     rules
         .unused_suppression
         .get_or_insert(UnusedSuppressionRule { severity: error });
+}
+
+fn security(rules: &mut Rules) {
+    let error = Severity::Error;
+
     rules.restricted_call.get_or_insert(RestrictedCallRule {
         severity: error,
         calls: Vec::new(),

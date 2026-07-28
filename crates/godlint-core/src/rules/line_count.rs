@@ -1,10 +1,15 @@
 use crate::{analyzers::SourceFacts, facts::CommentFact, source::SourceRange};
 
+#[derive(Clone, Copy)]
+pub(crate) struct Skipped {
+    pub blank_lines: bool,
+    pub comments: bool,
+}
+
 pub(crate) fn effective_line_count(
     facts: &SourceFacts,
     range: SourceRange,
-    skip_blank_lines: bool,
-    skip_comments: bool,
+    skipped: Skipped,
 ) -> u32 {
     let comments = facts.comments();
     let text = &facts.source().source()[range.start()..range.end()];
@@ -25,8 +30,7 @@ pub(crate) fn effective_line_count(
             line.trim_end_matches(['\n', '\r']),
             start,
             &comments[cursor..],
-            skip_blank_lines,
-            skip_comments,
+            skipped,
         ) {
             counted += 1;
         }
@@ -35,18 +39,12 @@ pub(crate) fn effective_line_count(
     counted
 }
 
-fn line_is_counted(
-    line: &str,
-    start: usize,
-    comments: &[CommentFact],
-    skip_blank_lines: bool,
-    skip_comments: bool,
-) -> bool {
-    if skip_blank_lines && line.trim().is_empty() {
+fn line_is_counted(line: &str, start: usize, comments: &[CommentFact], skipped: Skipped) -> bool {
+    if skipped.blank_lines && line.trim().is_empty() {
         return false;
     }
 
-    !(skip_comments && line_is_commentary(line, start, comments))
+    !(skipped.comments && line_is_commentary(line, start, comments))
 }
 
 fn line_is_commentary(line: &str, start: usize, comments: &[CommentFact]) -> bool {

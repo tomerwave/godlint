@@ -246,6 +246,18 @@ pub enum ConfigError {
     },
 }
 
+type Validator = fn(&Config) -> Result<(), ConfigError>;
+
+const VALIDATORS: &[Validator] = &[
+    Config::validate_suites,
+    Config::validate_version,
+    Config::validate_exclude,
+    Config::validate_complexity_rule,
+    Config::validate_todo_rule,
+    Config::validate_restricted_call_rule,
+    Config::validate_direct_environment_read_rule,
+];
+
 impl Config {
     pub fn load(path: impl AsRef<Path>) -> Result<Self, ConfigError> {
         let path = path.as_ref();
@@ -280,43 +292,56 @@ impl Config {
     }
 
     fn validate(&self) -> Result<(), ConfigError> {
-        if let Some(name) = self
+        for check in VALIDATORS {
+            check(self)?;
+        }
+
+        Ok(())
+    }
+
+    fn validate_suites(&self) -> Result<(), ConfigError> {
+        match self
             .suites
             .iter()
             .find(|name| !suites::NAMES.contains(&name.as_str()))
         {
-            return Err(ConfigError::UnknownSuite { name: name.clone() });
+            Some(name) => Err(ConfigError::UnknownSuite { name: name.clone() }),
+            None => Ok(()),
         }
+    }
 
-        if self.version != 1 {
-            return Err(ConfigError::UnsupportedVersion {
-                version: self.version,
-            });
+    fn validate_version(&self) -> Result<(), ConfigError> {
+        match self.version {
+            1 => Ok(()),
+            version => Err(ConfigError::UnsupportedVersion { version }),
         }
+    }
 
-        if let Some(pattern) = self
+    fn validate_exclude(&self) -> Result<(), ConfigError> {
+        match self
             .exclude
             .iter()
             .find(|pattern| pattern.trim().is_empty())
         {
-            return Err(ConfigError::InvalidExclude {
+            Some(pattern) => Err(ConfigError::InvalidExclude {
                 pattern: pattern.clone(),
-            });
+            }),
+            None => Ok(()),
         }
+    }
 
-        if self
+    fn validate_complexity_rule(&self) -> Result<(), ConfigError> {
+        let zero = self
             .rules
             .decision_complexity
             .as_ref()
-            .is_some_and(|rule| rule.limit() == 0)
-        {
+            .is_some_and(|rule| rule.limit() == 0);
+
+        if zero {
             return Err(ConfigError::InvalidComplexityLimit);
         }
 
-        self.validate_todo_rule()?;
-        self.validate_restricted_call_rule()?;
-
-        self.validate_direct_environment_read_rule()
+        Ok(())
     }
 
     fn validate_todo_rule(&self) -> Result<(), ConfigError> {

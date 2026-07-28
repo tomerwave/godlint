@@ -28,12 +28,7 @@ impl FunctionLimitRule for FunctionSize {
         facts: &SourceFacts,
         configuration: &Self::Configuration,
     ) -> u32 {
-        line_count::effective_line_count(
-            facts,
-            function.range(),
-            configuration.skip_blank_lines,
-            configuration.skip_comments,
-        )
+        line_count::effective_line_count(facts, function.range(), skipped(configuration))
     }
 
     fn max(configuration: &Self::Configuration) -> u32 {
@@ -45,4 +40,11 @@ pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, 
     when_configured(config.rules.function_size.as_ref(), |configuration| {
         evaluate_function_limit_rule::<FunctionSize>(facts, configuration)
     })
+}
+
+fn skipped(configuration: &LineLimitRule) -> line_count::Skipped {
+    line_count::Skipped {
+        blank_lines: configuration.skip_blank_lines,
+        comments: configuration.skip_comments,
+    }
 }

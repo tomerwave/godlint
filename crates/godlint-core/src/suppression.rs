@@ -20,6 +20,17 @@ const EXPIRES: &str = "expires";
 const DIRECTIVES: [(&str, Scope); 2] =
     [(NEXT_LINE, Scope::NextLine), (ENCLOSING, Scope::Enclosing)];
 
+struct Comment<'a> {
+    range: SourceRange,
+    text: &'a str,
+    kind: CommentKind,
+}
+
+struct Scan<'a> {
+    occupied: &'a BTreeSet<usize>,
+    facts: &'a SourceFacts,
+}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 enum Covers {
     Line(usize),
@@ -130,11 +141,15 @@ pub fn collect(facts: &[SourceFacts]) -> Vec<Suppression> {
 
             source_facts.comments().iter().flat_map(move |comment| {
                 in_comment(
-                    comment.range(),
-                    comment.text(),
-                    comment.kind(),
-                    &occupied,
-                    source_facts,
+                    Comment {
+                        range: comment.range(),
+                        text: comment.text(),
+                        kind: comment.kind(),
+                    },
+                    &Scan {
+                        occupied: &occupied,
+                        facts: source_facts,
+                    },
                 )
             })
         })
@@ -201,29 +216,21 @@ fn directive_lines(facts: &SourceFacts) -> BTreeSet<usize> {
         .collect()
 }
 
-fn in_comment(
-    comment_range: SourceRange,
-    text: &str,
-    kind: CommentKind,
-    occupied: &BTreeSet<usize>,
-    facts: &SourceFacts,
-) -> Vec<Suppression> {
-    let numbered: Vec<(usize, &str)> = lines(text).collect();
+fn in_comment(comment: Comment<'_>, scan: &Scan<'_>) -> Vec<Suppression> {
+    let numbered: Vec<(usize, &str)> = lines(comment.text).collect();
 
     numbered
         .iter()
         .enumerate()
         .filter_map(|(index, (offset, line))| {
-            let found = directive(line, kind, index == 0)?;
-            let start = comment_range.start() + offset + found.offset;
+            let found = directive(line, comment.kind, index == 0)?;
+            let start = comment.range.start() + offset + found.offset;
 
             Some(suppression(
-                found.scope,
-                found.arguments,
+                found,
                 SourceRange::new(start, start + found.length).ok()?,
-                spent_lines(&numbered[index + 1..], kind),
-                occupied,
-                facts,
+                spent_lines(&numbered[index + 1..], comment.kind),
+                scan,
             ))
         })
         .collect()
@@ -249,6 +256,7 @@ fn lines(text: &str) -> impl Iterator<Item = (usize, &str)> {
     })
 }
 
+#[derive(Clone, Copy)]
 struct Directive<'a> {
     scope: Scope,
     arguments: &'a str,
@@ -283,16 +291,14 @@ fn is_furniture(character: char, quotes: bool) -> bool {
 }
 
 fn suppression(
-    scope: Scope,
-    arguments: &str,
+    found: Directive<'_>,
     range: SourceRange,
     spent: usize,
-    occupied: &BTreeSet<usize>,
-    facts: &SourceFacts,
+    scan: &Scan<'_>,
 ) -> Suppression {
-    let source = facts.source();
+    let source = scan.facts.source();
     let line = source.line(range.start());
-    let (head, justification) = split_justification(arguments);
+    let (head, justification) = split_justification(found.arguments);
     let mut parsed = Arguments::default();
 
     for token in head.split_whitespace() {
@@ -303,14 +309,14 @@ fn suppression(
         source: source.clone(),
         range,
         line,
-        scope,
+        scope: found.scope,
         rules: parsed.rules,
         justification: justification.map(str::to_owned),
         owner: parsed.owner,
         expires: parsed.expires,
         unknown_options: parsed.unknown_options,
         repeated_options: parsed.repeated_options,
-        covers: coverage(scope, line + spent, occupied, range, facts),
+        covers: coverage(found.scope, line + spent, range, scan),
     }
 }
 
@@ -391,26 +397,20 @@ fn is_standalone(text: &str, index: usize) -> bool {
     before.is_none_or(char::is_whitespace) && after.is_none_or(char::is_whitespace)
 }
 
-fn coverage(
-    scope: Scope,
-    line: usize,
-    occupied: &BTreeSet<usize>,
-    range: SourceRange,
-    facts: &SourceFacts,
-) -> Option<Covers> {
+fn coverage(scope: Scope, line: usize, range: SourceRange, scan: &Scan<'_>) -> Option<Covers> {
     match scope {
         Scope::NextLine => {
             let mut target = line + 1;
 
-            while occupied.contains(&target) {
+            while scan.occupied.contains(&target) {
                 target += 1;
             }
 
             Some(Covers::Line(target))
         }
-        Scope::Enclosing => enclosing(range, facts).map(|function| Covers::Declaration {
+        Scope::Enclosing => enclosing(range, scan.facts).map(|function| Covers::Declaration {
             range: function.range(),
-            nested: nested_functions(function.range(), facts),
+            nested: nested_functions(function.range(), scan.facts),
         }),
     }
 }
