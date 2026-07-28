@@ -1,0 +1,9 @@
+exit-code: 1
+
+stdout: |
+  example.py:9:1: error[style/no-comments] Comment is not permitted; express the intent in the code.
+  example.rs:6:1: error[style/no-comments] Comment is not permitted; express the intent in the code.
+  example.rs:9:1: error[style/no-comments] Comment is not permitted; express the intent in the code.
+  example.ts:4:1: error[style/no-comments] Comment is not permitted; express the intent in the code.
+
+stderr: ""

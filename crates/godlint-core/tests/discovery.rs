@@ -137,7 +137,6 @@ fn defaults() -> Vec<String> {
     DEFAULT_EXCLUDES.iter().map(|name| (*name).into()).collect()
 }
 
-/// Exclusions are policy, so a repository can name its own generated directories.
 #[test]
 fn honours_configured_exclusions() {
     let repository = Repository::new();
@@ -156,7 +155,6 @@ fn honours_configured_exclusions() {
     );
 }
 
-/// Without exclusions every file is in scope, including dependency trees.
 #[test]
 fn scans_everything_when_nothing_is_excluded() {
     let repository = Repository::new();

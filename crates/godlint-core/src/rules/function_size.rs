@@ -3,8 +3,8 @@ use crate::{
     config::{Config, LineLimitRule, Severity},
     facts::FunctionFact,
     rules::{
-        Finding, FunctionRule, Rule, RuleError, Violation, evaluate_function_rule, line_count,
-        when_configured,
+        Finding, FunctionRule, Metric, Rule, RuleError, Violation, evaluate_function_rule,
+        line_count, when_configured,
     },
 };
 
@@ -34,7 +34,7 @@ impl FunctionRule for FunctionSize {
         );
         let max = configuration.max_lines.get();
 
-        (actual > max).then_some(Violation::FunctionLines { actual, max })
+        (actual > max).then_some(Violation::limit(Metric::FunctionLines, actual, max))
     }
 }
 

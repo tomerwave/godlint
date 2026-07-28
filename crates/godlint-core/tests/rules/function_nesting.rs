@@ -1,6 +1,6 @@
 use godlint_core::{
     config::{FunctionNestingRule, Severity},
-    rules::{FunctionRule, Rule, Violation, function_nesting::FunctionNesting},
+    rules::{FunctionRule, Metric, Rule, Violation, function_nesting::FunctionNesting},
 };
 
 use super::support::function;
@@ -103,7 +103,11 @@ fn reports_a_function_deeper_than_its_limit() {
 
     assert_eq!(
         FunctionNesting::check(&deep, &facts, &configuration(1)),
-        Some(Violation::BlockDepth { actual: 2, max: 1 })
+        Some(Violation::Limit {
+            metric: Metric::BlockDepth,
+            actual: 2,
+            max: 1
+        })
     );
 }
 

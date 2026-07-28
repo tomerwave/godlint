@@ -10,7 +10,6 @@ use crate::{
     source::SourceFile,
 };
 
-/// A file that could not be turned into facts, reported alongside the findings.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ScanIssue {
     pub path: PathBuf,
@@ -48,10 +47,6 @@ pub fn scan(root: &Path, paths: &[PathBuf], excludes: &[String]) -> Result<ScanR
     Ok(report)
 }
 
-/// Turns one file into facts, recording rather than propagating per-file failures.
-///
-/// A file that cannot be read or parsed must not discard the findings from every other
-/// file, so anything specific to one file becomes an issue on the report instead.
 fn scan_file(root: &Path, path: &Path, report: &mut ScanReport) -> Result<(), ScanError> {
     let relative_path = path
         .strip_prefix(root)

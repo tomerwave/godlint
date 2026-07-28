@@ -1,6 +1,6 @@
 use godlint_core::{
     config::{LineLimitRule, Severity},
-    rules::{FileRule, Rule, Violation, file_size::FileSize},
+    rules::{FileRule, Metric, Rule, Violation, file_size::FileSize},
 };
 
 use super::support::{facts, limit};
@@ -24,7 +24,11 @@ fn reports_a_file_over_its_limit() {
     assert_eq!(FileSize::ID, "maintainability/file-size");
     assert_eq!(
         FileSize::check(&facts, &configuration(2, true, true)),
-        Some(Violation::FileLines { actual: 3, max: 2 })
+        Some(Violation::Limit {
+            metric: Metric::FileLines,
+            actual: 3,
+            max: 2
+        })
     );
 }
 
@@ -45,11 +49,14 @@ fn applies_comment_and_blank_line_configuration() {
     assert_eq!(FileSize::check(&facts, &configuration(2, true, true)), None);
     assert_eq!(
         FileSize::check(&facts, &configuration(2, false, false)),
-        Some(Violation::FileLines { actual: 4, max: 2 })
+        Some(Violation::Limit {
+            metric: Metric::FileLines,
+            actual: 4,
+            max: 2
+        })
     );
 }
 
-/// A byte-order mark is invisible and must not change the accounting.
 #[test]
 fn ignores_a_byte_order_mark() {
     let plain = facts("src/plain.rs", "// detail\nfn example() {}\n");
@@ -61,7 +68,6 @@ fn ignores_a_byte_order_mark() {
     );
 }
 
-/// CRLF endings and a missing final newline describe the same number of lines.
 #[test]
 fn counts_line_endings_consistently() {
     let unix = facts("src/unix.rs", "fn a() {}\nfn b() {}\n");
@@ -71,7 +77,11 @@ fn counts_line_endings_consistently() {
     for subject in [&unix, &windows, &unterminated] {
         assert_eq!(
             FileSize::check(subject, &configuration(1, true, true)),
-            Some(Violation::FileLines { actual: 2, max: 1 })
+            Some(Violation::Limit {
+                metric: Metric::FileLines,
+                actual: 2,
+                max: 1
+            })
         );
     }
 }

@@ -1,6 +1,6 @@
 use godlint_core::{
     config::{LineLimitRule, Severity},
-    rules::{FunctionRule, Rule, Violation, function_size::FunctionSize},
+    rules::{FunctionRule, Metric, Rule, Violation, function_size::FunctionSize},
 };
 
 use super::support::{function, limit};
@@ -22,7 +22,11 @@ fn lines(path: &str, source: &str, skip_blank_lines: bool, skip_comments: bool) 
         &facts,
         &configuration(1, skip_blank_lines, skip_comments),
     ) {
-        Some(Violation::FunctionLines { actual, .. }) => actual,
+        Some(Violation::Limit {
+            metric: Metric::FunctionLines,
+            actual,
+            ..
+        }) => actual,
         _ => 1,
     }
 }
@@ -75,7 +79,6 @@ fn skips_comment_only_lines() {
     }
 }
 
-/// A nested block comment is entirely a comment, however the delimiters nest.
 #[test]
 fn skips_a_nested_block_comment() {
     assert_eq!(
@@ -89,8 +92,6 @@ fn skips_a_nested_block_comment() {
     );
 }
 
-/// A docstring documents the code the way a block comment does elsewhere, so the same
-/// configuration must skip it rather than counting it as work.
 #[test]
 fn skips_a_python_docstring() {
     assert_eq!(
@@ -104,7 +105,6 @@ fn skips_a_python_docstring() {
     );
 }
 
-/// A `//` inside a string literal is data, not a comment.
 #[test]
 fn counts_a_line_whose_comment_marker_is_inside_a_string() {
     assert_eq!(
@@ -137,7 +137,11 @@ fn reports_a_function_over_its_limit() {
 
     assert_eq!(
         FunctionSize::check(&big, &facts, &configuration(2, true, true)),
-        Some(Violation::FunctionLines { actual: 3, max: 2 })
+        Some(Violation::Limit {
+            metric: Metric::FunctionLines,
+            actual: 3,
+            max: 2
+        })
     );
 }
 

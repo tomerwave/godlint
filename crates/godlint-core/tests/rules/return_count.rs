@@ -1,6 +1,6 @@
 use godlint_core::{
     config::{ReturnCountRule, Severity},
-    rules::{FunctionRule, Rule, Violation, return_count::ReturnCount},
+    rules::{FunctionRule, Metric, Rule, Violation, return_count::ReturnCount},
 };
 
 use super::support::function;
@@ -28,8 +28,6 @@ fn counts_explicit_returns() {
     );
 }
 
-/// Rust yields its last value without writing `return`, so counting only explicit returns
-/// would report fewer exits than the identical TypeScript, which must write one.
 #[test]
 fn counts_an_implicit_tail_expression() {
     let rust = paths(
@@ -45,7 +43,6 @@ fn counts_an_implicit_tail_expression() {
     assert_eq!(typescript, 2);
 }
 
-/// `?` leaves the function when the value is an error, so it is an exit path.
 #[test]
 fn counts_the_rust_try_operator() {
     assert_eq!(
@@ -66,7 +63,11 @@ fn reports_a_function_over_its_limit() {
 
     assert_eq!(
         ReturnCount::check(&exits, &facts, &configuration(1)),
-        Some(Violation::ReturnPaths { actual: 2, max: 1 })
+        Some(Violation::Limit {
+            metric: Metric::ReturnPaths,
+            actual: 2,
+            max: 1
+        })
     );
 }
 

@@ -1,7 +1,7 @@
 use crate::{
     analyzers::SourceFacts,
     config::{Config, Severity, TodoRequiresReferenceRule},
-    facts::CommentFact,
+    facts::{CommentFact, CommentKind},
     rules::{
         CommentRule, Finding, Rule, RuleError, Violation, evaluate_comment_rule, when_configured,
     },
@@ -10,7 +10,6 @@ use crate::{
 
 pub struct TodoRequiresReference;
 
-/// One marker found in a comment, with the text that belongs to it.
 struct Marker<'a> {
     name: &'a str,
     start: usize,
@@ -28,15 +27,14 @@ impl Rule for TodoRequiresReference {
 }
 
 impl CommentRule for TodoRequiresReference {
-    /// Reports each unreferenced marker at its own position.
-    ///
-    /// Markers are matched on word boundaries, so `AUTODOWNLOAD` is not a marker, and
-    /// each marker owns only the text up to the next one, so one issue reference cannot
-    /// excuse every other marker in the same comment.
     fn check(
         comment: &CommentFact,
         configuration: &Self::Configuration,
     ) -> Vec<(SourceRange, Violation)> {
+        if comment.kind() == CommentKind::Shebang {
+            return Vec::new();
+        }
+
         let text = comment.text();
         let markers = markers(text, &configuration.markers);
 
@@ -63,7 +61,6 @@ impl CommentRule for TodoRequiresReference {
     }
 }
 
-/// Finds configured markers appearing as whole words, in source order.
 fn markers<'a>(text: &str, names: &'a [String]) -> Vec<Marker<'a>> {
     let mut found: Vec<Marker<'a>> = names
         .iter()
@@ -87,7 +84,6 @@ fn word_positions<'a>(text: &'a str, needle: &'a str) -> impl Iterator<Item = us
         .map(|(index, _)| index)
 }
 
-/// Reports whether the span is delimited by non-word characters on both sides.
 fn is_word_bounded(text: &str, start: usize, length: usize) -> bool {
     let before = text[..start].chars().next_back();
     let after = text[start + length..].chars().next();
@@ -99,7 +95,6 @@ fn is_word_character(character: char) -> bool {
     character.is_alphanumeric() || character == '_'
 }
 
-/// Reports whether `text` carries an issue reference for one of `prefixes`.
 fn has_reference(text: &str, prefixes: &[String]) -> bool {
     prefixes
         .iter()
@@ -112,7 +107,6 @@ fn references_with_prefix(text: &str, prefix: &str) -> bool {
     })
 }
 
-/// Requires the prefix to start a word so that `NOTJIRA-42` is not a `JIRA-` reference.
 fn prefix_is_delimited(text: &str, index: usize) -> bool {
     !text[..index]
         .chars()
@@ -120,10 +114,6 @@ fn prefix_is_delimited(text: &str, index: usize) -> bool {
         .is_some_and(char::is_alphanumeric)
 }
 
-/// Requires digits that end the token.
-///
-/// An issue number is digits and nothing else, which keeps a colour such as `#3366ff`
-/// from reading as accountability.
 fn digits_follow(text: &str) -> bool {
     let digits = text.chars().take_while(char::is_ascii_digit).count();
 

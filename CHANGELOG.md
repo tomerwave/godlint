@@ -41,6 +41,13 @@ releases begin.
   `target` were skipped, and the list was not configurable.
 - Support for the `.mjs` and `.cjs` JavaScript extensions and the `.mts` and `.cts`
   TypeScript extensions.
+- `style/no-comments` (`allow-doc-comments`) — requires code to explain itself rather
+  than leaning on prose beside it. Documentation comments are permitted by default,
+  because a published contract is written for a reader who cannot see the
+  implementation, which is a different job from explaining a line to someone already
+  reading it. An interpreter shebang is always exempt. Enable it alongside
+  `policy/todo-requires-reference` only deliberately: a marker comment will be reported
+  by both.
 
 ### Changed
 
@@ -78,6 +85,17 @@ releases begin.
   Purely numeric `reference-prefixes` are rejected by configuration validation. Python
   docstrings are scanned alongside comments.
 - `skip-blank-lines` and `skip-comments` default to `true` instead of being required.
+- Godlint's own source carries no comments, and enables `style/no-comments` with
+  `allow-doc-comments: false` to keep it that way. The reasoning that used to sit in
+  module and item documentation now lives in [the architecture guide](docs/architecture.md),
+  which is the better home for it: a boundary is easier to explain once, in prose, than
+  in fragments beside the code it constrains.
+- A limit violation is one `Violation::Limit` carrying the metric, the measured value,
+  and the ceiling, rather than one variant per metric. Rendering stays identical.
+- Line and column derivation binary-searches a per-file line index instead of scanning to
+  the offset, so reporting cost no longer grows with how far into a file a finding sits.
+  With `style/no-comments` reporting once per comment this was measurable: a file with
+  6,400 comments took 678 ms and now takes 161 ms.
 - Effective-line counting is derived from the analyzer's comment facts instead of
   scanning text for `//` and `#`, so Python docstrings are skipped like JSDoc blocks
   and nested Rust block comments are handled correctly.

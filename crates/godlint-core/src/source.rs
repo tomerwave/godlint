@@ -20,6 +20,7 @@ pub struct SourceFile {
     path: PathBuf,
     language: Language,
     source: Arc<str>,
+    line_starts: Arc<[usize]>,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -54,10 +55,6 @@ pub enum SourceRangeError {
     Reversed { start: usize, end: usize },
 }
 
-/// Byte-order mark that some editors prepend to UTF-8 sources.
-///
-/// It is stripped before parsing so that byte offsets, line accounting, and reported
-/// columns all describe the source a reader sees rather than an invisible prefix.
 const BYTE_ORDER_MARK: &str = "\u{feff}";
 
 impl Language {
@@ -85,14 +82,11 @@ impl SourceFile {
         Ok(Self {
             path,
             language,
+            line_starts: line_starts(source),
             source: Arc::from(source),
         })
     }
 
-    /// Reports whether the file only declares an interface, as a `.pyi` stub does.
-    ///
-    /// Stub files are all signatures and placeholder bodies by construction, so
-    /// body-shaped rules would report every declaration in them.
     pub fn is_interface_stub(&self) -> bool {
         self.path
             .extension()
@@ -126,10 +120,6 @@ impl SourceFile {
         })
     }
 
-    /// Confirms a range addresses real character boundaries without deriving positions.
-    ///
-    /// Line and column numbers are derived only at reporting boundaries, so callers that
-    /// merely need to validate offsets use this instead of discarding a [`SourceLocation`].
     pub(crate) fn validate_range(&self, range: SourceRange) -> Result<(), SourceFileError> {
         self.validate_offset(range.start)?;
         self.validate_offset(range.end)
@@ -155,14 +145,14 @@ impl SourceFile {
     fn position(&self, offset: usize) -> Result<SourcePosition, SourceFileError> {
         self.validate_offset(offset)?;
 
-        let prefix = &self.source[..offset];
-        let line = prefix.bytes().filter(|byte| *byte == b'\n').count() + 1;
-        let column = prefix
-            .rsplit('\n')
-            .next()
-            .map_or(1, |line| line.chars().count() + 1);
+        let line_index = self.line_starts.partition_point(|start| *start <= offset) - 1;
+        let line_start = self.line_starts.get(line_index).copied().unwrap_or(0);
+        let column = self.source[line_start..offset].chars().count() + 1;
 
-        Ok(SourcePosition { line, column })
+        Ok(SourcePosition {
+            line: line_index + 1,
+            column,
+        })
     }
 }
 
@@ -182,6 +172,20 @@ impl SourceRange {
     pub fn end(&self) -> usize {
         self.end
     }
+}
+
+fn line_starts(source: &str) -> Arc<[usize]> {
+    let mut starts = vec![0];
+
+    starts.extend(
+        source
+            .bytes()
+            .enumerate()
+            .filter(|(_, byte)| *byte == b'\n')
+            .map(|(index, _)| index + 1),
+    );
+
+    Arc::from(starts)
 }
 
 fn validate_path(path: &Path) -> Result<(), SourceFileError> {

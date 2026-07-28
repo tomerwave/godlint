@@ -8,7 +8,6 @@ use godlint_core::{
     source::SourceFile,
 };
 
-/// Every extension the tool claims to support.
 const SUPPORTED: [&str; 11] = [
     "rs", "js", "jsx", "mjs", "cjs", "ts", "tsx", "mts", "cts", "py", "pyi",
 ];
@@ -18,7 +17,6 @@ fn source(path: &str, contents: &str) -> SourceFile {
         .unwrap_or_else(|error| panic!("creates source file: {error}"))
 }
 
-/// Returns idiomatic source declaring one function named `example` for `extension`.
 fn declaration(extension: &str) -> &'static str {
     match extension {
         "rs" => "fn example() {\n    work();\n}",
@@ -70,7 +68,29 @@ fn classifies_a_python_docstring_as_commentary() {
     assert_eq!(facts.comments()[0].kind(), CommentKind::Docstring);
 }
 
-/// A string that is not the first statement of its block is data, not documentation.
+#[test]
+fn classifies_documentation_per_language_convention() {
+    let rust = analyze(&source("a.rs", "/// Doc.\nfn a() {}\n"))
+        .unwrap_or_else(|error| panic!("analyzes rust: {error}"));
+    let typescript = analyze(&source("a.ts", "/// Directive.\nfunction a() {}\n"))
+        .unwrap_or_else(|error| panic!("analyzes typescript: {error}"));
+    let jsdoc = analyze(&source("b.ts", "/** Doc. */\nfunction b() {}\n"))
+        .unwrap_or_else(|error| panic!("analyzes jsdoc: {error}"));
+
+    assert_eq!(rust.comments()[0].kind(), CommentKind::Doc);
+    assert_eq!(typescript.comments()[0].kind(), CommentKind::Line);
+    assert_eq!(jsdoc.comments()[0].kind(), CommentKind::Doc);
+}
+
+#[test]
+fn classifies_a_shebang_separately_from_commentary() {
+    let facts = analyze(&source("a.py", "#!/usr/bin/env python3\n# aside\n"))
+        .unwrap_or_else(|error| panic!("analyzes shebang: {error}"));
+
+    assert_eq!(facts.comments()[0].kind(), CommentKind::Shebang);
+    assert_eq!(facts.comments()[1].kind(), CommentKind::Line);
+}
+
 #[test]
 fn does_not_treat_every_python_string_as_commentary() {
     let facts = analyze(&source(
@@ -82,8 +102,6 @@ fn does_not_treat_every_python_string_as_commentary() {
     assert!(facts.comments().is_empty());
 }
 
-/// Closures are functions, so their size and branching is attributed to them and not to
-/// whatever encloses them. Without this, one threshold means different things per language.
 #[test]
 fn treats_closures_and_lambdas_as_functions() {
     let cases = [

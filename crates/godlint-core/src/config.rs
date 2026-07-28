@@ -7,10 +7,6 @@ use std::{
 
 use serde::Deserialize;
 
-/// Directories skipped unless a repository configures its own exclusions.
-///
-/// These hold build output and dependency trees rather than authored source; scanning
-/// them reports findings nobody can act on.
 pub const DEFAULT_EXCLUDES: [&str; 12] = [
     ".git",
     ".mypy_cache",
@@ -30,13 +26,8 @@ pub const DEFAULT_EXCLUDES: [&str; 12] = [
 #[serde(deny_unknown_fields)]
 pub struct Config {
     pub version: u8,
-    /// Lowest severity that makes `godlint check` fail.
-    ///
-    /// Without this, every severity blocks equally and the confidence ladder that lets a
-    /// new rule land as a warning cannot exist.
     #[serde(default = "default_fail_on", rename = "fail-on")]
     pub fail_on: Severity,
-    /// Path globs excluded from scanning, replacing [`DEFAULT_EXCLUDES`] when set.
     #[serde(default)]
     pub exclude: Vec<String>,
     #[serde(default)]
@@ -64,12 +55,10 @@ pub struct Rules {
     pub return_count: Option<ReturnCountRule>,
     #[serde(rename = "maintainability/function-statements")]
     pub function_statements: Option<FunctionStatementsRule>,
+    #[serde(rename = "style/no-comments")]
+    pub no_comments: Option<NoCommentsRule>,
 }
 
-/// Shared shape of the two line-counting rules.
-///
-/// `function-size` and `file-size` ask the same question of different ranges, so they
-/// share one configuration type rather than two identical ones.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct LineLimitRule {
@@ -82,14 +71,6 @@ pub struct LineLimitRule {
     pub skip_comments: bool,
 }
 
-/// Declares the rules whose entire configuration is a severity and one ceiling.
-///
-/// Each needs its own YAML key, so they cannot literally be one type; generating them
-/// keeps the shape in a single place and gives them a uniform `limit` accessor.
-///
-/// These ceilings accept zero, because forbidding a construct outright is a real policy:
-/// `max-depth: 0` bans nested blocks and `max-parameters: 0` bans parameters. Only a
-/// ceiling below the metric's own floor is meaningless, which [`Config::validate`] checks.
 macro_rules! count_limit_rules {
     ($($name:ident { $key:literal => $field:ident }),+ $(,)?) => {
         $(
@@ -124,6 +105,14 @@ pub struct EmptyFunctionRule {
     pub severity: Severity,
     #[serde(default, rename = "allow-names")]
     pub allow_names: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct NoCommentsRule {
+    pub severity: Severity,
+    #[serde(default = "enabled", rename = "allow-doc-comments")]
+    pub allow_doc_comments: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -199,7 +188,6 @@ impl Config {
         Ok(config)
     }
 
-    /// Reports the exclusion globs in force, falling back to the built-in defaults.
     pub fn excludes(&self) -> Vec<String> {
         if self.exclude.is_empty() {
             return DEFAULT_EXCLUDES.iter().map(|name| (*name).into()).collect();
@@ -259,10 +247,6 @@ impl Config {
     }
 }
 
-/// Rejects prefixes that cannot identify a reference.
-///
-/// A digits-only prefix would make any number starting with it read as accountability,
-/// so `1` would accept a timeout of `10` as an issue reference.
 fn prefix_is_unusable(prefix: &str) -> bool {
     let trimmed = prefix.trim();
 

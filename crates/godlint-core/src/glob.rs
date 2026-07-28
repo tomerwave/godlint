@@ -1,13 +1,3 @@
-//! Path-glob matching for configured exclusions.
-//!
-//! Deliberately small: repository policy needs `*`, `?`, and `**` over path segments,
-//! and nothing here justifies a dependency or a regex engine.
-
-/// Matches `path` against a slash-separated `pattern`.
-///
-/// `?` matches one character within a segment, `*` matches any run of characters within
-/// a segment, and a `**` segment matches zero or more whole segments. A pattern with no
-/// `/` matches against any single segment, so `*.py` excludes Python files anywhere.
 pub fn matches(pattern: &str, path: &str) -> bool {
     let pattern_segments = split(pattern);
     let path_segments = split(path);
@@ -41,7 +31,6 @@ fn match_segments(pattern: &[&str], path: &[&str]) -> bool {
     segment_matches(head, candidate) && match_segments(rest, remaining)
 }
 
-/// Matches a single path segment against a pattern segment containing `*` or `?`.
 fn segment_matches(pattern: &str, segment: &str) -> bool {
     let pattern: Vec<char> = pattern.chars().collect();
     let segment: Vec<char> = segment.chars().collect();
@@ -56,10 +45,6 @@ fn segment_matches(pattern: &str, segment: &str) -> bool {
     table[segment.len()]
 }
 
-/// Advances the match table by one pattern character.
-///
-/// `table[index]` records whether the pattern consumed so far can match the first
-/// `index` characters of the segment, which keeps `*` handling linear.
 fn advance(table: &mut [bool], segment: &[char], expected: char) {
     if expected == '*' {
         let mut matched = false;

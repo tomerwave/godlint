@@ -1,6 +1,6 @@
 use godlint_core::{
     config::{CyclomaticComplexityRule, Severity},
-    rules::{FunctionRule, Rule, Violation, cyclomatic_complexity::CyclomaticComplexity},
+    rules::{FunctionRule, Metric, Rule, Violation, cyclomatic_complexity::CyclomaticComplexity},
 };
 
 use super::support::function;
@@ -56,8 +56,6 @@ fn counts_match_arms() {
     );
 }
 
-/// The try operator either continues or returns, which is exactly a branch. Without it,
-/// idiomatic Rust error handling reports complexity 1 however many fallible calls it makes.
 #[test]
 fn counts_the_rust_try_operator() {
     assert_eq!(
@@ -69,8 +67,6 @@ fn counts_the_rust_try_operator() {
     );
 }
 
-/// A closure owns its own branching, so the same code has the same complexity whether the
-/// language spells the callable `|x|`, `lambda x:`, or `(x) =>`.
 #[test]
 fn attributes_closure_branching_to_the_closure() {
     let (_, host) = function(
@@ -90,7 +86,11 @@ fn reports_a_function_over_its_limit() {
 
     assert_eq!(
         CyclomaticComplexity::check(&branchy, &facts, &configuration(2)),
-        Some(Violation::Complexity { actual: 3, max: 2 })
+        Some(Violation::Limit {
+            metric: Metric::Complexity,
+            actual: 3,
+            max: 2
+        })
     );
 }
 

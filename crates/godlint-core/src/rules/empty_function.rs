@@ -20,13 +20,6 @@ impl Rule for EmptyFunction {
 }
 
 impl FunctionRule for EmptyFunction {
-    /// Reports a body that declares no work and says nothing about why.
-    ///
-    /// Three kinds of emptiness are deliberate and are not reported: an interface stub,
-    /// where every body is a placeholder by construction; a declaration the language
-    /// marks as having no implementation, such as an abstract method or a constructor
-    /// whose parameters carry the assignment; and a body holding a comment, which is the
-    /// author already explaining the omission.
     fn check(
         function: &FunctionFact,
         _facts: &SourceFacts,

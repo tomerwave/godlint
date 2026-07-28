@@ -1,13 +1,5 @@
-//! Effective-line accounting for the two size rules.
-//!
-//! Commentary is identified from the comment facts the analyzer already produced rather
-//! than by re-scanning text for `//` and `#`. Re-lexing here would duplicate the parser,
-//! put language knowledge in the rules layer, and get string literals, nested block
-//! comments, and Python docstrings wrong.
-
 use crate::{analyzers::SourceFacts, source::SourceRange};
 
-/// Counts the lines of `range` that carry code under the configured policy.
 pub(crate) fn effective_line_count(
     facts: &SourceFacts,
     range: SourceRange,
@@ -39,7 +31,6 @@ pub(crate) fn effective_line_count(
     counted
 }
 
-/// Collects the comment ranges that can affect `range`, in source order.
 fn commentary_within(facts: &SourceFacts, range: SourceRange) -> Vec<SourceRange> {
     facts
         .comments()
@@ -63,10 +54,6 @@ fn line_is_counted(
     !(skip_comments && line_is_commentary(line, start, commentary))
 }
 
-/// Reports whether every non-blank character of the line sits inside a comment.
-///
-/// A line holding both code and a trailing comment still counts, which is what a reader
-/// means by a line of code.
 fn line_is_commentary(line: &str, start: usize, commentary: &[SourceRange]) -> bool {
     let mut has_content = false;
 

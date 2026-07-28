@@ -19,10 +19,6 @@ pub enum DiscoveryError {
     },
 }
 
-/// Where discovery is rooted and what it must leave alone.
-///
-/// Exclusions are configured policy rather than a constant, so a repository can keep a
-/// virtual environment or a build directory out of its results.
 pub struct Scope<'a> {
     pub root: &'a Path,
     pub excludes: &'a [String],
@@ -61,7 +57,6 @@ fn discover_path(
     Ok(())
 }
 
-/// Reports whether configured policy excludes this path from scanning.
 fn is_excluded(path: &Path, scope: &Scope<'_>) -> bool {
     let relative = path.strip_prefix(scope.root).unwrap_or(path);
     let Some(candidate) = relative.to_str() else {

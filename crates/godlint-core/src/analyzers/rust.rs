@@ -2,6 +2,7 @@ use tree_sitter::Node;
 
 use crate::{
     analyzers::{Analyzer, AnalyzerError, SourceFacts, vocabulary::Vocabulary},
+    facts::CommentKind,
     source::SourceFile,
 };
 
@@ -23,14 +24,10 @@ const VOCABULARY: Vocabulary = Vocabulary {
     is_placeholder,
     is_receiver,
     is_abstract,
-    is_docstring,
+    comment_kind,
     has_implicit_tail_return,
 };
 
-/// Closures are functions.
-///
-/// A closure carries the same maintainability weight as a named function, and treating
-/// it otherwise would attribute its size and branching to whatever `fn` encloses it.
 fn is_function(kind: &str) -> bool {
     matches!(kind, "closure_expression" | "function_item")
 }
@@ -54,10 +51,6 @@ fn is_conditional(kind: &str) -> bool {
     kind == "if_expression"
 }
 
-/// Counts `?` as a branch.
-///
-/// The try operator is the dominant conditional in idiomatic Rust: it either continues
-/// or returns early, which is exactly a decision point.
 fn is_decision(kind: &str) -> bool {
     matches!(
         kind,
@@ -65,7 +58,6 @@ fn is_decision(kind: &str) -> bool {
     )
 }
 
-/// Counts `?` as an exit as well as a branch, because it can return from the function.
 fn is_return(kind: &str) -> bool {
     matches!(kind, "return_expression" | "try_expression")
 }
@@ -82,14 +74,29 @@ fn is_abstract(_node: Node<'_>, _source: &str) -> bool {
     false
 }
 
-fn is_docstring(_node: Node<'_>) -> bool {
-    false
+const COMMENT_PREFIXES: [(&str, CommentKind); 7] = [
+    ("///", CommentKind::Doc),
+    ("//!", CommentKind::Doc),
+    ("//", CommentKind::Line),
+    ("/**/", CommentKind::Block),
+    ("/**", CommentKind::Doc),
+    ("/*!", CommentKind::Doc),
+    ("/*", CommentKind::Block),
+];
+
+fn comment_kind(node: Node<'_>, source: &str) -> Option<CommentKind> {
+    if !node.is_extra() {
+        return None;
+    }
+
+    let text = source.get(node.byte_range())?;
+
+    COMMENT_PREFIXES
+        .iter()
+        .find(|(prefix, _)| text.starts_with(prefix))
+        .map(|(_, kind)| *kind)
 }
 
-/// Reports whether the body yields a value by falling off its end.
-///
-/// A trailing expression is an exit path, and counting it keeps Rust comparable with
-/// languages that must write `return` for the same control flow.
 fn has_implicit_tail_return(node: Node<'_>) -> bool {
     let Some(body) = node.child_by_field_name("body") else {
         return false;

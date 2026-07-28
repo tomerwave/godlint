@@ -1,9 +1,3 @@
-//! Derivation of the language-neutral function metrics from a parsed function node.
-//!
-//! Nothing here names a grammar node kind. Every question about what a node means is
-//! delegated to the [`Vocabulary`] the owning language module supplied, so a new
-//! language is added by describing it rather than by editing these walks.
-
 use tree_sitter::Node;
 
 use crate::{
@@ -11,10 +5,6 @@ use crate::{
     facts::{BlockDepth, DecisionPoints, ParameterCount, ReturnPaths, StatementCount},
 };
 
-/// Reports whether `node` is a function declaration rather than a keyword token.
-///
-/// Grammars name a keyword token after the construct it introduces, so Python's `lambda`
-/// keyword has the same node kind as the lambda itself. Only named nodes are structure.
 pub(super) fn is_function(node: Node<'_>, vocabulary: &Vocabulary) -> bool {
     node.is_named() && (vocabulary.is_function)(node.kind())
 }
@@ -23,7 +13,6 @@ fn matches(node: Node<'_>, predicate: fn(&str) -> bool) -> bool {
     node.is_named() && predicate(node.kind())
 }
 
-/// Counts parameters the author declared, excluding a receiver such as `self`.
 pub(super) fn parameter_count(
     function: Node<'_>,
     source: &str,
@@ -53,7 +42,6 @@ fn is_receiver(parameter: Node<'_>, source: &str, vocabulary: &Vocabulary) -> bo
     (vocabulary.is_receiver)(parameter.kind(), text.trim())
 }
 
-/// Counts branch points the function owns, excluding those inside nested functions.
 pub(super) fn decision_points(function: Node<'_>, vocabulary: &Vocabulary) -> DecisionPoints {
     DecisionPoints::new(count_own_nodes(
         function,
@@ -62,7 +50,6 @@ pub(super) fn decision_points(function: Node<'_>, vocabulary: &Vocabulary) -> De
     ))
 }
 
-/// Counts the paths that leave the function, including an implicit trailing expression.
 pub(super) fn return_paths(function: Node<'_>, vocabulary: &Vocabulary) -> ReturnPaths {
     let explicit = count_own_nodes(function, vocabulary, vocabulary.is_return);
     let implicit = u32::from((vocabulary.has_implicit_tail_return)(function));
@@ -70,7 +57,6 @@ pub(super) fn return_paths(function: Node<'_>, vocabulary: &Vocabulary) -> Retur
     ReturnPaths::new(explicit + implicit)
 }
 
-/// Counts nodes matching `predicate` within the function but not within nested ones.
 fn count_own_nodes(
     function: Node<'_>,
     vocabulary: &Vocabulary,
@@ -98,10 +84,6 @@ fn count_nodes_in(node: Node<'_>, vocabulary: &Vocabulary, predicate: fn(&str) -
             .sum::<u32>()
 }
 
-/// Counts statements in the body through nested blocks but not nested functions.
-///
-/// A body that is a bare expression rather than a block is one statement: an arrow
-/// function or lambda does exactly one thing.
 pub(super) fn statement_count(function: Node<'_>, vocabulary: &Vocabulary) -> StatementCount {
     let Some(body) = function.child_by_field_name("body") else {
         return StatementCount::new(0);
@@ -140,7 +122,6 @@ fn count_nested_statements(node: Node<'_>, vocabulary: &Vocabulary) -> u32 {
         .sum()
 }
 
-/// Measures the deepest run of nested control-flow blocks inside the body.
 pub(super) fn block_depth(function: Node<'_>, vocabulary: &Vocabulary) -> BlockDepth {
     let Some(body) = function.child_by_field_name("body") else {
         return BlockDepth::new(0);
@@ -168,10 +149,6 @@ fn deepest_block(node: Node<'_>, depth: u32, in_else: bool, vocabulary: &Vocabul
     deepest
 }
 
-/// Reports whether `child` deepens nesting.
-///
-/// A conditional reached as the `else` branch of another conditional continues a flat
-/// chain, so `else if` reads as one level however long the chain grows.
 fn child_opens_block(child: Node<'_>, in_else: bool, vocabulary: &Vocabulary) -> bool {
     if !matches(child, vocabulary.is_nesting) {
         return false;
@@ -180,10 +157,6 @@ fn child_opens_block(child: Node<'_>, in_else: bool, vocabulary: &Vocabulary) ->
     !(in_else && (vocabulary.is_conditional)(child.kind()))
 }
 
-/// Reports whether the body declares no work at all.
-///
-/// A body holding only a comment is not empty: the comment is the author recording that
-/// the emptiness is deliberate, which is exactly what an allow-list would otherwise say.
 pub(super) fn body_is_empty(function: Node<'_>, source: &str, vocabulary: &Vocabulary) -> bool {
     let Some(body) = function.child_by_field_name("body") else {
         return false;
@@ -195,7 +168,6 @@ pub(super) fn body_is_empty(function: Node<'_>, source: &str, vocabulary: &Vocab
 
     let mut cursor = body.walk();
 
-    // A comment is a named child too, and it fails this test on purpose.
     body.named_children(&mut cursor)
         .all(|child| !child.is_extra() && is_placeholder(child, source, vocabulary))
 }

@@ -21,6 +21,9 @@ mod function_size;
 #[path = "rules/function_statements.rs"]
 mod function_statements;
 
+#[path = "rules/no_comments.rs"]
+mod no_comments;
+
 #[path = "rules/parameter_count.rs"]
 mod parameter_count;
 
