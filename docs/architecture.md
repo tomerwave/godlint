@@ -41,7 +41,13 @@ The macro flag exists because a name is not enough to identify a callee in Rust.
 names a macro without its `!`, so a `fn dbg` and the `dbg!` macro reach a rule as the same
 string, and restricting one restricted the other. Rules spell a macro callee with its `!`,
 which is both how Rust writes it and the name a finding reports, so the name a reader sees
-is the name they configure. `Import`, `EnvironmentRead`,
+is the name they configure.
+
+Naming a callee under `calls` scopes the restriction that already exists rather than
+redefining it. A built-in name stays bound to the language that defines it, so giving
+Python's `print` an `allow-in` boundary leaves a TypeScript function of that name alone. A
+name the project invents belongs to no language and applies wherever it is called, which is
+what a policy about `loadConfig` means. `Import`, `EnvironmentRead`,
 `ErrorHandler`, `Assertion`, `Mock`, and `DependencyEdge` are planned and are described in the
 [rule roadmap](rule-roadmap.md).
 

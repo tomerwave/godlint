@@ -211,3 +211,72 @@ fn a_configured_name_keeps_the_macro_distinction() {
         "naming the function restricts it, and the macro stays restricted by default"
     );
 }
+
+#[test]
+fn naming_a_built_in_scopes_it_to_the_language_that_defines_it() {
+    let configuration = concat!(
+        "version: 1\n",
+        "rules:\n",
+        "  architecture/restricted-call:\n",
+        "    severity: error\n",
+        "    calls:\n",
+        "      - name: print\n",
+        "        allow-in:\n",
+        "          - reporting/**\n"
+    );
+
+    assert_eq!(
+        violations(
+            "svc.py",
+            "def emit(rows):\n    print(rows)\n",
+            configuration
+        )
+        .len(),
+        1,
+        "Python print is restricted outside its boundary"
+    );
+    assert!(
+        violations(
+            "reporting/ok.py",
+            "def emit(rows):\n    print(rows)\n",
+            configuration
+        )
+        .is_empty(),
+        "and allowed inside it"
+    );
+    assert!(
+        violations(
+            "widget.ts",
+            "function print(m: string): string {\n  return m;\n}\nexport const go = () => print(\"x\");\n",
+            configuration
+        )
+        .is_empty(),
+        "scoping Python's built-in must not restrict a TypeScript function of that name"
+    );
+}
+
+#[test]
+fn a_name_that_is_not_a_built_in_applies_to_every_language() {
+    let configuration = concat!(
+        "version: 1\n",
+        "rules:\n",
+        "  architecture/restricted-call:\n",
+        "    severity: error\n",
+        "    calls:\n",
+        "      - name: loadConfig\n",
+        "        allow-in:\n",
+        "          - config/**\n"
+    );
+
+    for (path, source) in [
+        ("svc.ts", "export function b(){ return loadConfig(); }\n"),
+        ("svc.py", "def c():\n    return loadConfig()\n"),
+        ("svc.rs", "pub fn d() -> u32 { loadConfig() }\n"),
+    ] {
+        assert_eq!(
+            violations(path, source, configuration).len(),
+            1,
+            "{path}: a callee the project names is restricted wherever it is called"
+        );
+    }
+}

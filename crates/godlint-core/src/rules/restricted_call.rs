@@ -54,14 +54,27 @@ fn spelled(call: &CallFact) -> String {
 
 fn is_restricted(call: &CallFact, restrictions: &[RestrictedCallConfiguration]) -> bool {
     let name = spelled(call);
+    let restricted_here = default_restrictions(call).contains(&name.as_str());
 
     match restrictions
         .iter()
         .find(|restriction| restriction.name == name)
     {
+        Some(_) if is_built_in(&name) && !restricted_here => false,
         Some(restriction) => !is_allowed(call, &restriction.allow_in),
-        None => default_restrictions(call).contains(&name.as_str()),
+        None => restricted_here,
     }
+}
+
+fn is_built_in(name: &str) -> bool {
+    [
+        JAVASCRIPT_RESTRICTIONS,
+        PYTHON_RESTRICTIONS,
+        RUST_RESTRICTIONS,
+        RUST_MACRO_RESTRICTIONS,
+    ]
+    .iter()
+    .any(|restrictions| restrictions.contains(&name))
 }
 
 fn default_restrictions(call: &CallFact) -> &'static [&'static str] {
