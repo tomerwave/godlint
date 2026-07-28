@@ -1,3 +1,3 @@
 def outer():
-    def inner():
+    def fixtureNested():
         pass

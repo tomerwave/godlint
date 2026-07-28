@@ -13,7 +13,7 @@ fn function(path: &str, source: &str) -> FunctionFact {
     let range = SourceRange::new(0, source.source().len())
         .unwrap_or_else(|error| panic!("creates source range: {error}"));
 
-    FunctionFact::new(source, Some("example".into()), range, range, 0)
+    FunctionFact::new(source, Some("example".into()), range, range, false, 0)
         .unwrap_or_else(|error| panic!("creates function fact: {error}"))
 }
 

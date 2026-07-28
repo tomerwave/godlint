@@ -19,6 +19,7 @@ pub trait Rule {
     ) -> Option<Self::Violation>;
 }
 
+pub mod empty_function;
 pub mod file_size;
 pub mod function_nesting;
 pub mod function_size;
@@ -52,6 +53,10 @@ pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, 
 
     if let Some(configuration) = &config.rules.file_size {
         findings.extend(file_size::evaluate(facts, configuration)?);
+    }
+
+    if let Some(configuration) = &config.rules.empty_function {
+        findings.extend(empty_function::evaluate(facts, configuration)?);
     }
 
     findings.sort_by(|left, right| {

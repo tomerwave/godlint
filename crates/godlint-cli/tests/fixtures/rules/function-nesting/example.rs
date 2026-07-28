@@ -1,3 +1,3 @@
 fn outer() {
-    fn inner() {}
+    fn fixtureNested() {}
 }

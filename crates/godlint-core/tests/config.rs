@@ -58,6 +58,15 @@ fn accepts_the_file_size_rule() {
 }
 
 #[test]
+fn accepts_the_empty_function_rule() {
+    let result = load(
+        "version: 1\nrules:\n  maintainability/empty-function:\n    severity: warning\n    allow-names:\n      - intentionallyEmpty\n",
+    );
+
+    assert!(result.is_ok());
+}
+
+#[test]
 fn rejects_an_unknown_rule() {
     let result = load("version: 1\nrules:\n  maintainability/unknown: {}\n");
 

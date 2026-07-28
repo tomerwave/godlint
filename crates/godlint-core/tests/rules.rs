@@ -1,3 +1,6 @@
+#[path = "rules/empty_function.rs"]
+mod empty_function;
+
 #[path = "rules/function_size.rs"]
 mod function_size;
 

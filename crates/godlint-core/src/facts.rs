@@ -8,6 +8,7 @@ pub struct FunctionFact {
     name: Option<String>,
     range: SourceRange,
     body_range: SourceRange,
+    body_is_empty: bool,
     nesting_depth: u32,
 }
 
@@ -31,6 +32,7 @@ impl FunctionFact {
         name: Option<String>,
         range: SourceRange,
         body_range: SourceRange,
+        body_is_empty: bool,
         nesting_depth: u32,
     ) -> Result<Self, FunctionFactError> {
         source
@@ -52,6 +54,7 @@ impl FunctionFact {
             name,
             range,
             body_range,
+            body_is_empty,
             nesting_depth,
         })
     }
@@ -70,6 +73,10 @@ impl FunctionFact {
 
     pub fn body_range(&self) -> SourceRange {
         self.body_range
+    }
+
+    pub fn body_is_empty(&self) -> bool {
+        self.body_is_empty
     }
 
     pub fn nesting_depth(&self) -> u32 {

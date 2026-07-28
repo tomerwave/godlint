@@ -1,6 +1,12 @@
 version: 1
 
 rules:
+  maintainability/empty-function:
+    severity: warning
+    allow-names:
+      - fixtureAllowed
+      - fixtureViolation
+      - fixtureNested
   maintainability/file-size:
     severity: warning
     max-lines: 500

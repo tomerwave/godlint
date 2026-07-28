@@ -27,6 +27,7 @@ fn extracts_function_facts_from_every_supported_language() {
 
         assert_eq!(facts.functions().len(), 1, "{path}");
         assert_eq!(facts.functions()[0].name(), Some("example"), "{path}");
+        assert!(!facts.functions()[0].body_is_empty(), "{path}");
     }
 }
 
@@ -47,4 +48,12 @@ fn extracts_javascript_function_expressions() {
 
     assert_eq!(facts.functions().len(), 1);
     assert_eq!(facts.functions()[0].name(), None);
+}
+
+#[test]
+fn ignores_rust_trait_methods_without_bodies() {
+    let facts = analyze(&source("example.rs", "trait Hook {\n    fn empty();\n}"))
+        .unwrap_or_else(|error| panic!("analyzes trait: {error}"));
+
+    assert!(facts.functions().is_empty());
 }

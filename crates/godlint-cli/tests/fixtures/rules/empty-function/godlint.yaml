@@ -1,0 +1,7 @@
+version: 1
+
+rules:
+  maintainability/empty-function:
+    severity: error
+    allow-names:
+      - fixtureAllowed

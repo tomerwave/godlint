@@ -147,17 +147,40 @@ fn function_fact(
         .map(|body| node_range(body, source))
         .transpose()?
         .unwrap_or(range);
+    let body_is_empty = node
+        .child_by_field_name("body")
+        .is_some_and(|body| body_is_empty(body, source.language()));
     let name = node
         .child_by_field_name("name")
         .and_then(|name| source.source().get(name.byte_range()))
         .map(str::to_owned);
 
-    FunctionFact::new(source.clone(), name, range, body_range, nesting_depth).map_err(|error| {
-        AnalyzerError::InvalidFunction {
-            path: source.path().to_path_buf(),
-            source: error,
-        }
+    FunctionFact::new(
+        source.clone(),
+        name,
+        range,
+        body_range,
+        body_is_empty,
+        nesting_depth,
+    )
+    .map_err(|error| AnalyzerError::InvalidFunction {
+        path: source.path().to_path_buf(),
+        source: error,
     })
+}
+
+fn body_is_empty(body: Node<'_>, language: Language) -> bool {
+    if language == Language::Python {
+        return body.named_child_count() == 1
+            && body
+                .named_child(0)
+                .is_some_and(|statement| statement.kind() == "pass_statement");
+    }
+
+    let mut cursor = body.walk();
+
+    body.named_children(&mut cursor)
+        .all(|child| child.is_extra())
 }
 
 fn node_range(node: Node<'_>, source: &SourceFile) -> Result<SourceRange, AnalyzerError> {

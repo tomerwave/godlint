@@ -23,6 +23,8 @@ pub struct Rules {
     pub function_nesting: Option<FunctionNestingRule>,
     #[serde(rename = "maintainability/file-size")]
     pub file_size: Option<FileSizeRule>,
+    #[serde(rename = "maintainability/empty-function")]
+    pub empty_function: Option<EmptyFunctionRule>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -55,6 +57,14 @@ pub struct FileSizeRule {
     pub skip_blank_lines: bool,
     #[serde(rename = "skip-comments")]
     pub skip_comments: bool,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct EmptyFunctionRule {
+    pub severity: Severity,
+    #[serde(default, rename = "allow-names")]
+    pub allow_names: Vec<String>,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq)]

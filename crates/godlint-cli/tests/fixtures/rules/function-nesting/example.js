@@ -1,3 +1,3 @@
 function outer() {
-  function inner() {}
+  function fixtureNested() {}
 }
