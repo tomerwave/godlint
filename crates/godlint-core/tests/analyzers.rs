@@ -29,6 +29,7 @@ fn extracts_function_facts_from_every_supported_language() {
         assert_eq!(facts.functions()[0].name(), Some("example"), "{path}");
         assert_eq!(facts.functions()[0].parameter_count(), 0, "{path}");
         assert_eq!(facts.functions()[0].decision_points(), 0, "{path}");
+        assert_eq!(facts.functions()[0].return_count(), 0, "{path}");
         assert!(!facts.functions()[0].body_is_empty(), "{path}");
     }
 }
@@ -80,6 +81,25 @@ fn excludes_nested_function_decision_points() {
 
     assert_eq!(facts.functions()[0].decision_points(), 0);
     assert_eq!(facts.functions()[1].decision_points(), 1);
+}
+
+#[test]
+fn extracts_return_counts_from_every_supported_language() {
+    let cases = [
+        ("example.rs", "fn example() {\n    return;\n}"),
+        ("example.js", "function example() {\n  return;\n}"),
+        ("example.ts", "function example() {\n  return;\n}"),
+        ("example.tsx", "function example() {\n  return;\n}"),
+        ("example.py", "def example():\n    return"),
+        ("example.pyi", "def example():\n    return"),
+    ];
+
+    for (path, contents) in cases {
+        let facts = analyze(&source(path, contents))
+            .unwrap_or_else(|error| panic!("extracts returns from {path}: {error}"));
+
+        assert_eq!(facts.functions()[0].return_count(), 1, "{path}");
+    }
 }
 
 #[test]

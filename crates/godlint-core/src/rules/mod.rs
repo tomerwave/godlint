@@ -26,6 +26,7 @@ pub mod function_nesting;
 pub mod function_size;
 mod line_count;
 pub mod parameter_count;
+pub mod return_count;
 pub mod todo_requires_reference;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -72,6 +73,10 @@ pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, 
 
     if let Some(configuration) = &config.rules.cyclomatic_complexity {
         findings.extend(cyclomatic_complexity::evaluate(facts, configuration)?);
+    }
+
+    if let Some(configuration) = &config.rules.return_count {
+        findings.extend(return_count::evaluate(facts, configuration)?);
     }
 
     findings.sort_by(|left, right| {

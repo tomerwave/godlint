@@ -17,3 +17,5 @@ mod todo_requires_reference;
 
 #[path = "rules/parameter_count.rs"]
 mod parameter_count;
+#[path = "rules/return_count.rs"]
+mod return_count;

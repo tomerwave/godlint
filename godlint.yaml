@@ -1,6 +1,9 @@
 version: 1
 
 rules:
+  maintainability/return-count:
+    severity: warning
+    max-returns: 5
   maintainability/cyclomatic-complexity:
     severity: warning
     max-complexity: 10
