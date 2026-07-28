@@ -1,0 +1,5 @@
+version: 1
+
+rules:
+  policy/todo-requires-reference:
+    severity: error

@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use godlint_core::{
-    facts::{FunctionFact, FunctionFactError},
+    facts::{CommentFact, CommentFactError, FunctionFact, FunctionFactError},
     source::{SourceFile, SourceRange},
 };
 
@@ -116,5 +116,28 @@ fn rejects_a_body_range_that_is_invalid_for_the_source_file() {
     assert!(matches!(
         result,
         Err(FunctionFactError::InvalidBodyRange { .. })
+    ));
+}
+
+#[test]
+fn records_a_comment_fact() {
+    let source = SourceFile::new(PathBuf::from("src/example.rs"), "// TODO: track #1".into())
+        .unwrap_or_else(|error| panic!("creates source file: {error}"));
+    let range = SourceRange::new(0, source.source().len())
+        .unwrap_or_else(|error| panic!("creates source range: {error}"));
+    let fact = CommentFact::new(source, range)
+        .unwrap_or_else(|error| panic!("creates comment fact: {error}"));
+
+    assert_eq!(fact.text(), "// TODO: track #1");
+    assert_eq!(fact.range(), range);
+}
+
+#[test]
+fn rejects_an_invalid_comment_range() {
+    let result = CommentFact::new(source(), range(0, 29));
+
+    assert!(matches!(
+        result,
+        Err(CommentFactError::InvalidCommentRange { .. })
     ));
 }

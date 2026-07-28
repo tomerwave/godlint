@@ -3,6 +3,12 @@ use std::{error::Error, fmt};
 use crate::source::{SourceFile, SourceFileError, SourceRange};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CommentFact {
+    source: SourceFile,
+    range: SourceRange,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct FunctionFact {
     source: SourceFile,
     name: Option<String>,
@@ -24,6 +30,33 @@ pub enum FunctionFactError {
         function_range: SourceRange,
         body_range: SourceRange,
     },
+}
+
+#[derive(Debug)]
+pub enum CommentFactError {
+    InvalidCommentRange { source: SourceFileError },
+}
+
+impl CommentFact {
+    pub fn new(source: SourceFile, range: SourceRange) -> Result<Self, CommentFactError> {
+        source
+            .validate_range(range)
+            .map_err(|source| CommentFactError::InvalidCommentRange { source })?;
+
+        Ok(Self { source, range })
+    }
+
+    pub fn source(&self) -> &SourceFile {
+        &self.source
+    }
+
+    pub fn range(&self) -> SourceRange {
+        self.range
+    }
+
+    pub fn text(&self) -> &str {
+        &self.source.source()[self.range.start()..self.range.end()]
+    }
 }
 
 impl FunctionFact {
@@ -119,6 +152,24 @@ impl Error for FunctionFactError {
                 Some(source)
             }
             Self::BodyOutsideFunction { .. } => None,
+        }
+    }
+}
+
+impl fmt::Display for CommentFactError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::InvalidCommentRange { source } => {
+                write!(formatter, "comment range is invalid: {source}")
+            }
+        }
+    }
+}
+
+impl Error for CommentFactError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            Self::InvalidCommentRange { source } => Some(source),
         }
     }
 }

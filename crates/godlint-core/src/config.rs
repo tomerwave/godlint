@@ -25,6 +25,8 @@ pub struct Rules {
     pub file_size: Option<FileSizeRule>,
     #[serde(rename = "maintainability/empty-function")]
     pub empty_function: Option<EmptyFunctionRule>,
+    #[serde(rename = "policy/todo-requires-reference")]
+    pub todo_requires_reference: Option<TodoRequiresReferenceRule>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -67,6 +69,18 @@ pub struct EmptyFunctionRule {
     pub allow_names: Vec<String>,
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct TodoRequiresReferenceRule {
+    pub severity: Severity,
+    #[serde(default = "default_reference_prefixes", rename = "reference-prefixes")]
+    pub reference_prefixes: Vec<String>,
+}
+
+fn default_reference_prefixes() -> Vec<String> {
+    vec!["#".into()]
+}
+
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum Severity {
@@ -91,6 +105,7 @@ pub enum ConfigError {
     },
     InvalidFunctionSizeLimit,
     InvalidFileSizeLimit,
+    InvalidTodoReferencePrefixes,
 }
 
 impl Config {
@@ -125,6 +140,10 @@ impl Config {
             return Err(ConfigError::InvalidFileSizeLimit);
         }
 
+        if self.todo_reference_prefixes_are_invalid() {
+            return Err(ConfigError::InvalidTodoReferencePrefixes);
+        }
+
         Ok(())
     }
 
@@ -140,6 +159,19 @@ impl Config {
             .file_size
             .as_ref()
             .is_some_and(|rule| rule.max_lines == 0)
+    }
+
+    fn todo_reference_prefixes_are_invalid(&self) -> bool {
+        self.rules
+            .todo_requires_reference
+            .as_ref()
+            .is_some_and(|rule| {
+                rule.reference_prefixes.is_empty()
+                    || rule
+                        .reference_prefixes
+                        .iter()
+                        .any(|prefix| prefix.trim().is_empty())
+            })
     }
 }
 
@@ -163,6 +195,12 @@ impl fmt::Display for ConfigError {
                     "maintainability/file-size max-lines must be at least 1"
                 )
             }
+            Self::InvalidTodoReferencePrefixes => {
+                write!(
+                    formatter,
+                    "policy/todo-requires-reference reference-prefixes must not be empty"
+                )
+            }
         }
     }
 }
@@ -174,7 +212,8 @@ impl Error for ConfigError {
             Self::Parse { source, .. } => Some(source),
             Self::UnsupportedVersion { .. }
             | Self::InvalidFunctionSizeLimit
-            | Self::InvalidFileSizeLimit => None,
+            | Self::InvalidFileSizeLimit
+            | Self::InvalidTodoReferencePrefixes => None,
         }
     }
 }

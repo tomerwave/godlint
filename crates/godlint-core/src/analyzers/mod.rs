@@ -3,7 +3,7 @@ use std::{error::Error, fmt, path::PathBuf};
 use tree_sitter::{Language as TreeSitterLanguage, Node, Parser};
 
 use crate::{
-    facts::{FunctionFact, FunctionFactError},
+    facts::{CommentFact, CommentFactError, FunctionFact, FunctionFactError},
     source::{Language, SourceFile, SourceRange, SourceRangeError},
 };
 
@@ -16,6 +16,7 @@ mod typescript;
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SourceFacts {
     source: SourceFile,
+    comments: Vec<CommentFact>,
     functions: Vec<FunctionFact>,
 }
 
@@ -26,6 +27,10 @@ impl SourceFacts {
 
     pub fn functions(&self) -> &[FunctionFact] {
         &self.functions
+    }
+
+    pub fn comments(&self) -> &[CommentFact] {
+        &self.comments
     }
 }
 
@@ -52,6 +57,10 @@ pub enum AnalyzerError {
     InvalidFunction {
         path: PathBuf,
         source: FunctionFactError,
+    },
+    InvalidComment {
+        path: PathBuf,
+        source: CommentFactError,
     },
 }
 
@@ -92,27 +101,31 @@ pub(super) fn analyze_with(
     }
 
     let mut functions = Vec::new();
+    let mut comments = Vec::new();
 
-    collect_functions(
+    collect_source_facts(
         tree.root_node(),
         source,
         0,
         is_function_node,
         &mut functions,
+        &mut comments,
     )?;
 
     Ok(SourceFacts {
         source: source.clone(),
+        comments,
         functions,
     })
 }
 
-fn collect_functions(
+fn collect_source_facts(
     node: Node<'_>,
     source: &SourceFile,
     nesting_depth: u32,
     is_function_node: fn(&str) -> bool,
     functions: &mut Vec<FunctionFact>,
+    comments: &mut Vec<CommentFact>,
 ) -> Result<(), AnalyzerError> {
     let is_function = is_function_node(node.kind());
     let child_nesting_depth = nesting_depth + u32::from(is_function);
@@ -121,19 +134,49 @@ fn collect_functions(
         functions.push(function_fact(node, source, nesting_depth)?);
     }
 
+    if node_is_comment(node, source) {
+        comments.push(comment_fact(node, source)?);
+    }
+
     let mut cursor = node.walk();
 
     for child in node.children(&mut cursor) {
-        collect_functions(
+        collect_source_facts(
             child,
             source,
             child_nesting_depth,
             is_function_node,
             functions,
+            comments,
         )?;
     }
 
     Ok(())
+}
+
+fn node_is_comment(node: Node<'_>, source: &SourceFile) -> bool {
+    if !node.is_extra() {
+        return false;
+    }
+
+    source
+        .source()
+        .get(node.byte_range())
+        .is_some_and(|text| match source.language() {
+            Language::JavaScript | Language::Rust | Language::TypeScript => {
+                text.starts_with("//") || text.starts_with("/*")
+            }
+            Language::Python => text.starts_with('#'),
+        })
+}
+
+fn comment_fact(node: Node<'_>, source: &SourceFile) -> Result<CommentFact, AnalyzerError> {
+    let range = node_range(node, source)?;
+
+    CommentFact::new(source.clone(), range).map_err(|error| AnalyzerError::InvalidComment {
+        path: source.path().to_path_buf(),
+        source: error,
+    })
 }
 
 fn function_fact(
@@ -222,6 +265,9 @@ impl fmt::Display for AnalyzerError {
                     path.display()
                 )
             }
+            Self::InvalidComment { path, source } => {
+                write!(formatter, "invalid comment in {}: {source}", path.display())
+            }
         }
     }
 }
@@ -232,6 +278,7 @@ impl Error for AnalyzerError {
             Self::ConfiguresParser { source, .. } => Some(source),
             Self::InvalidRange { source, .. } => Some(source),
             Self::InvalidFunction { source, .. } => Some(source),
+            Self::InvalidComment { source, .. } => Some(source),
             Self::MissingSyntaxTree { .. } | Self::InvalidSyntax { .. } => None,
         }
     }

@@ -1,6 +1,11 @@
 version: 1
 
 rules:
+  policy/todo-requires-reference:
+    severity: warning
+    reference-prefixes:
+      - '#'
+      - fixture-
   maintainability/empty-function:
     severity: warning
     allow-names:
