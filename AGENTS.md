@@ -30,6 +30,9 @@ Read the linked documents relevant to the task before changing code or policy.
   reads without it. Comments inside test fixtures are input data and are exempt.
 - Do not add dependencies, public APIs, configuration schema, or crate boundaries
   without updating the relevant documentation and tests.
+- A rule change is not covered because a fixture exists; it is covered when altering the
+  rule breaks a test. Run `cargo mutants --file 'crates/godlint-core/src/rules/*.rs'` and
+  leave no surviving mutant in a rule you touched.
 - Run `python3 scripts/validate-pull-request.py` before opening a pull request. It checks
   that a rule is registered, configurable, fixtured, tested, documented, and dogfooded,
   and names the file to edit for anything missing.

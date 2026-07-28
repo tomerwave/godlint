@@ -1,0 +1,65 @@
+name: Mutation testing
+
+on:
+  pull_request:
+    paths:
+      - 'crates/godlint-core/src/rules/**'
+      - '.cargo/mutants.toml'
+  schedule:
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  changed:
+    name: Prove the tests exercise what changed
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - run: rustup toolchain install 1.97.1 --profile minimal
+
+      - uses: Swatinem/rust-cache@v2
+
+      - run: cargo +1.97.1 install cargo-mutants --locked
+
+      # Only the lines this pull request touched, so the check stays proportionate to it.
+      - name: Alter the changed lines and require a test to notice
+        run: |
+          git diff "origin/${{ github.base_ref }}...HEAD" -- crates/godlint-core/src/rules/ > changed.diff
+          cargo +1.97.1 mutants --no-shuffle -j 2 --in-diff changed.diff
+
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutants-changed
+          path: mutants.out/
+
+  everything:
+    name: Prove the tests exercise every rule
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: rustup toolchain install 1.97.1 --profile minimal
+
+      - uses: Swatinem/rust-cache@v2
+
+      - run: cargo +1.97.1 install cargo-mutants --locked
+
+      - name: Alter every rule and require a test to notice
+        run: cargo +1.97.1 mutants --no-shuffle -j 2
+
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutants-everything
+          path: mutants.out/

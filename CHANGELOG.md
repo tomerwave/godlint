@@ -119,6 +119,19 @@ releases begin.
   longer costs its line count times its comment count: a file with 6,400 comments took
   1,080 ms and now takes 177 ms.
 
+- Mutation testing over the rules layer, replacing the removed requirement that a rule
+  change touch a fixture. That check could be satisfied by editing any fixture at all and
+  so never established what it appeared to; altering a rule and requiring a test to notice
+  establishes it directly. A pull request mutates the lines it changed; a weekly run covers
+  every rule. It raises the floor rather than proving coverage: a new branch can still be
+  untested while every mutant of it is caught, so review still decides whether a case
+  deserves a fixture.
+- Three cases the first mutation run showed were unexercised: code that begins at the byte
+  a block comment ends, and the two error-reporting paths of `RuleError`.
+- Every rule must now have a fixture that reports it and a fixture that configures it
+  without reporting it, so a rule cannot be left with nothing proving it stays silent on
+  conforming code. `style/no-comments` was missing the second and now has it.
+
 ### Fixed
 
 - Configuration discovery stops at a repository boundary, meaning a directory
