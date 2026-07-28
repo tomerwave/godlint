@@ -4,7 +4,6 @@ use crate::{
         Finding, Rule, RuleError, Violation, configured_severity, is_suppressible_rule,
         when_configured,
     },
-    source::SourceFile,
     suppression::Suppression,
 };
 
@@ -35,7 +34,15 @@ pub fn evaluate(
         suppressions
             .iter()
             .filter(|suppression| is_unused(suppression, findings, config))
-            .map(|suppression| finding(suppression.source(), suppression, severity))
+            .map(|suppression| {
+                super::finding(
+                    suppression.source(),
+                    suppression.range(),
+                    severity,
+                    UnusedSuppression::ID,
+                    Violation::UnusedSuppression,
+                )
+            })
             .collect()
     })
 }
@@ -46,23 +53,4 @@ fn is_unused(suppression: &Suppression, findings: &[Finding], config: &Config) -
     });
 
     has_enabled_rule && !findings.iter().any(|finding| suppression.covers(finding))
-}
-
-fn finding(
-    source: &SourceFile,
-    suppression: &Suppression,
-    severity: Severity,
-) -> Result<Finding, RuleError> {
-    let location = source
-        .location(suppression.range())
-        .map_err(|source| RuleError::LocatesSource { source })?;
-
-    Ok(Finding {
-        path: source.path().to_path_buf(),
-        line: location.start.line,
-        column: location.start.column,
-        severity,
-        rule_id: UnusedSuppression::ID,
-        violation: Violation::UnusedSuppression,
-    })
 }

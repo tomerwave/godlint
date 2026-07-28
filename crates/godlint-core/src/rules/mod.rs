@@ -24,7 +24,7 @@ pub mod return_count;
 pub mod todo_requires_reference;
 pub mod unused_suppression;
 
-pub use registry::{configured_severity, is_suppressible_rule};
+pub use registry::{configured_severity, is_known_rule, is_suppressible_rule, rule_ids};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Metric {
@@ -373,21 +373,6 @@ const EVALUATORS: &[Evaluator] = &[
     return_count::evaluate,
     function_statements::evaluate,
     no_comments::evaluate,
-];
-
-pub const RULE_IDS: &[&str] = &[
-    <accountable_suppression::AccountableSuppression as Rule>::ID,
-    <decision_complexity::DecisionComplexity as Rule>::ID,
-    <empty_function::EmptyFunction as Rule>::ID,
-    <file_size::FileSize as Rule>::ID,
-    <function_nesting::FunctionNesting as Rule>::ID,
-    <function_size::FunctionSize as Rule>::ID,
-    <function_statements::FunctionStatements as Rule>::ID,
-    <no_comments::NoComments as Rule>::ID,
-    <parameter_count::ParameterCount as Rule>::ID,
-    <return_count::ReturnCount as Rule>::ID,
-    <todo_requires_reference::TodoRequiresReference as Rule>::ID,
-    <unused_suppression::UnusedSuppression as Rule>::ID,
 ];
 
 pub fn evaluate(

@@ -32,7 +32,6 @@ RULES = "/src/rules/"
 BUDGET = {
     "src/rules/mod.rs": 7,
     "src/rules/todo_requires_reference.rs": 1,
-    "src/rules/unused_suppression.rs": 1,
 }
 
 

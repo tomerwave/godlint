@@ -2,8 +2,8 @@ use godlint_core::{
     config::{AccountableSuppressionRule, Severity},
     date::Date,
     rules::{
-        RULE_IDS, Rule, SuppressionDefect, SuppressionRule, Violation,
-        accountable_suppression::AccountableSuppression, is_suppressible_rule,
+        Rule, SuppressionDefect, SuppressionRule, Violation,
+        accountable_suppression::AccountableSuppression, is_suppressible_rule, rule_ids,
         unused_suppression::UnusedSuppression,
     },
 };
@@ -102,6 +102,7 @@ fn reports_every_unknown_rule_in_a_list() {
 
 #[test]
 fn refuses_to_suppress_the_rule_that_holds_suppressions_to_account() {
+    assert!(!is_suppressible_rule(AccountableSuppression::ID));
     assert_eq!(
         enclosing("policy/accountable-suppression -- circular"),
         vec![SuppressionDefect::NotSuppressible {
@@ -112,6 +113,7 @@ fn refuses_to_suppress_the_rule_that_holds_suppressions_to_account() {
 
 #[test]
 fn refuses_to_suppress_the_rule_that_removes_stale_exceptions() {
+    assert!(!is_suppressible_rule(UnusedSuppression::ID));
     assert_eq!(
         enclosing("policy/unused-suppression -- circular"),
         vec![SuppressionDefect::NotSuppressible {
@@ -228,19 +230,23 @@ fn a_next_line_directive_always_resolves() {
 
 #[test]
 fn every_registered_rule_can_be_named_by_a_suppression() {
-    for identifier in RULE_IDS {
-        if *identifier == AccountableSuppression::ID || *identifier == UnusedSuppression::ID {
+    let mut suppressible = 0;
+
+    for identifier in rule_ids() {
+        if !is_suppressible_rule(identifier) {
             continue;
         }
 
-        assert!(
-            is_suppressible_rule(identifier),
-            "{identifier} is registered but missing from the suppression registry"
-        );
+        suppressible += 1;
 
         assert!(
             enclosing(&format!("{identifier} -- registered")).is_empty(),
             "{identifier} is registered but a suppression cannot name it"
         );
     }
+
+    assert!(
+        suppressible > 0,
+        "the registry lists no suppressible rule, so this test proves nothing"
+    );
 }

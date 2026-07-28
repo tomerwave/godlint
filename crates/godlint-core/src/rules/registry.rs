@@ -2,7 +2,7 @@ use crate::{
     config::{Config, Severity},
     rules::{
         Rule, accountable_suppression::AccountableSuppression,
-        cyclomatic_complexity::CyclomaticComplexity, empty_function::EmptyFunction,
+        decision_complexity::DecisionComplexity, empty_function::EmptyFunction,
         file_size::FileSize, function_nesting::FunctionNesting, function_size::FunctionSize,
         function_statements::FunctionStatements, no_comments::NoComments,
         parameter_count::ParameterCount, return_count::ReturnCount,
@@ -39,9 +39,9 @@ severity!(
 );
 severity!(parameter_count_severity, ParameterCount, parameter_count);
 severity!(
-    cyclomatic_complexity_severity,
-    CyclomaticComplexity,
-    cyclomatic_complexity
+    decision_complexity_severity,
+    DecisionComplexity,
+    decision_complexity
 );
 severity!(return_count_severity, ReturnCount, return_count);
 severity!(
@@ -93,8 +93,8 @@ const REGISTRATIONS: &[Registration] = &[
         suppressible: true,
     },
     Registration {
-        id: CyclomaticComplexity::ID,
-        severity: cyclomatic_complexity_severity,
+        id: DecisionComplexity::ID,
+        severity: decision_complexity_severity,
         suppressible: true,
     },
     Registration {
@@ -124,18 +124,26 @@ const REGISTRATIONS: &[Registration] = &[
     },
 ];
 
-pub fn configured_severity(config: &Config, rule_id: &str) -> Severity {
+pub fn rule_ids() -> impl Iterator<Item = &'static str> {
+    REGISTRATIONS.iter().map(|registration| registration.id)
+}
+
+pub fn is_known_rule(rule_id: &str) -> bool {
+    registration(rule_id).is_some()
+}
+
+fn registration(rule_id: &str) -> Option<&'static Registration> {
     REGISTRATIONS
         .iter()
         .find(|registration| registration.id == rule_id)
-        .map_or(Severity::Off, |registration| {
-            (registration.severity)(config)
-        })
+}
+
+pub fn configured_severity(config: &Config, rule_id: &str) -> Severity {
+    registration(rule_id).map_or(Severity::Off, |registration| {
+        (registration.severity)(config)
+    })
 }
 
 pub fn is_suppressible_rule(rule_id: &str) -> bool {
-    REGISTRATIONS
-        .iter()
-        .find(|registration| registration.id == rule_id)
-        .is_some_and(|registration| registration.suppressible)
+    registration(rule_id).is_some_and(|registration| registration.suppressible)
 }
