@@ -28,6 +28,7 @@ E2E = Path("crates/godlint-cli/tests/e2e.rs")
 CONFIG = Path("crates/godlint-core/src/config.rs")
 DOGFOOD = Path("godlint.yaml")
 WORKFLOWS = Path(".github/workflows")
+MUTANTS = Path(".cargo/mutants.toml")
 
 ROADMAP = Path("docs/rule-roadmap.md")
 README = Path("README.md")
@@ -107,13 +108,65 @@ def check_rule(report: Report, module: Path, identifier: str) -> None:
         f"{DOGFOOD}: {identifier} is not enabled, so Godlint does not dogfood it",
     )
 
+    check_rule_coverage(report, identifier)
+
+
+def fixture_directories() -> list[Path]:
+    return sorted(path for path in FIXTURES_DIR.iterdir() if path.is_dir())
+
+
+def check_rule_coverage(report: Report, identifier: str) -> None:
+    reported = f"[{identifier}]"
+    fires = False
+    stays_silent = False
+
+    for fixture in fixture_directories():
+        expected = read(fixture / "expected.yaml")
+        configured = identifier in read(fixture / "godlint.yaml")
+
+        fires = fires or reported in expected
+        stays_silent = stays_silent or (configured and reported not in expected)
+
+    report.check(
+        fires,
+        f"{FIXTURES_DIR}: no fixture reports {identifier}, so nothing proves it fires",
+    )
+    report.check(
+        stays_silent,
+        f"{FIXTURES_DIR}: no fixture configures {identifier} without reporting it, "
+        "so nothing proves it stays silent on conforming code",
+    )
+
 
 def check_fixtures(report: Report) -> None:
-    for fixture in sorted(p for p in FIXTURES_DIR.iterdir() if p.is_dir()):
+    for fixture in fixture_directories():
         report.check(
             (fixture / "godlint.yaml").exists(),
             f"{fixture}: godlint.yaml is missing, so the fixture inherits the root config",
         )
+
+
+def check_mutation_config(report: Report) -> None:
+    body = read(MUTANTS)
+
+    report.check(
+        "test_workspace = true" in body,
+        f"{MUTANTS}: must set test_workspace, or the fixture corpus does not decide "
+        "whether a mutant was caught",
+    )
+
+    exclusions = [
+        line.strip()
+        for line in body.splitlines()
+        if line.strip().startswith('"') and line.strip().endswith('",')
+    ]
+    commented = body.count("    #")
+
+    report.check(
+        commented >= len(exclusions),
+        f"{MUTANTS}: every exclusion needs a stated reason; found {len(exclusions)} "
+        f"exclusions and {commented} comment lines beside them",
+    )
 
 
 def check_workflows(report: Report) -> None:
@@ -185,6 +238,7 @@ def main() -> int:
             check_rule(report, module, identifier)
 
     check_fixtures(report)
+    check_mutation_config(report)
     check_workflows(report)
 
     if arguments.base:

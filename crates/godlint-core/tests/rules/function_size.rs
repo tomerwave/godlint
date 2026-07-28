@@ -119,6 +119,19 @@ fn counts_a_line_whose_comment_marker_is_inside_a_string() {
 }
 
 #[test]
+fn counts_code_that_begins_where_a_comment_ends() {
+    assert_eq!(
+        lines(
+            "src/example.rs",
+            "fn example() {\n    /* detail */}",
+            true,
+            true
+        ),
+        2
+    );
+}
+
+#[test]
 fn counts_a_line_holding_both_code_and_a_comment() {
     assert_eq!(
         lines(

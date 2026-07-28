@@ -6,6 +6,9 @@ mod support;
 #[path = "rules/cyclomatic_complexity.rs"]
 mod cyclomatic_complexity;
 
+#[path = "rules/errors.rs"]
+mod errors;
+
 #[path = "rules/empty_function.rs"]
 mod empty_function;
 

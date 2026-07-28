@@ -1,0 +1,21 @@
+examine_globs = ["crates/godlint-core/src/rules/*.rs"]
+
+# The whole workspace's tests decide whether a mutant is caught. Scoping to the mutated
+# package alone would omit the CLI fixture corpus, which is what catches most rule
+# changes, and would report survivors that are in fact well covered.
+test_workspace = true
+
+timeout_multiplier = 5.0
+minimum_test_timeout = 60
+
+exclude_re = [
+    # The cursor only skips comments that can no longer overlap a later line, so failing
+    # to advance it costs time and changes nothing. No test can distinguish this mutant
+    # from the original, which makes it an equivalent mutant rather than a missing case.
+    "replace < with > in effective_line_count",
+    # Stopping the line walk from advancing does not produce a wrong answer, it stops the
+    # walk from finishing. The suite notices, but as non-termination rather than as a
+    # failed assertion, and whether that reads as a timeout depends on how fast the runner
+    # is. Gating on it would be flaky rather than informative.
+    "replace \\+= with \\*= in effective_line_count",
+]
