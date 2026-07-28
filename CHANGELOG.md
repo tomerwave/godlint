@@ -103,6 +103,16 @@ releases begin.
   `max-depth`, `max-parameters`, `max-returns`, and `max-statements` accept `0`,
   because forbidding a construct outright is a real policy.
 
+- Pull request templates for a new rule and for infrastructure work, each asking for
+  what a reviewer would otherwise have to reconstruct: the policy a rule encodes, what
+  it counts in each language, where its threshold came from, and which idiomatic
+  constructs a naive implementation would misreport.
+- `scripts/validate-pull-request.py`, run by CI, which checks the repository invariants
+  those templates ask about rather than trusting a ticked box. A rule module must be
+  registered, configurable, fixtured, unit-tested, documented in the roadmap, README and
+  changelog, and enabled for Godlint itself; every fixture must be declared by a test and
+  assert an exit code; every workflow must declare permissions and pin one toolchain.
+
 ### Fixed
 
 - Configuration discovery stops at a repository boundary, meaning a directory

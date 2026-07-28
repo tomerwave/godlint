@@ -15,3 +15,8 @@ For repository changes:
   `crates/godlint-cli/tests/fixtures/rules/<rule-id>/`.
 - Do not add a public API or crate boundary before a real implementation need exists.
 - Never commit `.omx/` planning/runtime files.
+- Pick the pull request template that matches the change: `new-rule` when adding or
+  changing a rule, `infrastructure` for build, CI, tooling, or documentation work. Append
+  `?template=new-rule.md` or `?template=infrastructure.md` to the pull request URL.
+- `python3 scripts/validate-pull-request.py` enforces the parts of those templates that
+  can be checked. Run it locally; CI runs it too.
