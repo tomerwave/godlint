@@ -47,7 +47,14 @@ Naming a callee under `calls` scopes the restriction that already exists rather 
 redefining it. A built-in name stays bound to the language that defines it, so giving
 Python's `print` an `allow-in` boundary leaves a TypeScript function of that name alone. A
 name the project invents belongs to no language and applies wherever it is called, which is
-what a policy about `loadConfig` means. `Import`, `EnvironmentRead`,
+what a policy about `loadConfig` means.
+
+One table pairs each built-in callee with the dialect that speaks it, and both questions the
+rule asks — is this name a built-in anywhere, and is it restricted in this call's dialect —
+are answered from that table. Splitting them across a list per language meant a new
+restriction had to be added twice, and forgetting the second made a built-in silently
+language-agnostic again. A dialect is not quite a language: Rust reaches the table twice,
+once for calls and once for macros, which is what keeps `dbg!` and a `fn dbg` apart. `Import`, `EnvironmentRead`,
 `ErrorHandler`, `Assertion`, `Mock`, and `DependencyEdge` are planned and are described in the
 [rule roadmap](rule-roadmap.md).
 

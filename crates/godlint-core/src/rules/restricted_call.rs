@@ -7,13 +7,24 @@ use crate::{
     source::Language,
 };
 
-const JAVASCRIPT_RESTRICTIONS: &[&str] = &["process.exit", "console.log", "console.debug"];
+#[derive(Clone, Copy, Eq, PartialEq)]
+enum Dialect {
+    JavaScript,
+    Python,
+    Rust,
+    RustMacro,
+}
 
-const PYTHON_RESTRICTIONS: &[&str] = &["sys.exit", "os._exit", "print"];
-
-const RUST_RESTRICTIONS: &[&str] = &["std::process::exit"];
-
-const RUST_MACRO_RESTRICTIONS: &[&str] = &["dbg!"];
+const DEFAULTS: &[(&str, Dialect)] = &[
+    ("process.exit", Dialect::JavaScript),
+    ("console.log", Dialect::JavaScript),
+    ("console.debug", Dialect::JavaScript),
+    ("sys.exit", Dialect::Python),
+    ("os._exit", Dialect::Python),
+    ("print", Dialect::Python),
+    ("std::process::exit", Dialect::Rust),
+    ("dbg!", Dialect::RustMacro),
+];
 
 pub struct RestrictedCall;
 
@@ -54,7 +65,7 @@ fn spelled(call: &CallFact) -> String {
 
 fn is_restricted(call: &CallFact, restrictions: &[RestrictedCallConfiguration]) -> bool {
     let name = spelled(call);
-    let restricted_here = default_restrictions(call).contains(&name.as_str());
+    let restricted_here = is_default_restriction(call, &name);
 
     match restrictions
         .iter()
@@ -67,22 +78,23 @@ fn is_restricted(call: &CallFact, restrictions: &[RestrictedCallConfiguration]) 
 }
 
 fn is_built_in(name: &str) -> bool {
-    [
-        JAVASCRIPT_RESTRICTIONS,
-        PYTHON_RESTRICTIONS,
-        RUST_RESTRICTIONS,
-        RUST_MACRO_RESTRICTIONS,
-    ]
-    .iter()
-    .any(|restrictions| restrictions.contains(&name))
+    DEFAULTS.iter().any(|(default, _)| *default == name)
 }
 
-fn default_restrictions(call: &CallFact) -> &'static [&'static str] {
+fn is_default_restriction(call: &CallFact, name: &str) -> bool {
+    let dialect = dialect(call);
+
+    DEFAULTS
+        .iter()
+        .any(|(default, spoken)| *default == name && *spoken == dialect)
+}
+
+fn dialect(call: &CallFact) -> Dialect {
     match call.source().language() {
-        Language::JavaScript | Language::TypeScript => JAVASCRIPT_RESTRICTIONS,
-        Language::Python => PYTHON_RESTRICTIONS,
-        Language::Rust if call.is_macro() => RUST_MACRO_RESTRICTIONS,
-        Language::Rust => RUST_RESTRICTIONS,
+        Language::JavaScript | Language::TypeScript => Dialect::JavaScript,
+        Language::Python => Dialect::Python,
+        Language::Rust if call.is_macro() => Dialect::RustMacro,
+        Language::Rust => Dialect::Rust,
     }
 }
 
