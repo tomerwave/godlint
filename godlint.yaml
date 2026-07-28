@@ -6,3 +6,6 @@ rules:
     max-lines: 300
     skip-blank-lines: true
     skip-comments: true
+  maintainability/function-nesting:
+    severity: error
+    max-depth: 5

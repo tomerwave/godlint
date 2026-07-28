@@ -1,0 +1,47 @@
+exit-code: 1
+
+findings:
+  - path: example.js
+    line: 2
+    column: 3
+    severity: error
+    rule-id: maintainability/function-nesting
+    message: Function is nested at depth 1 (max 0).
+  - path: example.jsx
+    line: 2
+    column: 3
+    severity: error
+    rule-id: maintainability/function-nesting
+    message: Function is nested at depth 1 (max 0).
+  - path: example.py
+    line: 2
+    column: 5
+    severity: error
+    rule-id: maintainability/function-nesting
+    message: Function is nested at depth 1 (max 0).
+  - path: example.pyi
+    line: 2
+    column: 5
+    severity: error
+    rule-id: maintainability/function-nesting
+    message: Function is nested at depth 1 (max 0).
+  - path: example.rs
+    line: 2
+    column: 5
+    severity: error
+    rule-id: maintainability/function-nesting
+    message: Function is nested at depth 1 (max 0).
+  - path: example.ts
+    line: 2
+    column: 3
+    severity: error
+    rule-id: maintainability/function-nesting
+    message: Function is nested at depth 1 (max 0).
+  - path: example.tsx
+    line: 2
+    column: 3
+    severity: error
+    rule-id: maintainability/function-nesting
+    message: Function is nested at depth 1 (max 0).
+
+stderr: []
