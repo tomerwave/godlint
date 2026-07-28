@@ -27,10 +27,6 @@ const VOCABULARY: Vocabulary = Vocabulary {
     has_implicit_tail_return,
 };
 
-/// Closures are functions.
-///
-/// A closure carries the same maintainability weight as a named function, and treating
-/// it otherwise would attribute its size and branching to whatever `fn` encloses it.
 fn is_function(kind: &str) -> bool {
     matches!(kind, "closure_expression" | "function_item")
 }
@@ -54,10 +50,6 @@ fn is_conditional(kind: &str) -> bool {
     kind == "if_expression"
 }
 
-/// Counts `?` as a branch.
-///
-/// The try operator is the dominant conditional in idiomatic Rust: it either continues
-/// or returns early, which is exactly a decision point.
 fn is_decision(kind: &str) -> bool {
     matches!(
         kind,
@@ -65,7 +57,6 @@ fn is_decision(kind: &str) -> bool {
     )
 }
 
-/// Counts `?` as an exit as well as a branch, because it can return from the function.
 fn is_return(kind: &str) -> bool {
     matches!(kind, "return_expression" | "try_expression")
 }
@@ -86,10 +77,6 @@ fn is_docstring(_node: Node<'_>) -> bool {
     false
 }
 
-/// Reports whether the body yields a value by falling off its end.
-///
-/// A trailing expression is an exit path, and counting it keeps Rust comparable with
-/// languages that must write `return` for the same control flow.
 fn has_implicit_tail_return(node: Node<'_>) -> bool {
     let Some(body) = node.child_by_field_name("body") else {
         return false;

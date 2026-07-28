@@ -12,13 +12,8 @@ use godlint_core::{
 
 pub const USAGE: &str = "check [paths...]";
 
-/// Name of the configuration file that anchors a scan.
 const CONFIG_NAME: &str = "godlint.yaml";
 
-/// Directory entry that marks the top of a repository.
-///
-/// Configuration discovery stops here so a stray `godlint.yaml` in a parent directory
-/// cannot silently govern an unrelated repository, or move the reported path root.
 const REPOSITORY_MARKER: &str = ".git";
 
 pub fn run(arguments: &[String]) -> Option<ExitCode> {
@@ -43,17 +38,12 @@ fn check(paths: &[String]) -> ExitCode {
     }
 }
 
-/// Everything resolved before any source is read.
 struct Prepared {
     root: PathBuf,
     scan_paths: Vec<PathBuf>,
     config: Config,
 }
 
-/// Reports findings for `paths`, returning the process exit code.
-///
-/// Every setup failure is returned as the operator-facing message to print, so the
-/// caller owns both the reporting and the failure exit code.
 fn run_check(paths: &[String]) -> Result<ExitCode, String> {
     let prepared = prepare(paths)?;
     let report = scan(
@@ -68,7 +58,6 @@ fn run_check(paths: &[String]) -> Result<ExitCode, String> {
     Ok(report_outcome(&findings, &report, prepared.config.fail_on))
 }
 
-/// Resolves the scan root, the paths to walk, and the configuration governing them.
 fn prepare(paths: &[String]) -> Result<Prepared, String> {
     let current_directory = std::env::current_dir()
         .map_err(|error| format!("Unable to determine the scan root: {error}"))?;
@@ -85,10 +74,6 @@ fn prepare(paths: &[String]) -> Result<Prepared, String> {
     })
 }
 
-/// Prints the run's output and decides the exit code.
-///
-/// Severity governs failure: a finding below `fail_on` is reported without failing the
-/// command, which is what makes it possible to adopt a rule as a warning first.
 fn report_outcome(findings: &[Finding], report: &ScanReport, fail_on: Severity) -> ExitCode {
     if findings.is_empty() && report.issues.is_empty() {
         println!("No findings.");
@@ -153,7 +138,6 @@ fn requested_path(current_directory: &Path, path: &Path) -> Result<PathBuf, Stri
     })
 }
 
-/// Finds the directory whose configuration governs this run.
 fn config_root(requested: &[PathBuf]) -> Result<PathBuf, String> {
     let path = requested
         .first()

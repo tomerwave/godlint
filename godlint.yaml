@@ -49,3 +49,6 @@ rules:
     severity: warning
   policy/todo-requires-reference:
     severity: warning
+  style/no-comments:
+    severity: error
+    allow-doc-comments: false

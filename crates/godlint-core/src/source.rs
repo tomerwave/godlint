@@ -54,10 +54,6 @@ pub enum SourceRangeError {
     Reversed { start: usize, end: usize },
 }
 
-/// Byte-order mark that some editors prepend to UTF-8 sources.
-///
-/// It is stripped before parsing so that byte offsets, line accounting, and reported
-/// columns all describe the source a reader sees rather than an invisible prefix.
 const BYTE_ORDER_MARK: &str = "\u{feff}";
 
 impl Language {
@@ -89,10 +85,6 @@ impl SourceFile {
         })
     }
 
-    /// Reports whether the file only declares an interface, as a `.pyi` stub does.
-    ///
-    /// Stub files are all signatures and placeholder bodies by construction, so
-    /// body-shaped rules would report every declaration in them.
     pub fn is_interface_stub(&self) -> bool {
         self.path
             .extension()
@@ -126,10 +118,6 @@ impl SourceFile {
         })
     }
 
-    /// Confirms a range addresses real character boundaries without deriving positions.
-    ///
-    /// Line and column numbers are derived only at reporting boundaries, so callers that
-    /// merely need to validate offsets use this instead of discarding a [`SourceLocation`].
     pub(crate) fn validate_range(&self, range: SourceRange) -> Result<(), SourceFileError> {
         self.validate_offset(range.start)?;
         self.validate_offset(range.end)

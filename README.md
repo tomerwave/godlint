@@ -84,7 +84,7 @@ godlint config validate --config path/to/godlint.yaml
 ```
 
 The `check` command evaluates the configured rules across Rust,
-TypeScript/JavaScript, and Python source files. Nine rules are implemented:
+TypeScript/JavaScript, and Python source files. Ten rules are implemented:
 
 - `maintainability/file-size` — effective lines in a file.
 - `maintainability/function-size` — effective lines in a function.
@@ -97,6 +97,7 @@ TypeScript/JavaScript, and Python source files. Nine rules are implemented:
   blocks but not into nested functions.
 - `maintainability/empty-function` — function bodies that appear unintentionally empty.
 - `policy/todo-requires-reference` — TODO-style markers that need an issue reference.
+- `style/no-comments` — commentary where the code should speak for itself.
 
 A function means the same thing in every language: Rust `fn` items and closures,
 Python `def` functions and lambdas, and JavaScript/TypeScript function declarations,

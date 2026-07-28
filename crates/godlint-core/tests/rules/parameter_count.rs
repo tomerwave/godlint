@@ -1,6 +1,6 @@
 use godlint_core::{
     config::{ParameterCountRule, Severity},
-    rules::{FunctionRule, Rule, Violation, parameter_count::ParameterCount},
+    rules::{FunctionRule, Metric, Rule, Violation, parameter_count::ParameterCount},
 };
 
 use super::support::function;
@@ -32,8 +32,6 @@ fn counts_a_single_unparenthesized_arrow_parameter() {
     );
 }
 
-/// A receiver is not a parameter the author chose to declare, and counting it would make
-/// the same three-argument method a violation in Rust and Python but not in TypeScript.
 #[test]
 fn excludes_the_method_receiver() {
     let rust = count(
@@ -71,7 +69,11 @@ fn reports_a_function_over_its_limit() {
 
     assert_eq!(
         ParameterCount::check(&wide, &facts, &configuration(2)),
-        Some(Violation::ParameterCount { actual: 3, max: 2 })
+        Some(Violation::Limit {
+            metric: Metric::ParameterCount,
+            actual: 3,
+            max: 2
+        })
     );
 }
 

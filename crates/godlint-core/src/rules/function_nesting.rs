@@ -3,7 +3,8 @@ use crate::{
     config::{Config, FunctionNestingRule, Severity},
     facts::FunctionFact,
     rules::{
-        Finding, FunctionRule, Rule, RuleError, Violation, evaluate_function_rule, when_configured,
+        Finding, FunctionRule, Metric, Rule, RuleError, Violation, evaluate_function_rule,
+        when_configured,
     },
 };
 
@@ -20,7 +21,6 @@ impl Rule for FunctionNesting {
 }
 
 impl FunctionRule for FunctionNesting {
-    /// Measures nesting inside the function, not how deeply the function itself sits.
     fn check(
         function: &FunctionFact,
         _facts: &SourceFacts,
@@ -29,7 +29,11 @@ impl FunctionRule for FunctionNesting {
         let actual = function.block_depth().value();
         let max = configuration.limit();
 
-        (actual > max).then_some(Violation::BlockDepth { actual, max })
+        (actual > max).then_some(Violation::Limit {
+            metric: Metric::BlockDepth,
+            actual,
+            max,
+        })
     }
 }
 

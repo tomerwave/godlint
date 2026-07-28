@@ -2,10 +2,6 @@ use std::{error::Error, fmt};
 
 use crate::source::{SourceFile, SourceFileError, SourceRange};
 
-/// Declares the parser-independent function metrics as distinct types.
-///
-/// Every metric is a bare count, so a single `u32` per metric would let any two of them
-/// be transposed at a construction site without the compiler objecting.
 macro_rules! function_metrics {
     ($($(#[$documentation:meta])* $name:ident),+ $(,)?) => {
         $(
@@ -33,28 +29,25 @@ macro_rules! function_metrics {
 }
 
 function_metrics! {
-    /// Parameters the author declared, excluding a method receiver such as `self`.
     ParameterCount,
-    /// Branch points inside the function, excluding those owned by nested functions.
     DecisionPoints,
-    /// Paths that leave the function, including `?` and an implicit tail expression.
     ReturnPaths,
-    /// Statements in the body, counted through nested blocks but not nested functions.
     StatementCount,
-    /// Deepest run of nested control-flow blocks inside the body.
     BlockDepth,
 }
 
-/// Distinguishes the comment syntaxes so cross-language policy can treat them alike.
-///
-/// A Python docstring is a string expression rather than a comment token, but it plays
-/// the role that a block comment plays elsewhere, so rules that skip commentary must be
-/// able to see it.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CommentKind {
     Line,
     Block,
+    Doc,
     Docstring,
+}
+
+impl CommentKind {
+    pub fn is_documentation(self) -> bool {
+        matches!(self, Self::Doc | Self::Docstring)
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -88,15 +81,7 @@ pub struct FunctionFactDetails {
     pub return_paths: ReturnPaths,
     pub statement_count: StatementCount,
     pub block_depth: BlockDepth,
-    /// Whether the body declares no work at all, ignoring placeholders like `pass`.
-    ///
-    /// A body holding only comments is not empty: the comment is the author stating
-    /// that emptiness is deliberate.
     pub body_is_empty: bool,
-    /// Whether the declaration intentionally has no implementation.
-    ///
-    /// Covers abstract and overload signatures plus constructors whose parameters carry
-    /// the assignment, all of which are empty by design.
     pub is_abstract: bool,
 }
 

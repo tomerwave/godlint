@@ -3,7 +3,8 @@ use crate::{
     config::{Config, CyclomaticComplexityRule, Severity},
     facts::FunctionFact,
     rules::{
-        Finding, FunctionRule, Rule, RuleError, Violation, evaluate_function_rule, when_configured,
+        Finding, FunctionRule, Metric, Rule, RuleError, Violation, evaluate_function_rule,
+        when_configured,
     },
 };
 
@@ -20,7 +21,6 @@ impl Rule for CyclomaticComplexity {
 }
 
 impl FunctionRule for CyclomaticComplexity {
-    /// Cyclomatic complexity is one more than the number of branch points.
     fn check(
         function: &FunctionFact,
         _facts: &SourceFacts,
@@ -29,7 +29,11 @@ impl FunctionRule for CyclomaticComplexity {
         let actual = function.decision_points().value() + 1;
         let max = configuration.limit();
 
-        (actual > max).then_some(Violation::Complexity { actual, max })
+        (actual > max).then_some(Violation::Limit {
+            metric: Metric::Complexity,
+            actual,
+            max,
+        })
     }
 }
 

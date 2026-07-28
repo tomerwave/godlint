@@ -57,7 +57,6 @@ fn reports_every_configured_marker() {
     );
 }
 
-/// `AUTODOWNLOAD` embeds the same four letters without being a marker.
 #[test]
 fn requires_a_whole_word_marker() {
     assert!(
@@ -70,7 +69,6 @@ fn requires_a_whole_word_marker() {
     );
 }
 
-/// An issue number is digits and nothing else, so a colour is not accountability.
 #[test]
 fn rejects_a_reference_that_is_not_an_issue_number() {
     assert_eq!(
@@ -83,7 +81,6 @@ fn rejects_a_reference_that_is_not_an_issue_number() {
     );
 }
 
-/// A prefix must start its own word, or `NOTJIRA-42` would satisfy `JIRA-`.
 #[test]
 fn requires_a_prefix_to_start_a_word() {
     assert_eq!(
@@ -111,7 +108,6 @@ fn honours_more_than_one_prefix() {
     assert!(markers_reported("src/example.rs", "// TODO: see #7", &["#", "GH-"]).is_empty());
 }
 
-/// One reference cannot excuse a second marker in the same comment.
 #[test]
 fn scopes_a_reference_to_the_marker_that_precedes_it() {
     assert_eq!(
@@ -124,7 +120,6 @@ fn scopes_a_reference_to_the_marker_that_precedes_it() {
     );
 }
 
-/// Prose TODOs live in docstrings in Python, and the rule claims every comment syntax.
 #[test]
 fn reads_a_python_docstring() {
     assert_eq!(

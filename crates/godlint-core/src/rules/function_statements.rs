@@ -3,7 +3,8 @@ use crate::{
     config::{Config, FunctionStatementsRule, Severity},
     facts::FunctionFact,
     rules::{
-        Finding, FunctionRule, Rule, RuleError, Violation, evaluate_function_rule, when_configured,
+        Finding, FunctionRule, Metric, Rule, RuleError, Violation, evaluate_function_rule,
+        when_configured,
     },
 };
 
@@ -28,7 +29,11 @@ impl FunctionRule for FunctionStatements {
         let actual = function.statement_count().value();
         let max = configuration.limit();
 
-        (actual > max).then_some(Violation::StatementCount { actual, max })
+        (actual > max).then_some(Violation::Limit {
+            metric: Metric::StatementCount,
+            actual,
+            max,
+        })
     }
 }
 

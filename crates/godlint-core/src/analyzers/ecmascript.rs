@@ -1,8 +1,3 @@
-//! Node vocabulary shared by the ECMAScript-family grammars.
-//!
-//! The JavaScript, TypeScript, and TSX grammars name these nodes identically, so all
-//! three analyzers resolve their vocabulary here to stay in lockstep.
-
 use tree_sitter::Node;
 
 use super::vocabulary::Vocabulary;
@@ -80,10 +75,6 @@ fn is_receiver(_kind: &str, _text: &str) -> bool {
     false
 }
 
-/// Treats a constructor whose parameters carry the assignment as intentionally empty.
-///
-/// TypeScript parameter properties declare and assign a field from the signature, so an
-/// empty constructor body is the idiom rather than an omission.
 fn is_abstract(node: Node<'_>, source: &str) -> bool {
     if node.kind() != "method_definition" {
         return false;
@@ -123,7 +114,6 @@ fn is_docstring(_node: Node<'_>) -> bool {
     false
 }
 
-/// Reports whether an arrow function returns its concise body implicitly.
 fn has_implicit_tail_return(node: Node<'_>) -> bool {
     if node.kind() != "arrow_function" {
         return false;

@@ -88,7 +88,6 @@ fn reports_an_invalid_configuration() {
     );
 }
 
-/// A repository with nothing to report must succeed, which no fixture asserted before.
 #[test]
 fn reports_a_clean_repository() {
     let repository = Repository::new();
@@ -109,7 +108,6 @@ fn reports_a_clean_repository() {
     assert!(output.stderr.is_empty());
 }
 
-/// Without a configuration the operator needs to be told that, not shown a read error.
 #[test]
 fn explains_a_missing_configuration() {
     let repository = Repository::new();
@@ -130,8 +128,6 @@ fn explains_a_missing_configuration() {
     );
 }
 
-/// Configuration discovery must stop at the repository boundary, so a stray file in a
-/// parent directory cannot silently govern an unrelated repository.
 #[test]
 fn does_not_adopt_a_configuration_from_outside_the_repository() {
     let outer = Repository::new();
@@ -156,7 +152,6 @@ fn does_not_adopt_a_configuration_from_outside_the_repository() {
     );
 }
 
-/// A temporary directory that cleans itself up, so a failing assertion cannot leak it.
 struct Repository {
     path: PathBuf,
 }

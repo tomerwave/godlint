@@ -36,7 +36,6 @@ fn details() -> FunctionFactDetails {
     }
 }
 
-/// Each metric carries a distinct value so that two transposed fields cannot both pass.
 #[test]
 fn records_every_metric_separately() {
     let fact = FunctionFact::new(source(), Some("outer".into()), details())

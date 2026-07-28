@@ -1,12 +1,5 @@
 #![allow(clippy::expect_used, clippy::unwrap_used)]
 
-//! Fixture-driven end-to-end checks.
-//!
-//! `expected.yaml` records the literal output the CLI must produce. Deriving it from a
-//! copy of the production format string would make this a second implementation of the
-//! contract rather than an expectation of it, and a consistent change to both would keep
-//! the fixtures green while the documented output changed.
-
 use std::{
     collections::BTreeSet,
     fs,
@@ -27,10 +20,8 @@ struct ExpectedResult {
     stderr: String,
 }
 
-/// Declares one test per fixture so a failure names the rule and can be run alone.
 macro_rules! fixture_tests {
     ($($name:ident => $directory:literal),+ $(,)?) => {
-        /// Every declared fixture, used to prove none is left untested.
         const DECLARED: &[&str] = &[$($directory),+];
 
         $(
@@ -55,6 +46,8 @@ fixture_tests! {
     function_statements => "function-statements",
     invalid_syntax => "invalid-syntax",
     marker_word_boundary => "marker-word-boundary",
+    no_comments => "no-comments",
+    no_comments_strict => "no-comments-strict",
     parameter_count => "parameter-count",
     receiver_parameters => "receiver-parameters",
     return_count => "return-count",
@@ -63,7 +56,6 @@ fixture_tests! {
     todo_requires_reference => "todo-requires-reference",
 }
 
-/// Guards against a fixture directory that no test exercises.
 #[test]
 fn every_fixture_directory_is_declared() {
     let present: BTreeSet<String> = fs::read_dir(fixtures_root())

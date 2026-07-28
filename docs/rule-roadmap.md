@@ -117,6 +117,15 @@ These rules use source-level `CommentFact` and `SourceFile` data alongside
 | `maintainability/file-size` | Shipped | High | All eleven supported extensions | `max-lines`, blank/comment policy | Warning, 500 |
 | `maintainability/empty-function` | Shipped | High | All eleven supported extensions except `.pyi` interface stubs | `allow-names` | Warning |
 | `policy/todo-requires-reference` | Shipped | High | All comment syntaxes and Python docstrings | `markers`, `reference-prefixes` | Warning |
+| `style/no-comments` | Shipped | High, but opinionated | All comment syntaxes and Python docstrings | `allow-doc-comments` | Error, documentation not permitted |
+
+`style/no-comments` is a policy rather than a defect check, which is why it sits in the
+`style` category and is off unless a repository opts in. It states that code should carry
+its own explanation; whether that is right is a decision a team makes, not something
+Godlint asserts. Two interactions are worth knowing before enabling it: a marker comment
+is reported by `policy/todo-requires-reference` as well, and
+`maintainability/empty-function` treats a comment in an otherwise empty body as the
+author documenting intent, so the two rules disagree about that body on purpose.
 
 `file-size` establishes that Godlint can evaluate file-level facts alongside
 function-level facts. It directly reflects the requested 500-line policy without

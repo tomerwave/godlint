@@ -43,8 +43,6 @@ fn reports_a_python_placeholder_body() {
     );
 }
 
-/// A comment in the body is the author recording that the emptiness is deliberate, which
-/// is the same statement an allow-list entry would make and needs no configuration.
 #[test]
 fn accepts_a_body_that_documents_its_emptiness() {
     assert_eq!(
@@ -73,8 +71,6 @@ fn accepts_a_body_that_documents_its_emptiness() {
     );
 }
 
-/// A stub file is signatures and placeholders by construction, so every body in it would
-/// otherwise be reported.
 #[test]
 fn accepts_every_body_in_an_interface_stub() {
     assert_eq!(
@@ -83,7 +79,6 @@ fn accepts_every_body_in_an_interface_stub() {
     );
 }
 
-/// An abstract method has no implementation on purpose.
 #[test]
 fn accepts_an_abstract_declaration() {
     assert_eq!(
@@ -96,8 +91,6 @@ fn accepts_an_abstract_declaration() {
     );
 }
 
-/// TypeScript parameter properties declare and assign a field from the signature, so the
-/// empty constructor body is the idiom rather than an omission.
 #[test]
 fn accepts_a_constructor_that_assigns_parameter_properties() {
     let (facts, constructor) = super::support::nth_function(

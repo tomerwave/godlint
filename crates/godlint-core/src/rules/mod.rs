@@ -14,25 +14,48 @@ pub mod function_nesting;
 pub mod function_size;
 pub mod function_statements;
 mod line_count;
+pub mod no_comments;
 pub mod parameter_count;
 pub mod return_count;
 pub mod todo_requires_reference;
 
-/// What a rule found, kept as data rather than as a prepared sentence.
-///
-/// Reporters other than the terminal need the numbers, and sorting findings by a
-/// rendered English message would make output order depend on wording.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Metric {
+    FunctionLines,
+    FileLines,
+    BlockDepth,
+    ParameterCount,
+    Complexity,
+    ReturnPaths,
+    StatementCount,
+}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Violation {
-    FunctionLines { actual: u32, max: u32 },
-    FileLines { actual: u32, max: u32 },
-    BlockDepth { actual: u32, max: u32 },
-    ParameterCount { actual: u32, max: u32 },
-    Complexity { actual: u32, max: u32 },
-    ReturnPaths { actual: u32, max: u32 },
-    StatementCount { actual: u32, max: u32 },
+    Limit {
+        metric: Metric,
+        actual: u32,
+        max: u32,
+    },
     EmptyBody,
-    MissingReference { marker: String },
+    MissingReference {
+        marker: String,
+    },
+    CommentNotPermitted,
+}
+
+impl Metric {
+    fn parts(self) -> (&'static str, &'static str) {
+        match self {
+            Self::FunctionLines => ("Function has", " effective lines"),
+            Self::FileLines => ("File has", " effective lines"),
+            Self::BlockDepth => ("Function nests blocks", " levels deep"),
+            Self::ParameterCount => ("Function has", " parameters"),
+            Self::Complexity => ("Function has cyclomatic complexity", ""),
+            Self::ReturnPaths => ("Function has", " return paths"),
+            Self::StatementCount => ("Function has", " statements"),
+        }
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -46,7 +69,6 @@ pub struct Finding {
 }
 
 impl Finding {
-    /// Renders the operator-facing sentence for this finding.
     pub fn message(&self) -> String {
         self.violation.to_string()
     }
@@ -57,7 +79,6 @@ pub enum RuleError {
     LocatesSource { source: SourceFileError },
 }
 
-/// Identity and enablement, shared by every rule regardless of what it inspects.
 pub trait Rule {
     const ID: &'static str;
 
@@ -66,7 +87,6 @@ pub trait Rule {
     fn severity(configuration: &Self::Configuration) -> Severity;
 }
 
-/// A rule that judges one function at a time.
 pub trait FunctionRule: Rule {
     fn check(
         function: &FunctionFact,
@@ -75,12 +95,10 @@ pub trait FunctionRule: Rule {
     ) -> Option<Violation>;
 }
 
-/// A rule that judges a whole file.
 pub trait FileRule: Rule {
     fn check(facts: &SourceFacts, configuration: &Self::Configuration) -> Option<Violation>;
 }
 
-/// A rule that judges commentary, possibly reporting more than once per comment.
 pub trait CommentRule: Rule {
     fn check(
         comment: &CommentFact,
@@ -88,10 +106,6 @@ pub trait CommentRule: Rule {
     ) -> Vec<(SourceRange, Violation)>;
 }
 
-/// Drives a function rule over every function in every file.
-///
-/// The severity gate is evaluated once here rather than inside each rule, so `off` costs
-/// nothing and no rule can forget to honour it.
 pub fn evaluate_function_rule<R: FunctionRule>(
     facts: &[SourceFacts],
     configuration: &R::Configuration,
@@ -123,7 +137,6 @@ pub fn evaluate_function_rule<R: FunctionRule>(
     Ok(findings)
 }
 
-/// Drives a file rule over every scanned file.
 pub fn evaluate_file_rule<R: FileRule>(
     facts: &[SourceFacts],
     configuration: &R::Configuration,
@@ -150,7 +163,6 @@ pub fn evaluate_file_rule<R: FileRule>(
         .collect()
 }
 
-/// Drives a comment rule over every comment in every file.
 pub fn evaluate_comment_rule<R: CommentRule>(
     facts: &[SourceFacts],
     configuration: &R::Configuration,
@@ -201,13 +213,8 @@ fn finding(
     })
 }
 
-/// Evaluates one configured rule, yielding nothing when the rule is absent.
 type Evaluator = fn(&[SourceFacts], &Config) -> Result<Vec<Finding>, RuleError>;
 
-/// The rule registry.
-///
-/// Adding a rule appends one entry here rather than growing a branch in `evaluate`,
-/// whose complexity previously rose with every rule shipped.
 const EVALUATORS: &[Evaluator] = &[
     function_size::evaluate,
     function_nesting::evaluate,
@@ -218,6 +225,7 @@ const EVALUATORS: &[Evaluator] = &[
     cyclomatic_complexity::evaluate,
     return_count::evaluate,
     function_statements::evaluate,
+    no_comments::evaluate,
 ];
 
 pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, RuleError> {
@@ -239,7 +247,6 @@ pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, 
     Ok(findings)
 }
 
-/// Runs `evaluate` only when the rule is configured.
 pub(crate) fn when_configured<C>(
     configuration: Option<&C>,
     evaluate: impl FnOnce(&C) -> Result<Vec<Finding>, RuleError>,
@@ -250,34 +257,23 @@ pub(crate) fn when_configured<C>(
 impl fmt::Display for Violation {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::FunctionLines { actual, max } => write!(
-                formatter,
-                "Function has {actual} effective lines (max {max})."
-            ),
-            Self::FileLines { actual, max } => {
-                write!(formatter, "File has {actual} effective lines (max {max}).")
-            }
-            Self::BlockDepth { actual, max } => write!(
-                formatter,
-                "Function nests blocks {actual} levels deep (max {max})."
-            ),
-            Self::ParameterCount { actual, max } => {
-                write!(formatter, "Function has {actual} parameters (max {max}).")
-            }
-            Self::Complexity { actual, max } => write!(
-                formatter,
-                "Function has cyclomatic complexity {actual} (max {max})."
-            ),
-            Self::ReturnPaths { actual, max } => {
-                write!(formatter, "Function has {actual} return paths (max {max}).")
-            }
-            Self::StatementCount { actual, max } => {
-                write!(formatter, "Function has {actual} statements (max {max}).")
+            Self::Limit {
+                metric,
+                actual,
+                max,
+            } => {
+                let (subject, measure) = metric.parts();
+
+                write!(formatter, "{subject} {actual}{measure} (max {max}).")
             }
             Self::EmptyBody => write!(formatter, "Function has an empty body."),
             Self::MissingReference { marker } => {
                 write!(formatter, "{marker} comment requires an issue reference.")
             }
+            Self::CommentNotPermitted => write!(
+                formatter,
+                "Comment is not permitted; express the intent in the code."
+            ),
         }
     }
 }

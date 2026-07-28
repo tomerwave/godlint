@@ -157,10 +157,6 @@ fn collect_source_facts(
     Ok(())
 }
 
-/// Classifies a node as commentary, including syntax that only plays that role.
-///
-/// A Python docstring is a string expression, not a comment token, but policy that skips
-/// commentary must skip it for the same reason it skips a JSDoc block.
 fn comment_kind(
     node: Node<'_>,
     source: &SourceFile,
@@ -176,11 +172,23 @@ fn comment_kind(
 
     let text = source.source().get(node.byte_range())?;
 
+    if text.starts_with("///") || text.starts_with("//!") {
+        return Some(CommentKind::Doc);
+    }
+
     if text.starts_with("//") || text.starts_with('#') {
         return Some(CommentKind::Line);
     }
 
+    if is_block_documentation(text) {
+        return Some(CommentKind::Doc);
+    }
+
     text.starts_with("/*").then_some(CommentKind::Block)
+}
+
+fn is_block_documentation(text: &str) -> bool {
+    (text.starts_with("/**") && !text.starts_with("/**/")) || text.starts_with("/*!")
 }
 
 fn comment_fact(

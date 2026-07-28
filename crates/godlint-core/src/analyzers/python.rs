@@ -30,20 +30,14 @@ const VOCABULARY: Vocabulary = Vocabulary {
     has_implicit_tail_return,
 };
 
-/// Blocks that a docstring may introduce.
 const DOCSTRING_BLOCKS: [&str; 2] = ["block", "module"];
 
-/// Decorators that declare a signature without an implementation.
 const ABSTRACT_DECORATORS: [&str; 2] = ["abstractmethod", "overload"];
 
 fn is_function(kind: &str) -> bool {
     matches!(kind, "function_definition" | "lambda")
 }
 
-/// Omits `elif_clause` deliberately.
-///
-/// An `elif` is a sibling clause of its `if`, so counting it would make a flat chain of
-/// conditions look like deepening nesting.
 fn is_nesting(kind: &str) -> bool {
     matches!(
         kind,
@@ -81,7 +75,6 @@ fn is_return(kind: &str) -> bool {
     kind == "return_statement"
 }
 
-/// Treats `pass` and `...` as the two ways Python spells "no implementation here".
 fn is_placeholder(kind: &str, text: &str) -> bool {
     kind == "pass_statement" || (kind == "expression_statement" && text.trim() == "...")
 }
@@ -90,7 +83,6 @@ fn is_receiver(_kind: &str, text: &str) -> bool {
     matches!(text, "cls" | "self")
 }
 
-/// Reports whether a decorator declares the function to have no implementation.
 fn is_abstract(node: Node<'_>, source: &str) -> bool {
     let Some(parent) = node.parent() else {
         return false;
@@ -113,7 +105,6 @@ fn is_abstract(node: Node<'_>, source: &str) -> bool {
         })
 }
 
-/// Reports whether a string is the documentation of the block it opens.
 fn is_docstring(node: Node<'_>) -> bool {
     node.kind() == "string" && is_leading_block_statement(node, &DOCSTRING_BLOCKS)
 }

@@ -1,0 +1,7 @@
+version: 1
+
+# The stricter policy: code carries all of its own explanation.
+rules:
+  style/no-comments:
+    severity: error
+    allow-doc-comments: false
