@@ -1,0 +1,28 @@
+name: Pull request
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate pull request invariants
+    runs-on: ubuntu-latest
+
+    steps:
+      # The change-scoped checks need the base commit, so shallow history is not enough.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check repository invariants
+        run: python3 scripts/validate-pull-request.py
+
+      - name: Check what this change touched
+        if: github.event_name == 'pull_request'
+        run: python3 scripts/validate-pull-request.py --base "origin/${{ github.base_ref }}"
