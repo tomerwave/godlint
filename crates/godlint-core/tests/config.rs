@@ -85,6 +85,15 @@ fn accepts_the_parameter_count_rule() {
 }
 
 #[test]
+fn accepts_the_cyclomatic_complexity_rule() {
+    let result = load(
+        "version: 1\nrules:\n  maintainability/cyclomatic-complexity:\n    severity: warning\n    max-complexity: 10\n",
+    );
+
+    assert!(result.is_ok());
+}
+
+#[test]
 fn rejects_an_unknown_rule() {
     let result = load("version: 1\nrules:\n  maintainability/unknown: {}\n");
 

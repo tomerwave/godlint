@@ -26,6 +26,7 @@ fn records_a_language_neutral_function_fact() {
             range: range(0, 28),
             body_range: range(11, 28),
             parameter_count: 0,
+            decision_points: 0,
             body_is_empty: false,
             nesting_depth: 0,
         },
@@ -37,6 +38,7 @@ fn records_a_language_neutral_function_fact() {
     assert_eq!(fact.range(), range(0, 28));
     assert_eq!(fact.body_range(), range(11, 28));
     assert_eq!(fact.parameter_count(), 0);
+    assert_eq!(fact.decision_points(), 0);
     assert!(!fact.body_is_empty());
     assert_eq!(fact.nesting_depth(), 0);
 }
@@ -50,6 +52,7 @@ fn preserves_nesting_for_nested_functions() {
             range: range(17, 24),
             body_range: range(17, 24),
             parameter_count: 0,
+            decision_points: 0,
             body_is_empty: false,
             nesting_depth: 1,
         },
@@ -68,6 +71,7 @@ fn rejects_a_body_outside_the_function_range() {
             range: range(0, 10),
             body_range: range(11, 28),
             parameter_count: 0,
+            decision_points: 0,
             body_is_empty: false,
             nesting_depth: 0,
         },
@@ -88,6 +92,7 @@ fn rejects_ranges_that_are_invalid_for_the_source_file() {
             range: range(0, 29),
             body_range: range(11, 28),
             parameter_count: 0,
+            decision_points: 0,
             body_is_empty: false,
             nesting_depth: 0,
         },
@@ -114,6 +119,7 @@ fn rejects_a_range_that_splits_a_multi_byte_character() {
             range: range(0, 4),
             body_range: range(0, 4),
             parameter_count: 0,
+            decision_points: 0,
             body_is_empty: false,
             nesting_depth: 0,
         },
@@ -134,6 +140,7 @@ fn rejects_a_body_range_that_is_invalid_for_the_source_file() {
             range: range(0, 28),
             body_range: range(11, 29),
             parameter_count: 0,
+            decision_points: 0,
             body_is_empty: false,
             nesting_depth: 0,
         },
