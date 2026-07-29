@@ -274,7 +274,7 @@ semantic capability exists.
 | `architecture/restricted-call` | Shipped | High | Direct callee and macro match | Block direct process exits and debug output by default; configure calls such as `loadConfig` with `allow-in` path globs |
 | `security/no-dynamic-execution` | Shipped | High | Direct JavaScript/Python callee match | Block JavaScript `eval`/`Function` and Python `eval`/`exec` |
 | `security/direct-environment-read` | Shipped | High | Direct platform API match | Require a single configuration boundary |
-| `reliability/explicit-timer-delay` | High | Direct timer calls with omitted delay | Require an intentional delay value |
+| `reliability/explicit-timer-delay` | Shipped | High | Direct JavaScript/TypeScript timer calls with fewer than two arguments | Require an intentional delay value |
 | `logging/no-production-log` | Medium | Direct configured logging calls | Ban `console.log` / `print` outside approved paths |
 | `reliability/network-timeout-required` | Medium | Configured known client calls | Require explicit timeout argument |
 
@@ -300,6 +300,28 @@ rules:
           - "**/config.ts"
           - "**/config/**"
 ```
+
+`reliability/explicit-timer-delay` covers JavaScript and TypeScript only. Omitting the
+second argument from `setTimeout` or `setInterval` is valid code that schedules immediate
+execution; Python and Rust timer APIs require their delay argument, so treating their
+invalid calls as a shared policy finding would duplicate the language checker rather than
+enforce an organization policy.
+
+It reads the timer under its bare name and under a global receiver — `window`, `globalThis`
+and `self` — because those spell the same function rather than a different one. A receiver
+it does not know, such as `timers.setTimeout`, is left alone: that is the point at which
+the callee stops being decidable without semantic analysis.
+
+A comment is not an argument. `setTimeout(work /*, 100 */)` is reported, because the shape a
+reader most wants caught is the one where the delay was commented out, and a rule that went
+quiet exactly then would be worse than no rule.
+
+Two limits remain, both consequences of counting spelled arguments rather than resolving
+values. A spread, `setTimeout(...args)`, is reported even though the delay may travel inside
+it — one argument is what the call site spells. An aliased timer, `const t = setTimeout`
+followed by `t(work)`, is not reported, the same boundary
+`architecture/restricted-call` draws. Both wait for semantic analysis rather than for a
+heuristic that would guess.
 
 ### Phase 4 — Imports and repository graph
 

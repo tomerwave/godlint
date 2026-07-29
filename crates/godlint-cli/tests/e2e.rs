@@ -60,6 +60,8 @@ fixture_tests! {
     no_dynamic_execution_clean => "no-dynamic-execution-clean",
     direct_environment_read => "direct-environment-read",
     direct_environment_read_clean => "direct-environment-read-clean",
+    explicit_timer_delay => "explicit-timer-delay",
+    explicit_timer_delay_clean => "explicit-timer-delay-clean",
     rust_try_operator => "rust-try-operator",
     severity_below_threshold => "severity-below-threshold",
     suppression_applies => "suppression-applies",

@@ -2,10 +2,10 @@ use std::num::NonZeroU32;
 
 use crate::config::{
     AccountableSuppressionRule, DecisionComplexityRule, DirectEnvironmentReadRule,
-    EmptyFunctionRule, FunctionNestingRule, FunctionStatementsRule, LineLimitRule, NoCommentsRule,
-    NoDynamicExecutionRule, ParameterCountRule, RestrictedCallRule, ReturnCountRule, Rules,
-    Severity, TodoRequiresReferenceRule, UnusedSuppressionRule, default_configuration_paths,
-    default_markers, default_reference_prefixes,
+    EmptyFunctionRule, ExplicitTimerDelayRule, FunctionNestingRule, FunctionStatementsRule,
+    LineLimitRule, NoCommentsRule, NoDynamicExecutionRule, ParameterCountRule, RestrictedCallRule,
+    ReturnCountRule, Rules, Severity, TodoRequiresReferenceRule, UnusedSuppressionRule,
+    default_configuration_paths, default_markers, default_reference_prefixes,
 };
 
 pub const RECOMMENDED: &str = "recommended@1";
@@ -26,6 +26,7 @@ fn recommended(rules: &mut Rules) {
     maintainability(rules);
     policy(rules);
     security(rules);
+    reliability(rules);
 }
 
 fn maintainability(rules: &mut Rules) {
@@ -114,5 +115,13 @@ fn security(rules: &mut Rules) {
         .get_or_insert_with(|| DirectEnvironmentReadRule {
             severity: error,
             allow_in: default_configuration_paths(),
+        });
+}
+
+fn reliability(rules: &mut Rules) {
+    rules
+        .explicit_timer_delay
+        .get_or_insert(ExplicitTimerDelayRule {
+            severity: Severity::Error,
         });
 }

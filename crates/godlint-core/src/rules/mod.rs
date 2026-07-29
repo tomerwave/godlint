@@ -13,6 +13,7 @@ pub mod accountable_suppression;
 pub mod decision_complexity;
 pub mod direct_environment_read;
 pub mod empty_function;
+pub mod explicit_timer_delay;
 pub mod file_size;
 pub mod function_nesting;
 pub mod function_size;
@@ -67,6 +68,9 @@ pub enum Violation {
     },
     DirectEnvironmentRead {
         target: String,
+    },
+    TimerWithoutDelay {
+        callee: String,
     },
 }
 
@@ -403,6 +407,7 @@ const EVALUATORS: &[Evaluator] = &[
     restricted_call::evaluate,
     no_dynamic_execution::evaluate,
     direct_environment_read::evaluate,
+    explicit_timer_delay::evaluate,
 ];
 
 pub fn evaluate(
@@ -482,6 +487,10 @@ impl fmt::Display for Violation {
             Self::DirectEnvironmentRead { target } => write!(
                 formatter,
                 "{target} reads environment directly; read configuration through a config boundary instead."
+            ),
+            Self::TimerWithoutDelay { callee } => write!(
+                formatter,
+                "{callee} needs an explicit delay; pass the intended delay in milliseconds."
             ),
         }
     }

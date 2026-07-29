@@ -18,6 +18,9 @@ mod errors;
 #[path = "rules/empty_function.rs"]
 mod empty_function;
 
+#[path = "rules/explicit_timer_delay.rs"]
+mod explicit_timer_delay;
+
 #[path = "rules/file_size.rs"]
 mod file_size;
 

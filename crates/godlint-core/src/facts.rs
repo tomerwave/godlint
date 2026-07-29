@@ -86,6 +86,7 @@ pub struct CallFact {
     source: SourceFile,
     range: SourceRange,
     is_macro: bool,
+    argument_count: usize,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -181,6 +182,7 @@ impl CallFact {
         source: SourceFile,
         range: SourceRange,
         is_macro: bool,
+        argument_count: usize,
     ) -> Result<Self, CallFactError> {
         source
             .validate_range(range)
@@ -190,6 +192,7 @@ impl CallFact {
             source,
             range,
             is_macro,
+            argument_count,
         })
     }
 
@@ -207,6 +210,10 @@ impl CallFact {
 
     pub fn is_macro(&self) -> bool {
         self.is_macro
+    }
+
+    pub const fn argument_count(&self) -> usize {
+        self.argument_count
     }
 }
 

@@ -19,6 +19,12 @@ releases begin.
   lists the available ones. Godlint's own configuration is now the suite and nothing else,
   since an override here would be this project exempting itself from its own standard.
 
+- `reliability/explicit-timer-delay` — requires an explicit delay for JavaScript and
+  TypeScript `setTimeout` and `setInterval` calls, where omission silently defaults to
+  immediate execution. Reads the timer under a global receiver (`window`, `globalThis`,
+  `self`) as the same timer, and does not count a comment as an argument, so a
+  commented-out delay is reported rather than mistaken for one.
+
 - Open-source project foundations, community guidance, security reporting guidance,
   and project brand assets.
 - A local CLI with `godlint config validate` and `godlint check`, source discovery for

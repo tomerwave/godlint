@@ -129,7 +129,7 @@ fn rejects_a_comment_range_outside_the_file() {
 
 #[test]
 fn records_a_call() {
-    let fact = CallFact::new(source(), range(17, 22), false)
+    let fact = CallFact::new(source(), range(17, 22), false, 2)
         .unwrap_or_else(|error| panic!("creates call fact: {error}"));
 
     assert_eq!(fact.range(), range(17, 22));
@@ -139,11 +139,12 @@ fn records_a_call() {
         "a callee is read from the range rather than stored beside it"
     );
     assert!(!fact.is_macro());
+    assert_eq!(fact.argument_count(), 2);
 }
 
 #[test]
 fn rejects_a_call_range_outside_the_file() {
-    let result = CallFact::new(source(), range(0, 999), false);
+    let result = CallFact::new(source(), range(0, 999), false, 0);
 
     assert!(matches!(
         result,
