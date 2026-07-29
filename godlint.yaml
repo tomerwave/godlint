@@ -16,6 +16,9 @@ exclude:
   - target
   - vendor
   - crates/godlint-cli/tests/fixtures
+  # The action's own fixtures are deliberately non-conforming inputs, the same as the rule
+  # fixtures: one tree the action must pass and one it must fail.
+  - .github/fixtures
   # Maintenance scripts and packaging are tooling rather than product source, and both are held to
   # a different standard on purpose: a script that encodes a budget should carry the reason beside
   # the number, and the npm shim exists to forward an exit code, which the call policy restricts

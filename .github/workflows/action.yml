@@ -1,0 +1,66 @@
+name: Action
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  clean:
+    name: The action passes a clean tree
+    runs-on: ${{ matrix.runner }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # The action under test is this checkout, so a change to it is exercised by its own pull
+      # request rather than only after release.
+      - uses: ./
+        id: godlint
+        with:
+          working-directory: .github/fixtures/action-clean
+          summary: "false"
+
+      - name: A clean tree reports nothing and resolves a version
+        shell: bash
+        env:
+          FINDINGS: ${{ steps.godlint.outputs.findings }}
+          VERSION: ${{ steps.godlint.outputs.version }}
+        run: |
+          test "$FINDINGS" = "0"
+          test -n "$VERSION"
+          echo "godlint $VERSION reported $FINDINGS findings"
+
+  dirty:
+    name: The action fails a tree with findings
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # continue-on-error, because the point is that it fails: the step must report a failure and
+      # the annotations must still be emitted.
+      - uses: ./
+        id: godlint
+        continue-on-error: true
+        with:
+          working-directory: .github/fixtures/action-dirty
+
+      - name: A tree with findings fails and counts them
+        shell: bash
+        env:
+          OUTCOME: ${{ steps.godlint.outcome }}
+          FINDINGS: ${{ steps.godlint.outputs.findings }}
+        run: |
+          test "$OUTCOME" = "failure"
+          test "$FINDINGS" -ge 2
+          echo "the action failed as it should, with $FINDINGS findings"

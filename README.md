@@ -101,6 +101,21 @@ above `fail-on`, which is what makes enforcement one line in CI:
 - run: godlint check
 ```
 
+On GitHub, the action installs the binary and puts every finding on the line it belongs to:
+
+```yaml
+- uses: tomerwave/godlint@v1
+  with:
+    version: 0.1.6
+```
+
+Findings appear as annotations in Files changed and disappear when they are fixed, so nothing has to
+be resolved by hand. It needs no token and no permissions, which is also why it works on a pull
+request from a fork, where the token is read-only and anything posted through the API fails. Pin
+`version`: the default is the latest release, and a floating version changes what a pull request is
+held to without a commit saying so. Because GitHub renders only so many annotations per run, the job
+summary carries the count for every rule.
+
 `check --format` decides who is reading. `terminal` is the default; `github` emits annotations so
 findings land on the exact line of a pull request diff; `json` and `sarif` are documents for another
 tool to consume, and both are emitted even when there is nothing to report, because a consumer parses

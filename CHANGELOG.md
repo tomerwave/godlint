@@ -11,6 +11,16 @@ speaks about.
 
 ### Added
 
+- A GitHub action. `uses: tomerwave/godlint@v1` installs the released binary, verifies it against
+  the checksum published beside it, and reports each finding as an annotation on its line. No
+  toolchain is installed and no token is used, which is what lets it work on a pull request from a
+  fork. The job summary carries a count per rule, because GitHub renders only so many annotations per
+  run and a repository with more findings than that would otherwise lose the rest silently. `version`
+  defaults to the latest release and says so; pin it for a check that cannot change under you.
+
+  The action is exercised by its own pull requests on Linux, macOS and Windows, against one tree it
+  must pass and one it must fail — so a change to it is tested before release rather than after.
+
 - `check --format <github|json|sarif|terminal>`. `terminal` stays the default. `github` emits
   workflow-command annotations, so a finding lands on the exact line of a pull request diff without a
   token and without permissions, which is also what makes it work on a pull request from a fork.

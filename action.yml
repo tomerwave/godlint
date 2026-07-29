@@ -1,0 +1,166 @@
+name: Godlint
+description: Enforce one code policy across Rust, TypeScript, JavaScript and Python.
+author: Tomer Gal
+
+branding:
+  icon: shield
+  color: purple
+
+inputs:
+  version:
+    description: >
+      Godlint version to run, without a leading v. Defaults to the latest release. Pin it for a
+      reproducible check, since a floating version changes what a pull request is held to without
+      a commit saying so.
+    required: false
+    default: latest
+  paths:
+    description: Paths to check. Defaults to the whole working directory.
+    required: false
+    default: ""
+  working-directory:
+    description: Directory to run in, which is where godlint.yaml is read from.
+    required: false
+    default: "."
+  summary:
+    description: Write a summary of the findings to the job summary.
+    required: false
+    default: "true"
+
+outputs:
+  version:
+    description: The Godlint version that ran, resolved if the input was latest.
+    value: ${{ steps.install.outputs.version }}
+  findings:
+    description: How many findings were reported.
+    value: ${{ steps.check.outputs.findings }}
+
+runs:
+  using: composite
+
+  steps:
+    # A release carries one archive per platform and a checksum beside it, so the binary is
+    # verified rather than trusted. No toolchain is installed: this is the same file published to
+    # npm, PyPI and the release page.
+    - name: Install Godlint
+      id: install
+      shell: bash
+      env:
+        REQUESTED: ${{ inputs.version }}
+      run: |
+        set -euo pipefail
+
+        version="$REQUESTED"
+
+        if [ "$version" = "latest" ]; then
+          version="$(
+            curl -fsSL https://api.github.com/repos/tomerwave/godlint/releases/latest |
+              sed -n 's/.*"tag_name": *"v\([^"]*\)".*/\1/p' | head -1
+          )"
+          echo "::notice::Godlint $version resolved from latest. Pin the version for a check that cannot change under you."
+        fi
+
+        if [ -z "$version" ]; then
+          echo "godlint-action: could not resolve a version to install." >&2
+          exit 1
+        fi
+
+        case "$RUNNER_OS-$RUNNER_ARCH" in
+          Linux-X64)    target=x86_64-unknown-linux-gnu;  archive=tar.gz ;;
+          Linux-ARM64)  target=aarch64-unknown-linux-gnu; archive=tar.gz ;;
+          macOS-X64)    target=x86_64-apple-darwin;       archive=tar.gz ;;
+          macOS-ARM64)  target=aarch64-apple-darwin;      archive=tar.gz ;;
+          Windows-X64)  target=x86_64-pc-windows-msvc;    archive=zip ;;
+          *)
+            echo "godlint-action: no Godlint binary for $RUNNER_OS-$RUNNER_ARCH." >&2
+            exit 1
+            ;;
+        esac
+
+        name="godlint-$target.$archive"
+        base="https://github.com/tomerwave/godlint/releases/download/v$version"
+        directory="$RUNNER_TEMP/godlint"
+
+        mkdir -p "$directory"
+        cd "$directory"
+        curl -fsSL -O "$base/$name"
+        curl -fsSL -O "$base/$name.sha256"
+
+        if command -v shasum >/dev/null 2>&1; then
+          shasum -a 256 -c "$name.sha256"
+        else
+          sha256sum -c "$name.sha256"
+        fi
+
+        if [ "$archive" = "zip" ]; then
+          unzip -q "$name"
+        else
+          tar -xzf "$name"
+        fi
+
+        echo "$directory" >> "$GITHUB_PATH"
+        echo "version=$version" >> "$GITHUB_OUTPUT"
+
+    # --format github turns each finding into an annotation on the exact line of the diff. It needs
+    # no token and no permissions, which is why it also works on a pull request from a fork.
+    - name: Run Godlint
+      id: check
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        PATHS: ${{ inputs.paths }}
+      run: |
+        set -uo pipefail
+
+        output="$RUNNER_TEMP/godlint-findings.txt"
+
+        # shellcheck disable=SC2086
+        godlint check --format github $PATHS | tee "$output"
+        status=${PIPESTATUS[0]}
+
+        findings="$(grep -c '^::' "$output" || true)"
+        echo "findings=$findings" >> "$GITHUB_OUTPUT"
+        echo "status=$status" >> "$GITHUB_OUTPUT"
+        exit 0
+
+    # GitHub caps how many annotations it renders, so the summary carries the whole count per rule.
+    # Without it a repository with more findings than the cap loses the rest silently.
+    - name: Summarise
+      if: ${{ inputs.summary == 'true' }}
+      shell: bash
+      env:
+        FINDINGS: ${{ steps.check.outputs.findings }}
+        VERSION: ${{ steps.install.outputs.version }}
+      run: |
+        set -euo pipefail
+
+        output="$RUNNER_TEMP/godlint-findings.txt"
+
+        {
+          echo "## Godlint $VERSION"
+          echo
+
+          if [ "$FINDINGS" = "0" ]; then
+            echo "No findings."
+          else
+            echo "$FINDINGS findings. Each one is annotated on its line in Files changed."
+            echo
+            echo "| Rule | Findings |"
+            echo "| --- | ---: |"
+            sed -n 's/^::[a-z]* .*title=\([^:]*\)::.*/\1/p' "$output" |
+              sort | uniq -c | sort -rn |
+              awk '{ printf "| `%s` | %d |\n", $2, $1 }'
+          fi
+        } >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Fail if Godlint failed
+      shell: bash
+      env:
+        STATUS: ${{ steps.check.outputs.status }}
+      run: |
+        set -euo pipefail
+
+        if [ "$STATUS" != "0" ]; then
+          echo "godlint exited $STATUS" >&2
+          exit "$STATUS"
+        fi
