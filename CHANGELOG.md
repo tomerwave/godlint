@@ -9,6 +9,20 @@ speaks about.
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-07-29
+
+### Fixed
+
+- The npm front door is `@godlint/cli`. npm refuses the bare name `godlint` as too similar to
+  `oxlint`, which only surfaced on upload — a dry run does not check name policy. The command it
+  installs is still `godlint`, because the executable a package provides is named independently of
+  the package, so `npx godlint check` reads the same either way.
+
+- A failed npm publish no longer costs the release its GitHub release and binaries. The two now run
+  in parallel after the builds rather than in a chain, so one registry cannot withhold artifacts
+  that are already correct.
+
+
 ## [0.1.2] - 2026-07-29
 
 ### Fixed
