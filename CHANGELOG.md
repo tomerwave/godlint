@@ -11,10 +11,20 @@ speaks about.
 
 ### Added
 
+- An npm package. `npm install --save-dev godlint` installs a binary and needs no Rust
+  toolchain — the audience for a JavaScript, TypeScript and Python linter mostly does not have one.
+  The bare `godlint` package carries no binary and declares one optional platform package per
+  platform; npm installs only the one matching `os` and `cpu`, and the package runs it. Nothing is
+  downloaded during install, so it works with `--ignore-scripts` and without a network. Linux ships
+  the statically linked build, so one binary per architecture runs against either libc. Packages are
+  published by trusted publishing rather than a stored token, and each carries a provenance
+  attestation tying it to the commit and workflow that built it.
+
 - Release binaries for Windows (`x86_64-pc-windows-msvc`) and for Linux without glibc
   (`x86_64-unknown-linux-musl`, statically linked), alongside the Linux and macOS builds for both
   architectures. The musl build is what a container image needs: a glibc binary fails there with a
-  loader error rather than a useful message, and a linter mostly runs in CI.
+  loader error rather than a useful message, and a linter mostly runs in CI. The same build is what
+  the npm packages ship for Linux.
 
 ## [0.1.0] - 2026-07-29
 

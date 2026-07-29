@@ -16,7 +16,12 @@ exclude:
   - target
   - vendor
   - crates/godlint-cli/tests/fixtures
+  # Maintenance scripts and packaging are tooling rather than product source, and both are held to
+  # a different standard on purpose: a script that encodes a budget should carry the reason beside
+  # the number, and the npm shim exists to forward an exit code, which the call policy restricts
+  # in product code for good reason. The Rust codebase keeps its reasoning in docs/architecture.md.
   - scripts
+  - packaging
 
 suites:
   - recommended@1
