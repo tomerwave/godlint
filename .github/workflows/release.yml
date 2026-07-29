@@ -261,10 +261,37 @@ jobs:
           path: artifacts
           merge-multiple: true
 
-      - name: Create the release from the changelog section
+      # A release may already exist, because listing an action on the Marketplace is done by editing
+      # one. Creating it unconditionally failed in that case and the archives never attached, which
+      # left the release that the action resolves as latest carrying no binary at all.
+      - name: Publish the release and attach every archive
         env:
           TAG: ${{ github.ref_name }}
           GH_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
+
           python3 scripts/check-release.py "$TAG" --notes > notes.md
-          gh release create "$TAG" --title "$TAG" --notes-file notes.md artifacts/*
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --title "$TAG" --notes-file notes.md
+          else
+            gh release create "$TAG" --title "$TAG" --notes-file notes.md
+          fi
+
+          gh release upload "$TAG" artifacts/* --clobber
+
+      # An archive that never attached is invisible until someone tries to install, so the count is
+      # asserted here rather than trusted.
+      - name: Every archive is attached
+        env:
+          TAG: ${{ github.ref_name }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          expected="$(find artifacts -type f | wc -l | tr -d ' ')"
+          attached="$(gh release view "$TAG" --json assets --jq '.assets | length')"
+
+          echo "$attached of $expected archives attached"
+          test "$attached" -ge "$expected"

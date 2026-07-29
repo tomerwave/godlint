@@ -9,6 +9,19 @@ speaks about.
 
 ## [Unreleased]
 
+### Fixed
+
+- A release is published whether or not one already exists for the tag. Listing an action on the
+  Marketplace is done by editing a release, so a release created by hand first made the workflow fail
+  at `gh release create` and the archives never attached — leaving the release that the action
+  resolves as `latest` carrying no binary at all. The archives are uploaded separately from creating
+  the release, and their count is asserted afterwards, because an archive that never attached is
+  invisible until someone tries to install.
+
+- The action's own check runs against this repository rather than a fixture, so a released binary
+  that disagrees with the code here fails in this repository instead of surprising whoever installs
+  it. Proving that the action *fails* still needs a tree with a finding in it, so that fixture stays.
+
 ## [0.1.8] - 2026-07-29
 
 ### Added

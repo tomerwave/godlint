@@ -24,10 +24,12 @@ jobs:
 
       # The action under test is this checkout, so a change to it is exercised by its own pull
       # request rather than only after release.
+      # The repository itself, not a fixture: the action is held to the same tree the rest of CI is,
+      # so a released binary that disagrees with this code is a failure here rather than a surprise
+      # for whoever installs it.
       - uses: ./
         id: godlint
         with:
-          working-directory: .github/fixtures/action-clean
           summary: "false"
 
       - name: A clean tree reports nothing and resolves a version
