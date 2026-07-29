@@ -1,0 +1,65 @@
+name: Targets probe
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: Probe ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: aarch64-apple-darwin
+            runner: macos-latest
+            runnable: true
+          - target: x86_64-apple-darwin
+            runner: macos-latest
+            runnable: false
+          - target: aarch64-unknown-linux-gnu
+            runner: ubuntu-24.04-arm
+            runnable: true
+          - target: x86_64-unknown-linux-gnu
+            runner: ubuntu-latest
+            runnable: true
+          - target: x86_64-unknown-linux-musl
+            runner: ubuntu-latest
+            runnable: true
+            musl: true
+          - target: x86_64-pc-windows-msvc
+            runner: windows-latest
+            runnable: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: rustup toolchain install 1.97.1 --profile minimal
+
+      - run: rustup target add ${{ matrix.target }} --toolchain 1.97.1
+
+      - name: Install the musl toolchain
+        if: matrix.musl
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+
+      - run: cargo +1.97.1 build --release --locked -p godlint-cli --target ${{ matrix.target }}
+        env:
+          CC_x86_64_unknown_linux_musl: ${{ matrix.musl && 'musl-gcc' || '' }}
+
+      - name: Run it
+        if: matrix.runnable
+        shell: bash
+        run: |
+          suffix=""
+          if [ "$RUNNER_OS" = "Windows" ]; then suffix=".exe"; fi
+          ./target/${{ matrix.target }}/release/godlint$suffix --version
+
+      - name: Prove a musl binary is static
+        if: matrix.musl
+        run: |
+          file "target/${{ matrix.target }}/release/godlint"
+          ldd "target/${{ matrix.target }}/release/godlint" 2>&1 | grep -q "not a dynamic executable"

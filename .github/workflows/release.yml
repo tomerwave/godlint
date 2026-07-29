@@ -34,12 +34,25 @@ jobs:
         include:
           - target: aarch64-apple-darwin
             runner: macos-latest
+            runnable: true
+          # Cross-compiled on an arm runner, so the result cannot be executed here.
           - target: x86_64-apple-darwin
             runner: macos-latest
+            runnable: false
           - target: aarch64-unknown-linux-gnu
             runner: ubuntu-24.04-arm
+            runnable: true
           - target: x86_64-unknown-linux-gnu
             runner: ubuntu-latest
+            runnable: true
+          # Statically linked, which is what a container without glibc needs.
+          - target: x86_64-unknown-linux-musl
+            runner: ubuntu-latest
+            runnable: true
+            musl: true
+          - target: x86_64-pc-windows-msvc
+            runner: windows-latest
+            runnable: true
 
     steps:
       - uses: actions/checkout@v4
@@ -48,18 +61,29 @@ jobs:
 
       - run: rustup target add ${{ matrix.target }} --toolchain 1.97.1
 
+      # The grammars are C, so a musl binary needs a musl C compiler and not only the Rust target.
+      - name: Install the musl toolchain
+        if: matrix.musl
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+
       - run: cargo +1.97.1 build --release --locked -p godlint-cli --target ${{ matrix.target }}
+        env:
+          CC_x86_64_unknown_linux_musl: ${{ matrix.musl && 'musl-gcc' || '' }}
 
       - name: Prove the binary runs and reports its version
-        if: ${{ !startsWith(matrix.target, 'aarch64-unknown') }}
+        if: matrix.runnable
+        shell: bash
         env:
           TAG: ${{ github.ref_name }}
         run: |
-          printed="$(./target/${{ matrix.target }}/release/godlint --version)"
+          suffix=""
+          if [ "$RUNNER_OS" = "Windows" ]; then suffix=".exe"; fi
+          printed="$(./target/${{ matrix.target }}/release/godlint$suffix --version)"
           echo "$printed"
           printf '%s' "$printed" | grep -Fq "${TAG#v}"
 
       - name: Package
+        if: runner.os != 'Windows'
         env:
           TARGET: ${{ matrix.target }}
         run: |
@@ -67,10 +91,25 @@ jobs:
           tar -czf "godlint-$TARGET.tar.gz" godlint LICENSE README.md
           shasum -a 256 "godlint-$TARGET.tar.gz" > "godlint-$TARGET.tar.gz.sha256"
 
+      # Windows has neither install nor shasum, and a zip is what a Windows user expects.
+      - name: Package for Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          Copy-Item "target/$env:TARGET/release/godlint.exe" godlint.exe
+          Compress-Archive -Path godlint.exe, LICENSE, README.md -DestinationPath "godlint-$env:TARGET.zip"
+          $hash = (Get-FileHash "godlint-$env:TARGET.zip" -Algorithm SHA256).Hash.ToLower()
+          "$hash  godlint-$env:TARGET.zip" | Out-File -Encoding ascii "godlint-$env:TARGET.zip.sha256"
+
       - uses: actions/upload-artifact@v4
         with:
           name: godlint-${{ matrix.target }}
-          path: godlint-${{ matrix.target }}.tar.gz*
+          path: |
+            godlint-${{ matrix.target }}.tar.gz*
+            godlint-${{ matrix.target }}.zip*
+          if-no-files-found: error
 
   publish:
     name: Publish to crates.io
