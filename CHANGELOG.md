@@ -9,6 +9,15 @@ speaks about.
 
 ## [Unreleased]
 
+### Added
+
+- An `expected-drift` label makes the drift check pass. It fails when a pull request fixes a false
+  positive or relaxes a rule, because the released binary still reports what the change removed. The
+  label says that is what happened, so a disagreement that was stated deliberately reads differently
+  from one that was discovered — and the explanation is still printed either way.
+
+## [0.1.9] - 2026-07-29
+
 ### Fixed
 
 - Godlint works on Windows. A repository-relative path is spelled with forward slashes wherever a
