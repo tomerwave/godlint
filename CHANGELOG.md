@@ -9,6 +9,17 @@ speaks about.
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-07-29
+
+### Changed
+
+- npm is reached by trusted publishing, so no registry token is stored for either registry.
+
+- The GitHub release waits for every registry rather than only for crates.io. A release announces
+  that a version is available, and it is not available while a registry is missing it. Binaries
+  survive a registry failure as workflow artifacts either way, so nothing is lost by waiting.
+
+
 ## [0.1.4] - 2026-07-29
 
 ### Fixed

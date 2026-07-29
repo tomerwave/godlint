@@ -35,8 +35,8 @@ For repository changes:
   token held as an environment secret, so no other workflow can read it. npm is reached by trusted
   publishing from its own environment, and each package carries a provenance attestation tying it to
   the commit and workflow that built it. npm cannot accept a trusted publisher for a name that does
-  not exist, so the first release of a new package authenticates with a token; once the name exists,
-  configure trusted publishing for it and delete the token. `packaging/build-npm.py` assembles the npm packages from the
+  not exist, so a brand new package needs one token-authenticated release before it can be
+  configured; every release after that is tokenless. `packaging/build-npm.py` assembles the npm packages from the
   binaries the release built; it takes `--only` so a single platform can be built and installed on
   one machine to check the shim end to end.
 - `python3 scripts/validate-pull-request.py` enforces the parts of those templates that
