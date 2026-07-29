@@ -9,6 +9,15 @@ speaks about.
 
 ## [Unreleased]
 
+## [0.1.7] - 2026-07-29
+
+### Fixed
+
+- The Windows checksum file ends its line with a newline rather than a carriage return and newline.
+  PowerShell's `Out-File` writes CRLF, so every Unix checksum tool read the filename as ending in a
+  carriage return and refused to verify a correct download.
+
+
 ### Added
 
 - A GitHub action. `uses: tomerwave/godlint@v1` installs the released binary, verifies it against
