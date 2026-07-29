@@ -1,7 +1,10 @@
 name: Action
 
 on:
+  # labeled and unlabeled as well as the defaults, so adding expected-drift re-evaluates the check.
+  # Without them the label would appear to do nothing until the next push.
   pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
   push:
     branches: [main]
   workflow_dispatch:
