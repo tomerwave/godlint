@@ -43,10 +43,11 @@ fn restriction<'a>(
     modules: &'a [RestrictedImportConfiguration],
 ) -> Option<&'a RestrictedImportConfiguration> {
     let module = import.module();
+    let language = import.source().language();
 
     modules
         .iter()
-        .find(|restriction| module_path::covers(&restriction.name, module))
+        .find(|restriction| module_path::covers(&restriction.name, module, language))
 }
 
 fn is_allowed(import: &ImportFact, paths: &[String]) -> bool {

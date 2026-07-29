@@ -288,8 +288,7 @@ semantic capability exists.
 `architecture/restricted-call` establishes the direct-call boundary. It detects only
 spelled, direct callee paths: aliases, computed properties, and type-mediated calls wait
 for semantic analysis. Its built-in policy is deliberately narrow: JavaScript
-`process.exit`, Python `sys.exit` and `os._exit`, Rust `std::process::exit`, JavaScript
-Python `sys.exit` and `os._exit`, and Rust `std::process::exit`. It does not ban file or
+`process.exit`, Python `sys.exit` and `os._exit`, and Rust `std::process::exit`. It does not ban file or
 network I/O, subprocesses, or `unwrap`, because those need repository context before a default
 can remain high-confidence.
 
@@ -359,6 +358,14 @@ rather than two modules; `import a, b` in Python records the first name only; an
 beneath it — `crate::internal` catches `crate::internal::deep` — by matching a whole segment,
 so `crate::internals` is a different module and not a longer spelling of the same one.
 
+A Rust alias is seen through — `use crate::internal as inner` is the module
+`crate::internal` — matching what Python already did for `import x as y`. A brace list with no
+common path, `use {crate::a, std::env}`, spells no single module and so yields no fact at all,
+rather than a module named after the braces. What counts as a segment separator is the one the
+language spells: `::` in Rust, `.` in Python, `/` in JavaScript and TypeScript. That is why a
+restriction on `lodash` leaves `lodash.merge` alone — a separately published package rather
+than a submodule — while catching `lodash/merge`.
+
 `architecture/dependency-boundary` reads the same fact and takes an ordered list of layers.
 Position in the list *is* the policy: a layer may depend on itself and on anything below it, and
 a dependency that runs upward is reported. Because nothing is resolved, a layer declares both
@@ -367,6 +374,14 @@ path and an import spelling are not the same string and neither can be derived f
 A configuration that gives a layer only one of the two is rejected rather than silently
 enforcing half a policy. A file no layer contains, or a module no layer names, is outside the
 policy and reported by neither.
+
+Declared order carries one thing only: the direction a dependency may run. Which layer a file
+or a module belongs to is decided by the most specific declaration that covers it, not by
+whichever was declared first. Those are two different orderings, and conflating them made a
+layer that also matched a broader earlier layer report itself as crossing a boundary, and hid a
+real violation inside a nested layer. So `src/app/api/**` wins over `src/app/**` for a file
+beneath it, and `crate::app::api` wins over `crate::app` for a module beneath that, wherever
+each appears in the list.
 
 | Rule | Status | Required capability | Confidence | Notes |
 | --- | --- | --- | --- | --- |

@@ -316,6 +316,8 @@ impl Config {
             Self::validate_restricted_call_rule,
             Self::validate_restricted_import_rule,
             Self::validate_dependency_boundary_rule,
+            Self::validate_no_production_log_rule,
+            Self::validate_empty_function_rule,
             Self::validate_direct_environment_read_rule,
         ]
         .iter()
@@ -431,6 +433,36 @@ impl Config {
                     name: layer.name.clone(),
                 });
             }
+        }
+
+        Ok(())
+    }
+
+    fn validate_no_production_log_rule(&self) -> Result<(), ConfigError> {
+        if self
+            .rules
+            .no_production_log
+            .as_ref()
+            .is_some_and(|rule| any_blank(&rule.allow_in))
+        {
+            return Err(ConfigError::BlankAllowIn {
+                rule: "logging/no-production-log",
+            });
+        }
+
+        Ok(())
+    }
+
+    fn validate_empty_function_rule(&self) -> Result<(), ConfigError> {
+        if self
+            .rules
+            .empty_function
+            .as_ref()
+            .is_some_and(|rule| any_blank(&rule.allow_names))
+        {
+            return Err(ConfigError::BlankAllowIn {
+                rule: "maintainability/empty-function",
+            });
         }
 
         Ok(())

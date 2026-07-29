@@ -23,8 +23,8 @@ impl Rule for DependencyBoundary {
 impl ImportRule for DependencyBoundary {
     fn check(import: &ImportFact, configuration: &Self::Configuration) -> Option<Violation> {
         let layers = &configuration.layers;
-        let from = position(layers, |layer| contains(layer, import))?;
-        let to = position(layers, |layer| names(layer, import.module()))?;
+        let from = most_specific(layers, |layer| contains(layer, import))?;
+        let to = most_specific(layers, |layer| names(layer, import))?;
 
         (to < from).then(|| Violation::CrossedBoundary {
             from: layers[from].name.clone(),
@@ -39,20 +39,34 @@ pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Vec<Finding> {
     })
 }
 
-fn position(layers: &[Layer], belongs: impl Fn(&Layer) -> bool) -> Option<usize> {
-    layers.iter().position(belongs)
+fn most_specific(layers: &[Layer], reach: impl Fn(&Layer) -> Option<usize>) -> Option<usize> {
+    layers
+        .iter()
+        .enumerate()
+        .filter_map(|(index, layer)| reach(layer).map(|length| (length, index)))
+        .max()
+        .map(|(_, index)| index)
 }
 
-fn contains(layer: &Layer, import: &ImportFact) -> bool {
-    glob::matches_any(
-        layer.paths.iter().map(String::as_str),
-        &import.source().path().to_string_lossy(),
-    )
+fn contains(layer: &Layer, import: &ImportFact) -> Option<usize> {
+    let path = import.source().path().to_string_lossy().into_owned();
+
+    layer
+        .paths
+        .iter()
+        .filter(|pattern| glob::matches_any(std::iter::once(pattern.as_str()), &path))
+        .map(|pattern| pattern.len())
+        .max()
 }
 
-fn names(layer: &Layer, module: &str) -> bool {
+fn names(layer: &Layer, import: &ImportFact) -> Option<usize> {
+    let module = import.module();
+    let language = import.source().language();
+
     layer
         .modules
         .iter()
-        .any(|spelling| module_path::covers(spelling, module))
+        .filter(|spelling| module_path::covers(spelling, module, language))
+        .map(String::len)
+        .max()
 }

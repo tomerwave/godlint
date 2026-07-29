@@ -84,7 +84,7 @@ godlint config validate --config path/to/godlint.yaml
 ```
 
 The `check` command evaluates the configured rules across Rust,
-TypeScript/JavaScript, and Python source files. Sixteen rules are implemented:
+TypeScript/JavaScript, and Python source files. Nineteen rules are implemented:
 
 - `maintainability/file-size` — effective lines in a file.
 - `maintainability/function-size` — effective lines in a function.
@@ -103,7 +103,7 @@ TypeScript/JavaScript, and Python source files. Sixteen rules are implemented:
   themselves.
 - `policy/unused-suppression` — inline suppressions that no longer silence an enabled
   finding.
-- `architecture/restricted-call` — abrupt process exits and debug-only output, plus
+- `architecture/restricted-call` — abrupt process exits, plus
   configured direct callees outside their approved paths.
 - `security/no-dynamic-execution` — JavaScript `eval`, `Function`, and `new Function`;
   Python `eval` and `exec`.
@@ -115,7 +115,8 @@ TypeScript/JavaScript, and Python source files. Sixteen rules are implemented:
 - `architecture/restricted-import` — imports of modules a repository puts behind a boundary.
 - `architecture/dependency-boundary` — a dependency that runs against the declared layer order.
 
-These four read the callee exactly as it is spelled. `std::env::var` is matched and the
+The call rules read the callee exactly as it is spelled, and the import rules read the
+module the same way. `std::env::var` is matched and the
 aliased `env::var` after `use std::env` is not, because knowing they name the same function
 needs resolution Godlint does not have yet — see
 [the rule roadmap](docs/rule-roadmap.md) for what that defers. They also have no scope
@@ -124,10 +125,16 @@ called `exec`, or a `const process = …` in TypeScript. Enable them deliberatel
 off until a repository configures it.
 
 One consequence of built-in restrictions being language-bound is worth knowing before you
-write a policy: a name a built-in already claims belongs to that built-in's language. Naming
-`print` restricts Python's, and a TypeScript function of your own called `print` cannot be
-restricted at all — there is no language key to say which you meant, so the policy is silent
-rather than wrong. Pick a name no built-in claims, or wait for that key.
+write a policy: a name a built-in already claims belongs to that built-in's language. Giving
+`sys.exit` an `allow-in` boundary scopes Python's, and a call spelled `sys.exit` in TypeScript
+is left alone — there is no language key to say which you meant, so the policy is silent rather
+than wrong.
+
+A name no built-in claims belongs to no language and applies wherever it is called, which is
+what a policy about `loadConfig` means. `print`, `console.log`, `console.debug` and `dbg!` are
+now in that group rather than the first: `logging/no-production-log` owns them as
+dialect-bound defaults, so naming one under `architecture/restricted-call` restricts it in
+every language. Restrict debug logging through the logging rule, which keeps the binding.
 
 A function means the same thing in every language: Rust `fn` items and closures,
 Python `def` functions and lambdas, and JavaScript/TypeScript function declarations,
@@ -142,7 +149,7 @@ godlint check crates
 ## Policy suites
 
 A suite names a set of rules and their thresholds so a repository adopts a standard in one
-line rather than fifteen:
+line rather than nineteen:
 
 ```yaml
 version: 1

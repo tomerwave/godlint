@@ -143,3 +143,78 @@ fn can_disable_the_rule() {
 
     assert!(violations("src/a.rs", "use crate::internal::store;", configuration).is_empty());
 }
+
+#[test]
+fn sees_a_rust_alias_through_to_the_module() {
+    let configuration = restricting("crate::internal");
+
+    assert_eq!(
+        violations("src/a.rs", "use crate::internal as inner;", &configuration).len(),
+        1,
+        "renaming an import must not hide it"
+    );
+    assert_eq!(
+        violations(
+            "src/a.rs",
+            "use crate::internal::store as s;",
+            &configuration
+        )
+        .len(),
+        1
+    );
+}
+
+#[test]
+fn invents_no_module_from_a_brace_list() {
+    assert!(
+        violations(
+            "src/a.rs",
+            "use {crate::internal::a, std::env};",
+            &restricting("{crate::internal::a")
+        )
+        .is_empty(),
+        "a brace list spells no single module, so it yields no fact to match against"
+    );
+}
+
+#[test]
+fn a_segment_separator_is_the_one_the_language_spells() {
+    assert!(
+        violations(
+            "src/pkg.ts",
+            "import { merge } from \"lodash.merge\";",
+            &restricting("lodash")
+        )
+        .is_empty(),
+        "lodash.merge is its own package, not a submodule of lodash"
+    );
+    assert!(
+        violations(
+            "src/a.ts",
+            "import { z } from \"fs:whatever\";",
+            &restricting("fs")
+        )
+        .is_empty(),
+        "a colon is not a segment separator in TypeScript"
+    );
+    assert_eq!(
+        violations(
+            "src/a.ts",
+            "import { z } from \"lodash/merge\";",
+            &restricting("lodash")
+        )
+        .len(),
+        1,
+        "a slash is"
+    );
+    assert_eq!(
+        violations(
+            "src/a.py",
+            "from legacy.db import rows",
+            &restricting("legacy")
+        )
+        .len(),
+        1,
+        "and a dot is, in Python"
+    );
+}

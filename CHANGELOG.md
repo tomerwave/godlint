@@ -11,7 +11,7 @@ releases begin.
 ### Added
 
 - Policy suites. `suites: [recommended@1]` adopts a named standard in one line instead of
-  fifteen rule blocks with hand-picked numbers. `recommended@1` enables every rule at
+  nineteen rule blocks with hand-picked numbers. `recommended@1` enables every rule at
   `error`, because a standard a repository can partly ignore is a suggestion. Suites are
   opt-in — a configuration naming none enforces nothing — and a `rules:` entry overrides the
   suite for that rule in either direction, including `severity: off`, which is what lets a
@@ -284,14 +284,17 @@ releases begin.
   the change it should have welcomed. Whether a fixture is owed is a judgement, and the
   template asks for it there.
 
-### Changed
-
 - `ConfigError` moved to `config/error.rs` and `Violation` to `rules/violation.rs`. Both files
   had crossed the 500-line ceiling this project holds itself to as rules were added, and the
   ceiling is not the thing to move.
 
 - `architecture/restricted-call` no longer bans `console.log`, `console.debug`, Python `print`
-  or Rust `dbg!` by default; `logging/no-production-log` owns them. A process exit is banned
+  or Rust `dbg!` by default; `logging/no-production-log` owns them. Two consequences to know
+  when upgrading. A suppression naming `architecture/restricted-call` over one of those calls
+  now reports twice — once as an unused suppression and once as a production log — and must be
+  renamed to the logging rule. And naming one of them under `calls` no longer scopes it to a
+  language, because the language binding belonged to their being built-ins; the logging rule
+  keeps that binding, so restrict debug output through it. A process exit is banned
   outright and excused per call site, while logging is permitted wherever a repository says it
   belongs, so one `allow-in` for the class fits it better than an entry per callee — and two
   rules reporting the same call reported it twice. Naming any of them under `calls` still

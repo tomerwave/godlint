@@ -92,3 +92,69 @@ fn can_disable_the_rule() {
         .is_empty()
     );
 }
+
+#[test]
+fn the_most_specific_layer_wins_regardless_of_declared_order() {
+    let broad_first = concat!(
+        "version: 1\n",
+        "rules:\n",
+        "  architecture/dependency-boundary:\n",
+        "    severity: error\n",
+        "    layers:\n",
+        "      - name: ui\n",
+        "        paths:\n",
+        "          - src/ui/**\n",
+        "        modules:\n",
+        "          - crate\n",
+        "      - name: domain\n",
+        "        paths:\n",
+        "          - src/domain/**\n",
+        "        modules:\n",
+        "          - crate::domain\n"
+    );
+
+    assert!(
+        rule_violations(
+            dependency_boundary::evaluate,
+            "src/domain/model.rs",
+            "use crate::domain::other;",
+            broad_first
+        )
+        .is_empty(),
+        "a layer importing itself is not a boundary crossing, even where a broader layer \
+         declared earlier also covers the module"
+    );
+}
+
+#[test]
+fn a_nested_layer_is_read_as_the_nested_one() {
+    let nested = concat!(
+        "version: 1\n",
+        "rules:\n",
+        "  architecture/dependency-boundary:\n",
+        "    severity: error\n",
+        "    layers:\n",
+        "      - name: app\n",
+        "        paths:\n",
+        "          - src/app/**\n",
+        "        modules:\n",
+        "          - crate::app\n",
+        "      - name: api\n",
+        "        paths:\n",
+        "          - src/app/api/**\n",
+        "        modules:\n",
+        "          - crate::app::api\n"
+    );
+
+    assert_eq!(
+        rule_violations(
+            dependency_boundary::evaluate,
+            "src/app/api/handler.rs",
+            "use crate::app::service;",
+            nested
+        )
+        .len(),
+        1,
+        "a file in the nested layer depends upward on the layer that contains it"
+    );
+}
