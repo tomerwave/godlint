@@ -36,7 +36,11 @@ For repository changes:
   publishing from its own environment, and each package carries a provenance attestation tying it to
   the commit and workflow that built it. npm cannot accept a trusted publisher for a name that does
   not exist, so a brand new package needs one token-authenticated release before it can be
-  configured; every release after that is tokenless. `packaging/build-npm.py` assembles the npm packages from the
+  configured; every release after that is tokenless. PyPI is reached by trusted publishing too, and
+  accepts it for a project that does not exist yet, so no PyPI token is ever needed.
+- `packaging/build_wheels.py` builds the Python wheels from the same binaries, and takes `--only` for
+  the same reason: one wheel can be built and `pip install`ed on one machine to check that the
+  command it installs is executable. `packaging/build-npm.py` assembles the npm packages from the
   binaries the release built; it takes `--only` so a single platform can be built and installed on
   one machine to check the shim end to end.
 - `python3 scripts/validate-pull-request.py` enforces the parts of those templates that

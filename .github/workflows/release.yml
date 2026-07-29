@@ -213,9 +213,39 @@ jobs:
             npm publish "$package" --access public --provenance
           done < packages/publish-order
 
+  pypi:
+    name: Publish to PyPI
+    needs: binaries
+    runs-on: ubuntu-latest
+    environment: pypi
+
+    # Trusted publishing, so no PyPI token exists to store or rotate.
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: binary-*
+          path: binaries
+
+      # The wheels carry the same binaries the release publishes everywhere else, rather than a
+      # second build of them.
+      - name: Build a wheel for every platform
+        env:
+          TAG: ${{ github.ref_name }}
+        run: python3 packaging/build_wheels.py "${TAG#v}" --binaries binaries --out wheels
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: wheels
+
   announce:
     name: Publish the GitHub release
-    needs: [publish, npm]
+    needs: [publish, npm, pypi]
     runs-on: ubuntu-latest
 
     steps:
