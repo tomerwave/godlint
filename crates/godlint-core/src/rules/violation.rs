@@ -10,6 +10,7 @@ pub enum Violation {
         max: u32,
     },
     EmptyBody,
+    EmptyErrorHandler,
     MissingReference {
         marker: String,
     },
@@ -90,6 +91,12 @@ impl fmt::Display for Violation {
                 max,
             } => metric.describe(formatter, *actual, *max),
             Self::EmptyBody => write!(formatter, "Function has an empty body."),
+            Self::EmptyErrorHandler => {
+                write!(
+                    formatter,
+                    "Error handler has an empty body; handle or re-raise the error."
+                )
+            }
             Self::MissingReference { marker } => {
                 write!(formatter, "{marker} comment requires an issue reference.")
             }

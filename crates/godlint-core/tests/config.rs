@@ -155,6 +155,14 @@ fn accepts_the_explicit_timer_delay_rule() {
 }
 
 #[test]
+fn accepts_the_empty_error_handler_rule() {
+    let result =
+        load("version: 1\nrules:\n  reliability/empty-error-handler:\n    severity: error\n");
+
+    assert!(result.is_ok());
+}
+
+#[test]
 fn rejects_an_unknown_rule() {
     let result = load("version: 1\nrules:\n  maintainability/unknown: {}\n");
 

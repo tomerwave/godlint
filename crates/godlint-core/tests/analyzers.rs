@@ -184,6 +184,43 @@ fn extracts_javascript_function_expressions() {
 }
 
 #[test]
+fn extracts_empty_error_handlers() {
+    let cases = [
+        ("example.js", "try { work(); } catch { }", true),
+        (
+            "example.ts",
+            "try { work(); } catch (error) { report(error); }",
+            false,
+        ),
+        ("example.py", "try:\n    work()\nexcept:\n    pass", true),
+        (
+            "example.py",
+            "try:\n    work()\nexcept Exception as error:\n    pass",
+            true,
+        ),
+        ("example.py", "try:\n    work()\nexcept:\n    ...", true),
+        (
+            "example.py",
+            "try:\n    work()\nexcept Exception:\n    raise",
+            false,
+        ),
+        ("example.rs", "fn example() { work(); }", false),
+    ];
+
+    for (path, contents, empty) in cases {
+        let facts = analyze(&source(path, contents))
+            .unwrap_or_else(|error| panic!("analyzes {path}: {error}"));
+
+        if path.ends_with(".rs") {
+            assert!(facts.error_handlers().is_empty(), "{path}");
+        } else {
+            assert_eq!(facts.error_handlers().len(), 1, "{path}");
+            assert_eq!(facts.error_handlers()[0].body_is_empty(), empty, "{path}");
+        }
+    }
+}
+
+#[test]
 fn ignores_rust_trait_methods_without_bodies() {
     let facts = analyze(&source("example.rs", "trait Hook {\n    fn empty();\n}"))
         .unwrap_or_else(|error| panic!("analyzes trait: {error}"));

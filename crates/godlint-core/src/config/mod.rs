@@ -73,6 +73,8 @@ pub struct Rules {
     pub direct_environment_read: Option<DirectEnvironmentReadRule>,
     #[serde(rename = "reliability/explicit-timer-delay")]
     pub explicit_timer_delay: Option<ExplicitTimerDelayRule>,
+    #[serde(rename = "reliability/empty-error-handler")]
+    pub empty_error_handler: Option<EmptyErrorHandlerRule>,
     #[serde(rename = "logging/no-production-log")]
     pub no_production_log: Option<NoProductionLogRule>,
     #[serde(rename = "architecture/restricted-import")]
@@ -229,6 +231,12 @@ pub struct NoProductionLogRule {
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ExplicitTimerDelayRule {
+    pub severity: Severity,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct EmptyErrorHandlerRule {
     pub severity: Severity,
 }
 

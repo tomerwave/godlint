@@ -1,6 +1,6 @@
 # Rule reference
 
-Twenty-one rules are implemented. Every one has an identifier of the form `family/name`, which is
+Twenty-two rules are implemented. Every one has an identifier of the form `family/name`, which is
 what a configuration entry and a suppression directive both name. [The rule roadmap](rule-roadmap.md)
 records the families still to come, and the reasoning behind each threshold `recommended@1` sets.
 
@@ -50,6 +50,20 @@ Neither policy rule about suppressions can itself be suppressed. See
 | Rule | What it reports |
 | --- | --- |
 | `reliability/explicit-timer-delay` | A JavaScript or TypeScript timer that omits its millisecond delay |
+| `reliability/empty-error-handler` | An error handler whose body discards the error |
+
+### What counts as an empty handler
+
+`reliability/empty-error-handler` reports a `catch` or `except` body that holds nothing but a
+placeholder. `pass`, `...` and a lone `;` are placeholders — and so is a comment. A comment neither
+handles the error nor re-raises it, and Godlint already has a way to say a swallow is deliberate:
+an [inline suppression](suppressions.md), which carries an owner and an expiry that a comment cannot
+be held to.
+
+A body that evaluates anything else is left alone, including a lone string literal.
+
+Rust is out of scope. It has no `catch`, and a discarded `Result` is `reliability/ignored-error` on
+[the roadmap](rule-roadmap.md) rather than this rule.
 
 ## Logging
 

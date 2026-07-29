@@ -1,0 +1,4 @@
+try {
+  work();
+} catch (error) {
+}

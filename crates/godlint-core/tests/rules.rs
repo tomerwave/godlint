@@ -21,6 +21,9 @@ mod errors;
 #[path = "rules/empty_function.rs"]
 mod empty_function;
 
+#[path = "rules/empty_error_handler.rs"]
+mod empty_error_handler;
+
 #[path = "rules/explicit_timer_delay.rs"]
 mod explicit_timer_delay;
 

@@ -1,6 +1,6 @@
 use tree_sitter::Node;
 
-use super::vocabulary::{Callee, Vocabulary};
+use super::vocabulary::{Callee, ErrorHandler, Vocabulary};
 use crate::facts::CommentKind;
 
 pub(super) const VOCABULARY: Vocabulary = Vocabulary {
@@ -14,6 +14,7 @@ pub(super) const VOCABULARY: Vocabulary = Vocabulary {
     is_receiver,
     is_abstract,
     callee,
+    error_handler,
     is_access,
     import,
     comment_kind,
@@ -64,6 +65,22 @@ fn callee(node: Node<'_>) -> Option<Callee<'_>> {
         node,
         is_macro: false,
     })
+}
+
+fn error_handler(node: Node<'_>) -> Option<ErrorHandler<'_>> {
+    (node.kind() == "catch_clause")
+        .then(|| node.child_by_field_name("body"))
+        .flatten()
+        .map(|body| {
+            let mut statements = body.walk();
+
+            ErrorHandler {
+                node,
+                body_is_empty: body
+                    .named_children(&mut statements)
+                    .all(|statement| matches!(statement.kind(), "empty_statement" | "comment")),
+            }
+        })
 }
 
 fn is_access(kind: &str) -> bool {

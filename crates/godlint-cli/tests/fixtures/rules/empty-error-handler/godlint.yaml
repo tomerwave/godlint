@@ -1,0 +1,6 @@
+version: 1
+exclude:
+  - excluded.ts
+rules:
+  reliability/empty-error-handler:
+    severity: error

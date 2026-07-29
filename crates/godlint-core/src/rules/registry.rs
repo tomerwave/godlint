@@ -3,8 +3,9 @@ use crate::{
     rules::{
         Rule, accountable_suppression::AccountableSuppression,
         decision_complexity::DecisionComplexity, dependency_boundary::DependencyBoundary,
-        direct_environment_read::DirectEnvironmentRead, empty_function::EmptyFunction,
-        explicit_timer_delay::ExplicitTimerDelay, file_size::FileSize, filename_case::FilenameCase,
+        direct_environment_read::DirectEnvironmentRead, empty_error_handler::EmptyErrorHandler,
+        empty_function::EmptyFunction, explicit_timer_delay::ExplicitTimerDelay,
+        file_size::FileSize, filename_case::FilenameCase,
         forbidden_dependency::ForbiddenDependency, function_nesting::FunctionNesting,
         function_size::FunctionSize, function_statements::FunctionStatements,
         no_comments::NoComments, no_dynamic_execution::NoDynamicExecution,
@@ -81,6 +82,11 @@ severity!(
     explicit_timer_delay_severity,
     ExplicitTimerDelay,
     explicit_timer_delay
+);
+severity!(
+    empty_error_handler_severity,
+    EmptyErrorHandler,
+    empty_error_handler
 );
 severity!(
     no_production_log_severity,
@@ -183,6 +189,11 @@ const REGISTRATIONS: &[Registration] = &[
     Registration {
         id: ExplicitTimerDelay::ID,
         severity: explicit_timer_delay_severity,
+        suppressible: true,
+    },
+    Registration {
+        id: EmptyErrorHandler::ID,
+        severity: empty_error_handler_severity,
         suppressible: true,
     },
     Registration {
