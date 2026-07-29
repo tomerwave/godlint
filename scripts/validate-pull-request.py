@@ -32,6 +32,12 @@ WORKFLOWS = Path(".github/workflows")
 MUTANTS = Path(".cargo/mutants.toml")
 SUITES = Path("crates/godlint-core/src/suites.rs")
 
+# A changelog entry describes a change as a release will present it, so the question is
+# what this branch adds to the release line rather than to whichever branch it targets.
+# For a pull request stacked on another, the entry belongs to the stack and lives in the
+# branch below; diffing against the target would demand a second entry for one change.
+RELEASE_LINE = "origin/main"
+
 ROADMAP = Path("docs/rule-roadmap.md")
 README = Path("README.md")
 CHANGELOG = Path("CHANGELOG.md")
@@ -233,8 +239,20 @@ def changed_files(base: str) -> list[str]:
     return [line for line in diff.stdout.splitlines() if line]
 
 
+def resolves(ref: str) -> bool:
+    return (
+        subprocess.run(
+            ["git", "rev-parse", "--verify", "--quiet", ref],
+            capture_output=True,
+            text=True,
+            check=False,
+        ).returncode
+        == 0
+    )
+
+
 def check_change(report: Report, base: str) -> None:
-    changed = changed_files(base)
+    changed = changed_files(RELEASE_LINE if resolves(RELEASE_LINE) else base)
 
     if not changed:
         return
