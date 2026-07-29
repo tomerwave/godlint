@@ -98,6 +98,12 @@ def shim_package(out: Path, version: str, names: list[str]) -> None:
     )
 
 
+def spelled(directory: Path) -> str:
+    text = directory.as_posix()
+
+    return text if text.startswith(("/", "./", "../")) else f"./{text}"
+
+
 def binary_for(binaries: Path, target: str) -> Path:
     executable = "godlint.exe" if target.endswith("windows-msvc") else "godlint"
     candidates = (
@@ -139,7 +145,15 @@ def main() -> int:
     ]
 
     shim_package(arguments.out, arguments.version, names)
-    print(f"godlint {arguments.version} and {len(names)} platform packages in {arguments.out}")
+
+    order = [arguments.out / f"cli-{system}-{architecture}" for system, architecture in (
+        PLATFORMS[target] for target in targets
+    )] + [arguments.out / "cli"]
+    (arguments.out / "publish-order").write_text(
+        "".join(f"{spelled(directory)}\n" for directory in order), encoding="utf-8"
+    )
+
+    print(f"{len(order)} packages in {arguments.out}, publish order in publish-order")
 
     return 0
 
