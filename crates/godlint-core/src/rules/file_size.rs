@@ -23,7 +23,7 @@ impl FileLimitRule for FileSize {
     const METRIC: Metric = Metric::FileLines;
 
     fn measure(facts: &SourceFacts, configuration: &Self::Configuration) -> u32 {
-        line_count::effective_line_count(facts, facts.source().full_range(), skipped(configuration))
+        line_count::effective_line_count(facts, facts.source().full_range(), configuration.into())
     }
 
     fn max(configuration: &Self::Configuration) -> u32 {
@@ -35,11 +35,4 @@ pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, 
     when_configured(config.rules.file_size.as_ref(), |configuration| {
         evaluate_file_limit_rule::<FileSize>(facts, configuration)
     })
-}
-
-fn skipped(configuration: &LineLimitRule) -> line_count::Skipped {
-    line_count::Skipped {
-        blank_lines: configuration.skip_blank_lines,
-        comments: configuration.skip_comments,
-    }
 }

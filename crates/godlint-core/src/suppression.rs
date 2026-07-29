@@ -2,7 +2,7 @@ use std::collections::BTreeSet;
 
 use crate::{
     analyzers::SourceFacts,
-    facts::{CommentKind, FunctionFact},
+    facts::{CommentFact, CommentKind, FunctionFact},
     rules::Finding,
     source::{SourceFile, SourceRange},
 };
@@ -19,12 +19,6 @@ const EXPIRES: &str = "expires";
 
 const DIRECTIVES: [(&str, Scope); 2] =
     [(NEXT_LINE, Scope::NextLine), (ENCLOSING, Scope::Enclosing)];
-
-struct Comment<'a> {
-    range: SourceRange,
-    text: &'a str,
-    kind: CommentKind,
-}
 
 struct Scan<'a> {
     occupied: &'a BTreeSet<usize>,
@@ -141,11 +135,7 @@ pub fn collect(facts: &[SourceFacts]) -> Vec<Suppression> {
 
             source_facts.comments().iter().flat_map(move |comment| {
                 in_comment(
-                    Comment {
-                        range: comment.range(),
-                        text: comment.text(),
-                        kind: comment.kind(),
-                    },
+                    comment,
                     &Scan {
                         occupied: &occupied,
                         facts: source_facts,
@@ -216,20 +206,20 @@ fn directive_lines(facts: &SourceFacts) -> BTreeSet<usize> {
         .collect()
 }
 
-fn in_comment(comment: Comment<'_>, scan: &Scan<'_>) -> Vec<Suppression> {
-    let numbered: Vec<(usize, &str)> = lines(comment.text).collect();
+fn in_comment(comment: &CommentFact, scan: &Scan<'_>) -> Vec<Suppression> {
+    let numbered: Vec<(usize, &str)> = lines(comment.text()).collect();
 
     numbered
         .iter()
         .enumerate()
         .filter_map(|(index, (offset, line))| {
-            let found = directive(line, comment.kind, index == 0)?;
-            let start = comment.range.start() + offset + found.offset;
+            let found = directive(line, comment.kind(), index == 0)?;
+            let start = comment.range().start() + offset + found.offset;
 
             Some(suppression(
                 found,
                 SourceRange::new(start, start + found.length).ok()?,
-                spent_lines(&numbered[index + 1..], comment.kind),
+                spent_lines(&numbered[index + 1..], comment.kind()),
                 scan,
             ))
         })

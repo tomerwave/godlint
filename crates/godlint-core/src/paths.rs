@@ -1,4 +1,5 @@
 use std::{
+    ffi::OsStr,
     fs,
     path::{Component, Path, PathBuf},
 };
@@ -33,16 +34,22 @@ pub fn contains_symlink(root: &Path, path: &Path) -> bool {
     };
     let mut current = root.to_path_buf();
 
-    relative
-        .components()
-        .filter_map(|component| match component {
-            Component::Normal(name) => Some(name),
-            _ => None,
-        })
-        .any(|name| {
-            current.push(name);
-            is_symlink(&current)
-        })
+    for name in relative.components().filter_map(normal_name) {
+        current.push(name);
+
+        if is_symlink(&current) {
+            return true;
+        }
+    }
+
+    false
+}
+
+fn normal_name(component: Component<'_>) -> Option<&OsStr> {
+    match component {
+        Component::Normal(name) => Some(name),
+        _ => None,
+    }
 }
 
 pub fn climbs(path: &Path) -> bool {

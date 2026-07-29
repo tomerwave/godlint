@@ -230,9 +230,10 @@ pub fn evaluate_function_rule<R: FunctionRule>(
     facts: &[SourceFacts],
     configuration: &R::Configuration,
 ) -> Result<Vec<Finding>, RuleError> {
-    evaluate_functions(
+    collect_ranged(
         facts,
         Reporting::of::<R>(configuration),
+        SourceFacts::functions,
         |function, source| R::check(function, source, configuration),
     )
 }
@@ -243,9 +244,10 @@ pub fn evaluate_function_limit_rule<R: FunctionLimitRule>(
 ) -> Result<Vec<Finding>, RuleError> {
     let max = R::max(configuration);
 
-    evaluate_functions(
+    collect_ranged(
         facts,
         Reporting::of::<R>(configuration),
+        SourceFacts::functions,
         |function, source| {
             let actual = R::measure(function, source, configuration);
 
@@ -254,12 +256,15 @@ pub fn evaluate_function_limit_rule<R: FunctionLimitRule>(
     )
 }
 
-pub(crate) fn collect_findings<'facts, T: 'facts>(
+pub(crate) fn collect_findings<'facts, T: 'facts, I>(
     facts: &'facts [SourceFacts],
     reporting: Reporting,
     items: impl Fn(&'facts SourceFacts) -> &'facts [T],
-    report: impl Fn(&'facts T, &'facts SourceFacts) -> Vec<(SourceRange, Violation)>,
-) -> Result<Vec<Finding>, RuleError> {
+    report: impl Fn(&'facts T, &'facts SourceFacts) -> I,
+) -> Result<Vec<Finding>, RuleError>
+where
+    I: IntoIterator<Item = (SourceRange, Violation)>,
+{
     if reporting.severity == Severity::Off {
         return Ok(Vec::new());
     }
@@ -276,22 +281,25 @@ pub(crate) fn collect_findings<'facts, T: 'facts>(
         .collect()
 }
 
-fn evaluate_functions(
-    facts: &[SourceFacts],
+pub trait Ranged {
+    fn source_range(&self) -> SourceRange;
+}
+
+impl Ranged for FunctionFact {
+    fn source_range(&self) -> SourceRange {
+        self.range()
+    }
+}
+
+pub(crate) fn collect_ranged<'facts, R: Ranged + 'facts>(
+    facts: &'facts [SourceFacts],
     reporting: Reporting,
-    check: impl Fn(&FunctionFact, &SourceFacts) -> Option<Violation>,
+    items: impl Fn(&'facts SourceFacts) -> &'facts [R],
+    check: impl Fn(&'facts R, &'facts SourceFacts) -> Option<Violation>,
 ) -> Result<Vec<Finding>, RuleError> {
-    collect_findings(
-        facts,
-        reporting,
-        SourceFacts::functions,
-        |function, source| {
-            check(function, source)
-                .map(|violation| (function.range(), violation))
-                .into_iter()
-                .collect()
-        },
-    )
+    collect_findings(facts, reporting, items, |item, source| {
+        check(item, source).map(|violation| (item.source_range(), violation))
+    })
 }
 
 pub fn evaluate_file_limit_rule<R: FileLimitRule>(

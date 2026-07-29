@@ -107,8 +107,8 @@ fn discover_directory(
     paths.sort();
 
     paths
-        .iter()
-        .try_for_each(|path| discover_path(path, scope, files, false))
+        .into_iter()
+        .try_for_each(|path| discover_path(&path, scope, files, false))
 }
 
 fn entry_paths(directory: &Path) -> Result<Vec<PathBuf>, DiscoveryError> {

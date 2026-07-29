@@ -186,15 +186,15 @@ pub struct TodoRequiresReferenceRule {
     pub reference_prefixes: Vec<String>,
 }
 
-fn default_reference_prefixes() -> Vec<String> {
+pub(crate) fn default_reference_prefixes() -> Vec<String> {
     vec!["#".into()]
 }
 
-fn default_markers() -> Vec<String> {
+pub(crate) fn default_markers() -> Vec<String> {
     vec!["TODO".into(), "FIXME".into(), "HACK".into(), "XXX".into()]
 }
 
-fn default_configuration_paths() -> Vec<String> {
+pub(crate) fn default_configuration_paths() -> Vec<String> {
     vec!["**/config.*".into(), "**/config/**".into()]
 }
 
@@ -246,18 +246,6 @@ pub enum ConfigError {
     },
 }
 
-type Validator = fn(&Config) -> Result<(), ConfigError>;
-
-const VALIDATORS: &[Validator] = &[
-    Config::validate_suites,
-    Config::validate_version,
-    Config::validate_exclude,
-    Config::validate_complexity_rule,
-    Config::validate_todo_rule,
-    Config::validate_restricted_call_rule,
-    Config::validate_direct_environment_read_rule,
-];
-
 impl Config {
     pub fn load(path: impl AsRef<Path>) -> Result<Self, ConfigError> {
         let path = path.as_ref();
@@ -271,8 +259,8 @@ impl Config {
                 source,
             })?;
 
-        config.validate()?;
         config.expand_suites();
+        config.validate()?;
 
         Ok(config)
     }
@@ -292,11 +280,17 @@ impl Config {
     }
 
     fn validate(&self) -> Result<(), ConfigError> {
-        for check in VALIDATORS {
-            check(self)?;
-        }
-
-        Ok(())
+        [
+            Self::validate_suites,
+            Self::validate_version,
+            Self::validate_exclude,
+            Self::validate_complexity_rule,
+            Self::validate_todo_rule,
+            Self::validate_restricted_call_rule,
+            Self::validate_direct_environment_read_rule,
+        ]
+        .iter()
+        .try_for_each(|check| check(self))
     }
 
     fn validate_suites(&self) -> Result<(), ConfigError> {
@@ -331,13 +325,12 @@ impl Config {
     }
 
     fn validate_complexity_rule(&self) -> Result<(), ConfigError> {
-        let zero = self
+        if self
             .rules
             .decision_complexity
             .as_ref()
-            .is_some_and(|rule| rule.limit() == 0);
-
-        if zero {
+            .is_some_and(|rule| rule.limit() == 0)
+        {
             return Err(ConfigError::InvalidComplexityLimit);
         }
 
@@ -435,9 +428,6 @@ const TODO_PREFIXES_REQUIRED: &str =
 
 const CALL_NAME_REQUIRED: &str = "architecture/restricted-call call names must not be blank";
 
-const DUPLICATE_CALL: &str = "architecture/restricted-call lists {name} more than once; one entry decides its allow-in \
-     boundary";
-
 impl fmt::Display for ConfigError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -452,7 +442,11 @@ impl fmt::Display for ConfigError {
                 suites::NAMES.join(", ")
             ),
             Self::DuplicateRestrictedCallName { name } => {
-                write!(formatter, "{}", DUPLICATE_CALL.replace("{name}", name))
+                write!(
+                    formatter,
+                    "architecture/restricted-call lists {name} more than once; one entry \
+                     decides its allow-in boundary"
+                )
             }
             Self::BlankAllowIn { rule } => {
                 write!(formatter, "{rule} allow-in paths must not be blank")

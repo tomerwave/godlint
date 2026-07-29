@@ -1,9 +1,20 @@
-use crate::{analyzers::SourceFacts, facts::CommentFact, source::SourceRange};
+use crate::{
+    analyzers::SourceFacts, config::LineLimitRule, facts::CommentFact, source::SourceRange,
+};
 
 #[derive(Clone, Copy)]
 pub(crate) struct Skipped {
     pub blank_lines: bool,
     pub comments: bool,
+}
+
+impl From<&LineLimitRule> for Skipped {
+    fn from(configuration: &LineLimitRule) -> Self {
+        Self {
+            blank_lines: configuration.skip_blank_lines,
+            comments: configuration.skip_comments,
+        }
+    }
 }
 
 pub(crate) fn effective_line_count(
