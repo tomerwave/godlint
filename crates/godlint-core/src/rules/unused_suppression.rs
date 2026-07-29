@@ -25,24 +25,19 @@ pub fn evaluate(
     config: &Config,
 ) -> Vec<Finding> {
     when_configured(config.rules.unused_suppression.as_ref(), |configuration| {
-        let reporting = Reporting::of::<UnusedSuppression>(configuration);
-
-        if reporting.severity == Severity::Off {
-            return Vec::new();
-        }
-
-        suppressions
-            .iter()
-            .filter(|suppression| is_unused(suppression, findings, config))
-            .map(|suppression| {
-                super::finding(
-                    suppression.source(),
-                    suppression.range(),
-                    reporting,
-                    Violation::UnusedSuppression,
-                )
-            })
-            .collect()
+        super::report(
+            Reporting::of::<UnusedSuppression>(configuration),
+            suppressions
+                .iter()
+                .filter(|suppression| is_unused(suppression, findings, config))
+                .map(|suppression| {
+                    (
+                        suppression.source(),
+                        suppression.range(),
+                        Violation::UnusedSuppression,
+                    )
+                }),
+        )
     })
 }
 
