@@ -1,0 +1,7 @@
+version: 1
+
+rules:
+  logging/no-production-log:
+    severity: error
+    allow-in:
+      - scripts/**

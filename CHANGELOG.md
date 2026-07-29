@@ -19,6 +19,13 @@ releases begin.
   lists the available ones. Godlint's own configuration is now the suite and nothing else,
   since an override here would be this project exempting itself from its own standard.
 
+- `logging/no-production-log` (`allow-in`) — reports debug logging outside the paths a
+  repository approves. Defaults to the calls that exist to be read during development:
+  `console.log`, `console.debug`, `console.info`, `console.trace`, Python `print` and
+  `pprint.pprint`, and Rust `dbg!`, each bound to the dialect that spells it. `console.error`,
+  `console.warn`, `println!` and the `logging` module are left alone, being how a program talks
+  to its user rather than leftover debugging.
+
 - `reliability/explicit-timer-delay` — requires an explicit delay for JavaScript and
   TypeScript `setTimeout` and `setInterval` calls, where omission silently defaults to
   immediate execution. Reads the timer under a global receiver (`window`, `globalThis`,
@@ -264,6 +271,13 @@ releases begin.
   template asks for it there.
 
 ### Changed
+
+- `architecture/restricted-call` no longer bans `console.log`, `console.debug`, Python `print`
+  or Rust `dbg!` by default; `logging/no-production-log` owns them. A process exit is banned
+  outright and excused per call site, while logging is permitted wherever a repository says it
+  belongs, so one `allow-in` for the class fits it better than an entry per callee — and two
+  rules reporting the same call reported it twice. Naming any of them under `calls` still
+  restricts it.
 
 - Every rule driver reports through one kernel, so the severity gate and the loop that turns
   a violation into a finding exist once rather than in each of five drivers. A file rule and a

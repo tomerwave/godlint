@@ -74,6 +74,8 @@ pub struct Rules {
     pub direct_environment_read: Option<DirectEnvironmentReadRule>,
     #[serde(rename = "reliability/explicit-timer-delay")]
     pub explicit_timer_delay: Option<ExplicitTimerDelayRule>,
+    #[serde(rename = "logging/no-production-log")]
+    pub no_production_log: Option<NoProductionLogRule>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -119,6 +121,14 @@ pub struct NoDynamicExecutionRule {
 pub struct DirectEnvironmentReadRule {
     pub severity: Severity,
     #[serde(default = "default_configuration_paths", rename = "allow-in")]
+    pub allow_in: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct NoProductionLogRule {
+    pub severity: Severity,
+    #[serde(default, rename = "allow-in")]
     pub allow_in: Vec<String>,
 }
 

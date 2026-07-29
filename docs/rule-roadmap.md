@@ -282,16 +282,27 @@ semantic capability exists.
 | `security/no-dynamic-execution` | Shipped | High | Direct JavaScript/Python callee match | Block JavaScript `eval`/`Function` and Python `eval`/`exec` |
 | `security/direct-environment-read` | Shipped | High | Direct platform API match | Require a single configuration boundary |
 | `reliability/explicit-timer-delay` | Shipped | High | Direct JavaScript/TypeScript timer calls with fewer than two arguments | Require an intentional delay value |
-| `logging/no-production-log` | Medium | Direct configured logging calls | Ban `console.log` / `print` outside approved paths |
+| `logging/no-production-log` | Shipped | High | Direct logging callee match | Ban debug logging outside approved paths |
 | `reliability/network-timeout-required` | Medium | Configured known client calls | Require explicit timeout argument |
 
 `architecture/restricted-call` establishes the direct-call boundary. It detects only
 spelled, direct callee paths: aliases, computed properties, and type-mediated calls wait
 for semantic analysis. Its built-in policy is deliberately narrow: JavaScript
 `process.exit`, Python `sys.exit` and `os._exit`, Rust `std::process::exit`, JavaScript
-`console.log` and `console.debug`, Python `print`, and Rust `dbg!`. It does not ban
-`console.error`, `println!`, file or network I/O, subprocesses, or `unwrap`, because
-those need repository context before a default can remain high-confidence.
+Python `sys.exit` and `os._exit`, and Rust `std::process::exit`. It does not ban file or
+network I/O, subprocesses, or `unwrap`, because those need repository context before a default
+can remain high-confidence.
+
+Debug logging used to sit in that list and now has its own rule, because the two policies have
+different shapes. A process exit is banned outright and excused per call site;
+logging is permitted wherever a repository says it belongs, so
+`logging/no-production-log` takes one `allow-in` for the whole class rather than an entry per
+callee. Keeping both would also have reported the same call twice. Its defaults are the calls
+that exist to be read during development — `console.log`, `console.debug`, `console.info`,
+`console.trace`, Python `print` and `pprint.pprint`, and Rust `dbg!` — and each is bound to the
+dialect that spells it, so a TypeScript function named `print` is not a Python built-in. It
+deliberately leaves `console.error`, `console.warn`, `println!` and the `logging` module alone:
+those are how a program talks to its user or its logger, not leftover debugging.
 
 `security/no-dynamic-execution` and `security/direct-environment-read` ship with this
 same call fact. The former is an AI-safety default; the latter centralizes global
