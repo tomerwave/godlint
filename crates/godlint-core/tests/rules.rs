@@ -9,6 +9,9 @@ mod accountable_suppression;
 #[path = "rules/decision_complexity.rs"]
 mod decision_complexity;
 
+#[path = "rules/dependency_boundary.rs"]
+mod dependency_boundary;
+
 #[path = "rules/direct_environment_read.rs"]
 mod direct_environment_read;
 

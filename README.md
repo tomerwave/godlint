@@ -113,6 +113,7 @@ TypeScript/JavaScript, and Python source files. Sixteen rules are implemented:
   explicit millisecond delay.
 - `logging/no-production-log` — debug logging outside the paths a repository approves.
 - `architecture/restricted-import` — imports of modules a repository puts behind a boundary.
+- `architecture/dependency-boundary` — a dependency that runs against the declared layer order.
 
 These four read the callee exactly as it is spelled. `std::env::var` is matched and the
 aliased `env::var` after `use std::env` is not, because knowing they name the same function

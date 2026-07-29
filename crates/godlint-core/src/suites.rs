@@ -1,12 +1,12 @@
 use std::num::NonZeroU32;
 
 use crate::config::{
-    AccountableSuppressionRule, DecisionComplexityRule, DirectEnvironmentReadRule,
-    EmptyFunctionRule, ExplicitTimerDelayRule, FunctionNestingRule, FunctionStatementsRule,
-    LineLimitRule, NoCommentsRule, NoDynamicExecutionRule, NoProductionLogRule, ParameterCountRule,
-    RestrictedCallRule, RestrictedImportRule, ReturnCountRule, Rules, Severity,
-    TodoRequiresReferenceRule, UnusedSuppressionRule, default_configuration_paths, default_markers,
-    default_reference_prefixes,
+    AccountableSuppressionRule, DecisionComplexityRule, DependencyBoundaryRule,
+    DirectEnvironmentReadRule, EmptyFunctionRule, ExplicitTimerDelayRule, FunctionNestingRule,
+    FunctionStatementsRule, LineLimitRule, NoCommentsRule, NoDynamicExecutionRule,
+    NoProductionLogRule, ParameterCountRule, RestrictedCallRule, RestrictedImportRule,
+    ReturnCountRule, Rules, Severity, TodoRequiresReferenceRule, UnusedSuppressionRule,
+    default_configuration_paths, default_markers, default_reference_prefixes,
 };
 
 pub const RECOMMENDED: &str = "recommended@1";
@@ -120,6 +120,12 @@ fn security(rules: &mut Rules) {
         severity: error,
         modules: Vec::new(),
     });
+    rules
+        .dependency_boundary
+        .get_or_insert(DependencyBoundaryRule {
+            severity: error,
+            layers: Vec::new(),
+        });
     rules
         .no_dynamic_execution
         .get_or_insert(NoDynamicExecutionRule { severity: error });

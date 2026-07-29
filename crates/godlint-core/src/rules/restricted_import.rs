@@ -5,10 +5,10 @@ use crate::{
     },
     facts::ImportFact,
     glob,
-    rules::{Finding, ImportRule, Rule, Violation, evaluate_import_rule, when_configured},
+    rules::{
+        Finding, ImportRule, Rule, Violation, evaluate_import_rule, module_path, when_configured,
+    },
 };
-
-const SEPARATORS: [char; 3] = [':', '.', '/'];
 
 pub struct RestrictedImport;
 
@@ -46,15 +46,7 @@ fn restriction<'a>(
 
     modules
         .iter()
-        .find(|restriction| covers(&restriction.name, module))
-}
-
-fn covers(restricted: &str, module: &str) -> bool {
-    let Some(rest) = module.strip_prefix(restricted) else {
-        return false;
-    };
-
-    rest.is_empty() || rest.starts_with(SEPARATORS)
+        .find(|restriction| module_path::covers(&restriction.name, module))
 }
 
 fn is_allowed(import: &ImportFact, paths: &[String]) -> bool {

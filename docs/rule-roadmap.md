@@ -359,10 +359,19 @@ rather than two modules; `import a, b` in Python records the first name only; an
 beneath it — `crate::internal` catches `crate::internal::deep` — by matching a whole segment,
 so `crate::internals` is a different module and not a longer spelling of the same one.
 
+`architecture/dependency-boundary` reads the same fact and takes an ordered list of layers.
+Position in the list *is* the policy: a layer may depend on itself and on anything below it, and
+a dependency that runs upward is reported. Because nothing is resolved, a layer declares both
+sides of the question — the `paths` it contains and the `modules` that name it — since a file
+path and an import spelling are not the same string and neither can be derived from the other.
+A configuration that gives a layer only one of the two is rejected rather than silently
+enforcing half a policy. A file no layer contains, or a module no layer names, is outside the
+policy and reported by neither.
+
 | Rule | Status | Required capability | Confidence | Notes |
 | --- | --- | --- | --- | --- |
 | `architecture/restricted-import` | Shipped | Direct import fact | High | Ban direct imports of internal or risky modules |
-| `architecture/dependency-boundary` | Planned | Import fact plus configured path layers | High | Enforce UI → application → domain → infrastructure direction |
+| `architecture/dependency-boundary` | Shipped | Import fact plus configured path layers | High | Enforce UI → application → domain → infrastructure direction |
 | `architecture/no-cycle` | Planned | Repository graph | High | Report the complete cycle edge chain |
 | `security/forbidden-dependency` | Planned | Package/import mapping | High | Block dependencies by explicit policy |
 | `architecture/filename-case` | Planned | Repository path fact | Medium | Support scoped case conventions and generated-file exceptions |

@@ -19,6 +19,12 @@ releases begin.
   lists the available ones. Godlint's own configuration is now the suite and nothing else,
   since an override here would be this project exempting itself from its own standard.
 
+- `architecture/dependency-boundary` (`layers`) — reports a dependency that runs against a
+  declared layer order. Position in the list is the policy: a layer may depend on itself and on
+  anything below it. Each layer declares both the `paths` it contains and the `modules` that
+  name it, because nothing is resolved and neither string can be derived from the other; a layer
+  given only one of the two is a configuration error rather than half a policy.
+
 - `architecture/restricted-import` (`modules`, each with `allow-in`) — reports an import of a
   module a repository puts behind a boundary. A restricted name covers what lies beneath it by
   whole segment, so `crate::internal` catches `crate::internal::deep` while `crate::internals`
@@ -279,6 +285,10 @@ releases begin.
   template asks for it there.
 
 ### Changed
+
+- `ConfigError` moved to `config/error.rs` and `Violation` to `rules/violation.rs`. Both files
+  had crossed the 500-line ceiling this project holds itself to as rules were added, and the
+  ceiling is not the thing to move.
 
 - `architecture/restricted-call` no longer bans `console.log`, `console.debug`, Python `print`
   or Rust `dbg!` by default; `logging/no-production-log` owns them. A process exit is banned

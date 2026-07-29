@@ -11,6 +11,7 @@ use crate::{
 
 pub mod accountable_suppression;
 pub mod decision_complexity;
+pub mod dependency_boundary;
 pub mod direct_environment_read;
 pub mod empty_function;
 pub mod explicit_timer_delay;
@@ -19,11 +20,13 @@ pub mod function_nesting;
 pub mod function_size;
 pub mod function_statements;
 mod line_count;
+mod module_path;
 pub mod no_comments;
 pub mod no_dynamic_execution;
 pub mod no_production_log;
 pub mod parameter_count;
 mod reference;
+mod violation;
 
 pub use reference::{
     AccessRule, CallRule, ImportRule, evaluate_access_rule, evaluate_call_rule,
@@ -37,6 +40,7 @@ pub mod todo_requires_reference;
 pub mod unused_suppression;
 
 pub use registry::{configured_severity, is_known_rule, is_suppressible_rule, rule_ids};
+pub use violation::Violation;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Metric {
@@ -47,42 +51,6 @@ pub enum Metric {
     Complexity,
     ReturnPaths,
     StatementCount,
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum Violation {
-    Limit {
-        metric: Metric,
-        actual: u32,
-        max: u32,
-    },
-    EmptyBody,
-    MissingReference {
-        marker: String,
-    },
-    CommentNotPermitted,
-    UnaccountableSuppression {
-        defect: SuppressionDefect,
-    },
-    UnusedSuppression,
-    RestrictedCall {
-        callee: String,
-    },
-    DynamicExecution {
-        callee: String,
-    },
-    DirectEnvironmentRead {
-        target: String,
-    },
-    TimerWithoutDelay {
-        callee: String,
-    },
-    ProductionLog {
-        callee: String,
-    },
-    RestrictedImport {
-        module: String,
-    },
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -140,16 +108,6 @@ pub struct Finding {
     pub severity: Severity,
     pub rule_id: &'static str,
     pub violation: Violation,
-}
-
-impl Violation {
-    pub const fn limit(metric: Metric, actual: u32, max: u32) -> Self {
-        Self::Limit {
-            metric,
-            actual,
-            max,
-        }
-    }
 }
 
 impl Finding {
@@ -405,6 +363,7 @@ const EVALUATORS: &[Evaluator] = &[
     explicit_timer_delay::evaluate,
     no_production_log::evaluate,
     restricted_import::evaluate,
+    dependency_boundary::evaluate,
 ];
 
 pub fn evaluate(facts: &[SourceFacts], config: &Config, today: Date) -> Vec<Finding> {
@@ -447,54 +406,6 @@ pub(crate) fn when_configured<C>(
     evaluate: impl FnOnce(&C) -> Vec<Finding>,
 ) -> Vec<Finding> {
     configuration.map_or_else(Vec::new, evaluate)
-}
-
-impl fmt::Display for Violation {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Limit {
-                metric,
-                actual,
-                max,
-            } => metric.describe(formatter, *actual, *max),
-            Self::EmptyBody => write!(formatter, "Function has an empty body."),
-            Self::MissingReference { marker } => {
-                write!(formatter, "{marker} comment requires an issue reference.")
-            }
-            Self::CommentNotPermitted => write!(
-                formatter,
-                "Comment is not permitted; express the intent in the code."
-            ),
-            Self::UnaccountableSuppression { defect } => defect.fmt(formatter),
-            Self::UnusedSuppression => write!(
-                formatter,
-                "Suppression does not silence an enabled finding; remove it or narrow the rule."
-            ),
-            Self::RestrictedCall { callee } => {
-                write!(formatter, "{callee} is restricted by project policy.")
-            }
-            Self::DynamicExecution { callee } => write!(
-                formatter,
-                "{callee} executes dynamically generated code; use an explicit, reviewed boundary instead."
-            ),
-            Self::DirectEnvironmentRead { target } => write!(
-                formatter,
-                "{target} reads environment directly; read configuration through a config boundary instead."
-            ),
-            Self::TimerWithoutDelay { callee } => write!(
-                formatter,
-                "{callee} needs an explicit delay; pass the intended delay in milliseconds."
-            ),
-            Self::RestrictedImport { module } => write!(
-                formatter,
-                "{module} is restricted by project policy; import it through an approved boundary."
-            ),
-            Self::ProductionLog { callee } => write!(
-                formatter,
-                "{callee} logs from production code; route it through the project's logger or an approved path."
-            ),
-        }
-    }
 }
 
 impl fmt::Display for SuppressionDefect {

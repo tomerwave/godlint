@@ -62,6 +62,8 @@ fixture_tests! {
     direct_environment_read_clean => "direct-environment-read-clean",
     explicit_timer_delay => "explicit-timer-delay",
     no_production_log => "no-production-log",
+    dependency_boundary => "dependency-boundary",
+    dependency_boundary_clean => "dependency-boundary-clean",
     restricted_import => "restricted-import",
     restricted_import_clean => "restricted-import-clean",
     no_production_log_clean => "no-production-log-clean",

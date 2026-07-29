@@ -1,14 +1,12 @@
-use std::{
-    collections::BTreeSet,
-    error::Error,
-    fmt, fs,
-    num::NonZeroU32,
-    path::{Path, PathBuf},
-};
+use std::{collections::BTreeSet, fs, num::NonZeroU32, path::Path};
 
 use serde::Deserialize;
 
 use crate::suites;
+
+mod error;
+
+pub use error::ConfigError;
 
 pub const DEFAULT_EXCLUDES: [&str; 12] = [
     ".git",
@@ -78,6 +76,8 @@ pub struct Rules {
     pub no_production_log: Option<NoProductionLogRule>,
     #[serde(rename = "architecture/restricted-import")]
     pub restricted_import: Option<RestrictedImportRule>,
+    #[serde(rename = "architecture/dependency-boundary")]
+    pub dependency_boundary: Option<DependencyBoundaryRule>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -118,6 +118,24 @@ pub struct RestrictedImportRule {
     pub severity: Severity,
     #[serde(default)]
     pub modules: Vec<RestrictedImport>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct DependencyBoundaryRule {
+    pub severity: Severity,
+    #[serde(default)]
+    pub layers: Vec<Layer>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Layer {
+    pub name: String,
+    #[serde(default)]
+    pub paths: Vec<String>,
+    #[serde(default)]
+    pub modules: Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -251,41 +269,6 @@ pub enum Severity {
     Error,
 }
 
-#[derive(Debug)]
-pub enum ConfigError {
-    Read {
-        path: PathBuf,
-        source: std::io::Error,
-    },
-    Parse {
-        path: PathBuf,
-        source: yaml_serde::Error,
-    },
-    UnsupportedVersion {
-        version: u8,
-    },
-    InvalidComplexityLimit,
-    InvalidTodoMarkers,
-    InvalidTodoReferencePrefixes,
-    UnknownSuite {
-        name: String,
-    },
-    InvalidRestrictedCallName,
-    InvalidRestrictedImportName,
-    DuplicateRestrictedImportName {
-        name: String,
-    },
-    DuplicateRestrictedCallName {
-        name: String,
-    },
-    BlankAllowIn {
-        rule: &'static str,
-    },
-    InvalidExclude {
-        pattern: String,
-    },
-}
-
 impl Config {
     pub fn load(path: impl AsRef<Path>) -> Result<Self, ConfigError> {
         let path = path.as_ref();
@@ -332,6 +315,7 @@ impl Config {
             Self::validate_todo_rule,
             Self::validate_restricted_call_rule,
             Self::validate_restricted_import_rule,
+            Self::validate_dependency_boundary_rule,
             Self::validate_direct_environment_read_rule,
         ]
         .iter()
@@ -432,6 +416,26 @@ impl Config {
         Ok(())
     }
 
+    fn validate_dependency_boundary_rule(&self) -> Result<(), ConfigError> {
+        let Some(rule) = &self.rules.dependency_boundary else {
+            return Ok(());
+        };
+
+        let mut seen = BTreeSet::new();
+
+        for layer in &rule.layers {
+            validate_layer(layer)?;
+
+            if !seen.insert(layer.name.as_str()) {
+                return Err(ConfigError::DuplicateLayerName {
+                    name: layer.name.clone(),
+                });
+            }
+        }
+
+        Ok(())
+    }
+
     fn validate_direct_environment_read_rule(&self) -> Result<(), ConfigError> {
         if self
             .rules
@@ -476,6 +480,26 @@ fn validate_restricted_import(module: &RestrictedImport) -> Result<(), ConfigErr
     Ok(())
 }
 
+fn validate_layer(layer: &Layer) -> Result<(), ConfigError> {
+    if layer.name.trim().is_empty() {
+        return Err(ConfigError::InvalidLayerName);
+    }
+
+    if layer.paths.is_empty() || layer.modules.is_empty() {
+        return Err(ConfigError::EmptyLayer {
+            name: layer.name.clone(),
+        });
+    }
+
+    if any_blank(&layer.paths) || any_blank(&layer.modules) {
+        return Err(ConfigError::BlankAllowIn {
+            rule: "architecture/dependency-boundary",
+        });
+    }
+
+    Ok(())
+}
+
 fn any_blank(values: &[String]) -> bool {
     values.iter().any(|value| value.trim().is_empty())
 }
@@ -484,78 +508,4 @@ fn prefix_is_unusable(prefix: &str) -> bool {
     let trimmed = prefix.trim();
 
     trimmed.is_empty() || trimmed.chars().all(|character| character.is_ascii_digit())
-}
-
-const COMPLEXITY_AT_LEAST_ONE: &str =
-    "maintainability/decision-complexity max-complexity must be at least 1";
-
-const TODO_MARKERS_REQUIRED: &str = "policy/todo-requires-reference markers must not be empty";
-
-const TODO_PREFIXES_REQUIRED: &str =
-    "policy/todo-requires-reference reference-prefixes must not be empty or numeric";
-
-const CALL_NAME_REQUIRED: &str = "architecture/restricted-call call names must not be blank";
-
-const IMPORT_NAME_REQUIRED: &str = "architecture/restricted-import module names must not be blank";
-
-impl fmt::Display for ConfigError {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Read { path, source } => write!(formatter, "{}: {source}", path.display()),
-            Self::Parse { path, source } => write!(formatter, "{}: {source}", path.display()),
-            Self::UnsupportedVersion { version } => {
-                write!(formatter, "unsupported configuration version: {version}")
-            }
-            Self::UnknownSuite { name } => write!(
-                formatter,
-                "unknown suite {name}; available suites are {}",
-                suites::names().collect::<Vec<_>>().join(", ")
-            ),
-            Self::DuplicateRestrictedCallName { name } => {
-                write!(
-                    formatter,
-                    "architecture/restricted-call lists {name} more than once; one entry \
-                     decides its allow-in boundary"
-                )
-            }
-            Self::BlankAllowIn { rule } => {
-                write!(formatter, "{rule} allow-in paths must not be blank")
-            }
-            Self::InvalidExclude { pattern } => {
-                write!(formatter, "exclude pattern must not be blank: {pattern:?}")
-            }
-            Self::InvalidComplexityLimit => formatter.write_str(COMPLEXITY_AT_LEAST_ONE),
-            Self::InvalidTodoMarkers => formatter.write_str(TODO_MARKERS_REQUIRED),
-            Self::InvalidTodoReferencePrefixes => formatter.write_str(TODO_PREFIXES_REQUIRED),
-            Self::InvalidRestrictedCallName => formatter.write_str(CALL_NAME_REQUIRED),
-            Self::InvalidRestrictedImportName => formatter.write_str(IMPORT_NAME_REQUIRED),
-            Self::DuplicateRestrictedImportName { name } => {
-                write!(
-                    formatter,
-                    "architecture/restricted-import lists {name} more than once; one entry \
-                     decides its allow-in boundary"
-                )
-            }
-        }
-    }
-}
-
-impl Error for ConfigError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match self {
-            Self::Read { source, .. } => Some(source),
-            Self::Parse { source, .. } => Some(source),
-            Self::UnsupportedVersion { .. }
-            | Self::InvalidComplexityLimit
-            | Self::InvalidTodoMarkers
-            | Self::InvalidTodoReferencePrefixes
-            | Self::UnknownSuite { .. }
-            | Self::InvalidRestrictedCallName
-            | Self::DuplicateRestrictedCallName { .. }
-            | Self::InvalidRestrictedImportName
-            | Self::DuplicateRestrictedImportName { .. }
-            | Self::BlankAllowIn { .. }
-            | Self::InvalidExclude { .. } => None,
-        }
-    }
 }
