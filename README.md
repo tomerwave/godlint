@@ -59,9 +59,10 @@ delivery sequence. The implementation sequence is:
 
 ## Install
 
-A prebuilt binary needs no toolchain. Download the archive for your platform from the
-[latest release](https://github.com/tomerwave/godlint/releases/latest), check it against the
-`.sha256` beside it, and put `godlint` on your `PATH`:
+A prebuilt binary needs no toolchain. Releases carry Linux and macOS on both architectures,
+Windows, and a statically linked Linux build for containers without glibc. Download the archive for
+your platform from the [latest release](https://github.com/tomerwave/godlint/releases/latest), check
+it against the `.sha256` beside it, and put `godlint` on your `PATH`:
 
 ```bash
 tar -xzf godlint-x86_64-unknown-linux-gnu.tar.gz

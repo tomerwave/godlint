@@ -9,6 +9,13 @@ speaks about.
 
 ## [Unreleased]
 
+### Added
+
+- Release binaries for Windows (`x86_64-pc-windows-msvc`) and for Linux without glibc
+  (`x86_64-unknown-linux-musl`, statically linked), alongside the Linux and macOS builds for both
+  architectures. The musl build is what a container image needs: a glibc binary fails there with a
+  loader error rather than a useful message, and a linter mostly runs in CI.
+
 ## [0.1.0] - 2026-07-29
 
 ### Added
