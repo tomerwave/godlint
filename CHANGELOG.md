@@ -9,6 +9,8 @@ speaks about.
 
 ## [Unreleased]
 
+## [0.1.9] - 2026-07-29
+
 ### Fixed
 
 - Godlint works on Windows. A repository-relative path is spelled with forward slashes wherever a
