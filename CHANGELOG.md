@@ -33,7 +33,10 @@ releases begin.
   `lodash-es` alone. The package is the first path segment in JavaScript and TypeScript, or the
   first two when scoped, the first dotted segment in Python, and the first `::` segment in Rust
   including `extern crate`. A relative import, `crate`, `self`, `super`, and a builtin reached
-  through a protocol such as `node:fs` name no package and are never dependencies.
+  through a protocol name no package and are never dependencies — in fact any specifier
+  containing a colon is rejected, which covers `node:fs`, a URL and a Windows path alike, as is
+  any specifier rooted at `/`. A leading `::` in Rust is stripped first, so `::serde` is the
+  crate `serde`.
 
 - `architecture/dependency-boundary` (`layers`) — reports a dependency that runs against a
   declared layer order. Position in the list is the policy: a layer may depend on itself and on
@@ -300,15 +303,11 @@ releases begin.
   the change it should have welcomed. Whether a fixture is owed is a judgement, and the
   template asks for it there.
 
-- The configuration validators moved to `config/validate.rs`, and `ConfigError` earlier to
-  `config/error.rs`; `Violation` moved to `rules/violation.rs`. Each file had crossed the
+- `ConfigError` moved to `config/error.rs`, the configuration validators to
+  `config/validate.rs`, and `Violation` to `rules/violation.rs`. Each file had crossed the
   500-line or 50-line ceiling this project holds itself to as rules were added, and the ceiling
-  is not the thing to move. Three `ConfigError` variants also said the same sentence about a
-  duplicated entry, which is now written once.
-
-- `ConfigError` moved to `config/error.rs` and `Violation` to `rules/violation.rs`. Both files
-  had crossed the 500-line ceiling this project holds itself to as rules were added, and the
-  ceiling is not the thing to move.
+  is not the thing to move. The variants reporting a duplicated entry also repeated one
+  sentence, which is now written once.
 
 - `architecture/restricted-call` no longer bans `console.log`, `console.debug`, Python `print`
   or Rust `dbg!` by default; `logging/no-production-log` owns them. Two consequences to know

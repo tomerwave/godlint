@@ -215,3 +215,28 @@ fn a_scope_with_no_package_names_nothing() {
         "a bare scope is not a package"
     );
 }
+
+#[test]
+fn a_leading_path_separator_does_not_hide_a_crate() {
+    assert_eq!(
+        violations("src/a.rs", "use ::serde::de::Error;", &forbidding("serde")).len(),
+        1,
+        "::serde names the crate more explicitly, not less"
+    );
+    assert!(violations("src/a.rs", "use ::crate_like::thing;", &forbidding("serde")).is_empty());
+}
+
+#[test]
+fn a_scope_with_a_trailing_separator_names_no_package() {
+    for module in ["@corp/", "@corp//legacy"] {
+        assert!(
+            violations(
+                "src/a.ts",
+                &format!("import c from \"{module}\";"),
+                &forbidding(module)
+            )
+            .is_empty(),
+            "{module} has no package after the scope"
+        );
+    }
+}
