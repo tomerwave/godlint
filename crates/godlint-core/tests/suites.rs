@@ -61,37 +61,103 @@ fn recommended_enables_every_rule_at_error() {
     );
 }
 
-#[test]
-fn recommended_carries_the_measured_thresholds() {
-    let config = recommended();
+fn documented_thresholds() -> Vec<(String, u32)> {
+    let roadmap = concat!(env!("CARGO_MANIFEST_DIR"), "/../../docs/rule-roadmap.md");
+    let text = fs::read_to_string(roadmap).unwrap_or_else(|error| panic!("reads roadmap: {error}"));
+
+    text.lines()
+        .skip_while(|line| !is_recommended_header(line))
+        .take_while(|line| line.starts_with('|'))
+        .filter_map(documented_threshold)
+        .collect()
+}
+
+fn is_recommended_header(line: &str) -> bool {
+    line.starts_with('|') && line.contains("`recommended@1`")
+}
+
+fn documented_threshold(line: &str) -> Option<(String, u32)> {
+    let mut cells = line.split('|').map(str::trim).skip(1);
+    let rule = documented_rule(cells.next()?)?;
+    let threshold = cells.next()?.parse().ok()?;
+
+    Some((rule.to_owned(), threshold))
+}
+
+fn documented_rule(cell: &str) -> Option<&str> {
+    cell.strip_prefix('`')
+        .and_then(|rule| rule.strip_suffix('`'))
+        .filter(|rule| rule.starts_with("maintainability/"))
+}
+
+fn configured_limits(config: &Config) -> Vec<(String, u32)> {
     let rules = &config.rules;
 
+    vec![
+        (
+            "maintainability/file-size",
+            rules.file_size.as_ref().expect("file").max_lines.get(),
+        ),
+        (
+            "maintainability/function-size",
+            rules.function_size.as_ref().expect("size").max_lines.get(),
+        ),
+        (
+            "maintainability/function-nesting",
+            rules.function_nesting.as_ref().expect("nesting").limit(),
+        ),
+        (
+            "maintainability/parameter-count",
+            rules.parameter_count.as_ref().expect("parameters").limit(),
+        ),
+        (
+            "maintainability/decision-complexity",
+            rules
+                .decision_complexity
+                .as_ref()
+                .expect("complexity")
+                .limit(),
+        ),
+        (
+            "maintainability/return-count",
+            rules.return_count.as_ref().expect("returns").limit(),
+        ),
+        (
+            "maintainability/function-statements",
+            rules
+                .function_statements
+                .as_ref()
+                .expect("statements")
+                .limit(),
+        ),
+    ]
+    .into_iter()
+    .map(|(rule, limit)| (rule.to_owned(), limit))
+    .collect()
+}
+
+#[test]
+fn recommended_carries_the_documented_thresholds() {
+    let mut documented = documented_thresholds();
+    let mut configured = configured_limits(&recommended());
+
+    documented.sort();
+    configured.sort();
+
     assert_eq!(
-        rules.function_size.as_ref().expect("size").max_lines.get(),
-        50
+        documented, configured,
+        "docs/rule-roadmap.md and recommended@1 disagree; the table is the source"
     );
-    assert_eq!(rules.file_size.as_ref().expect("file").max_lines.get(), 500);
-    assert_eq!(rules.function_nesting.as_ref().expect("nesting").limit(), 2);
+}
+
+#[test]
+fn the_roadmap_documents_every_threshold() {
+    let documented = documented_thresholds();
+
     assert_eq!(
-        rules.parameter_count.as_ref().expect("parameters").limit(),
-        4
-    );
-    assert_eq!(
-        rules
-            .decision_complexity
-            .as_ref()
-            .expect("complexity")
-            .limit(),
-        5
-    );
-    assert_eq!(rules.return_count.as_ref().expect("returns").limit(), 6);
-    assert_eq!(
-        rules
-            .function_statements
-            .as_ref()
-            .expect("statements")
-            .limit(),
-        14
+        documented.len(),
+        configured_limits(&recommended()).len(),
+        "every threshold recommended@1 sets must appear in docs/rule-roadmap.md: {documented:?}"
     );
 }
 

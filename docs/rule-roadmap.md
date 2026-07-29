@@ -76,15 +76,20 @@ means nesting it, which the nesting rule then reports.
 Thresholds are policy choices, not language semantics. Godlint ships no hidden
 universal number. The following profiles are the starting point for documented suites:
 
-| Rule | Recommended | Strict | Source of the initial policy |
-| --- | ---: | ---: | --- |
-| `maintainability/file-size` | 500 effective lines | 300 effective lines | User policy: file-size ceiling requested at 500; existing TypeScript policy uses 300 |
-| `maintainability/function-size` | 50 effective lines | 30 effective lines | Existing TypeScript `max-lines-per-function` policy |
-| `maintainability/function-nesting` | 3 | 2 | Existing Godlint rule; lower is intentionally stricter |
-| `maintainability/parameter-count` | 6 | 4 | Common design-lint threshold; tune per repository |
-| `maintainability/decision-complexity` | 8 | 5 | Measured against this repository under Godlint's own metric. The former 10 came from an ESLint `complexity: 10` setting, which does not transfer: ESLint counts every `case`, Godlint counts a multiway branch once |
-| `maintainability/return-count` | 5 | 3 | Pylint's `too-many-return-statements` design metric. Counting `?` and implicit tail expressions raises Rust counts, so Rust-heavy repositories may need a looser threshold than the profile — this one uses 8 |
-| `maintainability/function-statements` | 30 | 20 | Derived from the `maintainability/function-size` profile: a function sitting at its effective-line ceiling should not be almost entirely statements, so each profile allows about two thirds of its line budget as statements |
+What `recommended@1` ships is stated once, under [Policy suites](#policy-suites), and a test
+holds that table to the code. This table records where each number came from and what
+`strict@1` would tighten it to; it deliberately does not restate the shipped values, because
+two tables of the same numbers is how the two disagreed before.
+
+| Rule | `strict@1` intent | Source of the initial policy |
+| --- | ---: | --- |
+| `maintainability/file-size` | 300 effective lines | User policy: file-size ceiling requested at 500; existing TypeScript policy uses 300 |
+| `maintainability/function-size` | 30 effective lines | Existing TypeScript `max-lines-per-function` policy |
+| `maintainability/function-nesting` | 2 | Existing Godlint rule; lower is intentionally stricter. `recommended@1` adopted it |
+| `maintainability/parameter-count` | 4 | Common design-lint threshold; tune per repository. `recommended@1` adopted it |
+| `maintainability/decision-complexity` | 5 | Measured against this repository under Godlint's own metric, and adopted by `recommended@1`. The former 10 came from an ESLint `complexity: 10` setting, which does not transfer: ESLint counts every `case`, Godlint counts a multiway branch once |
+| `maintainability/return-count` | 3 | Pylint's `too-many-return-statements` design metric. Counting `?` and implicit tail expressions raises Rust counts, so this one does not transfer at all — see the note under Policy suites |
+| `maintainability/function-statements` | 20 | Derived from the `maintainability/function-size` profile: a function sitting at its effective-line ceiling should not be almost entirely statements, so each profile allows about two thirds of its line budget as statements |
 
 “Effective lines” exclude blank lines and comment-only lines when configured, matching
 the current function-size contract. ESLint likewise makes blank-line and comment
@@ -174,17 +179,19 @@ a Python file that would express the same logic as named helpers.
 ### Phase 1 — Existing facts and file metrics
 
 These rules use source-level `CommentFact` and `SourceFile` data alongside
-`FunctionFact`; they need no semantic or repository-graph capability.
+`FunctionFact`; they need no semantic or repository-graph capability. Severity and
+thresholds are not listed per rule: a repository adopts them through a suite, and
+`recommended@1` names every rule at `error`.
 
-| Rule | Status | Confidence | Languages | Configuration | Dogfood default |
-| --- | --- | --- | --- | --- | --- |
-| `maintainability/function-size` | Shipped | High | All eleven supported extensions | `max-lines`, blank/comment policy | Error, 300 while Godlint is young |
-| `maintainability/function-nesting` | Shipped | High | All eleven supported extensions | `max-depth` | Error, 3 |
-| `maintainability/file-size` | Shipped | High | All eleven supported extensions | `max-lines`, blank/comment policy | Warning, 500 |
-| `maintainability/empty-function` | Shipped | High | All eleven supported extensions except `.pyi` interface stubs | `allow-names` | Warning |
-| `policy/todo-requires-reference` | Shipped | High | All comment syntaxes and Python docstrings | `markers`, `reference-prefixes` | Warning |
-| `style/no-comments` | Shipped | High, but opinionated | All comment syntaxes and Python docstrings | `allow-doc-comments` | Error, documentation not permitted |
-| `policy/accountable-suppression` | Shipped | High | All comment syntaxes and Python docstrings | `require-owner`, `require-expiry` | Error, owner and expiry required |
+| Rule | Status | Confidence | Languages | Configuration |
+| --- | --- | --- | --- | --- |
+| `maintainability/function-size` | Shipped | High | All eleven supported extensions | `max-lines`, blank/comment policy |
+| `maintainability/function-nesting` | Shipped | High | All eleven supported extensions | `max-depth` |
+| `maintainability/file-size` | Shipped | High | All eleven supported extensions | `max-lines`, blank/comment policy |
+| `maintainability/empty-function` | Shipped | High | All eleven supported extensions except `.pyi` interface stubs | `allow-names` |
+| `policy/todo-requires-reference` | Shipped | High | All comment syntaxes and Python docstrings | `markers`, `reference-prefixes` |
+| `style/no-comments` | Shipped | High, but opinionated | All comment syntaxes and Python docstrings | `allow-doc-comments` |
+| `policy/accountable-suppression` | Shipped | High | All comment syntaxes and Python docstrings | `require-owner`, `require-expiry` |
 
 `style/no-comments` is a policy rather than a defect check, which is why it sits in the
 `style` category and is off unless a repository opts in. It states that code should carry
@@ -209,12 +216,12 @@ warning and observed before it blocks anyone.
 
 Extend `FunctionFact` only when the same data will serve multiple rules.
 
-| New field or fact | Rules unlocked | Status | Confidence | Languages | Configuration | Dogfood default | Notes |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| `parameter_count` | `maintainability/parameter-count` | Shipped | High | All eleven supported extensions | `max-parameters` | Warning, 6 | Count declared parameters only, excluding a method receiver (`self`, `&self`, `cls`); do not infer types or defaults initially |
-| `decision_points` | `maintainability/decision-complexity` | Shipped | High | All eleven supported extensions | `max-complexity` | Warning, 8 | Count language-defined branch points, including the Rust `?` operator and a `match`/`case` guard, but not short-circuit boolean operators and not one per arm of a multiway branch; fixture each language explicitly |
-| `return_count` | `maintainability/return-count` | Shipped | Medium | All eleven supported extensions | `max-returns` | Warning, 8 | Count every exit path: explicit `return`, the Rust `?` operator, and an implicit trailing expression. Keep opt-in because early returns are often clearer |
-| `statement_count` | `maintainability/function-statements` | Shipped | Medium | All eleven supported extensions | `max-statements` | Warning, 30 | Count statements through nested blocks but not into nested functions, which are measured as functions in their own right; comments are not statements, and an expression-bodied arrow or lambda is one |
+| New field or fact | Rules unlocked | Status | Confidence | Languages | Configuration | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| `parameter_count` | `maintainability/parameter-count` | Shipped | High | All eleven supported extensions | `max-parameters` | Count declared parameters only, excluding a method receiver (`self`, `&self`, `cls`); do not infer types or defaults initially |
+| `decision_points` | `maintainability/decision-complexity` | Shipped | High | All eleven supported extensions | `max-complexity` | Count language-defined branch points, including the Rust `?` operator and a `match`/`case` guard, but not short-circuit boolean operators and not one per arm of a multiway branch; fixture each language explicitly |
+| `return_count` | `maintainability/return-count` | Shipped | Medium | All eleven supported extensions | `max-returns` | Count every exit path: explicit `return`, the Rust `?` operator, and an implicit trailing expression. Keep opt-in because early returns are often clearer |
+| `statement_count` | `maintainability/function-statements` | Shipped | Medium | All eleven supported extensions | `max-statements` | Count statements through nested blocks but not into nested functions, which are measured as functions in their own right; comments are not statements, and an expression-bodied arrow or lambda is one |
 
 Phase 2 is complete. Its fact additions stay small and reusable for future policy.
 
