@@ -37,7 +37,11 @@ fn prints_its_version() {
     let output = run(godlint().arg("--version"));
 
     assert!(output.status.success());
-    assert_eq!(String::from_utf8_lossy(&output.stdout), "godlint 0.1.0\n");
+    assert_eq!(
+        String::from_utf8_lossy(&output.stdout),
+        format!("godlint {}\n", env!("CARGO_PKG_VERSION")),
+        "the printed version comes from the manifest, so a release does not edit this test"
+    );
     assert!(output.stderr.is_empty());
 }
 
