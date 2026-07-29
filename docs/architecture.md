@@ -35,7 +35,9 @@ model that rules consume without a universal AST. `FunctionFact`, `CommentFact`,
 `CallFact`, and `AccessFact` exist today. `CallFact` records a direct callee path, a
 source range, argument count, and whether the call site was a macro invocation; `AccessFact` does the same
 for direct member access. Neither resolves aliases, types, or dynamically computed
-properties.
+properties. The argument count excludes comments: a grammar reports them as named nodes
+inside the argument list, so counting named children alone would read
+`setTimeout(work /*, 100 */)` as a call that passes two arguments.
 
 The macro flag exists because a name is not enough to identify a callee in Rust. A grammar
 names a macro without its `!`, so a `fn dbg` and the `dbg!` macro reach a rule as the same

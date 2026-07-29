@@ -6,6 +6,10 @@ use crate::{
     source::Language,
 };
 
+const TIMERS: [&str; 2] = ["setTimeout", "setInterval"];
+
+const GLOBALS: [&str; 3] = ["globalThis", "self", "window"];
+
 pub struct ExplicitTimerDelay;
 
 impl Rule for ExplicitTimerDelay {
@@ -36,6 +40,14 @@ fn is_timer_without_delay(call: &CallFact) -> bool {
     matches!(
         call.source().language(),
         Language::JavaScript | Language::TypeScript
-    ) && matches!(call.callee(), "setTimeout" | "setInterval")
+    ) && TIMERS.contains(&timer_name(call.callee()))
         && call.argument_count() < 2
+}
+
+fn timer_name(callee: &str) -> &str {
+    match callee.split_once('.') {
+        Some((receiver, name)) if GLOBALS.contains(&receiver) => name,
+        Some(_) => "",
+        None => callee,
+    }
 }

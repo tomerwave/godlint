@@ -21,7 +21,9 @@ releases begin.
 
 - `reliability/explicit-timer-delay` — requires an explicit delay for JavaScript and
   TypeScript `setTimeout` and `setInterval` calls, where omission silently defaults to
-  immediate execution.
+  immediate execution. Reads the timer under a global receiver (`window`, `globalThis`,
+  `self`) as the same timer, and does not count a comment as an argument, so a
+  commented-out delay is reported rather than mistaken for one.
 
 - Open-source project foundations, community guidance, security reporting guidance,
   and project brand assets.

@@ -212,8 +212,15 @@ fn call_fact(
 }
 
 fn argument_count(node: Node<'_>) -> usize {
-    node.child_by_field_name("arguments")
-        .map_or(0, |arguments| arguments.named_child_count())
+    let Some(arguments) = node.child_by_field_name("arguments") else {
+        return 0;
+    };
+    let mut cursor = arguments.walk();
+
+    arguments
+        .named_children(&mut cursor)
+        .filter(|argument| !argument.is_extra())
+        .count()
 }
 
 fn access_fact(
