@@ -1,7 +1,7 @@
 name: Action
 
 on:
-  # labeled and unlabeled as well as the defaults, so adding expected-drift re-evaluates the check.
+  # labeled and unlabeled as well as the defaults, so applying a drift label re-evaluates the check.
   # Without them the label would appear to do nothing until the next push.
   pull_request:
     types: [opened, synchronize, reopened, labeled, unlabeled]
@@ -43,7 +43,8 @@ jobs:
         shell: bash
         env:
           OUTCOME: ${{ steps.godlint.outcome }}
-          DECLARED: ${{ contains(github.event.pull_request.labels.*.name, 'expected-drift') }}
+          FIXES_FALSE_POSITIVE: ${{ contains(github.event.pull_request.labels.*.name, 'fixes-false-positive') }}
+          RELAXES_A_RULE: ${{ contains(github.event.pull_request.labels.*.name, 'relaxes-a-rule') }}
         run: |
           annotations="$RUNNER_TEMP/godlint-annotations.txt"
           version="$(godlint --version | cut -d' ' -f2)"
@@ -60,13 +61,18 @@ jobs:
             echo
             echo "This means one of two things."
             echo
-            echo "1. A false positive was fixed here, or a rule was relaxed, and it is not"
-            echo "   released yet. The released binary still reports what the change removed, so it"
-            echo "   cannot approve this tree. Label the pull request expected-drift to say so and"
-            echo "   this check passes; it goes green on its own after the next release."
+            echo "1. This pull request fixed a false positive, so the released binary still"
+            echo "   reports what the fix removed. Label it fixes-false-positive."
             echo
-            echo "2. This repository has drifted from the standard it publishes. Then the findings"
-            echo "   below are real and belong fixed here."
+            echo "2. This pull request relaxed a rule, so the released binary still enforces the"
+            echo "   stricter form. Label it relaxes-a-rule."
+            echo
+            echo "Either label passes this check and records which one it was. It goes green on its"
+            echo "own after the next release."
+            echo
+            echo "3. Neither of those happened, and this repository has drifted from the standard"
+            echo "   it publishes. Then the findings below are real and belong fixed here, and no"
+            echo "   label is the right answer."
             echo
             echo "Adding a rule or tightening a threshold does not land here: the released binary is"
             echo "always the more permissive one, so it stays quiet."
@@ -76,9 +82,15 @@ jobs:
           } | tee -a "$GITHUB_STEP_SUMMARY"
 
           # A declared drift passes, because the disagreement was stated deliberately rather than
-          # discovered. The explanation above is still printed, so the reason is on the record.
-          if [ "$DECLARED" = "true" ]; then
-            echo "::notice::Drift declared with expected-drift, so this check passes."
+          # discovered. Which of the two it was is recorded, since that is the thing a reader of the
+          # history wants and a single label could not say.
+          if [ "$FIXES_FALSE_POSITIVE" = "true" ]; then
+            echo "::notice::Declared: this pull request fixes a false positive, so the released binary still reports what the fix removed."
+            exit 0
+          fi
+
+          if [ "$RELAXES_A_RULE" = "true" ]; then
+            echo "::notice::Declared: this pull request relaxes a rule, so the released binary still enforces the stricter form."
             exit 0
           fi
 
