@@ -41,9 +41,35 @@ testing@1      Test hygiene rules with framework configuration.
 architecture@1 Repository layout, dependency, and ownership rules.
 ```
 
-Each suite is opt-in except `recommended@1`. A repository may then set thresholds and
-path-scoped overrides, for example a looser file-size limit for generated code. Rules
-must never silently exclude production, test, or worker code.
+`recommended@1` is shipped. It names every rule at `error`, because a standard a repository
+can partly ignore is a suggestion. Every suite including `recommended@1` is opt-in and must
+be named in `suites:`; a configuration that names none enforces nothing, which keeps a rule
+silent until a repository asks for it.
+
+A `rules:` entry overrides the suite for that rule, in either direction — a looser threshold
+for generated code, a tighter one, or `severity: off` to decline one rule without abandoning
+the suite. That is what the confidence ladder needs: a rule can be adopted as a warning
+first. Rules must never silently exclude production, test, or worker code.
+
+The thresholds in `recommended@1` are measured against this repository rather than borrowed:
+
+| Rule | `recommended@1` | Why not the roadmap's strict number |
+| --- | ---: | --- |
+| `maintainability/file-size` | 500 | 300 would demand splitting files whose length is a table, not a tangle |
+| `maintainability/function-size` | 50 | 30 fights test bodies built from `concat!` blocks |
+| `maintainability/function-nesting` | 2 | the strict number, adopted |
+| `maintainability/parameter-count` | 4 | the strict number, adopted |
+| `maintainability/decision-complexity` | 5 | the strict number, adopted |
+| `maintainability/return-count` | 6 | see below; 3 is a Python number |
+| `maintainability/function-statements` | 14 | tighter than the strict profile's 20, measured |
+
+`return-count` is the one place the strict profile is wrong rather than ambitious. At 3 it
+reported 21 functions here, and every one was Rust idiom: 14 dominated by `?` propagation, 6
+by guard clauses, and the last was three `.ok()?` conversions. Pylint's
+`too-many-return-statements` counts `return` statements in a language without `?` or tail
+expressions, so its number does not transfer — the same mistake as the ESLint `complexity`
+threshold this project already re-derived. Getting a three-guard-clause function under 3
+means nesting it, which the nesting rule then reports.
 
 ## Threshold profiles
 

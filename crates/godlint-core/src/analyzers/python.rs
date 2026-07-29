@@ -134,6 +134,10 @@ fn comment_kind(node: Node<'_>, source: &str) -> Option<CommentKind> {
         return Some(CommentKind::Docstring);
     }
 
+    hash_comment(node, source)
+}
+
+fn hash_comment(node: Node<'_>, source: &str) -> Option<CommentKind> {
     if !node.is_extra() {
         return None;
     }

@@ -25,55 +25,8 @@ exclude:
   # instead; a script that encodes a budget should carry the reason beside the number.
   - scripts
 
-rules:
-  maintainability/function-size:
-    severity: error
-    max-lines: 300
-  maintainability/file-size:
-    severity: warning
-    max-lines: 500
-  maintainability/function-nesting:
-    severity: error
-    max-depth: 3
-  maintainability/parameter-count:
-    severity: warning
-    max-parameters: 6
-  # Recalibrated against this repository once a multiway branch stopped counting once per
-  # arm: the worst function measures 7 and the 90th percentile is 4, so 10 no longer
-  # constrained anything. The old 10 came from an ESLint `complexity` setting, and ESLint
-  # counts every `case`, so the number did not transfer with the metric.
-  maintainability/decision-complexity:
-    severity: warning
-    max-complexity: 8
-  # Counting `?` as an exit path raises Rust counts relative to a language that must
-  # write `return`, so this threshold is calibrated above the roadmap's recommended 5.
-  maintainability/return-count:
-    severity: warning
-    max-returns: 8
-  maintainability/function-statements:
-    severity: warning
-    max-statements: 30
-  maintainability/empty-function:
-    severity: warning
-  policy/todo-requires-reference:
-    severity: warning
-  style/no-comments:
-    severity: error
-    allow-doc-comments: false
-  # An exception this project cannot fix yet must name someone and a date, which is what
-  # docs/dogfooding.md asks of every exception. The rule cannot be suppressed, so setting
-  # it to error means a lapsed expiry fails CI.
-  policy/accountable-suppression:
-    severity: error
-    require-owner: true
-    require-expiry: true
-  policy/unused-suppression:
-    severity: error
-  architecture/restricted-call:
-    severity: error
-  security/no-dynamic-execution:
-    severity: error
-  security/direct-environment-read:
-    severity: error
-  reliability/explicit-timer-delay:
-    severity: error
+# Godlint holds itself to the suite it publishes. There is no rules block: an override here
+# would be this project exempting itself from its own standard, which is what the suite
+# exists to prevent.
+suites:
+  - recommended@1

@@ -154,13 +154,19 @@ vocabulary that it has no member-read form of the constructs these rules police 
 the environment through a call — so a reader can tell the difference between "Rust is not
 violated" and "Rust is not seen".
 
-Calls and accesses share one driver in `rules::reference`, which also owns the `CallRule`
-and `AccessRule` traits, so a reference rule declares what it looks for and the driver reads
-its identity and severity. That is what stops a rule naming another rule's identifier or
-ignoring the severity gate. Both answer the same question of
-a different fact slice — does this reference violate a policy — so the loop that walks them,
-honours the severity gate, and turns a violation into a finding is written once. A rule that
-consumes both, as the environment-read rule does, gets consistent ordering for free.
+Functions, calls and accesses share one driver. Each asks the same question of a different
+fact slice — does this item violate a policy, and over what range — so `Ranged` names the
+one thing they have in common and `collect_ranged` walks the slice, honours the severity
+gate, and turns a violation into a finding exactly once. `rules::reference` keeps the
+`CallRule` and `AccessRule` traits, so a reference rule declares what it looks for and the
+driver reads its identity and severity. That is what stops a rule naming another rule's
+identifier or ignoring the severity gate, and a rule that consumes both slices, as the
+environment-read rule does, gets consistent ordering for free.
+
+Underneath, `collect_findings` accepts any iterable of reported violations rather than a
+`Vec`. A rule that reports at most one violation per item hands over its `Option` directly,
+so the shared driver costs no allocation on the path that walks every function in a
+repository.
 
 `rules::line_count` identifies commentary from the comment facts the analyzer already
 produced rather than by re-scanning text for `//` and `#`. Re-lexing there would

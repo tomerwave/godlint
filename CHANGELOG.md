@@ -10,6 +10,15 @@ releases begin.
 
 ### Added
 
+- Policy suites. `suites: [recommended@1]` adopts a named standard in one line instead of
+  fifteen rule blocks with hand-picked numbers. `recommended@1` enables every rule at
+  `error`, because a standard a repository can partly ignore is a suggestion. Suites are
+  opt-in — a configuration naming none enforces nothing — and a `rules:` entry overrides the
+  suite for that rule in either direction, including `severity: off`, which is what lets a
+  rule be adopted as a warning first. An unknown suite name is a configuration error that
+  lists the available ones. Godlint's own configuration is now the suite and nothing else,
+  since an override here would be this project exempting itself from its own standard.
+
 - `reliability/explicit-timer-delay` — requires an explicit delay for JavaScript and
   TypeScript `setTimeout` and `setInterval` calls, where omission silently defaults to
   immediate execution.

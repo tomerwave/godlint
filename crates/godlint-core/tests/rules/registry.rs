@@ -43,11 +43,7 @@ fn every_registered_rule_reads_its_own_configuration() {
             "{enabled} does not read its own severity"
         );
 
-        for other in &all {
-            if other == enabled {
-                continue;
-            }
-
+        for other in all.iter().filter(|other| *other != enabled) {
             assert_eq!(
                 severity_of(other, enabled),
                 Severity::Off,

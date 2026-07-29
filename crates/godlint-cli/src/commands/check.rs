@@ -50,6 +50,21 @@ fn report_outcome(findings: &[Finding], report: &ScanReport, fail_on: Severity) 
         return ExitCode::SUCCESS;
     }
 
+    print_findings(findings);
+    print_issues(report);
+
+    if !report.issues.is_empty() {
+        return ExitCode::from(2);
+    }
+
+    if fails(findings, fail_on) {
+        return ExitCode::from(1);
+    }
+
+    ExitCode::SUCCESS
+}
+
+fn print_findings(findings: &[Finding]) {
     for finding in findings {
         println!(
             "{}:{}:{}: {}[{}] {}",
@@ -61,20 +76,12 @@ fn report_outcome(findings: &[Finding], report: &ScanReport, fail_on: Severity) 
             finding.message()
         );
     }
+}
 
+fn print_issues(report: &ScanReport) {
     for issue in &report.issues {
         eprintln!("{}: {}", issue.path.display(), issue.message);
     }
-
-    if !report.issues.is_empty() {
-        return ExitCode::from(2);
-    }
-
-    if fails(findings, fail_on) {
-        return ExitCode::from(1);
-    }
-
-    ExitCode::SUCCESS
 }
 
 fn fails(findings: &[Finding], fail_on: Severity) -> bool {

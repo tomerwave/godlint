@@ -5,8 +5,13 @@ A checklist records an intention; this records a fact. Every check here is one a
 reviewer would otherwise have to perform by hand, and each failure names the file to
 edit rather than the box to tick.
 
-Run with no arguments to check the working tree. Pass --base <ref> to additionally
+Run with no arguments to check the working tree. Pass --release-line <ref> to additionally
 apply the checks that depend on what a change touched.
+
+Those checks measure the branch against the release line rather than against whichever
+branch a pull request targets, because a changelog entry describes a change as a release
+will present it. A pull request stacked on another carries the entry in the branch below
+it, and asking about the target would demand a second entry for one change.
 """
 
 from __future__ import annotations
@@ -30,6 +35,7 @@ CONFIG = Path("crates/godlint-core/src/config.rs")
 DOGFOOD = Path("godlint.yaml")
 WORKFLOWS = Path(".github/workflows")
 MUTANTS = Path(".cargo/mutants.toml")
+SUITES = Path("crates/godlint-core/src/suites.rs")
 
 ROADMAP = Path("docs/rule-roadmap.md")
 README = Path("README.md")
@@ -123,9 +129,18 @@ def check_rule(report: Report, module: Path, identifier: str) -> None:
             f"{document}: does not mention {identifier}",
         )
 
+    # A repository adopts rules by naming them or by naming a suite. Godlint does the
+    # latter, so the dogfood check follows the suite: the rule must be one the suite sets.
+    # That the suite sets every rule at error is asserted in tests/suites.rs, where it
+    # cannot drift from the code that expands it.
+    dogfooded = identifier in read(DOGFOOD) or (
+        "suites:" in read(DOGFOOD)
+        and f"rules.{name}.get_or_insert" in re.sub(r"\s+", "", read(SUITES))
+    )
     report.check(
-        identifier in read(DOGFOOD),
-        f"{DOGFOOD}: {identifier} is not enabled, so Godlint does not dogfood it",
+        dogfooded,
+        f"{DOGFOOD}: {identifier} is enabled by neither a rules entry nor the adopted suite, "
+        "so Godlint does not dogfood it",
     )
 
     check_rule_coverage(report, identifier)
@@ -223,8 +238,8 @@ def changed_files(base: str) -> list[str]:
     return [line for line in diff.stdout.splitlines() if line]
 
 
-def check_change(report: Report, base: str) -> None:
-    changed = changed_files(base)
+def check_change(report: Report, release_line: str) -> None:
+    changed = changed_files(release_line)
 
     if not changed:
         return
@@ -239,7 +254,10 @@ def check_change(report: Report, base: str) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--base", help="git ref to diff against for change-scoped checks")
+    parser.add_argument(
+        "--release-line",
+        help="git ref for the release line this change will land on, such as origin/main",
+    )
     arguments = parser.parse_args()
 
     report = Report()
@@ -253,8 +271,8 @@ def main() -> int:
     check_mutation_config(report)
     check_workflows(report)
 
-    if arguments.base:
-        check_change(report, arguments.base)
+    if arguments.release_line:
+        check_change(report, arguments.release_line)
 
     if report.failures:
         print(f"{len(report.failures)} of {report.checked} checks failed:\n")

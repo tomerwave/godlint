@@ -8,6 +8,8 @@ use std::{
 
 use serde::Deserialize;
 
+use crate::suites;
+
 pub const DEFAULT_EXCLUDES: [&str; 12] = [
     ".git",
     ".mypy_cache",
@@ -31,6 +33,8 @@ pub struct Config {
     pub fail_on: Severity,
     #[serde(default)]
     pub exclude: Vec<String>,
+    #[serde(default)]
+    pub suites: Vec<String>,
     #[serde(default)]
     pub rules: Rules,
 }
@@ -190,15 +194,15 @@ pub struct TodoRequiresReferenceRule {
     pub reference_prefixes: Vec<String>,
 }
 
-fn default_reference_prefixes() -> Vec<String> {
+pub(crate) fn default_reference_prefixes() -> Vec<String> {
     vec!["#".into()]
 }
 
-fn default_markers() -> Vec<String> {
+pub(crate) fn default_markers() -> Vec<String> {
     vec!["TODO".into(), "FIXME".into(), "HACK".into(), "XXX".into()]
 }
 
-fn default_configuration_paths() -> Vec<String> {
+pub(crate) fn default_configuration_paths() -> Vec<String> {
     vec!["**/config.*".into(), "**/config/**".into()]
 }
 
@@ -235,6 +239,9 @@ pub enum ConfigError {
     InvalidComplexityLimit,
     InvalidTodoMarkers,
     InvalidTodoReferencePrefixes,
+    UnknownSuite {
+        name: String,
+    },
     InvalidRestrictedCallName,
     DuplicateRestrictedCallName {
         name: String,
@@ -254,11 +261,13 @@ impl Config {
             path: path.to_path_buf(),
             source,
         })?;
-        let config: Self = yaml_serde::from_str(&source).map_err(|source| ConfigError::Parse {
-            path: path.to_path_buf(),
-            source,
-        })?;
+        let mut config: Self =
+            yaml_serde::from_str(&source).map_err(|source| ConfigError::Parse {
+                path: path.to_path_buf(),
+                source,
+            })?;
 
+        config.expand_suites();
         config.validate()?;
 
         Ok(config)
@@ -272,23 +281,58 @@ impl Config {
         self.exclude.clone()
     }
 
-    fn validate(&self) -> Result<(), ConfigError> {
-        if self.version != 1 {
-            return Err(ConfigError::UnsupportedVersion {
-                version: self.version,
-            });
+    fn expand_suites(&mut self) {
+        for name in &self.suites {
+            suites::apply(name, &mut self.rules);
         }
+    }
 
-        if let Some(pattern) = self
+    fn validate(&self) -> Result<(), ConfigError> {
+        [
+            Self::validate_suites,
+            Self::validate_version,
+            Self::validate_exclude,
+            Self::validate_complexity_rule,
+            Self::validate_todo_rule,
+            Self::validate_restricted_call_rule,
+            Self::validate_direct_environment_read_rule,
+        ]
+        .iter()
+        .try_for_each(|check| check(self))
+    }
+
+    fn validate_suites(&self) -> Result<(), ConfigError> {
+        match self
+            .suites
+            .iter()
+            .find(|name| !suites::NAMES.contains(&name.as_str()))
+        {
+            Some(name) => Err(ConfigError::UnknownSuite { name: name.clone() }),
+            None => Ok(()),
+        }
+    }
+
+    fn validate_version(&self) -> Result<(), ConfigError> {
+        match self.version {
+            1 => Ok(()),
+            version => Err(ConfigError::UnsupportedVersion { version }),
+        }
+    }
+
+    fn validate_exclude(&self) -> Result<(), ConfigError> {
+        match self
             .exclude
             .iter()
             .find(|pattern| pattern.trim().is_empty())
         {
-            return Err(ConfigError::InvalidExclude {
+            Some(pattern) => Err(ConfigError::InvalidExclude {
                 pattern: pattern.clone(),
-            });
+            }),
+            None => Ok(()),
         }
+    }
 
+    fn validate_complexity_rule(&self) -> Result<(), ConfigError> {
         if self
             .rules
             .decision_complexity
@@ -298,10 +342,7 @@ impl Config {
             return Err(ConfigError::InvalidComplexityLimit);
         }
 
-        self.validate_todo_rule()?;
-        self.validate_restricted_call_rule()?;
-
-        self.validate_direct_environment_read_rule()
+        Ok(())
     }
 
     fn validate_todo_rule(&self) -> Result<(), ConfigError> {
@@ -333,15 +374,7 @@ impl Config {
         let mut seen = BTreeSet::new();
 
         for call in &rule.calls {
-            if call.name.trim().is_empty() {
-                return Err(ConfigError::InvalidRestrictedCallName);
-            }
-
-            if any_blank(&call.allow_in) {
-                return Err(ConfigError::BlankAllowIn {
-                    rule: "architecture/restricted-call",
-                });
-            }
+            validate_restricted_call(call)?;
 
             if !seen.insert(call.name.as_str()) {
                 return Err(ConfigError::DuplicateRestrictedCallName {
@@ -369,6 +402,20 @@ impl Config {
     }
 }
 
+fn validate_restricted_call(call: &RestrictedCall) -> Result<(), ConfigError> {
+    if call.name.trim().is_empty() {
+        return Err(ConfigError::InvalidRestrictedCallName);
+    }
+
+    if any_blank(&call.allow_in) {
+        return Err(ConfigError::BlankAllowIn {
+            rule: "architecture/restricted-call",
+        });
+    }
+
+    Ok(())
+}
+
 fn any_blank(values: &[String]) -> bool {
     values.iter().any(|value| value.trim().is_empty())
 }
@@ -379,6 +426,16 @@ fn prefix_is_unusable(prefix: &str) -> bool {
     trimmed.is_empty() || trimmed.chars().all(|character| character.is_ascii_digit())
 }
 
+const COMPLEXITY_AT_LEAST_ONE: &str =
+    "maintainability/decision-complexity max-complexity must be at least 1";
+
+const TODO_MARKERS_REQUIRED: &str = "policy/todo-requires-reference markers must not be empty";
+
+const TODO_PREFIXES_REQUIRED: &str =
+    "policy/todo-requires-reference reference-prefixes must not be empty or numeric";
+
+const CALL_NAME_REQUIRED: &str = "architecture/restricted-call call names must not be blank";
+
 impl fmt::Display for ConfigError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -387,35 +444,16 @@ impl fmt::Display for ConfigError {
             Self::UnsupportedVersion { version } => {
                 write!(formatter, "unsupported configuration version: {version}")
             }
-            Self::InvalidComplexityLimit => {
-                write!(
-                    formatter,
-                    "maintainability/decision-complexity max-complexity must be at least 1"
-                )
-            }
-            Self::InvalidTodoMarkers => {
-                write!(
-                    formatter,
-                    "policy/todo-requires-reference markers must not be empty"
-                )
-            }
-            Self::InvalidTodoReferencePrefixes => {
-                write!(
-                    formatter,
-                    "policy/todo-requires-reference reference-prefixes must not be empty or numeric"
-                )
-            }
-            Self::InvalidRestrictedCallName => {
-                write!(
-                    formatter,
-                    "architecture/restricted-call call names must not be blank"
-                )
-            }
+            Self::UnknownSuite { name } => write!(
+                formatter,
+                "unknown suite {name}; available suites are {}",
+                suites::NAMES.join(", ")
+            ),
             Self::DuplicateRestrictedCallName { name } => {
                 write!(
                     formatter,
-                    "architecture/restricted-call lists {name} more than once; \
-                     one entry decides its allow-in boundary"
+                    "architecture/restricted-call lists {name} more than once; one entry \
+                     decides its allow-in boundary"
                 )
             }
             Self::BlankAllowIn { rule } => {
@@ -424,6 +462,10 @@ impl fmt::Display for ConfigError {
             Self::InvalidExclude { pattern } => {
                 write!(formatter, "exclude pattern must not be blank: {pattern:?}")
             }
+            Self::InvalidComplexityLimit => formatter.write_str(COMPLEXITY_AT_LEAST_ONE),
+            Self::InvalidTodoMarkers => formatter.write_str(TODO_MARKERS_REQUIRED),
+            Self::InvalidTodoReferencePrefixes => formatter.write_str(TODO_PREFIXES_REQUIRED),
+            Self::InvalidRestrictedCallName => formatter.write_str(CALL_NAME_REQUIRED),
         }
     }
 }
@@ -437,6 +479,7 @@ impl Error for ConfigError {
             | Self::InvalidComplexityLimit
             | Self::InvalidTodoMarkers
             | Self::InvalidTodoReferencePrefixes
+            | Self::UnknownSuite { .. }
             | Self::InvalidRestrictedCallName
             | Self::DuplicateRestrictedCallName { .. }
             | Self::BlankAllowIn { .. }
