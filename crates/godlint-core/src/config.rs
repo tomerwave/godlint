@@ -76,6 +76,8 @@ pub struct Rules {
     pub explicit_timer_delay: Option<ExplicitTimerDelayRule>,
     #[serde(rename = "logging/no-production-log")]
     pub no_production_log: Option<NoProductionLogRule>,
+    #[serde(rename = "architecture/restricted-import")]
+    pub restricted_import: Option<RestrictedImportRule>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -105,6 +107,22 @@ pub struct RestrictedCallRule {
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct RestrictedCall {
+    pub name: String,
+    #[serde(default, rename = "allow-in")]
+    pub allow_in: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RestrictedImportRule {
+    pub severity: Severity,
+    #[serde(default)]
+    pub modules: Vec<RestrictedImport>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RestrictedImport {
     pub name: String,
     #[serde(default, rename = "allow-in")]
     pub allow_in: Vec<String>,
@@ -253,6 +271,10 @@ pub enum ConfigError {
         name: String,
     },
     InvalidRestrictedCallName,
+    InvalidRestrictedImportName,
+    DuplicateRestrictedImportName {
+        name: String,
+    },
     DuplicateRestrictedCallName {
         name: String,
     },
@@ -309,6 +331,7 @@ impl Config {
             Self::validate_complexity_rule,
             Self::validate_todo_rule,
             Self::validate_restricted_call_rule,
+            Self::validate_restricted_import_rule,
             Self::validate_direct_environment_read_rule,
         ]
         .iter()
@@ -389,6 +412,26 @@ impl Config {
         Ok(())
     }
 
+    fn validate_restricted_import_rule(&self) -> Result<(), ConfigError> {
+        let Some(rule) = &self.rules.restricted_import else {
+            return Ok(());
+        };
+
+        let mut seen = BTreeSet::new();
+
+        for module in &rule.modules {
+            validate_restricted_import(module)?;
+
+            if !seen.insert(module.name.as_str()) {
+                return Err(ConfigError::DuplicateRestrictedImportName {
+                    name: module.name.clone(),
+                });
+            }
+        }
+
+        Ok(())
+    }
+
     fn validate_direct_environment_read_rule(&self) -> Result<(), ConfigError> {
         if self
             .rules
@@ -419,6 +462,20 @@ fn validate_restricted_call(call: &RestrictedCall) -> Result<(), ConfigError> {
     Ok(())
 }
 
+fn validate_restricted_import(module: &RestrictedImport) -> Result<(), ConfigError> {
+    if module.name.trim().is_empty() {
+        return Err(ConfigError::InvalidRestrictedImportName);
+    }
+
+    if any_blank(&module.allow_in) {
+        return Err(ConfigError::BlankAllowIn {
+            rule: "architecture/restricted-import",
+        });
+    }
+
+    Ok(())
+}
+
 fn any_blank(values: &[String]) -> bool {
     values.iter().any(|value| value.trim().is_empty())
 }
@@ -438,6 +495,8 @@ const TODO_PREFIXES_REQUIRED: &str =
     "policy/todo-requires-reference reference-prefixes must not be empty or numeric";
 
 const CALL_NAME_REQUIRED: &str = "architecture/restricted-call call names must not be blank";
+
+const IMPORT_NAME_REQUIRED: &str = "architecture/restricted-import module names must not be blank";
 
 impl fmt::Display for ConfigError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -469,6 +528,14 @@ impl fmt::Display for ConfigError {
             Self::InvalidTodoMarkers => formatter.write_str(TODO_MARKERS_REQUIRED),
             Self::InvalidTodoReferencePrefixes => formatter.write_str(TODO_PREFIXES_REQUIRED),
             Self::InvalidRestrictedCallName => formatter.write_str(CALL_NAME_REQUIRED),
+            Self::InvalidRestrictedImportName => formatter.write_str(IMPORT_NAME_REQUIRED),
+            Self::DuplicateRestrictedImportName { name } => {
+                write!(
+                    formatter,
+                    "architecture/restricted-import lists {name} more than once; one entry \
+                     decides its allow-in boundary"
+                )
+            }
         }
     }
 }
@@ -485,6 +552,8 @@ impl Error for ConfigError {
             | Self::UnknownSuite { .. }
             | Self::InvalidRestrictedCallName
             | Self::DuplicateRestrictedCallName { .. }
+            | Self::InvalidRestrictedImportName
+            | Self::DuplicateRestrictedImportName { .. }
             | Self::BlankAllowIn { .. }
             | Self::InvalidExclude { .. } => None,
         }

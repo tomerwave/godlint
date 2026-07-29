@@ -15,6 +15,7 @@ pub(super) const VOCABULARY: Vocabulary = Vocabulary {
     is_abstract,
     callee,
     is_access,
+    import,
     comment_kind,
     has_implicit_tail_return,
 };
@@ -157,4 +158,11 @@ fn has_implicit_tail_return(node: Node<'_>) -> bool {
 
     node.child_by_field_name("body")
         .is_some_and(|body| body.kind() != "statement_block")
+}
+
+fn import(node: Node<'_>) -> Option<Node<'_>> {
+    matches!(node.kind(), "import_statement" | "export_statement")
+        .then(|| node.child_by_field_name("source"))
+        .flatten()
+        .and_then(|string| string.named_child(0))
 }

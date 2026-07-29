@@ -32,7 +32,7 @@ expected: read it here.
 
 Language adapters retain native AST and parser details. They emit a small shared fact
 model that rules consume without a universal AST. `FunctionFact`, `CommentFact`,
-`CallFact`, and `AccessFact` exist today. `CallFact` records a direct callee path, a
+`CallFact`, `AccessFact`, and `ImportFact` exist today. `CallFact` records a direct callee path, a
 source range, argument count, and whether the call site was a macro invocation; `AccessFact` does the same
 for direct member access. Neither resolves aliases, types, or dynamically computed
 properties. The argument count excludes comments: a grammar reports them as named nodes
@@ -173,6 +173,11 @@ already does, rather than storing a copy of the text beside the range. Two field
 truth can disagree, and a test asserting a callee of `inner` for a range spelling `inner()`
 is what that drift looks like. `SourceFile` holds its path behind an `Arc` because a fact
 clones the file it came from, and an owned path allocated on every one of those clones.
+
+`ImportFact` carries the range that spells the imported module and reads the module from it.
+Which node spells the module is a per-language question, so it sits behind the vocabulary
+alongside the callee: shared code asks for the import and never names `use_declaration`,
+`import_from_statement`, or `string_fragment`.
 
 `AccessFact` is produced for JavaScript, TypeScript and Python only. Rust states in its
 vocabulary that it has no member-read form of the constructs these rules police — it reads

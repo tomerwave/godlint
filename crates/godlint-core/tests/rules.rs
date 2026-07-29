@@ -51,6 +51,9 @@ mod registry;
 #[path = "rules/return_count.rs"]
 mod return_count;
 
+#[path = "rules/restricted_import.rs"]
+mod restricted_import;
+
 #[path = "rules/restricted_call.rs"]
 mod restricted_call;
 

@@ -5,6 +5,7 @@ use tree_sitter::{Language as TreeSitterLanguage, Node, Parser};
 use crate::{
     facts::{
         AccessFact, CallFact, CommentFact, FunctionFact, FunctionFactDetails, FunctionFactError,
+        ImportFact,
     },
     source::{Language, SourceFile, SourceFileError, SourceRange},
 };
@@ -26,6 +27,7 @@ pub struct SourceFacts {
     comments: Vec<CommentFact>,
     calls: Vec<CallFact>,
     functions: Vec<FunctionFact>,
+    imports: Vec<ImportFact>,
 }
 
 impl SourceFacts {
@@ -47,6 +49,10 @@ impl SourceFacts {
 
     pub fn calls(&self) -> &[CallFact] {
         &self.calls
+    }
+
+    pub fn imports(&self) -> &[ImportFact] {
+        &self.imports
     }
 }
 
@@ -101,6 +107,7 @@ pub(crate) fn analyze_with(
         comments: collected.comments,
         calls: collected.calls,
         functions: collected.functions,
+        imports: collected.imports,
     })
 }
 
@@ -139,6 +146,7 @@ struct Collected {
     functions: Vec<FunctionFact>,
     comments: Vec<CommentFact>,
     calls: Vec<CallFact>,
+    imports: Vec<ImportFact>,
 }
 
 impl Collected {
@@ -148,12 +156,33 @@ impl Collected {
         source: &SourceFile,
         vocabulary: &Vocabulary,
     ) -> Result<(), AnalyzerError> {
+        self.absorb_declarations(node, source, vocabulary)?;
+        self.absorb_references(node, source, vocabulary)
+    }
+
+    fn absorb_declarations(
+        &mut self,
+        node: Node<'_>,
+        source: &SourceFile,
+        vocabulary: &Vocabulary,
+    ) -> Result<(), AnalyzerError> {
         self.functions
             .extend(function_fact(node, source, vocabulary)?);
         self.comments
             .extend(comment_fact(node, source, vocabulary)?);
+
+        Ok(())
+    }
+
+    fn absorb_references(
+        &mut self,
+        node: Node<'_>,
+        source: &SourceFile,
+        vocabulary: &Vocabulary,
+    ) -> Result<(), AnalyzerError> {
         self.calls.extend(call_fact(node, source, vocabulary)?);
         self.accesses.extend(access_fact(node, source, vocabulary)?);
+        self.imports.extend(import_fact(node, source, vocabulary)?);
 
         Ok(())
     }
@@ -225,6 +254,19 @@ fn access_fact(
     let range = node_range(node, source)?;
 
     Ok(Some(AccessFact::new(source.clone(), range)))
+}
+
+fn import_fact(
+    node: Node<'_>,
+    source: &SourceFile,
+    vocabulary: &Vocabulary,
+) -> Result<Option<ImportFact>, AnalyzerError> {
+    let Some(module) = (vocabulary.import)(node) else {
+        return Ok(None);
+    };
+    let range = node_range(module, source)?;
+
+    Ok(Some(ImportFact::new(source.clone(), range)))
 }
 
 fn direct_path<'source>(node: Node<'_>, source: &'source SourceFile) -> Option<&'source str> {

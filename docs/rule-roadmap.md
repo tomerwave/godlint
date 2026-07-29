@@ -346,13 +346,26 @@ heuristic that would guess.
 Introduce `ImportFact` first, then a repository graph only when an import-local rule
 cannot answer the policy.
 
-| Rule | Required capability | Confidence | Notes |
-| --- | --- | --- | --- |
-| `architecture/restricted-import` | Direct import fact | High | Ban direct imports of internal or risky modules |
-| `architecture/dependency-boundary` | Import fact plus configured path layers | High | Enforce UI → application → domain → infrastructure direction |
-| `architecture/no-cycle` | Repository graph | High | Report the complete cycle edge chain |
-| `security/forbidden-dependency` | Package/import mapping | High | Block dependencies by explicit policy |
-| `architecture/filename-case` | Repository path fact | Medium | Support scoped case conventions and generated-file exceptions |
+`ImportFact` is shipped. It carries the range that spells the module and reads the module from
+it, the way every other fact reads its text, so the two cannot disagree. What counts as the
+module is decided per language behind the vocabulary: a Rust `use` path or `extern crate` name,
+the module of a Python `import` or `from ... import` with an alias seen through, and the source
+string of a JavaScript or TypeScript `import` — including a re-export, which is an import edge
+whatever it is spelled as.
+
+It resolves nothing, the same boundary the call rules draw. `use a::{b, c}` is the module `a`
+rather than two modules; `import a, b` in Python records the first name only; and a
+`require()` call is a call fact rather than an import. A restricted module covers what lies
+beneath it — `crate::internal` catches `crate::internal::deep` — by matching a whole segment,
+so `crate::internals` is a different module and not a longer spelling of the same one.
+
+| Rule | Status | Required capability | Confidence | Notes |
+| --- | --- | --- | --- | --- |
+| `architecture/restricted-import` | Shipped | Direct import fact | High | Ban direct imports of internal or risky modules |
+| `architecture/dependency-boundary` | Planned | Import fact plus configured path layers | High | Enforce UI → application → domain → infrastructure direction |
+| `architecture/no-cycle` | Planned | Repository graph | High | Report the complete cycle edge chain |
+| `security/forbidden-dependency` | Planned | Package/import mapping | High | Block dependencies by explicit policy |
+| `architecture/filename-case` | Planned | Repository path fact | Medium | Support scoped case conventions and generated-file exceptions |
 
 ### Phase 5 — Error handling and testing
 

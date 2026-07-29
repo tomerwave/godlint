@@ -61,6 +61,12 @@ pub struct CallFact {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ImportFact {
+    source: SourceFile,
+    range: SourceRange,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct AccessFact {
     source: SourceFile,
     range: SourceRange,
@@ -161,6 +167,24 @@ impl CallFact {
 
     pub const fn argument_count(&self) -> usize {
         self.argument_count
+    }
+}
+
+impl ImportFact {
+    pub fn new(source: SourceFile, range: SourceRange) -> Self {
+        Self { source, range }
+    }
+
+    pub fn source(&self) -> &SourceFile {
+        &self.source
+    }
+
+    pub fn range(&self) -> SourceRange {
+        self.range
+    }
+
+    pub fn module(&self) -> &str {
+        &self.source.source()[self.range.start()..self.range.end()]
     }
 }
 
