@@ -53,10 +53,14 @@ runs:
         version="$REQUESTED"
 
         if [ "$version" = "latest" ]; then
-          version="$(
-            curl -fsSL https://api.github.com/repos/tomerwave/godlint/releases/latest |
-              sed -n 's/.*"tag_name": *"v\([^"]*\)".*/\1/p' | head -1
+          # The releases/latest page redirects to the tag, so the version comes from a redirect
+          # rather than from api.github.com, which rate-limits an unauthenticated runner and answers
+          # 403 without warning.
+          resolved="$(
+            curl -fsSLI -o /dev/null -w '%{url_effective}' \
+              https://github.com/tomerwave/godlint/releases/latest
           )"
+          version="${resolved##*/tag/v}"
           echo "::notice::Godlint $version resolved from latest. Pin the version for a check that cannot change under you."
         fi
 
@@ -86,10 +90,22 @@ runs:
         curl -fsSL -O "$base/$name"
         curl -fsSL -O "$base/$name.sha256"
 
+        # The published hash is compared directly rather than through shasum -c, which reads a
+        # filename from the file and so fails on a checksum written with a carriage return. Only
+        # the hash matters here, and the file being verified is the one just downloaded.
+        published="$(cut -d' ' -f1 < "$name.sha256" | tr -d '\r\n')"
+
         if command -v shasum >/dev/null 2>&1; then
-          shasum -a 256 -c "$name.sha256"
+          computed="$(shasum -a 256 "$name" | cut -d' ' -f1)"
         else
-          sha256sum -c "$name.sha256"
+          computed="$(sha256sum "$name" | cut -d' ' -f1)"
+        fi
+
+        if [ "$computed" != "$published" ]; then
+          echo "godlint-action: checksum mismatch for $name" >&2
+          echo "  published $published" >&2
+          echo "  computed  $computed" >&2
+          exit 1
         fi
 
         if [ "$archive" = "zip" ]; then
