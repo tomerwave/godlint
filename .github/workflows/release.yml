@@ -295,3 +295,30 @@ jobs:
 
           echo "$attached of $expected archives attached"
           test "$attached" -ge "$expected"
+
+      # tomerwave/godlint@v1 is what a workflow writes, so the tag has to arrive at the commit of
+      # the release that just published - and only here, after every registry and every archive
+      # succeeded, because a v1 sitting on a half-published release hands everyone a broken action.
+      #
+      # v1 is the action's interface version, not the command line's. The inputs are what it
+      # promises, and they have not changed since the action shipped, while the binary is still
+      # 0.1.x. A break in those inputs means a v2 and a new value here, not a bump of this one.
+      #
+      # Exact version tags are immutable by ruleset. v1 is deliberately outside it: a tag whose
+      # whole purpose is to move cannot also be protected against moving.
+      - name: Point the floating major tag at this release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          major=v1
+
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$major" >/dev/null 2>&1; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/$major" -f sha="$SHA" -F force=true >/dev/null
+          else
+            gh api -X POST "repos/$GITHUB_REPOSITORY/git/refs" -f "ref=refs/tags/$major" -f sha="$SHA" >/dev/null
+          fi
+
+          echo "$major now points at $SHA"
