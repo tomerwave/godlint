@@ -2,9 +2,13 @@
 """Assemble the npm packages for a release from the binaries it built.
 
 npm installs a platform package only when its `os` and `cpu` match, so a user downloads the one
-binary they can run and nothing else. The front door is the bare `godlint` package: it carries no
-binary, declares every platform package as optional, and runs whichever one npm chose. Nothing is
-fetched during install, so this works with `--ignore-scripts` and without a network.
+binary they can run and nothing else. The front door is `@godlint/cli`: it carries no binary,
+declares every platform package as optional, and runs whichever one npm chose. Nothing is fetched
+during install, so this works with `--ignore-scripts` and without a network.
+
+The front door is scoped because npm refuses the bare name `godlint` as too similar to `oxlint`.
+The command is still `godlint`, since the executable a package installs is named independently of
+the package.
 
 Linux ships the statically linked musl build, so one binary per architecture runs against either
 libc instead of failing on a loader error.
@@ -76,7 +80,7 @@ def platform_package(out: Path, version: str, target: str, binary: Path) -> str:
 
 
 def shim_package(out: Path, version: str, names: list[str]) -> None:
-    directory = out / "godlint"
+    directory = out / "cli"
     (directory / "bin").mkdir(parents=True)
     shutil.copy2(SHIM, directory / "bin" / "godlint.js")
     (directory / "bin" / "godlint.js").chmod(0o755)
@@ -85,7 +89,7 @@ def shim_package(out: Path, version: str, names: list[str]) -> None:
     write(
         directory / "package.json",
         {
-            "name": "godlint",
+            "name": f"{SCOPE}/cli",
             **common(version),
             "bin": {"godlint": "bin/godlint.js"},
             "files": ["bin/godlint.js", "README.md", "LICENSE"],

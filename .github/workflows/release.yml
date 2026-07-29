@@ -161,7 +161,7 @@ jobs:
 
   npm:
     name: Publish to npm
-    needs: publish
+    needs: binaries
     runs-on: ubuntu-latest
     environment: npm
 
@@ -218,7 +218,7 @@ jobs:
 
   announce:
     name: Publish the GitHub release
-    needs: npm
+    needs: publish
     runs-on: ubuntu-latest
 
     steps:
