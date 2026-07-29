@@ -116,7 +116,11 @@ jobs:
           Copy-Item "target/$env:TARGET/release/godlint.exe" godlint.exe
           Compress-Archive -Path godlint.exe, LICENSE, README.md -DestinationPath "godlint-$env:TARGET.zip"
           $hash = (Get-FileHash "godlint-$env:TARGET.zip" -Algorithm SHA256).Hash.ToLower()
-          "$hash  godlint-$env:TARGET.zip" | Out-File -Encoding ascii "godlint-$env:TARGET.zip.sha256"
+          # WriteAllText rather than Out-File: Out-File ends the line with CRLF, and a checksum
+          # file with a carriage return makes every Unix checker read the filename as ending in
+          # one, so verification fails on a correct download.
+          $line = "$hash  godlint-$env:TARGET.zip`n"
+          [IO.File]::WriteAllText("$PWD/godlint-$env:TARGET.zip.sha256", $line)
 
       - uses: actions/upload-artifact@v4
         with:
