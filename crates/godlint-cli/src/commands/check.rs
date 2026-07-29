@@ -7,9 +7,12 @@ use godlint_core::{
     scan::ScanReport,
 };
 
-use crate::workspace::Workspace;
+use crate::{
+    report::{self, FORMATS, Format},
+    workspace::Workspace,
+};
 
-pub const USAGE: &str = "check [paths...]";
+pub const USAGE: &str = "check [--format <format>] [paths...]";
 
 pub fn run(arguments: &[String]) -> Option<ExitCode> {
     let [command, paths @ ..] = arguments else {
@@ -23,8 +26,8 @@ pub fn run(arguments: &[String]) -> Option<ExitCode> {
     Some(check(paths))
 }
 
-fn check(paths: &[String]) -> ExitCode {
-    match run_check(paths) {
+fn check(arguments: &[String]) -> ExitCode {
+    match run_check(arguments) {
         Ok(exit_code) => exit_code,
         Err(message) => {
             eprintln!("{message}");
@@ -33,23 +36,63 @@ fn check(paths: &[String]) -> ExitCode {
     }
 }
 
-fn run_check(paths: &[String]) -> Result<ExitCode, String> {
-    let workspace = Workspace::prepare(paths)?;
+fn run_check(arguments: &[String]) -> Result<ExitCode, String> {
+    let (format, paths) = requested(arguments)?;
+    let workspace = Workspace::prepare(&paths)?;
     let report = workspace.scan()?;
     let today = Date::today().ok_or_else(|| "Unable to determine the current date.".to_owned())?;
     let findings = evaluate(&report.facts, &workspace.config, today);
 
-    Ok(report_outcome(&findings, &report, workspace.config.fail_on))
+    Ok(report_outcome(
+        format,
+        &findings,
+        &report,
+        workspace.config.fail_on,
+    ))
 }
 
-fn report_outcome(findings: &[Finding], report: &ScanReport, fail_on: Severity) -> ExitCode {
-    if findings.is_empty() && report.issues.is_empty() {
-        println!("No findings.");
+fn requested(arguments: &[String]) -> Result<(Format, Vec<String>), String> {
+    let mut format = Format::Terminal;
+    let mut paths = Vec::new();
+    let mut remaining = arguments.iter();
 
-        return ExitCode::SUCCESS;
+    while let Some(argument) = remaining.next() {
+        match named_format(argument, &mut remaining)? {
+            Some(requested) => format = requested,
+            None => paths.push(argument.clone()),
+        }
     }
 
-    print_findings(findings);
+    Ok((format, paths))
+}
+
+fn named_format<'a>(
+    argument: &str,
+    remaining: &mut impl Iterator<Item = &'a String>,
+) -> Result<Option<Format>, String> {
+    let name = match argument.strip_prefix("--format") {
+        Some("") => remaining.next().map(String::as_str),
+        Some(rest) => rest.strip_prefix('='),
+        None => return Ok(None),
+    };
+
+    match name.map(Format::parse) {
+        Some(Some(format)) => Ok(Some(format)),
+        Some(None) => Err(format!(
+            "Unknown format: {}\n\nAvailable formats are {FORMATS}.",
+            name.unwrap_or_default()
+        )),
+        None => Err(format!("--format needs a format. Available are {FORMATS}.")),
+    }
+}
+
+fn report_outcome(
+    format: Format,
+    findings: &[Finding],
+    report: &ScanReport,
+    fail_on: Severity,
+) -> ExitCode {
+    print_report(format, findings, report);
     print_issues(report);
 
     if !report.issues.is_empty() {
@@ -63,17 +106,13 @@ fn report_outcome(findings: &[Finding], report: &ScanReport, fail_on: Severity) 
     ExitCode::SUCCESS
 }
 
-fn print_findings(findings: &[Finding]) {
-    for finding in findings {
-        println!(
-            "{}:{}:{}: {}[{}] {}",
-            finding.path.display(),
-            finding.line,
-            finding.column,
-            severity_name(finding.severity),
-            finding.rule_id,
-            finding.message()
-        );
+fn print_report(format: Format, findings: &[Finding], report: &ScanReport) {
+    let body = report::render(format, findings, report);
+
+    if !body.is_empty() {
+        println!("{body}");
+    } else if !format.is_machine_readable() && report.issues.is_empty() {
+        println!("No findings.");
     }
 }
 
@@ -85,13 +124,4 @@ fn print_issues(report: &ScanReport) {
 
 fn fails(findings: &[Finding], fail_on: Severity) -> bool {
     fail_on != Severity::Off && findings.iter().any(|finding| finding.severity >= fail_on)
-}
-
-fn severity_name(severity: Severity) -> &'static str {
-    match severity {
-        Severity::Error => "error",
-        Severity::Info => "info",
-        Severity::Off => "off",
-        Severity::Warning => "warning",
-    }
 }

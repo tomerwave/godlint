@@ -168,6 +168,11 @@ one home for each default value — comes instead from the suite calling the sam
 default functions the configuration schema uses, and the published thresholds are held to
 `docs/rule-roadmap.md` by a test.
 
+A reporter decides how a finding is spelled, and the rules know nothing about it. That is what lets
+the same run produce a terminal line, a GitHub annotation, a JSON document, or SARIF without a rule
+choosing a wording for a machine — and it is why a finding carries a typed violation rather than a
+prepared sentence.
+
 A finding carries a typed violation rather than a prepared sentence. Reporters other than
 the terminal need the numbers, and a rendered message must never be load-bearing:
 findings are ordered by path, line, column, and rule identifier, so output order cannot
