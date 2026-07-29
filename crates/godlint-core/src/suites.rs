@@ -2,11 +2,11 @@ use std::num::NonZeroU32;
 
 use crate::config::{
     AccountableSuppressionRule, DecisionComplexityRule, DependencyBoundaryRule,
-    DirectEnvironmentReadRule, EmptyFunctionRule, ExplicitTimerDelayRule, ForbiddenDependencyRule,
-    FunctionNestingRule, FunctionStatementsRule, LineLimitRule, NoCommentsRule,
-    NoDynamicExecutionRule, NoProductionLogRule, ParameterCountRule, RestrictedCallRule,
-    RestrictedImportRule, ReturnCountRule, Rules, Severity, TodoRequiresReferenceRule,
-    UnusedSuppressionRule, default_configuration_paths, default_markers,
+    DirectEnvironmentReadRule, EmptyFunctionRule, ExplicitTimerDelayRule, FilenameCaseRule,
+    ForbiddenDependencyRule, FunctionNestingRule, FunctionStatementsRule, LineLimitRule,
+    NoCommentsRule, NoDynamicExecutionRule, NoProductionLogRule, ParameterCountRule,
+    RestrictedCallRule, RestrictedImportRule, ReturnCountRule, Rules, Severity,
+    TodoRequiresReferenceRule, UnusedSuppressionRule, default_configuration_paths, default_markers,
     default_reference_prefixes,
 };
 
@@ -116,6 +116,11 @@ fn security(rules: &mut Rules) {
     rules.restricted_call.get_or_insert(RestrictedCallRule {
         severity: error,
         calls: Vec::new(),
+    });
+    rules.filename_case.get_or_insert(FilenameCaseRule {
+        severity: error,
+        scopes: Vec::new(),
+        allow: Vec::new(),
     });
     rules.restricted_import.get_or_insert(RestrictedImportRule {
         severity: error,

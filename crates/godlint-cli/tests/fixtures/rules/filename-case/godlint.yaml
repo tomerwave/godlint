@@ -1,0 +1,11 @@
+version: 1
+
+rules:
+  architecture/filename-case:
+    severity: error
+    scopes:
+      - paths:
+          - src/ui/**
+        case: pascal
+    allow:
+      - "**/legacyName.rs"

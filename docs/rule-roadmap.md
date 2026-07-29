@@ -404,7 +404,20 @@ each appears in the list.
 | `architecture/dependency-boundary` | Shipped | Import fact plus configured path layers | High | Enforce UI → application → domain → infrastructure direction |
 | `architecture/no-cycle` | Planned | Repository graph | High | Report the complete cycle edge chain |
 | `security/forbidden-dependency` | Shipped | Package/import mapping | High | Block dependencies by explicit policy |
-| `architecture/filename-case` | Planned | Repository path fact | Medium | Support scoped case conventions and generated-file exceptions |
+| `architecture/filename-case` | Shipped | Repository path fact | Medium | Support scoped case conventions and generated-file exceptions |
+
+`architecture/filename-case` reads no syntax at all — a path is the whole input — which makes it
+the one rule that behaves identically in every language. What it cannot assume is the
+convention. Rust and Python each have one the ecosystem already enforces, so a file in those
+languages is held to `snake_case` with no configuration. JavaScript and TypeScript have no single
+convention — `kebab-case` modules and `PascalCase` components are both ordinary — so those files
+are unchecked until a `scopes` entry names them, silent rather than wrong.
+
+A scope declares the case for the paths it names and wins over a language convention, so a
+repository that keeps components in `src/ui/**` can require `PascalCase` there and leave the rest
+alone. `allow` exempts a path outright, which is what a generated file needs. The name checked is
+what precedes the first dot, so `widget.test.ts` is judged as `widget` — the compound extension is
+a suffix, not part of the name.
 
 ### Phase 5 — Error handling and testing
 

@@ -11,13 +11,21 @@ releases begin.
 ### Added
 
 - Policy suites. `suites: [recommended@1]` adopts a named standard in one line instead of
-  twenty rule blocks with hand-picked numbers. `recommended@1` enables every rule at
+  twenty-one rule blocks with hand-picked numbers. `recommended@1` enables every rule at
   `error`, because a standard a repository can partly ignore is a suggestion. Suites are
   opt-in — a configuration naming none enforces nothing — and a `rules:` entry overrides the
   suite for that rule in either direction, including `severity: off`, which is what lets a
   rule be adopted as a warning first. An unknown suite name is a configuration error that
   lists the available ones. Godlint's own configuration is now the suite and nothing else,
   since an override here would be this project exempting itself from its own standard.
+
+- `architecture/filename-case` (`scopes`, `allow`) — reports a file name that does not follow the
+  convention for its language or for a declared scope. It reads no syntax: a path is the whole
+  input. Rust and Python are held to `snake_case` with no configuration, because each ecosystem
+  already enforces one. JavaScript and TypeScript have no single convention, so those files are
+  unchecked until a `scopes` entry names them — silent rather than wrong. A scope declares the
+  case for the paths it names and wins over the language default; `allow` exempts a path outright.
+  The name judged is what precedes the first dot, so `widget.test.ts` is judged as `widget`.
 
 - `security/forbidden-dependency` (`packages`, each with `allow-in`) — reports an import of a
   package the project has ruled out. It maps an import to its package and matches that name

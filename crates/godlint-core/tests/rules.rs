@@ -24,6 +24,9 @@ mod empty_function;
 #[path = "rules/explicit_timer_delay.rs"]
 mod explicit_timer_delay;
 
+#[path = "rules/filename_case.rs"]
+mod filename_case;
+
 #[path = "rules/file_size.rs"]
 mod file_size;
 

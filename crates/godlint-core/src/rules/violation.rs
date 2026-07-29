@@ -43,6 +43,10 @@ pub enum Violation {
     ForbiddenDependency {
         package: String,
     },
+    FilenameCase {
+        name: String,
+        case: String,
+    },
 }
 
 impl Violation {
@@ -100,6 +104,9 @@ impl fmt::Display for Violation {
                 write!(formatter, "{target} {ENVIRONMENT_READ}")
             }
             Self::TimerWithoutDelay { callee } => write!(formatter, "{callee} {TIMER_DELAY}"),
+            Self::FilenameCase { name, case } => {
+                write!(formatter, "{name} is not {case}; rename the file to match.")
+            }
             Self::ForbiddenDependency { package } => {
                 write!(formatter, "{package} {FORBIDDEN_DEPENDENCY}")
             }

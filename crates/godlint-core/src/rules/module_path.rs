@@ -55,7 +55,7 @@ fn rust_package(module: &str) -> Option<&str> {
     }
 }
 
-fn first_segment<'a>(text: &'a str, separator: &str) -> &'a str {
+pub(crate) fn first_segment<'a>(text: &'a str, separator: &str) -> &'a str {
     match text.find(separator) {
         Some(index) => &text[..index],
         None => text,
@@ -64,4 +64,11 @@ fn first_segment<'a>(text: &'a str, separator: &str) -> &'a str {
 
 fn non_empty(name: &str) -> Option<&str> {
     (!name.is_empty()).then_some(name)
+}
+
+pub(crate) fn last_segment(text: &str, separator: char) -> &str {
+    match text.rfind(separator) {
+        Some(index) => &text[index + separator.len_utf8()..],
+        None => text,
+    }
 }

@@ -16,6 +16,7 @@ pub mod direct_environment_read;
 pub mod empty_function;
 pub mod explicit_timer_delay;
 pub mod file_size;
+pub mod filename_case;
 pub mod forbidden_dependency;
 pub mod function_nesting;
 pub mod function_size;
@@ -160,6 +161,10 @@ pub trait FileLimitRule: Rule {
     fn max(configuration: &Self::Configuration) -> u32;
 }
 
+pub trait FileRule: Rule {
+    fn check(source: &SourceFile, configuration: &Self::Configuration) -> Option<Violation>;
+}
+
 pub trait SuppressionRule: Rule {
     fn check(
         suppression: &Suppression,
@@ -299,6 +304,15 @@ fn evaluate_files(
     )
 }
 
+pub fn evaluate_file_rule<R: FileRule>(
+    facts: &[SourceFacts],
+    configuration: &R::Configuration,
+) -> Vec<Finding> {
+    evaluate_files(facts, Reporting::of::<R>(configuration), |source_facts| {
+        R::check(source_facts.source(), configuration)
+    })
+}
+
 pub fn evaluate_comment_rule<R: CommentRule>(
     facts: &[SourceFacts],
     configuration: &R::Configuration,
@@ -366,6 +380,7 @@ const EVALUATORS: &[Evaluator] = &[
     restricted_import::evaluate,
     dependency_boundary::evaluate,
     forbidden_dependency::evaluate,
+    filename_case::evaluate,
 ];
 
 pub fn evaluate(facts: &[SourceFacts], config: &Config, today: Date) -> Vec<Finding> {

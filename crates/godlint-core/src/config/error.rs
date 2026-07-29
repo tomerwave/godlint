@@ -25,6 +25,9 @@ pub enum ConfigError {
     InvalidRestrictedImportName,
     InvalidLayerName,
     InvalidPackageName,
+    EmptyNamingScope {
+        case: String,
+    },
     DuplicatePackageName {
         name: String,
     },
@@ -62,6 +65,13 @@ const LAYER_NAME_REQUIRED: &str = "architecture/dependency-boundary layer names 
 
 const PACKAGE_NAME_REQUIRED: &str = "security/forbidden-dependency package names must not be blank";
 
+const LAYER_NEEDS_BOTH: &str =
+    "must declare both the paths it contains and the modules that name it";
+
+const LAYER_POSITION: &str = "more than once; one entry decides its position";
+
+const SCOPE_NAMES_NOTHING: &str = "names no paths, so it applies to nothing";
+
 const IMPORT_NAME_REQUIRED: &str = "architecture/restricted-import module names must not be blank";
 
 impl fmt::Display for ConfigError {
@@ -93,18 +103,20 @@ impl fmt::Display for ConfigError {
             Self::InvalidRestrictedImportName => formatter.write_str(IMPORT_NAME_REQUIRED),
             Self::InvalidLayerName => formatter.write_str(LAYER_NAME_REQUIRED),
             Self::InvalidPackageName => formatter.write_str(PACKAGE_NAME_REQUIRED),
+            Self::EmptyNamingScope { case } => write!(
+                formatter,
+                "architecture/filename-case scope for {case} {SCOPE_NAMES_NOTHING}"
+            ),
             Self::DuplicatePackageName { name } => {
                 duplicate(formatter, "security/forbidden-dependency", name)
             }
             Self::EmptyLayer { name } => write!(
                 formatter,
-                "architecture/dependency-boundary layer {name} must declare both the paths it \
-                 contains and the modules that name it"
+                "architecture/dependency-boundary layer {name} {LAYER_NEEDS_BOTH}"
             ),
             Self::DuplicateLayerName { name } => write!(
                 formatter,
-                "architecture/dependency-boundary lists layer {name} more than once; one entry \
-                 decides its position"
+                "architecture/dependency-boundary lists layer {name} {LAYER_POSITION}"
             ),
             Self::DuplicateRestrictedImportName { name } => {
                 duplicate(formatter, "architecture/restricted-import", name)
@@ -136,6 +148,7 @@ impl Error for ConfigError {
             | Self::DuplicateRestrictedImportName { .. }
             | Self::InvalidLayerName
             | Self::InvalidPackageName
+            | Self::EmptyNamingScope { .. }
             | Self::DuplicatePackageName { .. }
             | Self::EmptyLayer { .. }
             | Self::DuplicateLayerName { .. }
