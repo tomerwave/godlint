@@ -128,7 +128,9 @@ runs:
       run: |
         set -uo pipefail
 
-        output="$RUNNER_TEMP/godlint-findings.txt"
+        # A fixed path, so a following step can read the annotations even when this action fails
+        # and GitHub withholds its outputs.
+        output="$RUNNER_TEMP/godlint-annotations.txt"
 
         # shellcheck disable=SC2086
         godlint check --format github $PATHS | tee "$output"
@@ -150,7 +152,7 @@ runs:
       run: |
         set -euo pipefail
 
-        output="$RUNNER_TEMP/godlint-findings.txt"
+        output="$RUNNER_TEMP/godlint-annotations.txt"
 
         {
           echo "## Godlint $VERSION"

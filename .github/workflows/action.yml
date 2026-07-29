@@ -55,17 +55,20 @@ jobs:
         with:
           working-directory: .github/fixtures/action-dirty
 
-      # The summary rather than the findings output: a composite action does not export its outputs
-      # when it fails, and failing is what this asserts. The summary is written before that, and it
-      # is what a person reads, so it is the better thing to hold to.
-      - name: A tree with findings fails and says which rules
+      # The annotations file rather than an output or the summary: a composite action withholds its
+      # outputs when it fails, and GITHUB_STEP_SUMMARY is a separate file per step, so neither is
+      # readable from here. Failing is the thing being asserted, so the assertion cannot depend on
+      # the action having succeeded.
+      - name: A tree with findings fails and annotates both rules
         shell: bash
         env:
           OUTCOME: ${{ steps.godlint.outcome }}
         run: |
           set -euo pipefail
 
+          annotations="$RUNNER_TEMP/godlint-annotations.txt"
+
           test "$OUTCOME" = "failure"
-          grep -q 'architecture/filename-case' "$GITHUB_STEP_SUMMARY"
-          grep -q 'logging/no-production-log' "$GITHUB_STEP_SUMMARY"
-          echo "the action failed as it should, and named both rules in the summary"
+          grep -q '^::error .*title=architecture/filename-case::' "$annotations"
+          grep -q '^::error .*title=logging/no-production-log::' "$annotations"
+          echo "the action failed as it should, and annotated both rules"
