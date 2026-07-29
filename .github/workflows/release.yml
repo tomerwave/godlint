@@ -78,11 +78,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: crates-io
 
-    # Trusted publishing exchanges GitHub's OIDC identity for a credential that lives for one
-    # job, so the repository stores no registry token: nothing to leak, and nothing to expire on
-    # a date nobody is watching. It is why this job needs id-token.
     permissions:
-      id-token: write
       contents: read
 
     steps:
@@ -90,14 +86,16 @@ jobs:
 
       - run: rustup toolchain install 1.97.1 --profile minimal
 
-      - uses: rust-lang/crates-io-auth-action@v1
-        id: registry
-
+      # The token is an environment secret rather than a repository one, so no other workflow
+      # can read it. It is also the reason this job is worth replacing: a token expires on a date
+      # nobody is watching, and the release it breaks is the one being cut. Trusted publishing
+      # takes over once both crates exist on the registry -- see the note in docs/contributing.md.
+      #
       # --workspace publishes in dependency order and waits for each crate to appear in the
       # index, so godlint-cli never races the godlint-core it depends on.
       - run: cargo +1.97.1 publish --workspace --locked
         env:
-          CARGO_REGISTRY_TOKEN: ${{ steps.registry.outputs.token }}
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
   announce:
     name: Publish the GitHub release
