@@ -19,4 +19,7 @@ jobs:
 
       - run: rustup toolchain install 1.97.1 --profile minimal
 
-      - run: cargo +1.97.1 run -p godlint-cli -- check .
+      # Built from this checkout rather than installed from a release, so the check is of the code
+      # in the pull request. --format github puts each finding on its own line in Files changed,
+      # which is the same output the published action produces.
+      - run: cargo +1.97.1 run -p godlint-cli -- check --format github .
