@@ -28,6 +28,7 @@ pub mod no_dynamic_execution;
 pub mod no_production_log;
 pub mod parameter_count;
 mod reference;
+mod scoped;
 mod violation;
 
 pub use reference::{

@@ -2,7 +2,10 @@ use crate::{
     analyzers::SourceFacts,
     config::{Config, FilenameCaseRule, NamingCase, Severity},
     glob,
-    rules::{FileRule, Finding, Rule, Violation, evaluate_file_rule, module_path, when_configured},
+    rules::{
+        FileRule, Finding, Rule, Violation, evaluate_file_rule, module_path, scoped,
+        when_configured,
+    },
     source::{Language, SourceFile},
 };
 
@@ -24,7 +27,7 @@ impl FileRule for FilenameCase {
             return None;
         }
 
-        let expected = expected_case(configuration, source)?;
+        let expected = expected_case(configuration, source);
         let name = stem(source)?;
 
         (!follows(&name, expected)).then(|| Violation::FilenameCase {
@@ -40,59 +43,67 @@ pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Vec<Finding> {
     })
 }
 
-fn expected_case(configuration: &FilenameCaseRule, source: &SourceFile) -> Option<NamingCase> {
-    configuration
-        .scopes
-        .iter()
-        .find(|scope| matches(&scope.paths, source))
-        .map(|scope| scope.case)
-        .or_else(|| conventional_case(source.language()))
+fn expected_case(configuration: &FilenameCaseRule, source: &SourceFile) -> NamingCase {
+    scoped::most_specific(&configuration.scopes, |scope| {
+        scoped::longest_match(&scope.paths, source.path_text())
+    })
+    .and_then(|index| configuration.scopes.get(index))
+    .map_or_else(|| conventional_case(source), |scope| scope.case)
 }
 
-fn conventional_case(language: Language) -> Option<NamingCase> {
-    match language {
-        Language::Python | Language::Rust => Some(NamingCase::Snake),
-        Language::JavaScript | Language::TypeScript => None,
+fn conventional_case(source: &SourceFile) -> NamingCase {
+    match source.language() {
+        Language::Python | Language::Rust => NamingCase::Snake,
+        Language::JavaScript | Language::TypeScript => ecmascript_case(source),
+    }
+}
+
+fn ecmascript_case(source: &SourceFile) -> NamingCase {
+    match module_path::last_segment(file_name(source), '.') {
+        "jsx" | "tsx" => NamingCase::Pascal,
+        _ => NamingCase::Kebab,
     }
 }
 
 fn matches(patterns: &[String], source: &SourceFile) -> bool {
-    glob::matches_any(
-        patterns.iter().map(String::as_str),
-        &source.path().to_string_lossy(),
-    )
+    glob::matches_any(patterns.iter().map(String::as_str), source.path_text())
 }
 
 fn stem(source: &SourceFile) -> Option<String> {
-    let path = source.path().to_string_lossy();
-    let name = module_path::last_segment(&path, '/');
-    let stem = module_path::first_segment(name, ".");
+    let stem = module_path::first_segment(file_name(source), ".");
 
     (!stem.is_empty()).then(|| stem.to_owned())
+}
+
+fn file_name(source: &SourceFile) -> &str {
+    module_path::last_segment(source.path_text(), '/')
 }
 
 fn follows(name: &str, case: NamingCase) -> bool {
     match case {
         NamingCase::Kebab => separated(name, '-'),
         NamingCase::Snake => separated(name, '_'),
-        NamingCase::Camel => bounded(name, char::is_lowercase),
-        NamingCase::Pascal => bounded(name, char::is_uppercase),
+        NamingCase::Camel => bounded(name, char::is_ascii_lowercase),
+        NamingCase::Pascal => bounded(name, char::is_ascii_uppercase),
     }
 }
 
 fn separated(name: &str, separator: char) -> bool {
-    !name.is_empty()
-        && name.split(separator).all(|segment| {
-            !segment.is_empty()
-                && segment
-                    .chars()
-                    .all(|character| character.is_ascii_lowercase() || character.is_ascii_digit())
-        })
+    let trimmed = name.trim_matches(separator);
+
+    !trimmed.is_empty() && trimmed.split(separator).all(is_lower_segment)
 }
 
-fn bounded(name: &str, leads: impl Fn(char) -> bool) -> bool {
+fn is_lower_segment(segment: &str) -> bool {
+    !segment.is_empty()
+        && segment
+            .chars()
+            .all(|character| character.is_ascii_lowercase() || character.is_ascii_digit())
+}
+
+fn bounded(name: &str, leads: impl Fn(&char) -> bool) -> bool {
     let mut characters = name.chars();
 
-    characters.next().is_some_and(leads)
+    characters.next().as_ref().is_some_and(leads)
         && characters.all(|character| character.is_ascii_alphanumeric())
 }

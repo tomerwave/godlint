@@ -414,17 +414,40 @@ each appears in the list.
 | `architecture/filename-case` | Shipped | Repository path fact | Medium | Support scoped case conventions and generated-file exceptions |
 
 `architecture/filename-case` reads no syntax at all — a path is the whole input — which makes it
-the one rule that behaves identically in every language. What it cannot assume is the
-convention. Rust and Python each have one the ecosystem already enforces, so a file in those
-languages is held to `snake_case` with no configuration. JavaScript and TypeScript have no single
-convention — `kebab-case` modules and `PascalCase` components are both ordinary — so those files
-are unchecked until a `scopes` entry names them, silent rather than wrong.
+the one rule that behaves identically in every language.
 
-A scope declares the case for the paths it names and wins over a language convention, so a
-repository that keeps components in `src/ui/**` can require `PascalCase` there and leave the rest
-alone. `allow` exempts a path outright, which is what a generated file needs. The name checked is
-what precedes the first dot, so `widget.test.ts` is judged as `widget` — the compound extension is
-a suffix, not part of the name.
+The convention comes from the **extension**, not the language, because that is where the
+distinction actually lives. `.tsx` and `.jsx` are components and take `PascalCase`; `.ts`, `.js`,
+`.mjs`, `.cjs`, `.mts` and `.cts` are modules and take `kebab-case`; `.rs`, `.py` and `.pyi` take
+`snake_case`, which each ecosystem already enforces. So `Button.tsx` and `use-button.ts` are both
+correct in the same directory, and a language-level default could not express that.
+
+| Extension | Case |
+| --- | --- |
+| `.jsx`, `.tsx` | `PascalCase` |
+| `.cjs`, `.cts`, `.js`, `.mjs`, `.mts`, `.ts` | `kebab-case` |
+| `.py`, `.pyi`, `.rs` | `snake_case` |
+
+A `scopes` entry declares the case for the paths it names and wins over the extension default, for
+a repository whose layout says something the extension does not. Where two scopes name the same
+path, the most specific declaration decides, the same rule
+`architecture/dependency-boundary` follows for layers — so `ui/legacy/**` beats `ui/**` wherever
+each sits in the list, and a narrower scope cannot become dead configuration by being declared
+second. `allow` is checked before any scope and exempts a path outright, which is what a generated
+file needs.
+
+A leading or trailing separator is not part of the name, which is what `__init__.py`,
+`__main__.py` and `_private.py` need: PEP 8's snake_case includes them, and `__init__.py` is a file
+Python requires rather than one a project chose. A separator doubled *inside* a name still leaves
+an empty segment and is reported, and a name that is only separators is not a name.
+
+Every case is judged in ASCII in every position, so `Éclair.tsx` is reported rather than accepted
+on its leading character alone. The name judged is what precedes the first dot, so
+`widget.test.ts` is judged as `widget` — a compound extension is a suffix, not part of the name. A
+file whose name begins with the dot has no name to judge and is left alone.
+
+A finding is suppressible, the same as a file-size finding: both are reported against the whole
+file, and neither is one of the two rules that hold suppressions to account.
 
 ### Phase 5 — Error handling and testing
 

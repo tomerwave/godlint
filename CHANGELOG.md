@@ -20,11 +20,15 @@ releases begin.
   since an override here would be this project exempting itself from its own standard.
 
 - `architecture/filename-case` (`scopes`, `allow`) — reports a file name that does not follow the
-  convention for its language or for a declared scope. It reads no syntax: a path is the whole
-  input. Rust and Python are held to `snake_case` with no configuration, because each ecosystem
-  already enforces one. JavaScript and TypeScript have no single convention, so those files are
-  unchecked until a `scopes` entry names them — silent rather than wrong. A scope declares the
-  case for the paths it names and wins over the language default; `allow` exempts a path outright.
+  convention for its extension or for a declared scope. It reads no syntax: a path is the whole
+  input. The convention comes from the extension rather than the language, because that is where
+  the distinction lives: `PascalCase` for `.tsx` and `.jsx`, `kebab-case` for `.ts`, `.js`,
+  `.mjs`, `.cjs`, `.mts` and `.cts`, and `snake_case` for `.rs`, `.py` and `.pyi`. So `Button.tsx`
+  and `use-button.ts` are both correct in the same directory. A `scopes` entry declares the case
+  for the paths it names and wins over the extension default, with the most specific scope
+  deciding rather than the first declared; `allow` is checked first and exempts a path outright. A
+  leading or trailing separator is not part of the name, so `__init__.py`, `__main__.py` and
+  `_private.py` are snake_case as PEP 8 has them. Every case is judged in ASCII in every position.
   The name judged is what precedes the first dot, so `widget.test.ts` is judged as `widget`.
 
 - `security/forbidden-dependency` (`packages`, each with `allow-in`) — reports an import of a
@@ -161,6 +165,14 @@ releases begin.
   time-dependent input, and fixtures pin dates far in the past and future.
 
 ### Changed
+
+- A blank path pattern is reported as `<rule> path patterns must not be blank` rather than naming
+  `allow-in`, since `architecture/filename-case` has no `allow-in` key — it has `allow` and
+  `scopes`, and the old message named a field that rule does not have.
+
+- A scoped JavaScript specifier of exactly `@` is no longer read as a package. `@/components` is a
+  bundler alias for first-party source rather than a registry scope, and first-party code names no
+  dependency.
 
 - One registry is the single list of rules. `rules::registry` already had to know every
   rule to answer "is this rule enabled", which `policy/unused-suppression` needs, and
@@ -306,8 +318,8 @@ releases begin.
 - `ConfigError` moved to `config/error.rs`, the configuration validators to
   `config/validate.rs`, and `Violation` to `rules/violation.rs`. Each file had crossed the
   500-line or 50-line ceiling this project holds itself to as rules were added, and the ceiling
-  is not the thing to move. The variants reporting a duplicated entry also repeated one
-  sentence, which is now written once.
+  is not the thing to move. The three variants reporting an entry duplicated within an `allow-in`
+  list also repeated one sentence, which is now written once.
 
 - `architecture/restricted-call` no longer bans `console.log`, `console.debug`, Python `print`
   or Rust `dbg!` by default; `logging/no-production-log` owns them. Two consequences to know

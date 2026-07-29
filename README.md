@@ -116,7 +116,8 @@ TypeScript/JavaScript, and Python source files. Twenty-one rules are implemented
 - `architecture/dependency-boundary` — a dependency that runs against the declared layer order.
 - `security/forbidden-dependency` — an import of a package the project has ruled out.
 - `architecture/filename-case` — a file name that does not follow the convention for its
-  language or its declared scope.
+  extension or its declared scope: `PascalCase` for `.tsx`/`.jsx`, `kebab-case` for other
+  JavaScript and TypeScript, `snake_case` for Rust and Python.
 
 The call rules read the callee exactly as it is spelled, and the import rules read the
 module the same way. `std::env::var` is matched and the

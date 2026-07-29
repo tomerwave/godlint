@@ -208,7 +208,7 @@ const REGISTRATIONS: &[Registration] = &[
     Registration {
         id: FilenameCase::ID,
         severity: filename_case_severity,
-        suppressible: false,
+        suppressible: true,
     },
 ];
 

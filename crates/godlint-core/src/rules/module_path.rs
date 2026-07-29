@@ -31,13 +31,21 @@ fn ecmascript_package(module: &str) -> Option<&str> {
 
     let first = first_segment(module, "/");
 
-    if !first.starts_with('@') {
-        return non_empty(first);
+    if first.starts_with('@') {
+        return scoped_package(module, first);
     }
 
-    let scoped = non_empty(first_segment(module.get(first.len() + 1..)?, "/"))?;
+    non_empty(first)
+}
 
-    non_empty(&module[..first.len() + 1 + scoped.len()])
+fn scoped_package<'a>(module: &'a str, scope: &str) -> Option<&'a str> {
+    if scope.len() == 1 {
+        return None;
+    }
+
+    let name = non_empty(first_segment(module.get(scope.len() + 1..)?, "/"))?;
+
+    non_empty(&module[..scope.len() + 1 + name.len()])
 }
 
 fn python_package(module: &str) -> Option<&str> {

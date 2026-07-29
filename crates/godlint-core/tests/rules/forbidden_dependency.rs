@@ -240,3 +240,18 @@ fn a_scope_with_a_trailing_separator_names_no_package() {
         );
     }
 }
+
+#[test]
+fn a_bundler_alias_is_first_party_rather_than_a_scope() {
+    for module in ["@/components/Button", "@/x", "@"] {
+        assert!(
+            violations(
+                "src/a.ts",
+                &format!("import f from \"{module}\";"),
+                &forbidding(module)
+            )
+            .is_empty(),
+            "{module} aliases first-party source rather than naming a registry scope"
+        );
+    }
+}
