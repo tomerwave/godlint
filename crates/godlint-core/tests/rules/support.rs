@@ -6,7 +6,7 @@ use godlint_core::{
     config::Config,
     facts::FunctionFact,
     rules::{
-        CommentRule, FileLimitRule, Finding, FunctionLimitRule, RuleError, Violation,
+        CommentRule, FileLimitRule, Finding, FunctionLimitRule, Violation,
         evaluate_file_limit_rule, evaluate_function_limit_rule,
     },
     suppression::{Suppression, collect},
@@ -17,13 +17,12 @@ pub(super) fn config(body: &str) -> Config {
 }
 
 pub(super) fn rule_violations(
-    evaluate: fn(&[SourceFacts], &Config) -> Result<Vec<Finding>, RuleError>,
+    evaluate: fn(&[SourceFacts], &Config) -> Vec<Finding>,
     path: &str,
     source: &str,
     configuration: &str,
 ) -> Vec<Violation> {
     evaluate(&[facts(path, source)], &config(configuration))
-        .unwrap_or_else(|error| panic!("evaluates {path}: {error}"))
         .into_iter()
         .map(|finding| finding.violation)
         .collect()
@@ -80,7 +79,6 @@ pub(super) fn function_limits<R: FunctionLimitRule>(
     let facts = facts(path, source);
 
     evaluate_function_limit_rule::<R>(std::slice::from_ref(&facts), configuration)
-        .unwrap_or_else(|error| panic!("evaluates {}: {error}", R::ID))
         .into_iter()
         .map(|finding| finding.violation)
         .collect()
@@ -94,7 +92,6 @@ pub(super) fn file_limits<R: FileLimitRule>(
     let facts = facts(path, source);
 
     evaluate_file_limit_rule::<R>(std::slice::from_ref(&facts), configuration)
-        .unwrap_or_else(|error| panic!("evaluates {}: {error}", R::ID))
         .into_iter()
         .map(|finding| finding.violation)
         .collect()

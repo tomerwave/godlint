@@ -3,8 +3,7 @@ use crate::{
     config::{Config, ParameterCountRule, Severity},
     facts::FunctionFact,
     rules::{
-        Finding, FunctionLimitRule, Metric, Rule, RuleError, evaluate_function_limit_rule,
-        when_configured,
+        Finding, FunctionLimitRule, Metric, Rule, evaluate_function_limit_rule, when_configured,
     },
 };
 
@@ -36,7 +35,7 @@ impl FunctionLimitRule for ParameterCount {
     }
 }
 
-pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, RuleError> {
+pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Vec<Finding> {
     when_configured(config.rules.parameter_count.as_ref(), |configuration| {
         evaluate_function_limit_rule::<ParameterCount>(facts, configuration)
     })

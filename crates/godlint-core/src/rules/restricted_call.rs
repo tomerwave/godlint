@@ -3,7 +3,7 @@ use crate::{
     config::{Config, RestrictedCall as RestrictedCallConfiguration, RestrictedCallRule, Severity},
     facts::CallFact,
     glob,
-    rules::{CallRule, Finding, Rule, RuleError, Violation, evaluate_call_rule, when_configured},
+    rules::{CallRule, Finding, Rule, Violation, evaluate_call_rule, when_configured},
     source::Language,
 };
 
@@ -45,7 +45,7 @@ impl CallRule for RestrictedCall {
     }
 }
 
-pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, RuleError> {
+pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Vec<Finding> {
     when_configured(config.rules.restricted_call.as_ref(), |rule| {
         evaluate_call_rule::<RestrictedCall>(facts, rule)
     })

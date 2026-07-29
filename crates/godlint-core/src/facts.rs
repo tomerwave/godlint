@@ -1,6 +1,6 @@
 use std::{error::Error, fmt};
 
-use crate::source::{SourceFile, SourceFileError, SourceRange};
+use crate::source::{SourceFile, SourceRange};
 
 macro_rules! function_metrics {
     ($($(#[$documentation:meta])* $name:ident),+ $(,)?) => {
@@ -22,35 +22,6 @@ macro_rules! function_metrics {
             impl fmt::Display for $name {
                 fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
                     write!(formatter, "{}", self.0)
-                }
-            }
-        )+
-    };
-}
-
-macro_rules! range_errors {
-    ($($name:ident => $variant:ident, $noun:literal),+ $(,)?) => {
-        $(
-            #[derive(Debug)]
-            pub enum $name {
-                $variant { source: SourceFileError },
-            }
-
-            impl fmt::Display for $name {
-                fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-                    match self {
-                        Self::$variant { source } => {
-                            write!(formatter, concat!($noun, " range is invalid: {}"), source)
-                        }
-                    }
-                }
-            }
-
-            impl Error for $name {
-                fn source(&self) -> Option<&(dyn Error + 'static)> {
-                    match self {
-                        Self::$variant { source } => Some(source),
-                    }
                 }
             }
         )+
@@ -125,39 +96,19 @@ pub struct FunctionFactDetails {
 
 #[derive(Debug)]
 pub enum FunctionFactError {
-    InvalidFunctionRange {
-        source: SourceFileError,
-    },
-    InvalidBodyRange {
-        source: SourceFileError,
-    },
     BodyOutsideFunction {
         function_range: SourceRange,
         body_range: SourceRange,
     },
 }
 
-range_errors! {
-    CommentFactError => InvalidCommentRange, "comment",
-    CallFactError => InvalidCallRange, "call",
-    AccessFactError => InvalidAccessRange, "access",
-}
-
 impl CommentFact {
-    pub fn new(
-        source: SourceFile,
-        range: SourceRange,
-        kind: CommentKind,
-    ) -> Result<Self, CommentFactError> {
-        source
-            .validate_range(range)
-            .map_err(|source| CommentFactError::InvalidCommentRange { source })?;
-
-        Ok(Self {
+    pub fn new(source: SourceFile, range: SourceRange, kind: CommentKind) -> Self {
+        Self {
             source,
             range,
             kind,
-        })
+        }
     }
 
     pub fn source(&self) -> &SourceFile {
@@ -183,17 +134,13 @@ impl CallFact {
         range: SourceRange,
         is_macro: bool,
         argument_count: usize,
-    ) -> Result<Self, CallFactError> {
-        source
-            .validate_range(range)
-            .map_err(|source| CallFactError::InvalidCallRange { source })?;
-
-        Ok(Self {
+    ) -> Self {
+        Self {
             source,
             range,
             is_macro,
             argument_count,
-        })
+        }
     }
 
     pub fn source(&self) -> &SourceFile {
@@ -218,12 +165,8 @@ impl CallFact {
 }
 
 impl AccessFact {
-    pub fn new(source: SourceFile, range: SourceRange) -> Result<Self, AccessFactError> {
-        source
-            .validate_range(range)
-            .map_err(|source| AccessFactError::InvalidAccessRange { source })?;
-
-        Ok(Self { source, range })
+    pub fn new(source: SourceFile, range: SourceRange) -> Self {
+        Self { source, range }
     }
 
     pub fn source(&self) -> &SourceFile {
@@ -245,13 +188,6 @@ impl FunctionFact {
         name: Option<String>,
         details: FunctionFactDetails,
     ) -> Result<Self, FunctionFactError> {
-        source
-            .validate_range(details.range)
-            .map_err(|source| FunctionFactError::InvalidFunctionRange { source })?;
-        source
-            .validate_range(details.body_range)
-            .map_err(|source| FunctionFactError::InvalidBodyRange { source })?;
-
         if !range_contains(details.range, details.body_range) {
             return Err(FunctionFactError::BodyOutsideFunction {
                 function_range: details.range,
@@ -326,12 +262,6 @@ fn range_contains(container: SourceRange, candidate: SourceRange) -> bool {
 impl fmt::Display for FunctionFactError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::InvalidFunctionRange { source } => {
-                write!(formatter, "function range is invalid: {source}")
-            }
-            Self::InvalidBodyRange { source } => {
-                write!(formatter, "function body range is invalid: {source}")
-            }
             Self::BodyOutsideFunction {
                 function_range,
                 body_range,
@@ -347,13 +277,4 @@ impl fmt::Display for FunctionFactError {
     }
 }
 
-impl Error for FunctionFactError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match self {
-            Self::InvalidFunctionRange { source } | Self::InvalidBodyRange { source } => {
-                Some(source)
-            }
-            Self::BodyOutsideFunction { .. } => None,
-        }
-    }
-}
+impl Error for FunctionFactError {}

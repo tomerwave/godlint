@@ -24,23 +24,20 @@ RULES = "/src/rules/"
 
 # Lines that cannot be executed by any test, with the reason they cannot.
 #
-# Most entries are error propagation from `SourceFile::location`, which fails only for a
-# range that is out of bounds or off a character boundary. Function, comment, call, and
-# access facts validate their ranges when they are constructed, so no fact can carry such
-# a range and the `?` never fires. One entry is a match arm kept for exhaustiveness, noted
-# beside it. The budget is fixed in both directions: a newly uncovered line pushes the count
-# over, and a budget left above reality is reported too, which is how collapsing four
-# duplicated drivers into one showed up here as two entries that no longer existed.
+# There used to be nine, eight of them the same thing: a `?` propagating a location error
+# that could not occur, because every fact validated its range on construction without the
+# type recording that it had. A range is now built only by the file it indexes, so locating
+# one cannot fail, rule evaluation reports no error at all, and those eight lines are gone
+# rather than documented. The budget is fixed in both directions: a newly uncovered line
+# pushes the count over, and a budget left above reality is reported too, which is how that
+# collapse showed up here rather than as silent slack.
 BUDGET = {
-    "src/rules/mod.rs": 5,
-    # A rule that evaluates two fact kinds propagates a location error from each, and the
-    # shared reference driver propagates one of its own. CallFact and AccessFact validate
-    # their ranges on construction, so none of these can execute through the fact contract.
-    # Two are the rule's own `?` propagations. The third is `Language::Rust => false` in
-    # `is_environment_access`: Rust states in its vocabulary that it has no member-access
-    # form, so no Rust file produces an access fact and the arm exists to make the compiler
-    # demand a decision when a language is added.
-    "src/rules/direct_environment_read.rs": 3,
+    # `Language::Rust => false` in `is_environment_access`. Rust states in its vocabulary
+    # that it has no member-access form, so no Rust file produces an access fact; the arm
+    # exists to make the compiler demand a decision when a language is added.
+    "src/rules/direct_environment_read.rs": 1,
+    # The marker range is derived from a comment range that is already valid and can only
+    # narrow it, so asking the file for it cannot fail.
     "src/rules/todo_requires_reference.rs": 1,
 }
 

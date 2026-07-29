@@ -1,11 +1,11 @@
-use std::{error::Error, fmt, path::PathBuf};
+use std::{fmt, path::PathBuf};
 
 use crate::{
     analyzers::SourceFacts,
     config::{Config, Severity},
     date::Date,
     facts::{CommentFact, FunctionFact},
-    source::{SourceFile, SourceFileError, SourceRange},
+    source::{SourceFile, SourceRange},
     suppression::{self, Suppression},
 };
 
@@ -147,11 +147,6 @@ impl Finding {
     }
 }
 
-#[derive(Debug)]
-pub enum RuleError {
-    LocatesSource { source: SourceFileError },
-}
-
 pub trait Rule {
     const ID: &'static str;
 
@@ -207,11 +202,11 @@ pub fn evaluate_suppression_rule<R: SuppressionRule>(
     suppressions: &[Suppression],
     configuration: &R::Configuration,
     today: Date,
-) -> Result<Vec<Finding>, RuleError> {
+) -> Vec<Finding> {
     let reporting = Reporting::of::<R>(configuration);
 
     if reporting.severity == Severity::Off {
-        return Ok(Vec::new());
+        return Vec::new();
     }
 
     let mut findings = Vec::new();
@@ -223,17 +218,17 @@ pub fn evaluate_suppression_rule<R: SuppressionRule>(
                 suppression.range(),
                 reporting,
                 violation,
-            )?);
+            ));
         }
     }
 
-    Ok(findings)
+    findings
 }
 
 pub fn evaluate_function_rule<R: FunctionRule>(
     facts: &[SourceFacts],
     configuration: &R::Configuration,
-) -> Result<Vec<Finding>, RuleError> {
+) -> Vec<Finding> {
     collect_ranged(
         facts,
         Reporting::of::<R>(configuration),
@@ -245,7 +240,7 @@ pub fn evaluate_function_rule<R: FunctionRule>(
 pub fn evaluate_function_limit_rule<R: FunctionLimitRule>(
     facts: &[SourceFacts],
     configuration: &R::Configuration,
-) -> Result<Vec<Finding>, RuleError> {
+) -> Vec<Finding> {
     let max = R::max(configuration);
 
     collect_ranged(
@@ -265,12 +260,12 @@ pub(crate) fn collect_findings<'facts, T: 'facts, I>(
     reporting: Reporting,
     items: impl Fn(&'facts SourceFacts) -> &'facts [T],
     report: impl Fn(&'facts T, &'facts SourceFacts) -> I,
-) -> Result<Vec<Finding>, RuleError>
+) -> Vec<Finding>
 where
     I: IntoIterator<Item = (SourceRange, Violation)>,
 {
     if reporting.severity == Severity::Off {
-        return Ok(Vec::new());
+        return Vec::new();
     }
 
     facts
@@ -300,7 +295,7 @@ pub(crate) fn collect_ranged<'facts, R: Ranged + 'facts>(
     reporting: Reporting,
     items: impl Fn(&'facts SourceFacts) -> &'facts [R],
     check: impl Fn(&'facts R, &'facts SourceFacts) -> Option<Violation>,
-) -> Result<Vec<Finding>, RuleError> {
+) -> Vec<Finding> {
     collect_findings(facts, reporting, items, |item, source| {
         check(item, source).map(|violation| (item.source_range(), violation))
     })
@@ -309,7 +304,7 @@ pub(crate) fn collect_ranged<'facts, R: Ranged + 'facts>(
 pub fn evaluate_file_limit_rule<R: FileLimitRule>(
     facts: &[SourceFacts],
     configuration: &R::Configuration,
-) -> Result<Vec<Finding>, RuleError> {
+) -> Vec<Finding> {
     let max = R::max(configuration);
 
     evaluate_files(facts, Reporting::of::<R>(configuration), |source| {
@@ -323,9 +318,9 @@ fn evaluate_files(
     facts: &[SourceFacts],
     reporting: Reporting,
     check: impl Fn(&SourceFacts) -> Option<Violation>,
-) -> Result<Vec<Finding>, RuleError> {
+) -> Vec<Finding> {
     if reporting.severity == Severity::Off {
-        return Ok(Vec::new());
+        return Vec::new();
     }
 
     facts
@@ -346,7 +341,7 @@ fn evaluate_files(
 pub fn evaluate_comment_rule<R: CommentRule>(
     facts: &[SourceFacts],
     configuration: &R::Configuration,
-) -> Result<Vec<Finding>, RuleError> {
+) -> Vec<Finding> {
     collect_findings(
         facts,
         Reporting::of::<R>(configuration),
@@ -375,12 +370,10 @@ fn finding(
     range: SourceRange,
     reporting: Reporting,
     violation: Violation,
-) -> Result<Finding, RuleError> {
-    let location = source
-        .location(range)
-        .map_err(|source| RuleError::LocatesSource { source })?;
+) -> Finding {
+    let location = source.location(range);
 
-    Ok(Finding {
+    Finding {
         path: source.path().to_path_buf(),
         range,
         line: location.start.line,
@@ -388,10 +381,10 @@ fn finding(
         severity: reporting.severity,
         rule_id: reporting.rule_id,
         violation,
-    })
+    }
 }
 
-type Evaluator = fn(&[SourceFacts], &Config) -> Result<Vec<Finding>, RuleError>;
+type Evaluator = fn(&[SourceFacts], &Config) -> Vec<Finding>;
 
 const EVALUATORS: &[Evaluator] = &[
     function_size::evaluate,
@@ -410,16 +403,12 @@ const EVALUATORS: &[Evaluator] = &[
     explicit_timer_delay::evaluate,
 ];
 
-pub fn evaluate(
-    facts: &[SourceFacts],
-    config: &Config,
-    today: Date,
-) -> Result<Vec<Finding>, RuleError> {
+pub fn evaluate(facts: &[SourceFacts], config: &Config, today: Date) -> Vec<Finding> {
     let suppressions = suppression::collect(facts);
     let mut findings = Vec::new();
 
     for evaluate_rule in EVALUATORS {
-        findings.extend(evaluate_rule(facts, config)?);
+        findings.extend(evaluate_rule(facts, config));
     }
 
     let raw_findings = findings;
@@ -429,13 +418,13 @@ pub fn evaluate(
         &suppressions,
         config,
         today,
-    )?);
+    ));
 
     findings.extend(unused_suppression::evaluate(
         &suppressions,
         &raw_findings,
         config,
-    )?);
+    ));
 
     findings.sort_by(|left, right| {
         (&left.path, left.line, left.column, left.rule_id).cmp(&(
@@ -446,14 +435,14 @@ pub fn evaluate(
         ))
     });
 
-    Ok(findings)
+    findings
 }
 
 pub(crate) fn when_configured<C>(
     configuration: Option<&C>,
-    evaluate: impl FnOnce(&C) -> Result<Vec<Finding>, RuleError>,
-) -> Result<Vec<Finding>, RuleError> {
-    configuration.map_or_else(|| Ok(Vec::new()), evaluate)
+    evaluate: impl FnOnce(&C) -> Vec<Finding>,
+) -> Vec<Finding> {
+    configuration.map_or_else(Vec::new, evaluate)
 }
 
 impl fmt::Display for Violation {
@@ -541,22 +530,6 @@ impl fmt::Display for SuppressionDefect {
                 "Suppression has no enclosing declaration; place it inside the declaration \
                  it applies to."
             ),
-        }
-    }
-}
-
-impl fmt::Display for RuleError {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::LocatesSource { source } => write!(formatter, "invalid source file: {source}"),
-        }
-    }
-}
-
-impl Error for RuleError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match self {
-            Self::LocatesSource { source } => Some(source),
         }
     }
 }

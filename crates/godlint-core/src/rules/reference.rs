@@ -1,7 +1,7 @@
 use crate::{
     analyzers::SourceFacts,
     facts::{AccessFact, CallFact},
-    rules::{Finding, Ranged, Reporting, Rule, RuleError, Violation, collect_ranged},
+    rules::{Finding, Ranged, Reporting, Rule, Violation, collect_ranged},
     source::SourceRange,
 };
 
@@ -16,7 +16,7 @@ pub trait AccessRule: Rule {
 pub fn evaluate_call_rule<R: CallRule>(
     facts: &[SourceFacts],
     configuration: &R::Configuration,
-) -> Result<Vec<Finding>, RuleError> {
+) -> Vec<Finding> {
     collect_ranged(
         facts,
         Reporting::of::<R>(configuration),
@@ -28,7 +28,7 @@ pub fn evaluate_call_rule<R: CallRule>(
 pub fn evaluate_access_rule<R: AccessRule>(
     facts: &[SourceFacts],
     configuration: &R::Configuration,
-) -> Result<Vec<Finding>, RuleError> {
+) -> Vec<Finding> {
     collect_ranged(
         facts,
         Reporting::of::<R>(configuration),

@@ -2,9 +2,7 @@ use crate::{
     analyzers::SourceFacts,
     config::{Config, EmptyFunctionRule, Severity},
     facts::FunctionFact,
-    rules::{
-        Finding, FunctionRule, Rule, RuleError, Violation, evaluate_function_rule, when_configured,
-    },
+    rules::{Finding, FunctionRule, Rule, Violation, evaluate_function_rule, when_configured},
 };
 
 pub struct EmptyFunction;
@@ -46,7 +44,7 @@ fn name_is_allowed(function: &FunctionFact, configuration: &EmptyFunctionRule) -
     })
 }
 
-pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, RuleError> {
+pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Vec<Finding> {
     when_configured(config.rules.empty_function.as_ref(), |configuration| {
         evaluate_function_rule::<EmptyFunction>(facts, configuration)
     })

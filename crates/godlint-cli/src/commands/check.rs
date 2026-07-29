@@ -37,8 +37,7 @@ fn run_check(paths: &[String]) -> Result<ExitCode, String> {
     let workspace = Workspace::prepare(paths)?;
     let report = workspace.scan()?;
     let today = Date::today().ok_or_else(|| "Unable to determine the current date.".to_owned())?;
-    let findings = evaluate(&report.facts, &workspace.config, today)
-        .map_err(|error| format!("Unable to evaluate rules: {error}"))?;
+    let findings = evaluate(&report.facts, &workspace.config, today);
 
     Ok(report_outcome(&findings, &report, workspace.config.fail_on))
 }

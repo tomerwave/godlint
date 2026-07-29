@@ -48,11 +48,7 @@ pub enum SourceFileError {
     UnsupportedLanguage { path: PathBuf },
     InvalidRange { range: SourceRange },
     InvalidUtf8Boundary { offset: usize },
-}
-
-#[derive(Debug)]
-pub enum SourceRangeError {
-    Reversed { start: usize, end: usize },
+    ReversedRange { start: usize, end: usize },
 }
 
 const BYTE_ORDER_MARK: &str = "\u{feff}";
@@ -113,20 +109,26 @@ impl SourceFile {
         }
     }
 
+    pub fn range(&self, start: usize, end: usize) -> Result<SourceRange, SourceFileError> {
+        if start > end {
+            return Err(SourceFileError::ReversedRange { start, end });
+        }
+
+        self.validate_offset(start)?;
+        self.validate_offset(end)?;
+
+        Ok(SourceRange { start, end })
+    }
+
     pub fn line(&self, offset: usize) -> usize {
         self.line_starts.partition_point(|start| *start <= offset)
     }
 
-    pub fn location(&self, range: SourceRange) -> Result<SourceLocation, SourceFileError> {
-        Ok(SourceLocation {
-            start: self.position(range.start)?,
-            end: self.position(range.end)?,
-        })
-    }
-
-    pub(crate) fn validate_range(&self, range: SourceRange) -> Result<(), SourceFileError> {
-        self.validate_offset(range.start)?;
-        self.validate_offset(range.end)
+    pub fn location(&self, range: SourceRange) -> SourceLocation {
+        SourceLocation {
+            start: self.position(range.start),
+            end: self.position(range.end),
+        }
     }
 
     fn validate_offset(&self, offset: usize) -> Result<(), SourceFileError> {
@@ -146,29 +148,19 @@ impl SourceFile {
         Ok(())
     }
 
-    fn position(&self, offset: usize) -> Result<SourcePosition, SourceFileError> {
-        self.validate_offset(offset)?;
-
+    fn position(&self, offset: usize) -> SourcePosition {
         let line_index = self.line_starts.partition_point(|start| *start <= offset) - 1;
         let line_start = self.line_starts.get(line_index).copied().unwrap_or(0);
         let column = self.source[line_start..offset].chars().count() + 1;
 
-        Ok(SourcePosition {
+        SourcePosition {
             line: line_index + 1,
             column,
-        })
+        }
     }
 }
 
 impl SourceRange {
-    pub fn new(start: usize, end: usize) -> Result<Self, SourceRangeError> {
-        if start > end {
-            return Err(SourceRangeError::Reversed { start, end });
-        }
-
-        Ok(Self { start, end })
-    }
-
     pub fn start(&self) -> usize {
         self.start
     }
@@ -242,20 +234,11 @@ impl fmt::Display for SourceFileError {
                     "source offset is not on a UTF-8 boundary: {offset}"
                 )
             }
-        }
-    }
-}
-
-impl Error for SourceFileError {}
-
-impl fmt::Display for SourceRangeError {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Reversed { start, end } => {
+            Self::ReversedRange { start, end } => {
                 write!(formatter, "source range start exceeds end: {start}..{end}")
             }
         }
     }
 }
 
-impl Error for SourceRangeError {}
+impl Error for SourceFileError {}
