@@ -9,6 +9,16 @@ speaks about.
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-07-29
+
+### Fixed
+
+- The npm packages are published from paths prefixed with `./`. npm reads a bare `owner/name` as a
+  GitHub shorthand, so `packages/cli-darwin-arm64` was fetched from git rather than published from
+  disk, and the release failed after the crates were already published. A dry run now packs every
+  package before any upload, so a packaging mistake costs nothing.
+
+
 ## [0.1.1] - 2026-07-29
 
 ### Added

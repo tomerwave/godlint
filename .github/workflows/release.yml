@@ -198,14 +198,23 @@ jobs:
       # A trusted publisher cannot be configured for a name that does not exist yet, so the first
       # release authenticates with a token. Once these packages exist, configure trusted publishing
       # for each and delete both this env block and the secret.
+      # Every path is prefixed with ./ because npm reads a bare owner/name as a git shorthand and
+      # would try to fetch packages/cli-darwin-arm64 from GitHub. A dry run first, so a packaging
+      # mistake is found before anything is uploaded and the version has to be burned.
+      - name: Check every package packs
+        run: |
+          for package in ./packages/*; do
+            npm publish "$package" --access public --dry-run
+          done
+
       - name: Publish every platform package, then the one that names them
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          for package in packages/cli-*; do
+          for package in ./packages/cli-*; do
             npm publish "$package" --access public --provenance
           done
-          npm publish packages/godlint --access public --provenance
+          npm publish ./packages/godlint --access public --provenance
 
   announce:
     name: Publish the GitHub release
