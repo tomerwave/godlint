@@ -5,11 +5,18 @@ Read the linked documents relevant to the task before changing code or policy.
 
 ## Project documents
 
+[The documentation index](docs/README.md) lists every document. The ones that most often decide a
+change:
+
 - [Product scope](docs/product-scope.md) — product promise, MVP boundary, and non-goals.
 - [Architecture](docs/architecture.md) — system boundaries, crate ownership, and delivery order.
 - [Testing strategy](docs/testing.md) — fixture-first testing and required validation layers.
 - [Dogfooding](docs/dogfooding.md) — how Godlint enforces policy on its own repository.
-- [Contribution conventions](docs/contributing.md) — code, documentation, dependency, and change expectations.
+- [Rule reference](docs/rules.md) — every implemented rule and what it cannot see yet.
+- [Configuration](docs/configuration.md) — the `godlint.yaml` schema.
+- [Local development](docs/local-development.md) — the build and the checks CI runs.
+- [Releasing](docs/releasing.md) — the tag-driven release and the registries.
+- [Contributing](CONTRIBUTING.md) — change conventions, branch naming, pull request templates, labels.
 
 ## Operating rules
 
