@@ -43,12 +43,13 @@ jobs:
         env:
           BRANCH: ${{ github.head_ref }}
         run: |
-          if printf '%s' "$BRANCH" | grep -Eq '^(feat|fix|docs|chore|refactor|test|ci)/[a-z0-9][a-z0-9._-]*$'; then
+          if printf '%s' "$BRANCH" | grep -Eqx '(feat|fix|perf|docs|chore|refactor|style|build|revert|test|ci)/[a-z0-9][a-z0-9._/-]*'; then
             echo "$BRANCH"
             exit 0
           fi
 
           echo "Branch name '$BRANCH' does not carry a conventional prefix." >&2
-          echo "Use feat/, fix/, docs/, chore/, refactor/, test/ or ci/ followed by a" >&2
-          echo "lower-case description, such as feat/import-fact." >&2
+          echo "Use one of feat, fix, perf, docs, style, refactor, test, build, ci, chore or" >&2
+          echo "revert, then a slash and a lower-case description." >&2
+          echo "For example feat/import-fact. Further slashes are allowed." >&2
           exit 1

@@ -15,10 +15,11 @@ For repository changes:
   `crates/godlint-cli/tests/fixtures/rules/<rule-id>/`.
 - Do not add a public API or crate boundary before a real implementation need exists.
 - Never commit `.omx/` planning/runtime files.
-- Branch from `main` and name the branch with a conventional prefix: `feat/`, `fix/`,
-  `docs/`, `chore/`, `refactor/`, `test/` or `ci/`, followed by a lower-case description, as in
-  `feat/import-fact`. A required check enforces this. It cannot refuse the push, only the
-  merge, because GitHub's own branch-name rule is not available on this repository's plan.
+- Branch from `main` and name the branch with a Conventional Commits type followed by a slash
+  and a lower-case description, as in `feat/import-fact`: `feat`, `fix`, `perf`, `docs`,
+  `style`, `refactor`, `test`, `build`, `ci`, `chore` or `revert`. Further slashes are allowed.
+  A required check enforces this. It cannot refuse the push, only the merge, because GitHub's
+  own branch-name rule is not available on this repository's plan.
 - `main` is protected: it takes no direct push, no force-push and no deletion, and a pull
   request must have every required check green before it merges. Merges are merge commits, and
   the branch is deleted afterwards. A repository administrator can bypass, which exists to
