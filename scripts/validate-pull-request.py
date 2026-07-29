@@ -5,8 +5,13 @@ A checklist records an intention; this records a fact. Every check here is one a
 reviewer would otherwise have to perform by hand, and each failure names the file to
 edit rather than the box to tick.
 
-Run with no arguments to check the working tree. Pass --base <ref> to additionally
+Run with no arguments to check the working tree. Pass --release-line <ref> to additionally
 apply the checks that depend on what a change touched.
+
+Those checks measure the branch against the release line rather than against whichever
+branch a pull request targets, because a changelog entry describes a change as a release
+will present it. A pull request stacked on another carries the entry in the branch below
+it, and asking about the target would demand a second entry for one change.
 """
 
 from __future__ import annotations
@@ -233,8 +238,8 @@ def changed_files(base: str) -> list[str]:
     return [line for line in diff.stdout.splitlines() if line]
 
 
-def check_change(report: Report, base: str) -> None:
-    changed = changed_files(base)
+def check_change(report: Report, release_line: str) -> None:
+    changed = changed_files(release_line)
 
     if not changed:
         return
@@ -249,7 +254,10 @@ def check_change(report: Report, base: str) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--base", help="git ref to diff against for change-scoped checks")
+    parser.add_argument(
+        "--release-line",
+        help="git ref for the release line this change will land on, such as origin/main",
+    )
     arguments = parser.parse_args()
 
     report = Report()
@@ -263,8 +271,8 @@ def main() -> int:
     check_mutation_config(report)
     check_workflows(report)
 
-    if arguments.base:
-        check_change(report, arguments.base)
+    if arguments.release_line:
+        check_change(report, arguments.release_line)
 
     if report.failures:
         print(f"{len(report.failures)} of {report.checked} checks failed:\n")

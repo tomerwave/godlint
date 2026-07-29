@@ -19,4 +19,6 @@ For repository changes:
   changing a rule, `infrastructure` for build, CI, tooling, or documentation work. Append
   `?template=new-rule.md` or `?template=infrastructure.md` to the pull request URL.
 - `python3 scripts/validate-pull-request.py` enforces the parts of those templates that
-  can be checked. Run it locally; CI runs it too.
+  can be checked. Run it locally; CI runs it too. Its change-scoped checks measure the
+  branch against `origin/main` rather than the pull request's target, so a stack of pull
+  requests needs one changelog entry for the change and not one per pull request.

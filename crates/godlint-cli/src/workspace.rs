@@ -16,24 +16,39 @@ pub struct Workspace {
 
 impl Workspace {
     pub fn prepare(paths: &[String]) -> Result<Self, String> {
-        let current_directory = std::env::current_dir()
-            .map_err(|error| format!("Unable to determine the scan root: {error}"))?;
-        let requested = requested_paths(paths, &current_directory)?;
-        let root = config_root(&requested)?;
-        let scan_paths = scan_paths(&requested, &root)?;
-        let config = Config::load(root.join(CONFIG_NAME))
+        let located = Located::new(paths)?;
+        let config = Config::load(located.root.join(CONFIG_NAME))
             .map_err(|error| format!("Configuration is invalid: {error}"))?;
 
         Ok(Self {
             config,
-            root,
-            scan_paths,
+            root: located.root,
+            scan_paths: located.scan_paths,
         })
     }
 
     pub fn scan(&self) -> Result<ScanReport, String> {
         scan(&self.root, &self.scan_paths, &self.config.excludes())
             .map_err(|error| format!("Unable to scan source files: {error}"))
+    }
+}
+
+struct Located {
+    root: PathBuf,
+    scan_paths: Vec<PathBuf>,
+}
+
+impl Located {
+    fn new(paths: &[String]) -> Result<Self, String> {
+        let current_directory = std::env::current_dir()
+            .map_err(|error| format!("Unable to determine the scan root: {error}"))?;
+        let requested = requested_paths(paths, &current_directory)?;
+        let root = config_root(&requested)?;
+
+        Ok(Self {
+            scan_paths: scan_paths(&requested, &root)?,
+            root,
+        })
     }
 }
 
