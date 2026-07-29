@@ -15,6 +15,7 @@ impl Config {
             Self::validate_restricted_import_rule,
             Self::validate_dependency_boundary_rule,
             Self::validate_forbidden_dependency_rule,
+            Self::validate_filename_case_rule,
             Self::validate_no_production_log_rule,
             Self::validate_empty_function_rule,
             Self::validate_direct_environment_read_rule,
@@ -155,6 +156,25 @@ impl Config {
         }
 
         Ok(())
+    }
+
+    fn validate_filename_case_rule(&self) -> Result<(), ConfigError> {
+        let Some(rule) = &self.rules.filename_case else {
+            return Ok(());
+        };
+
+        if any_blank(&rule.allow) || rule.scopes.iter().any(|scope| any_blank(&scope.paths)) {
+            return Err(ConfigError::BlankAllowIn {
+                rule: "architecture/filename-case",
+            });
+        }
+
+        match rule.scopes.iter().find(|scope| scope.paths.is_empty()) {
+            Some(scope) => Err(ConfigError::EmptyNamingScope {
+                case: scope.case.describe().to_owned(),
+            }),
+            None => Ok(()),
+        }
     }
 
     fn validate_no_production_log_rule(&self) -> Result<(), ConfigError> {

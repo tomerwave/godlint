@@ -31,13 +31,21 @@ fn ecmascript_package(module: &str) -> Option<&str> {
 
     let first = first_segment(module, "/");
 
-    if !first.starts_with('@') {
-        return non_empty(first);
+    if first.starts_with('@') {
+        return scoped_package(module, first);
     }
 
-    let scoped = non_empty(first_segment(module.get(first.len() + 1..)?, "/"))?;
+    non_empty(first)
+}
 
-    non_empty(&module[..first.len() + 1 + scoped.len()])
+fn scoped_package<'a>(module: &'a str, scope: &str) -> Option<&'a str> {
+    if scope.len() == 1 {
+        return None;
+    }
+
+    let name = non_empty(first_segment(module.get(scope.len() + 1..)?, "/"))?;
+
+    non_empty(&module[..scope.len() + 1 + name.len()])
 }
 
 fn python_package(module: &str) -> Option<&str> {
@@ -57,7 +65,7 @@ fn rust_package(module: &str) -> Option<&str> {
     }
 }
 
-fn first_segment<'a>(text: &'a str, separator: &str) -> &'a str {
+pub(crate) fn first_segment<'a>(text: &'a str, separator: &str) -> &'a str {
     match text.find(separator) {
         Some(index) => &text[..index],
         None => text,
@@ -66,4 +74,11 @@ fn first_segment<'a>(text: &'a str, separator: &str) -> &'a str {
 
 fn non_empty(name: &str) -> Option<&str> {
     (!name.is_empty()).then_some(name)
+}
+
+pub(crate) fn last_segment(text: &str, separator: char) -> &str {
+    match text.rfind(separator) {
+        Some(index) => &text[index + separator.len_utf8()..],
+        None => text,
+    }
 }

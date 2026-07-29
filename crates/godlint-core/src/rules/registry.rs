@@ -4,7 +4,7 @@ use crate::{
         Rule, accountable_suppression::AccountableSuppression,
         decision_complexity::DecisionComplexity, dependency_boundary::DependencyBoundary,
         direct_environment_read::DirectEnvironmentRead, empty_function::EmptyFunction,
-        explicit_timer_delay::ExplicitTimerDelay, file_size::FileSize,
+        explicit_timer_delay::ExplicitTimerDelay, file_size::FileSize, filename_case::FilenameCase,
         forbidden_dependency::ForbiddenDependency, function_nesting::FunctionNesting,
         function_size::FunctionSize, function_statements::FunctionStatements,
         no_comments::NoComments, no_dynamic_execution::NoDynamicExecution,
@@ -102,6 +102,7 @@ severity!(
     ForbiddenDependency,
     forbidden_dependency
 );
+severity!(filename_case_severity, FilenameCase, filename_case);
 
 const REGISTRATIONS: &[Registration] = &[
     Registration {
@@ -202,6 +203,11 @@ const REGISTRATIONS: &[Registration] = &[
     Registration {
         id: ForbiddenDependency::ID,
         severity: forbidden_dependency_severity,
+        suppressible: true,
+    },
+    Registration {
+        id: FilenameCase::ID,
+        severity: filename_case_severity,
         suppressible: true,
     },
 ];

@@ -84,7 +84,7 @@ godlint config validate --config path/to/godlint.yaml
 ```
 
 The `check` command evaluates the configured rules across Rust,
-TypeScript/JavaScript, and Python source files. Twenty rules are implemented:
+TypeScript/JavaScript, and Python source files. Twenty-one rules are implemented:
 
 - `maintainability/file-size` — effective lines in a file.
 - `maintainability/function-size` — effective lines in a function.
@@ -115,6 +115,9 @@ TypeScript/JavaScript, and Python source files. Twenty rules are implemented:
 - `architecture/restricted-import` — imports of modules a repository puts behind a boundary.
 - `architecture/dependency-boundary` — a dependency that runs against the declared layer order.
 - `security/forbidden-dependency` — an import of a package the project has ruled out.
+- `architecture/filename-case` — a file name that does not follow the convention for its
+  extension or its declared scope: `PascalCase` for `.tsx`/`.jsx`, `kebab-case` for other
+  JavaScript and TypeScript, `snake_case` for Rust and Python.
 
 The call rules read the callee exactly as it is spelled, and the import rules read the
 module the same way. `std::env::var` is matched and the
@@ -150,7 +153,7 @@ godlint check crates
 ## Policy suites
 
 A suite names a set of rules and their thresholds so a repository adopts a standard in one
-line rather than twenty:
+line rather than twenty-one:
 
 ```yaml
 version: 1

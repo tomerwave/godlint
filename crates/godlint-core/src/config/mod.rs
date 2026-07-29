@@ -81,6 +81,8 @@ pub struct Rules {
     pub dependency_boundary: Option<DependencyBoundaryRule>,
     #[serde(rename = "security/forbidden-dependency")]
     pub forbidden_dependency: Option<ForbiddenDependencyRule>,
+    #[serde(rename = "architecture/filename-case")]
+    pub filename_case: Option<FilenameCaseRule>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -121,6 +123,43 @@ pub struct RestrictedImportRule {
     pub severity: Severity,
     #[serde(default)]
     pub modules: Vec<RestrictedImport>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct FilenameCaseRule {
+    pub severity: Severity,
+    #[serde(default)]
+    pub scopes: Vec<NamingScope>,
+    #[serde(default)]
+    pub allow: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct NamingScope {
+    pub paths: Vec<String>,
+    pub case: NamingCase,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum NamingCase {
+    Kebab,
+    Snake,
+    Camel,
+    Pascal,
+}
+
+impl NamingCase {
+    pub fn describe(self) -> &'static str {
+        match self {
+            Self::Kebab => "kebab-case",
+            Self::Snake => "snake_case",
+            Self::Camel => "camelCase",
+            Self::Pascal => "PascalCase",
+        }
+    }
 }
 
 #[derive(Debug, Deserialize)]

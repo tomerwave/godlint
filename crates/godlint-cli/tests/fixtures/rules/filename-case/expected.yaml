@@ -1,0 +1,9 @@
+exit-code: 1
+
+stdout: |
+  src/httpClient.ts:1:1: error[architecture/filename-case] httpClient is not kebab-case; rename the file to match.
+  src/lineCount.rs:1:1: error[architecture/filename-case] lineCount is not snake_case; rename the file to match.
+  src/ui/panel.rs:1:1: error[architecture/filename-case] panel is not PascalCase; rename the file to match.
+  src/widget.tsx:1:1: error[architecture/filename-case] widget is not PascalCase; rename the file to match.
+
+stderr: ""

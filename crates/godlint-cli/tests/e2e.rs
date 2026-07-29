@@ -63,6 +63,8 @@ fixture_tests! {
     explicit_timer_delay => "explicit-timer-delay",
     no_production_log => "no-production-log",
     dependency_boundary => "dependency-boundary",
+    filename_case => "filename-case",
+    filename_case_clean => "filename-case-clean",
     forbidden_dependency => "forbidden-dependency",
     forbidden_dependency_clean => "forbidden-dependency-clean",
     dependency_boundary_clean => "dependency-boundary-clean",

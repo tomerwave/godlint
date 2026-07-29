@@ -18,6 +18,7 @@ pub enum Language {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SourceFile {
     path: Arc<Path>,
+    path_text: Arc<str>,
     language: Language,
     source: Arc<str>,
     line_starts: Arc<[usize]>,
@@ -76,6 +77,7 @@ impl SourceFile {
             .map_or(source.as_str(), |stripped| stripped);
 
         Ok(Self {
+            path_text: Arc::from(path.to_string_lossy().into_owned()),
             path: Arc::from(path),
             language,
             line_starts: line_starts(source),
@@ -92,6 +94,10 @@ impl SourceFile {
 
     pub fn path(&self) -> &Path {
         &self.path
+    }
+
+    pub fn path_text(&self) -> &str {
+        self.path_text.as_ref()
     }
 
     pub fn language(&self) -> Language {

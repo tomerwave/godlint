@@ -133,7 +133,10 @@ parser type crosses into rules, findings, or reporters.
 ## Rules
 
 A rule declares its identity and how to read its severity, then implements one trait per
-fact scope: a function rule, a file rule, or a comment rule. A shared driver per scope
+fact scope: a function rule, a file rule, or a comment rule. A file rule receives the source
+file rather than its facts, which is what lets `architecture/filename-case` judge a path without
+reading any syntax. `SourceFile` keeps its path as text beside the `Path`, so a rule that reads a
+name does not allocate one per file. A shared driver per scope
 runs it over the fact set, and every scope's driver reports through one kernel. This is why
 the severity gate is evaluated once rather than per function, and why no rule can forget to
 honour it.
