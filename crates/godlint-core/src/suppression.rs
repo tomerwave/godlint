@@ -218,7 +218,7 @@ fn in_comment(comment: &CommentFact, scan: &Scan<'_>) -> Vec<Suppression> {
 
             Some(suppression(
                 found,
-                SourceRange::new(start, start + found.length).ok()?,
+                comment.source().range(start, start + found.length).ok()?,
                 spent_lines(&numbered[index + 1..], comment.kind()),
                 scan,
             ))

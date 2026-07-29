@@ -2,8 +2,7 @@ use crate::{
     analyzers::SourceFacts,
     config::{Config, LineLimitRule, Severity},
     rules::{
-        FileLimitRule, Finding, Metric, Rule, RuleError, evaluate_file_limit_rule, line_count,
-        when_configured,
+        FileLimitRule, Finding, Metric, Rule, evaluate_file_limit_rule, line_count, when_configured,
     },
 };
 
@@ -31,7 +30,7 @@ impl FileLimitRule for FileSize {
     }
 }
 
-pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, RuleError> {
+pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Vec<Finding> {
     when_configured(config.rules.file_size.as_ref(), |configuration| {
         evaluate_file_limit_rule::<FileSize>(facts, configuration)
     })

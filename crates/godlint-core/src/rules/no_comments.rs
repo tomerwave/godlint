@@ -2,9 +2,7 @@ use crate::{
     analyzers::SourceFacts,
     config::{Config, NoCommentsRule, Severity},
     facts::{CommentFact, CommentKind},
-    rules::{
-        CommentRule, Finding, Rule, RuleError, Violation, evaluate_comment_rule, when_configured,
-    },
+    rules::{CommentRule, Finding, Rule, Violation, evaluate_comment_rule, when_configured},
     source::SourceRange,
     suppression::is_directive_only,
 };
@@ -44,7 +42,7 @@ fn is_permitted(kind: CommentKind, configuration: &NoCommentsRule) -> bool {
     }
 }
 
-pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, RuleError> {
+pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Vec<Finding> {
     when_configured(config.rules.no_comments.as_ref(), |configuration| {
         evaluate_comment_rule::<NoComments>(facts, configuration)
     })

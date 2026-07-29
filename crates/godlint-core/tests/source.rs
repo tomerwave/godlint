@@ -2,9 +2,7 @@
 
 use std::path::{Path, PathBuf};
 
-use godlint_core::source::{
-    Language, SourceFile, SourceFileError, SourcePosition, SourceRange, SourceRangeError,
-};
+use godlint_core::source::{Language, SourceFile, SourceFileError, SourcePosition};
 
 #[test]
 fn reports_the_line_an_offset_falls_on() {
@@ -85,10 +83,10 @@ fn rejects_an_unsupported_source_language() {
 fn converts_byte_ranges_to_one_based_source_locations() {
     let file = SourceFile::new(PathBuf::from("example.py"), "alpha\nβeta\n".into())
         .unwrap_or_else(|error| panic!("creates source file: {error}"));
-    let range = SourceRange::new(6, 9).unwrap_or_else(|error| panic!("creates range: {error}"));
-    let location = file
-        .location(range)
-        .unwrap_or_else(|error| panic!("converts location: {error}"));
+    let range = file
+        .range(6, 9)
+        .unwrap_or_else(|error| panic!("creates range: {error}"));
+    let location = file.location(range);
 
     assert_eq!(location.start, SourcePosition { line: 2, column: 1 });
     assert_eq!(location.end, SourcePosition { line: 2, column: 3 });
@@ -96,21 +94,19 @@ fn converts_byte_ranges_to_one_based_source_locations() {
 
 #[test]
 fn rejects_reversed_or_invalid_source_ranges() {
-    let reversed = SourceRange::new(3, 2);
     let file = SourceFile::new(PathBuf::from("example.rs"), "é".into())
         .unwrap_or_else(|error| panic!("creates source file: {error}"));
-    let invalid_boundary = file
-        .location(SourceRange::new(1, 1).unwrap_or_else(|error| panic!("creates range: {error}")));
-    let outside_file = file
-        .location(SourceRange::new(3, 3).unwrap_or_else(|error| panic!("creates range: {error}")));
 
-    assert!(matches!(reversed, Err(SourceRangeError::Reversed { .. })));
     assert!(matches!(
-        invalid_boundary,
+        file.range(3, 2),
+        Err(SourceFileError::ReversedRange { .. })
+    ));
+    assert!(matches!(
+        file.range(1, 1),
         Err(SourceFileError::InvalidUtf8Boundary { offset: 1 })
     ));
     assert!(matches!(
-        outside_file,
+        file.range(3, 3),
         Err(SourceFileError::InvalidRange { .. })
     ));
 }

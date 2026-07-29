@@ -4,9 +4,8 @@ use std::path::PathBuf;
 
 use godlint_core::{
     facts::{
-        AccessFact, AccessFactError, BlockDepth, CallFact, CallFactError, CommentFact,
-        CommentFactError, CommentKind, DecisionPoints, FunctionFact, FunctionFactDetails,
-        FunctionFactError, ParameterCount, ReturnPaths, StatementCount,
+        AccessFact, BlockDepth, CallFact, CommentFact, CommentKind, DecisionPoints, FunctionFact,
+        FunctionFactDetails, FunctionFactError, ParameterCount, ReturnPaths, StatementCount,
     },
     source::{SourceFile, SourceRange},
 };
@@ -20,7 +19,9 @@ fn source() -> SourceFile {
 }
 
 fn range(start: usize, end: usize) -> SourceRange {
-    SourceRange::new(start, end).unwrap_or_else(|error| panic!("creates source range: {error}"))
+    source()
+        .range(start, end)
+        .unwrap_or_else(|error| panic!("creates source range: {error}"))
 }
 
 fn details() -> FunctionFactDetails {
@@ -56,40 +57,6 @@ fn records_every_metric_separately() {
 }
 
 #[test]
-fn rejects_a_function_range_outside_the_file() {
-    let result = FunctionFact::new(
-        source(),
-        None,
-        FunctionFactDetails {
-            range: range(0, 999),
-            ..details()
-        },
-    );
-
-    assert!(matches!(
-        result,
-        Err(FunctionFactError::InvalidFunctionRange { .. })
-    ));
-}
-
-#[test]
-fn rejects_a_body_range_outside_the_file() {
-    let result = FunctionFact::new(
-        source(),
-        None,
-        FunctionFactDetails {
-            body_range: range(0, 999),
-            ..details()
-        },
-    );
-
-    assert!(matches!(
-        result,
-        Err(FunctionFactError::InvalidBodyRange { .. })
-    ));
-}
-
-#[test]
 fn rejects_a_body_outside_its_function() {
     let result = FunctionFact::new(
         source(),
@@ -109,8 +76,7 @@ fn rejects_a_body_outside_its_function() {
 
 #[test]
 fn records_a_comment_with_its_kind() {
-    let fact = CommentFact::new(source(), range(0, 11), CommentKind::Line)
-        .unwrap_or_else(|error| panic!("creates comment fact: {error}"));
+    let fact = CommentFact::new(source(), range(0, 11), CommentKind::Line);
 
     assert_eq!(fact.range(), range(0, 11));
     assert_eq!(fact.kind(), CommentKind::Line);
@@ -118,19 +84,8 @@ fn records_a_comment_with_its_kind() {
 }
 
 #[test]
-fn rejects_a_comment_range_outside_the_file() {
-    let result = CommentFact::new(source(), range(0, 999), CommentKind::Block);
-
-    assert!(matches!(
-        result,
-        Err(CommentFactError::InvalidCommentRange { .. })
-    ));
-}
-
-#[test]
 fn records_a_call() {
-    let fact = CallFact::new(source(), range(17, 22), false, 2)
-        .unwrap_or_else(|error| panic!("creates call fact: {error}"));
+    let fact = CallFact::new(source(), range(17, 22), false, 2);
 
     assert_eq!(fact.range(), range(17, 22));
     assert_eq!(
@@ -143,19 +98,8 @@ fn records_a_call() {
 }
 
 #[test]
-fn rejects_a_call_range_outside_the_file() {
-    let result = CallFact::new(source(), range(0, 999), false, 0);
-
-    assert!(matches!(
-        result,
-        Err(CallFactError::InvalidCallRange { .. })
-    ));
-}
-
-#[test]
 fn records_an_access() {
-    let fact = AccessFact::new(source(), range(3, 8))
-        .unwrap_or_else(|error| panic!("creates access fact: {error}"));
+    let fact = AccessFact::new(source(), range(3, 8));
 
     assert_eq!(fact.range(), range(3, 8));
     assert_eq!(
@@ -163,14 +107,4 @@ fn records_an_access() {
         "outer",
         "a target is read from the range rather than stored beside it"
     );
-}
-
-#[test]
-fn rejects_an_access_range_outside_the_file() {
-    let result = AccessFact::new(source(), range(0, 999));
-
-    assert!(matches!(
-        result,
-        Err(AccessFactError::InvalidAccessRange { .. })
-    ));
 }

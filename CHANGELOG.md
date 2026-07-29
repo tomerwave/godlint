@@ -263,6 +263,16 @@ releases begin.
   the change it should have welcomed. Whether a fixture is owed is a judgement, and the
   template asks for it there.
 
+### Changed
+
+- A source range is built only by the file it indexes, so a range that exists has already
+  been checked against that file. Locating one is infallible, no fact re-validates a range
+  its type already vouches for, and rule evaluation reports no error at all: the single
+  error it could return was a location failure that could not occur. `SourceRange::new`,
+  `SourceRangeError`, `RuleError`, and the three fact range errors are gone, and every rule
+  evaluator returns findings rather than a `Result`. The count of lines no test can reach
+  fell from nine to two.
+
 ### Fixed
 
 - A suite name is checked by the same lookup that expands it, so a name can no longer be

@@ -4,10 +4,9 @@ use tree_sitter::{Language as TreeSitterLanguage, Node, Parser};
 
 use crate::{
     facts::{
-        AccessFact, AccessFactError, CallFact, CallFactError, CommentFact, CommentFactError,
-        FunctionFact, FunctionFactDetails, FunctionFactError,
+        AccessFact, CallFact, CommentFact, FunctionFact, FunctionFactDetails, FunctionFactError,
     },
-    source::{Language, SourceFile, SourceRange, SourceRangeError},
+    source::{Language, SourceFile, SourceFileError, SourceRange},
 };
 
 use self::vocabulary::Vocabulary;
@@ -69,23 +68,11 @@ pub enum AnalyzerError {
     },
     InvalidRange {
         path: PathBuf,
-        source: SourceRangeError,
+        source: SourceFileError,
     },
     InvalidFunction {
         path: PathBuf,
         source: FunctionFactError,
-    },
-    InvalidComment {
-        path: PathBuf,
-        source: CommentFactError,
-    },
-    InvalidCall {
-        path: PathBuf,
-        source: CallFactError,
-    },
-    InvalidAccess {
-        path: PathBuf,
-        source: AccessFactError,
     },
 }
 
@@ -202,13 +189,12 @@ fn call_fact(
     }
 
     let range = node_range(callee.node, source)?;
-    let fact = CallFact::new(source.clone(), range, callee.is_macro, argument_count(node))
-        .map_err(|error| AnalyzerError::InvalidCall {
-            path: source.path().to_path_buf(),
-            source: error,
-        })?;
-
-    Ok(Some(fact))
+    Ok(Some(CallFact::new(
+        source.clone(),
+        range,
+        callee.is_macro,
+        argument_count(node),
+    )))
 }
 
 fn argument_count(node: Node<'_>) -> usize {
@@ -237,13 +223,8 @@ fn access_fact(
     }
 
     let range = node_range(node, source)?;
-    let fact =
-        AccessFact::new(source.clone(), range).map_err(|error| AnalyzerError::InvalidAccess {
-            path: source.path().to_path_buf(),
-            source: error,
-        })?;
 
-    Ok(Some(fact))
+    Ok(Some(AccessFact::new(source.clone(), range)))
 }
 
 fn direct_path<'source>(node: Node<'_>, source: &'source SourceFile) -> Option<&'source str> {
@@ -270,12 +251,7 @@ fn comment_fact(
     };
     let range = node_range(node, source)?;
 
-    CommentFact::new(source.clone(), range, kind)
-        .map(Some)
-        .map_err(|error| AnalyzerError::InvalidComment {
-            path: source.path().to_path_buf(),
-            source: error,
-        })
+    Ok(Some(CommentFact::new(source.clone(), range, kind)))
 }
 
 fn function_fact(
@@ -322,12 +298,12 @@ fn function_fact(
 }
 
 fn node_range(node: Node<'_>, source: &SourceFile) -> Result<SourceRange, AnalyzerError> {
-    SourceRange::new(node.start_byte(), node.end_byte()).map_err(|error| {
-        AnalyzerError::InvalidRange {
+    source
+        .range(node.start_byte(), node.end_byte())
+        .map_err(|error| AnalyzerError::InvalidRange {
             path: source.path().to_path_buf(),
             source: error,
-        }
-    })
+        })
 }
 
 impl fmt::Display for AnalyzerError {
@@ -360,15 +336,6 @@ impl fmt::Display for AnalyzerError {
                     path.display()
                 )
             }
-            Self::InvalidComment { path, source } => {
-                write!(formatter, "invalid comment in {}: {source}", path.display())
-            }
-            Self::InvalidCall { path, source } => {
-                write!(formatter, "invalid call in {}: {source}", path.display())
-            }
-            Self::InvalidAccess { path, source } => {
-                write!(formatter, "invalid access in {}: {source}", path.display())
-            }
         }
     }
 }
@@ -379,9 +346,6 @@ impl Error for AnalyzerError {
             Self::ConfiguresParser { source, .. } => Some(source),
             Self::InvalidRange { source, .. } => Some(source),
             Self::InvalidFunction { source, .. } => Some(source),
-            Self::InvalidComment { source, .. } => Some(source),
-            Self::InvalidCall { source, .. } => Some(source),
-            Self::InvalidAccess { source, .. } => Some(source),
             Self::MissingSyntaxTree { .. } | Self::InvalidSyntax { .. } => None,
         }
     }

@@ -67,8 +67,16 @@ language suffices and the name alone separates `dbg!` from a `fn dbg`. `Import`,
 [rule roadmap](rule-roadmap.md).
 
 Source files are identified with repository-relative paths and a shared language enum.
-Ranges use byte offsets internally; the source contract validates them and derives
-one-based line and Unicode-scalar-column positions only at reporting boundaries. That
+Ranges use byte offsets internally and derive one-based line and Unicode-scalar-column
+positions only at reporting boundaries.
+
+A range is built by the file it indexes and by nothing else: `SourceFile::range` is the only
+constructor, and it rejects an offset past the end, an offset off a UTF-8 boundary, and a
+start after its end. A `SourceRange` that exists is therefore a range that has already been
+checked, so locating one cannot fail, and no fact needs to re-validate what its type already
+records. That is what makes rule evaluation infallible — the single error a rule could once
+report was a location failure that could not occur, and an error variant that cannot happen
+still has to be handled by every caller. That
 derivation binary-searches a line-start index built once per file, because scanning to
 the offset instead would make reporting cost grow with a finding's distance into the
 file — which is invisible while rules fire rarely and quadratic once one fires per

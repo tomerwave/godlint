@@ -6,8 +6,8 @@ use crate::{
     facts::{AccessFact, CallFact},
     glob,
     rules::{
-        AccessRule, CallRule, Finding, Rule, RuleError, Violation, evaluate_access_rule,
-        evaluate_call_rule, when_configured,
+        AccessRule, CallRule, Finding, Rule, Violation, evaluate_access_rule, evaluate_call_rule,
+        when_configured,
     },
     source::Language,
 };
@@ -39,13 +39,13 @@ impl CallRule for DirectEnvironmentRead {
     }
 }
 
-pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, RuleError> {
+pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Vec<Finding> {
     when_configured(config.rules.direct_environment_read.as_ref(), |rule| {
-        let mut findings = evaluate_access_rule::<DirectEnvironmentRead>(facts, rule)?;
+        let mut findings = evaluate_access_rule::<DirectEnvironmentRead>(facts, rule);
 
-        findings.extend(evaluate_call_rule::<DirectEnvironmentRead>(facts, rule)?);
+        findings.extend(evaluate_call_rule::<DirectEnvironmentRead>(facts, rule));
 
-        Ok(findings)
+        findings
     })
 }
 

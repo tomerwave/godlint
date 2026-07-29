@@ -24,7 +24,6 @@ fn findings(
     let today = Date::parse(TODAY).unwrap_or_else(|error| panic!("parses {TODAY}: {error}"));
 
     evaluate(&[facts], &config, today)
-        .unwrap_or_else(|error| panic!("evaluates rules: {error}"))
         .into_iter()
         .map(|finding| finding.violation)
         .collect()

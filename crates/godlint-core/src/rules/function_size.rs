@@ -3,8 +3,8 @@ use crate::{
     config::{Config, LineLimitRule, Severity},
     facts::FunctionFact,
     rules::{
-        Finding, FunctionLimitRule, Metric, Rule, RuleError, evaluate_function_limit_rule,
-        line_count, when_configured,
+        Finding, FunctionLimitRule, Metric, Rule, evaluate_function_limit_rule, line_count,
+        when_configured,
     },
 };
 
@@ -36,7 +36,7 @@ impl FunctionLimitRule for FunctionSize {
     }
 }
 
-pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, RuleError> {
+pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Vec<Finding> {
     when_configured(config.rules.function_size.as_ref(), |configuration| {
         evaluate_function_limit_rule::<FunctionSize>(facts, configuration)
     })

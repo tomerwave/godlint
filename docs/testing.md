@@ -96,10 +96,16 @@ python3 scripts/check-rule-coverage.py coverage.json
 ```
 
 The budget is a count of lines rather than a percentage, because a percentage loose enough
-to tolerate the known residue is also loose enough to hide a new two-line branch. The
-residue is error propagation from `SourceFile::location`, which cannot fail for a range a
-fact carries, since facts validate their ranges when constructed. Removing that plumbing
-would take the budget to zero.
+to tolerate the known residue is also loose enough to hide a new two-line branch. It stood at
+nine, eight of them error propagation from `SourceFile::location` that could not fire; making
+a range valid by construction deleted that plumbing rather than documenting it, and the
+budget is now two. Both remaining lines are named in the script beside the number: one match
+arm kept for exhaustiveness, and one range that can only narrow a range already checked.
+
+That collapse is also the argument for the budget failing in both directions. Removing the
+plumbing left the numbers above reality, and the script reported it — a budget that only
+catches new uncovered lines would have kept nine lines of slack available for the next
+untested branch to hide in.
 
 The two mechanisms answer different questions and neither replaces the other. Coverage
 asks whether a line ran; mutation testing asks whether anything would notice if it changed.

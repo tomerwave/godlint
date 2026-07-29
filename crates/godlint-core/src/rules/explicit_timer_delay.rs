@@ -2,7 +2,7 @@ use crate::{
     analyzers::SourceFacts,
     config::{Config, ExplicitTimerDelayRule, Severity},
     facts::CallFact,
-    rules::{CallRule, Finding, Rule, RuleError, Violation, evaluate_call_rule, when_configured},
+    rules::{CallRule, Finding, Rule, Violation, evaluate_call_rule, when_configured},
     source::Language,
 };
 
@@ -30,7 +30,7 @@ impl CallRule for ExplicitTimerDelay {
     }
 }
 
-pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, RuleError> {
+pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Vec<Finding> {
     when_configured(config.rules.explicit_timer_delay.as_ref(), |rule| {
         evaluate_call_rule::<ExplicitTimerDelay>(facts, rule)
     })

@@ -2,8 +2,8 @@ use crate::{
     config::{AccountableSuppressionRule, Config, Severity},
     date::Date,
     rules::{
-        Finding, Rule, RuleError, SuppressionDefect, SuppressionRule, Violation,
-        evaluate_suppression_rule, is_known_rule, is_suppressible_rule, when_configured,
+        Finding, Rule, SuppressionDefect, SuppressionRule, Violation, evaluate_suppression_rule,
+        is_known_rule, is_suppressible_rule, when_configured,
     },
     suppression::Suppression,
 };
@@ -119,11 +119,7 @@ fn expiry(
     })
 }
 
-pub fn evaluate(
-    suppressions: &[Suppression],
-    config: &Config,
-    today: Date,
-) -> Result<Vec<Finding>, RuleError> {
+pub fn evaluate(suppressions: &[Suppression], config: &Config, today: Date) -> Vec<Finding> {
     when_configured(
         config.rules.accountable_suppression.as_ref(),
         |configuration| {

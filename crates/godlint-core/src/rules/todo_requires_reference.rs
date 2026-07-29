@@ -2,9 +2,7 @@ use crate::{
     analyzers::SourceFacts,
     config::{Config, Severity, TodoRequiresReferenceRule},
     facts::{CommentFact, CommentKind},
-    rules::{
-        CommentRule, Finding, Rule, RuleError, Violation, evaluate_comment_rule, when_configured,
-    },
+    rules::{CommentRule, Finding, Rule, Violation, evaluate_comment_rule, when_configured},
     source::SourceRange,
 };
 
@@ -48,7 +46,10 @@ impl CommentRule for TodoRequiresReference {
             })
             .filter_map(|(_, marker)| {
                 let start = comment.range().start() + marker.start;
-                let range = SourceRange::new(start, start + marker.name.len()).ok()?;
+                let range = comment
+                    .source()
+                    .range(start, start + marker.name.len())
+                    .ok()?;
 
                 Some((
                     range,
@@ -127,7 +128,7 @@ fn digits_follow(text: &str) -> bool {
         .is_some_and(char::is_alphanumeric)
 }
 
-pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Result<Vec<Finding>, RuleError> {
+pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Vec<Finding> {
     when_configured(
         config.rules.todo_requires_reference.as_ref(),
         |configuration| evaluate_comment_rule::<TodoRequiresReference>(facts, configuration),
