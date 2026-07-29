@@ -26,8 +26,11 @@ speaks about.
   invisible until someone tries to install.
 
 - The action's own check runs against this repository rather than a fixture, so a released binary
-  that disagrees with the code here fails in this repository instead of surprising whoever installs
-  it. Proving that the action *fails* still needs a tree with a finding in it, so that fixture stays.
+  that disagrees with the code here is visible instead of surprising whoever installs it. It reports
+  rather than blocks, because a pull request that fixes the binary cannot pass a gate that runs the
+  release: the fix is not released yet. Whether the action *works* — install, checksum, annotate,
+  fail — is gated separately by a tree with findings in it, which does not depend on the release
+  agreeing with this one.
 
 ## [0.1.8] - 2026-07-29
 

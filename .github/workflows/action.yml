@@ -10,9 +10,14 @@ permissions:
   contents: read
 
 jobs:
-  clean:
-    name: The action passes a clean tree
+  # This compares the released binary against the code in the pull request, which is a signal worth
+  # having and cannot be a gate: the pull request that fixes the binary cannot pass it, because the
+  # fix is not released yet. It reports and does not block. Whether the action itself works is gated
+  # by the job below, which does not depend on the release agreeing with this tree.
+  repository:
+    name: The released Godlint agrees with this tree
     runs-on: ${{ matrix.runner }}
+    continue-on-error: true
 
     strategy:
       fail-fast: false
@@ -29,18 +34,22 @@ jobs:
       # for whoever installs it.
       - uses: ./
         id: godlint
+        continue-on-error: true
         with:
           summary: "false"
 
-      - name: A clean tree reports nothing and resolves a version
+      - name: Say whether the release still agrees
         shell: bash
         env:
-          FINDINGS: ${{ steps.godlint.outputs.findings }}
+          OUTCOME: ${{ steps.godlint.outcome }}
           VERSION: ${{ steps.godlint.outputs.version }}
         run: |
-          test "$FINDINGS" = "0"
-          test -n "$VERSION"
-          echo "godlint $VERSION reported $FINDINGS findings"
+          if [ "$OUTCOME" = "success" ]; then
+            echo "::notice::Godlint $VERSION reports nothing against this tree."
+            exit 0
+          fi
+
+          echo "::notice::The released Godlint reports findings against this tree. Expected while a rule or a fix is merged but not yet released; otherwise this repository has drifted from its own standard."
 
   dirty:
     name: The action fails a tree with findings
