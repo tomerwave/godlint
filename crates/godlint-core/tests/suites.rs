@@ -226,7 +226,7 @@ fn rejects_an_unknown_suite() {
 
 #[test]
 fn every_named_suite_is_applicable() {
-    for name in suites::NAMES {
+    for name in suites::names() {
         let config = load(&format!("version: 1\nsuites:\n  - {name}\n"))
             .unwrap_or_else(|error| panic!("loads {name}: {error}"));
 

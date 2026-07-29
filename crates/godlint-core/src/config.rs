@@ -267,7 +267,7 @@ impl Config {
                 source,
             })?;
 
-        config.expand_suites();
+        config.expand_suites()?;
         config.validate()?;
 
         Ok(config)
@@ -281,15 +281,19 @@ impl Config {
         self.exclude.clone()
     }
 
-    fn expand_suites(&mut self) {
+    fn expand_suites(&mut self) -> Result<(), ConfigError> {
         for name in &self.suites {
-            suites::apply(name, &mut self.rules);
+            let expand = suites::lookup(name)
+                .ok_or_else(|| ConfigError::UnknownSuite { name: name.clone() })?;
+
+            expand(&mut self.rules);
         }
+
+        Ok(())
     }
 
     fn validate(&self) -> Result<(), ConfigError> {
         [
-            Self::validate_suites,
             Self::validate_version,
             Self::validate_exclude,
             Self::validate_complexity_rule,
@@ -299,17 +303,6 @@ impl Config {
         ]
         .iter()
         .try_for_each(|check| check(self))
-    }
-
-    fn validate_suites(&self) -> Result<(), ConfigError> {
-        match self
-            .suites
-            .iter()
-            .find(|name| !suites::NAMES.contains(&name.as_str()))
-        {
-            Some(name) => Err(ConfigError::UnknownSuite { name: name.clone() }),
-            None => Ok(()),
-        }
     }
 
     fn validate_version(&self) -> Result<(), ConfigError> {
@@ -447,7 +440,7 @@ impl fmt::Display for ConfigError {
             Self::UnknownSuite { name } => write!(
                 formatter,
                 "unknown suite {name}; available suites are {}",
-                suites::NAMES.join(", ")
+                suites::names().collect::<Vec<_>>().join(", ")
             ),
             Self::DuplicateRestrictedCallName { name } => {
                 write!(

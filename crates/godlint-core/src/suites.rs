@@ -10,16 +10,23 @@ use crate::config::{
 
 pub const RECOMMENDED: &str = "recommended@1";
 
+type Expand = fn(&mut Rules);
+
+const SUITES: &[(&str, Expand)] = &[(RECOMMENDED, recommended)];
+
 const FUNCTION_LINES: NonZeroU32 = NonZeroU32::new(50).expect("50 is not zero");
 
 const FILE_LINES: NonZeroU32 = NonZeroU32::new(500).expect("500 is not zero");
 
-pub const NAMES: [&str; 1] = [RECOMMENDED];
+pub fn names() -> impl Iterator<Item = &'static str> {
+    SUITES.iter().map(|(name, _)| *name)
+}
 
-pub fn apply(name: &str, rules: &mut Rules) {
-    if name == RECOMMENDED {
-        recommended(rules);
-    }
+pub fn lookup(name: &str) -> Option<Expand> {
+    SUITES
+        .iter()
+        .find(|(known, _)| *known == name)
+        .map(|(_, expand)| *expand)
 }
 
 fn recommended(rules: &mut Rules) {

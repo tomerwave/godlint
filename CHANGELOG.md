@@ -265,6 +265,11 @@ releases begin.
 
 ### Fixed
 
+- A suite name is checked by the same lookup that expands it, so a name can no longer be
+  offered as available while enforcing nothing. The name was previously validated against one
+  list and expanded by a separate comparison, which a second suite could satisfy in one place
+  and not the other.
+
 - A call or access fact reads its callee or target from the range it already carries instead
   of storing a second copy, and `SourceFile` holds its path behind an `Arc` so cloning a file
   into a fact no longer allocates one. Both cut the memory a scan holds, since every fact for

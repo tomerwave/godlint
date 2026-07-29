@@ -140,6 +140,20 @@ The registry is a table of evaluators. Adding a rule appends an entry rather tha
 a branch in a dispatcher, which had previously pushed the dispatcher's own decision
 complexity to the repository's configured limit.
 
+A suite is one entry in a table of expansions, looked up by name. A name that is not in the
+table is a configuration error rather than a suite that expands to nothing, because the
+lookup that finds the expansion is the same lookup that decides the name is real — there is
+no second list of valid names to keep in step. Expansion runs before validation, so the
+validators see the configuration that will actually run, and it inserts only where a rule is
+absent, which is what makes an explicit `rules:` entry win.
+
+The suite stays typed Rust rather than an embedded document. Its thresholds are `NonZeroU32`
+constants and its severities are enum variants, so a mistyped value fails the build; a parsed
+document would move that failure to the user's first run. What a document would have bought —
+one home for each default value — comes instead from the suite calling the same `serde`
+default functions the configuration schema uses, and the published thresholds are held to
+`docs/rule-roadmap.md` by a test.
+
 A finding carries a typed violation rather than a prepared sentence. Reporters other than
 the terminal need the numbers, and a rendered message must never be load-bearing:
 findings are ordered by path, line, column, and rule identifier, so output order cannot
