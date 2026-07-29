@@ -9,6 +9,8 @@ speaks about.
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-07-29
+
 ### Added
 
 - An npm package. `npm install --save-dev godlint` installs a binary and needs no Rust
