@@ -69,6 +69,10 @@ tar -xzf godlint-x86_64-unknown-linux-gnu.tar.gz
 install -m 755 godlint /usr/local/bin/
 ```
 
+On npm, `npm install --save-dev godlint` fetches only the binary for your platform and needs no
+Rust toolchain, which is the point: Godlint lints JavaScript, TypeScript and Python, and most people
+working in those languages do not have one.
+
 With a Rust toolchain, `cargo install godlint-cli` builds the same binary. The library crate,
 `godlint-core`, is published because the command line depends on it; its API is not stable before
 `1.0`.

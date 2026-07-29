@@ -45,9 +45,14 @@ jobs:
           - target: x86_64-unknown-linux-gnu
             runner: ubuntu-latest
             runnable: true
-          # Statically linked, which is what a container without glibc needs.
+          # Statically linked, which is what a container without glibc needs, and what the npm
+          # packages ship so that one binary per architecture runs against either libc.
           - target: x86_64-unknown-linux-musl
             runner: ubuntu-latest
+            runnable: true
+            musl: true
+          - target: aarch64-unknown-linux-musl
+            runner: ubuntu-24.04-arm
             runnable: true
             musl: true
           - target: x86_64-pc-windows-msvc
@@ -69,6 +74,7 @@ jobs:
       - run: cargo +1.97.1 build --release --locked -p godlint-cli --target ${{ matrix.target }}
         env:
           CC_x86_64_unknown_linux_musl: ${{ matrix.musl && 'musl-gcc' || '' }}
+          CC_aarch64_unknown_linux_musl: ${{ matrix.musl && 'musl-gcc' || '' }}
 
       - name: Prove the binary runs and reports its version
         if: matrix.runnable
@@ -120,6 +126,16 @@ jobs:
             godlint-${{ matrix.target }}.zip*
           if-no-files-found: error
 
+      # The wrappers repackage the executable itself rather than an archive, and it is kept in a
+      # separate artifact so the release carries archives only.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: binary-${{ matrix.target }}
+          path: |
+            godlint
+            godlint.exe
+          if-no-files-found: error
+
   publish:
     name: Publish to crates.io
     needs: binaries
@@ -143,9 +159,47 @@ jobs:
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
+  npm:
+    name: Publish to npm
+    needs: publish
+    runs-on: ubuntu-latest
+    environment: npm
+
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: binary-*
+          path: binaries
+
+      # Each platform package must exist before the package that depends on them is published,
+      # or npm resolves an optional dependency that is not there yet and installs no binary.
+      - name: Assemble the packages
+        env:
+          TAG: ${{ github.ref_name }}
+        run: python3 packaging/build-npm.py "${TAG#v}" --binaries binaries --out packages
+
+      - name: Publish every platform package, then the one that names them
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          for package in packages/cli-*; do
+            npm publish "$package" --access public
+          done
+          npm publish packages/godlint --access public
+
   announce:
     name: Publish the GitHub release
-    needs: publish
+    needs: npm
     runs-on: ubuntu-latest
 
     steps:
@@ -153,6 +207,7 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
+          pattern: godlint-*
           path: artifacts
           merge-multiple: true
 
