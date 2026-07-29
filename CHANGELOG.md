@@ -9,6 +9,17 @@ speaks about.
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-07-29
+
+### Fixed
+
+- The npm packages are published from a list the assembler writes, dependencies first, so the check
+  that packs them and the step that publishes them walk the same list. Naming the paths twice in the
+  workflow is what published five packages and then failed on the sixth, whose directory had been
+  renamed — the same shape as the `./` mistake before it: the check and the action were not the same
+  command.
+
+
 ## [0.1.3] - 2026-07-29
 
 ### Fixed
