@@ -1,0 +1,7 @@
+version: 1
+
+rules:
+  security/forbidden-dependency:
+    severity: error
+    packages:
+      - name: lodash

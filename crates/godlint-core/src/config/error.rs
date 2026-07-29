@@ -24,6 +24,10 @@ pub enum ConfigError {
     InvalidRestrictedCallName,
     InvalidRestrictedImportName,
     InvalidLayerName,
+    InvalidPackageName,
+    DuplicatePackageName {
+        name: String,
+    },
     EmptyLayer {
         name: String,
     },
@@ -56,6 +60,8 @@ const CALL_NAME_REQUIRED: &str = "architecture/restricted-call call names must n
 
 const LAYER_NAME_REQUIRED: &str = "architecture/dependency-boundary layer names must not be blank";
 
+const PACKAGE_NAME_REQUIRED: &str = "security/forbidden-dependency package names must not be blank";
+
 const IMPORT_NAME_REQUIRED: &str = "architecture/restricted-import module names must not be blank";
 
 impl fmt::Display for ConfigError {
@@ -72,11 +78,7 @@ impl fmt::Display for ConfigError {
                 suites::names().collect::<Vec<_>>().join(", ")
             ),
             Self::DuplicateRestrictedCallName { name } => {
-                write!(
-                    formatter,
-                    "architecture/restricted-call lists {name} more than once; one entry \
-                     decides its allow-in boundary"
-                )
+                duplicate(formatter, "architecture/restricted-call", name)
             }
             Self::BlankAllowIn { rule } => {
                 write!(formatter, "{rule} allow-in paths must not be blank")
@@ -90,6 +92,10 @@ impl fmt::Display for ConfigError {
             Self::InvalidRestrictedCallName => formatter.write_str(CALL_NAME_REQUIRED),
             Self::InvalidRestrictedImportName => formatter.write_str(IMPORT_NAME_REQUIRED),
             Self::InvalidLayerName => formatter.write_str(LAYER_NAME_REQUIRED),
+            Self::InvalidPackageName => formatter.write_str(PACKAGE_NAME_REQUIRED),
+            Self::DuplicatePackageName { name } => {
+                duplicate(formatter, "security/forbidden-dependency", name)
+            }
             Self::EmptyLayer { name } => write!(
                 formatter,
                 "architecture/dependency-boundary layer {name} must declare both the paths it \
@@ -101,14 +107,17 @@ impl fmt::Display for ConfigError {
                  decides its position"
             ),
             Self::DuplicateRestrictedImportName { name } => {
-                write!(
-                    formatter,
-                    "architecture/restricted-import lists {name} more than once; one entry \
-                     decides its allow-in boundary"
-                )
+                duplicate(formatter, "architecture/restricted-import", name)
             }
         }
     }
+}
+
+fn duplicate(formatter: &mut fmt::Formatter<'_>, rule: &str, name: &str) -> fmt::Result {
+    write!(
+        formatter,
+        "{rule} lists {name} more than once; one entry decides its allow-in boundary"
+    )
 }
 
 impl Error for ConfigError {
@@ -126,6 +135,8 @@ impl Error for ConfigError {
             | Self::InvalidRestrictedImportName
             | Self::DuplicateRestrictedImportName { .. }
             | Self::InvalidLayerName
+            | Self::InvalidPackageName
+            | Self::DuplicatePackageName { .. }
             | Self::EmptyLayer { .. }
             | Self::DuplicateLayerName { .. }
             | Self::BlankAllowIn { .. }

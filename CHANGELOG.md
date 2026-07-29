@@ -11,13 +11,24 @@ releases begin.
 ### Added
 
 - Policy suites. `suites: [recommended@1]` adopts a named standard in one line instead of
-  nineteen rule blocks with hand-picked numbers. `recommended@1` enables every rule at
+  twenty rule blocks with hand-picked numbers. `recommended@1` enables every rule at
   `error`, because a standard a repository can partly ignore is a suggestion. Suites are
   opt-in — a configuration naming none enforces nothing — and a `rules:` entry overrides the
   suite for that rule in either direction, including `severity: off`, which is what lets a
   rule be adopted as a warning first. An unknown suite name is a configuration error that
   lists the available ones. Godlint's own configuration is now the suite and nothing else,
   since an override here would be this project exempting itself from its own standard.
+
+- `security/forbidden-dependency` (`packages`, each with `allow-in`) — reports an import of a
+  package the project has ruled out. It maps an import to its package and matches that name
+  exactly, so naming `lodash` catches `lodash/merge` and anything deeper while leaving
+  `lodash-es` alone. The package is the first path segment in JavaScript and TypeScript, or the
+  first two when scoped, the first dotted segment in Python, and the first `::` segment in Rust
+  including `extern crate`. A relative import, `crate`, `self`, `super`, and a builtin reached
+  through a protocol name no package and are never dependencies — in fact any specifier
+  containing a colon is rejected, which covers `node:fs`, a URL and a Windows path alike, as is
+  any specifier rooted at `/`. A leading `::` in Rust is stripped first, so `::serde` is the
+  crate `serde`.
 
 - `architecture/dependency-boundary` (`layers`) — reports a dependency that runs against a
   declared layer order. Position in the list is the policy: a layer may depend on itself and on
@@ -284,9 +295,11 @@ releases begin.
   the change it should have welcomed. Whether a fixture is owed is a judgement, and the
   template asks for it there.
 
-- `ConfigError` moved to `config/error.rs` and `Violation` to `rules/violation.rs`. Both files
-  had crossed the 500-line ceiling this project holds itself to as rules were added, and the
-  ceiling is not the thing to move.
+- `ConfigError` moved to `config/error.rs`, the configuration validators to
+  `config/validate.rs`, and `Violation` to `rules/violation.rs`. Each file had crossed the
+  500-line or 50-line ceiling this project holds itself to as rules were added, and the ceiling
+  is not the thing to move. The variants reporting a duplicated entry also repeated one
+  sentence, which is now written once.
 
 - `architecture/restricted-call` no longer bans `console.log`, `console.debug`, Python `print`
   or Rust `dbg!` by default; `logging/no-production-log` owns them. Two consequences to know

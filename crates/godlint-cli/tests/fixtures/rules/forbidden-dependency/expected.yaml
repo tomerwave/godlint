@@ -1,0 +1,8 @@
+exit-code: 1
+
+stdout: |
+  src/app.ts:1:20: error[security/forbidden-dependency] lodash is a forbidden dependency; the policy that names it decides where it may be used.
+  src/app.ts:2:16: error[security/forbidden-dependency] @corp/legacy is a forbidden dependency; the policy that names it decides where it may be used.
+  src/client.py:1:6: error[security/forbidden-dependency] requests is a forbidden dependency; the policy that names it decides where it may be used.
+
+stderr: ""

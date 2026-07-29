@@ -16,6 +16,7 @@ pub mod direct_environment_read;
 pub mod empty_function;
 pub mod explicit_timer_delay;
 pub mod file_size;
+pub mod forbidden_dependency;
 pub mod function_nesting;
 pub mod function_size;
 pub mod function_statements;
@@ -364,6 +365,7 @@ const EVALUATORS: &[Evaluator] = &[
     no_production_log::evaluate,
     restricted_import::evaluate,
     dependency_boundary::evaluate,
+    forbidden_dependency::evaluate,
 ];
 
 pub fn evaluate(facts: &[SourceFacts], config: &Config, today: Date) -> Vec<Finding> {
