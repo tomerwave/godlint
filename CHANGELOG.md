@@ -9,6 +9,28 @@ speaks about.
 
 ## [Unreleased]
 
+## [0.1.8] - 2026-07-29
+
+### Added
+
+- A GitHub action. `uses: tomerwave/godlint@v1` installs the released binary, verifies it against
+  the checksum published beside it, and reports each finding as an annotation on its line. No
+  toolchain is installed and no token is used, which is what lets it work on a pull request from a
+  fork. The job summary carries a count per rule, because GitHub renders only so many annotations per
+  run and a repository with more findings than that would otherwise lose the rest silently. `version`
+  defaults to the latest release and says so; pin it for a check that cannot change under you. The
+  action is listed as `Run Godlint`, since a Marketplace name has to be unique across every action,
+  user and organisation, and `Godlint` was taken. It changes no `uses:` line and no package name.
+
+  The action is exercised by its own pull requests on Linux, macOS and Windows, against one tree it
+  must pass and one it must fail — so a change to it is tested before release rather than after. That
+  test found three things on its first run: a checksum file written with a carriage return, an
+  unauthenticated call to `api.github.com` answering 403 from a rate-limited runner, and that the
+  action cannot be tested against a release older than the flag it depends on. The version is now
+  resolved from the redirect the releases page serves, and a download is verified by comparing the
+  published hash rather than by handing the file to `shasum -c`, which reads a filename out of it.
+
+
 ## [0.1.7] - 2026-07-29
 
 ### Fixed
@@ -19,21 +41,6 @@ speaks about.
 
 
 ### Added
-
-- A GitHub action. `uses: tomerwave/godlint@v1` installs the released binary, verifies it against
-  the checksum published beside it, and reports each finding as an annotation on its line. No
-  toolchain is installed and no token is used, which is what lets it work on a pull request from a
-  fork. The job summary carries a count per rule, because GitHub renders only so many annotations per
-  run and a repository with more findings than that would otherwise lose the rest silently. `version`
-  defaults to the latest release and says so; pin it for a check that cannot change under you.
-
-  The action is exercised by its own pull requests on Linux, macOS and Windows, against one tree it
-  must pass and one it must fail — so a change to it is tested before release rather than after. That
-  test found three things on its first run: a checksum file written with a carriage return, an
-  unauthenticated call to `api.github.com` answering 403 from a rate-limited runner, and that the
-  action cannot be tested against a release older than the flag it depends on. The version is now
-  resolved from the redirect the releases page serves, and a download is verified by comparing the
-  published hash rather than by handing the file to `shasum -c`, which reads a filename out of it.
 
 - `check --format <github|json|sarif|terminal>`. `terminal` stays the default. `github` emits
   workflow-command annotations, so a finding lands on the exact line of a pull request diff without a
