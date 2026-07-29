@@ -29,3 +29,26 @@ jobs:
           git fetch --no-tags origin "${{ github.event.repository.default_branch }}"
           python3 scripts/validate-pull-request.py \
             --release-line "origin/${{ github.event.repository.default_branch }}"
+
+  branch-name:
+    name: Check the branch name
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      # A branch name is the first thing a reader of the history sees, so it carries the kind
+      # of change. GitHub's own branch-name rule is not available on this plan, so the check
+      # lives here: it cannot refuse the push, but it does refuse the merge.
+      - name: Require a conventional prefix
+        env:
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          if printf '%s' "$BRANCH" | grep -Eq '^(feat|fix|docs|chore|refactor|test|ci)/[a-z0-9][a-z0-9._-]*$'; then
+            echo "$BRANCH"
+            exit 0
+          fi
+
+          echo "Branch name '$BRANCH' does not carry a conventional prefix." >&2
+          echo "Use feat/, fix/, docs/, chore/, refactor/, test/ or ci/ followed by a" >&2
+          echo "lower-case description, such as feat/import-fact." >&2
+          exit 1
