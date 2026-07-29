@@ -19,6 +19,14 @@ releases begin.
   lists the available ones. Godlint's own configuration is now the suite and nothing else,
   since an override here would be this project exempting itself from its own standard.
 
+- `architecture/restricted-import` (`modules`, each with `allow-in`) — reports an import of a
+  module a repository puts behind a boundary. A restricted name covers what lies beneath it by
+  whole segment, so `crate::internal` catches `crate::internal::deep` while `crate::internals`
+  is a different module. Built on a new `ImportFact`, which reads the module from the range that
+  spells it: a Rust `use` path or `extern crate` name, a Python `import` or `from ... import`
+  module with an alias seen through, and the source string of a JavaScript or TypeScript
+  `import` or re-export. It resolves nothing, the same boundary the call rules draw.
+
 - `logging/no-production-log` (`allow-in`) — reports debug logging outside the paths a
   repository approves. Defaults to the calls that exist to be read during development:
   `console.log`, `console.debug`, `console.info`, `console.trace`, Python `print` and

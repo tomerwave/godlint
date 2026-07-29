@@ -1,6 +1,6 @@
 use crate::{
     analyzers::SourceFacts,
-    facts::{AccessFact, CallFact},
+    facts::{AccessFact, CallFact, ImportFact},
     rules::{Finding, Ranged, Reporting, Rule, Violation, collect_ranged},
     source::SourceRange,
 };
@@ -11,6 +11,10 @@ pub trait CallRule: Rule {
 
 pub trait AccessRule: Rule {
     fn check(access: &AccessFact, configuration: &Self::Configuration) -> Option<Violation>;
+}
+
+pub trait ImportRule: Rule {
+    fn check(import: &ImportFact, configuration: &Self::Configuration) -> Option<Violation>;
 }
 
 pub fn evaluate_call_rule<R: CallRule>(
@@ -43,8 +47,26 @@ impl Ranged for CallFact {
     }
 }
 
+impl Ranged for ImportFact {
+    fn source_range(&self) -> SourceRange {
+        self.range()
+    }
+}
+
 impl Ranged for AccessFact {
     fn source_range(&self) -> SourceRange {
         self.range()
     }
+}
+
+pub fn evaluate_import_rule<R: ImportRule>(
+    facts: &[SourceFacts],
+    configuration: &R::Configuration,
+) -> Vec<Finding> {
+    collect_ranged(
+        facts,
+        Reporting::of::<R>(configuration),
+        SourceFacts::imports,
+        |import, _| R::check(import, configuration),
+    )
 }

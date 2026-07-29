@@ -1,0 +1,8 @@
+exit-code: 1
+
+stdout: |
+  example.py:1:6: error[architecture/restricted-import] legacy.db is restricted by project policy; import it through an approved boundary.
+  example.rs:1:5: error[architecture/restricted-import] crate::internal::store is restricted by project policy; import it through an approved boundary.
+  example.ts:1:24: error[architecture/restricted-import] @app/internal is restricted by project policy; import it through an approved boundary.
+
+stderr: ""

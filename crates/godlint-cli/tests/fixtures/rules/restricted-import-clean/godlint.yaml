@@ -1,0 +1,7 @@
+version: 1
+
+rules:
+  architecture/restricted-import:
+    severity: error
+    modules:
+      - name: crate::internal

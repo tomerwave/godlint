@@ -1,0 +1,14 @@
+version: 1
+
+exclude:
+  - excluded.ts
+
+rules:
+  architecture/restricted-import:
+    severity: error
+    modules:
+      - name: crate::internal
+      - name: legacy.db
+      - name: "@app/internal"
+        allow-in:
+          - app/**

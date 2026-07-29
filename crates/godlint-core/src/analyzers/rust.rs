@@ -29,6 +29,7 @@ const VOCABULARY: Vocabulary = Vocabulary {
     is_abstract,
     callee,
     is_access,
+    import,
     comment_kind,
     has_implicit_tail_return,
 };
@@ -66,6 +67,22 @@ fn callee(node: Node<'_>) -> Option<Callee<'_>> {
 
     node.child_by_field_name(field)
         .map(|node| Callee { node, is_macro })
+}
+
+fn import(node: Node<'_>) -> Option<Node<'_>> {
+    match node.kind() {
+        "use_declaration" => spelled_path(node.child_by_field_name("argument")?),
+        "extern_crate_declaration" => node.child_by_field_name("name"),
+        _ => None,
+    }
+}
+
+fn spelled_path(argument: Node<'_>) -> Option<Node<'_>> {
+    if argument.kind() == "scoped_use_list" {
+        return argument.child_by_field_name("path");
+    }
+
+    Some(argument)
 }
 
 fn is_access(_kind: &str) -> bool {

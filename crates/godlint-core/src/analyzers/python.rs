@@ -29,6 +29,7 @@ const VOCABULARY: Vocabulary = Vocabulary {
     is_abstract,
     callee,
     is_access,
+    import,
     comment_kind,
     has_implicit_tail_return,
 };
@@ -69,6 +70,22 @@ fn callee(node: Node<'_>) -> Option<Callee<'_>> {
             node,
             is_macro: false,
         })
+}
+
+fn import(node: Node<'_>) -> Option<Node<'_>> {
+    match node.kind() {
+        "import_statement" => spelled_module(node.child_by_field_name("name")?),
+        "import_from_statement" => node.child_by_field_name("module_name"),
+        _ => None,
+    }
+}
+
+fn spelled_module(name: Node<'_>) -> Option<Node<'_>> {
+    if name.kind() == "aliased_import" {
+        return name.child_by_field_name("name");
+    }
+
+    Some(name)
 }
 
 fn is_access(kind: &str) -> bool {

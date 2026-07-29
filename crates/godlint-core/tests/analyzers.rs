@@ -227,6 +227,52 @@ fn extracts_direct_calls_from_each_language() {
 }
 
 #[test]
+fn extracts_imported_modules_in_every_language() {
+    let cases = [
+        (
+            "example.rs",
+            "use std::process::exit;\nuse crate::internal::{a, b};\nextern crate serde;\n",
+            vec!["std::process::exit", "crate::internal", "serde"],
+        ),
+        (
+            "example.py",
+            "import os.path\nfrom a.b import c\nimport x as y\n",
+            vec!["os.path", "a.b", "x"],
+        ),
+        (
+            "example.js",
+            "import x from \"a/b\";\nimport \"./side\";\nexport { z } from \"pkg\";\n",
+            vec!["a/b", "./side", "pkg"],
+        ),
+        (
+            "example.ts",
+            "import type { T } from \"./t\";\nimport x from \"a/b\";\n",
+            vec!["./t", "a/b"],
+        ),
+    ];
+
+    for (path, contents, expected) in cases {
+        let facts = analyze(&source(path, contents))
+            .unwrap_or_else(|error| panic!("analyzes {path}: {error}"));
+        let modules: Vec<&str> = facts
+            .imports()
+            .iter()
+            .map(|import| import.module())
+            .collect();
+
+        assert_eq!(modules, expected, "{path}");
+    }
+}
+
+#[test]
+fn reads_no_import_from_a_file_that_has_none() {
+    let facts = analyze(&source("example.rs", "fn main() {}\n"))
+        .unwrap_or_else(|error| panic!("analyzes: {error}"));
+
+    assert!(facts.imports().is_empty());
+}
+
+#[test]
 fn counts_direct_call_arguments() {
     let facts = analyze(&source(
         "example.ts",

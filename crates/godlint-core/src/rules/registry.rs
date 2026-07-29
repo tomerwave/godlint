@@ -8,8 +8,8 @@ use crate::{
         function_statements::FunctionStatements, no_comments::NoComments,
         no_dynamic_execution::NoDynamicExecution, no_production_log::NoProductionLog,
         parameter_count::ParameterCount, restricted_call::RestrictedCall,
-        return_count::ReturnCount, todo_requires_reference::TodoRequiresReference,
-        unused_suppression::UnusedSuppression,
+        restricted_import::RestrictedImport, return_count::ReturnCount,
+        todo_requires_reference::TodoRequiresReference, unused_suppression::UnusedSuppression,
     },
 };
 
@@ -84,6 +84,11 @@ severity!(
     no_production_log_severity,
     NoProductionLog,
     no_production_log
+);
+severity!(
+    restricted_import_severity,
+    RestrictedImport,
+    restricted_import
 );
 
 const REGISTRATIONS: &[Registration] = &[
@@ -170,6 +175,11 @@ const REGISTRATIONS: &[Registration] = &[
     Registration {
         id: NoProductionLog::ID,
         severity: no_production_log_severity,
+        suppressible: true,
+    },
+    Registration {
+        id: RestrictedImport::ID,
+        severity: restricted_import_severity,
         suppressible: true,
     },
 ];

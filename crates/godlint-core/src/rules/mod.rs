@@ -25,9 +25,13 @@ pub mod no_production_log;
 pub mod parameter_count;
 mod reference;
 
-pub use reference::{AccessRule, CallRule, evaluate_access_rule, evaluate_call_rule};
+pub use reference::{
+    AccessRule, CallRule, ImportRule, evaluate_access_rule, evaluate_call_rule,
+    evaluate_import_rule,
+};
 mod registry;
 pub mod restricted_call;
+pub mod restricted_import;
 pub mod return_count;
 pub mod todo_requires_reference;
 pub mod unused_suppression;
@@ -75,6 +79,9 @@ pub enum Violation {
     },
     ProductionLog {
         callee: String,
+    },
+    RestrictedImport {
+        module: String,
     },
 }
 
@@ -397,6 +404,7 @@ const EVALUATORS: &[Evaluator] = &[
     direct_environment_read::evaluate,
     explicit_timer_delay::evaluate,
     no_production_log::evaluate,
+    restricted_import::evaluate,
 ];
 
 pub fn evaluate(facts: &[SourceFacts], config: &Config, today: Date) -> Vec<Finding> {
@@ -476,6 +484,10 @@ impl fmt::Display for Violation {
             Self::TimerWithoutDelay { callee } => write!(
                 formatter,
                 "{callee} needs an explicit delay; pass the intended delay in milliseconds."
+            ),
+            Self::RestrictedImport { module } => write!(
+                formatter,
+                "{module} is restricted by project policy; import it through an approved boundary."
             ),
             Self::ProductionLog { callee } => write!(
                 formatter,

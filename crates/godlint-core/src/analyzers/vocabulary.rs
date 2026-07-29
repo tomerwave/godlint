@@ -21,6 +21,7 @@ pub(crate) struct Vocabulary {
     pub is_abstract: fn(Node<'_>, &str) -> bool,
     pub callee: fn(Node<'_>) -> Option<Callee<'_>>,
     pub is_access: fn(&str) -> bool,
+    pub import: fn(Node<'_>) -> Option<Node<'_>>,
     pub comment_kind: fn(Node<'_>, &str) -> Option<CommentKind>,
     pub has_implicit_tail_return: fn(Node<'_>) -> bool,
 }

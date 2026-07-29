@@ -112,6 +112,7 @@ TypeScript/JavaScript, and Python source files. Sixteen rules are implemented:
 - `reliability/explicit-timer-delay` — JavaScript/TypeScript timers that omit their
   explicit millisecond delay.
 - `logging/no-production-log` — debug logging outside the paths a repository approves.
+- `architecture/restricted-import` — imports of modules a repository puts behind a boundary.
 
 These four read the callee exactly as it is spelled. `std::env::var` is matched and the
 aliased `env::var` after `use std::env` is not, because knowing they name the same function
