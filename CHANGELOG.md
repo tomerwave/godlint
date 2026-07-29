@@ -16,7 +16,9 @@ speaks about.
   The bare `godlint` package carries no binary and declares one optional platform package per
   platform; npm installs only the one matching `os` and `cpu`, and the package runs it. Nothing is
   downloaded during install, so it works with `--ignore-scripts` and without a network. Linux ships
-  the statically linked build, so one binary per architecture runs against either libc.
+  the statically linked build, so one binary per architecture runs against either libc. Packages are
+  published by trusted publishing rather than a stored token, and each carries a provenance
+  attestation tying it to the commit and workflow that built it.
 
 - Release binaries for Windows (`x86_64-pc-windows-msvc`) and for Linux without glibc
   (`x86_64-unknown-linux-musl`, statically linked), alongside the Linux and macOS builds for both

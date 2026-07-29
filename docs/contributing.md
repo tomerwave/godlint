@@ -32,8 +32,9 @@ For repository changes:
   already says the same: `python3 scripts/check-release.py v<version>` checks all three agree and
   prints the notes the release will carry. Publishing cannot be undone — a version may be yanked
   but never replaced — so the check runs before anything is built. crates.io is reached with a
-  token held as an environment secret, so no other workflow can read it. npm is reached the same
-  way, from its own environment. `packaging/build-npm.py` assembles the npm packages from the
+  token held as an environment secret, so no other workflow can read it. npm is reached by trusted
+  publishing instead, from its own environment, so no npm token is stored and each package carries a
+  provenance attestation tying it to the commit and workflow that built it. `packaging/build-npm.py` assembles the npm packages from the
   binaries the release built; it takes `--only` so a single platform can be built and installed on
   one machine to check the shim end to end.
 - `python3 scripts/validate-pull-request.py` enforces the parts of those templates that

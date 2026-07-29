@@ -165,8 +165,12 @@ jobs:
     runs-on: ubuntu-latest
     environment: npm
 
+    # Trusted publishing exchanges this identity for a short-lived credential, so no token is
+    # stored, and it is also what lets npm attach a provenance attestation tying each package to
+    # the commit and workflow that built it.
     permissions:
       contents: read
+      id-token: write
 
     steps:
       - uses: actions/checkout@v4
@@ -174,28 +178,28 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          registry-url: https://registry.npmjs.org
+
+      # Trusted publishing needs a newer npm than the one bundled with Node.
+      - run: npm install --global npm@latest
 
       - uses: actions/download-artifact@v4
         with:
           pattern: binary-*
           path: binaries
 
-      # Each platform package must exist before the package that depends on them is published,
-      # or npm resolves an optional dependency that is not there yet and installs no binary.
       - name: Assemble the packages
         env:
           TAG: ${{ github.ref_name }}
         run: python3 packaging/build-npm.py "${TAG#v}" --binaries binaries --out packages
 
+      # Every platform package must exist before the package that names them, or npm resolves an
+      # optional dependency that is not published yet and installs no binary at all.
       - name: Publish every platform package, then the one that names them
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           for package in packages/cli-*; do
-            npm publish "$package" --access public
+            npm publish "$package" --access public --provenance
           done
-          npm publish packages/godlint --access public
+          npm publish packages/godlint --access public --provenance
 
   announce:
     name: Publish the GitHub release
