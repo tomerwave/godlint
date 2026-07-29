@@ -1,0 +1,24 @@
+name: Labeler
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  label:
+    name: Label the pull request
+    runs-on: ubuntu-latest
+
+    steps:
+      # pull_request_target, because labelling a pull request needs write access and a pull request
+      # from a fork has a read-only token. It is only safe while nothing here checks out or runs the
+      # pull request's code, and nothing does: the labeller reads the changed paths from the API.
+      - uses: actions/labeler@v5
+        with:
+          # Never remove a label. A path rule has no business undoing a decision a person made, and
+          # the drift labels are exactly the kind of decision that must survive a later commit.
+          sync-labels: false

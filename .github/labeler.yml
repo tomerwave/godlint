@@ -1,0 +1,29 @@
+# Descriptive labels only. fixes-false-positive and relaxes-a-rule are deliberately absent: they
+# record a judgement about why the released binary disagrees with this tree, and a label applied by
+# a path rule would let the drift check bypass itself exactly when it matters.
+
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - docs/**
+          - "*.md"
+
+rule-proposal:
+  - changed-files:
+      - any-glob-to-any-file:
+          - crates/godlint-core/src/rules/**
+          - crates/godlint-cli/tests/fixtures/rules/**
+
+tech-debt:
+  - changed-files:
+      - any-glob-to-any-file:
+          - scripts/**
+
+packaging:
+  - changed-files:
+      - any-glob-to-any-file:
+          - packaging/**
+          - action.yml
+          - Cargo.toml
+          - crates/*/Cargo.toml
+          - .github/workflows/release.yml
