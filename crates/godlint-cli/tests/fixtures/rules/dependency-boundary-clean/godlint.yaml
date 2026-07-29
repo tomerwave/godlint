@@ -1,0 +1,21 @@
+version: 1
+
+rules:
+  architecture/dependency-boundary:
+    severity: error
+    layers:
+      - name: ui
+        paths:
+          - src/ui/**
+        modules:
+          - crate::ui
+      - name: application
+        paths:
+          - src/app/**
+        modules:
+          - crate::app
+      - name: domain
+        paths:
+          - src/domain/**
+        modules:
+          - crate::domain

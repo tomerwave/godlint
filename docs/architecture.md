@@ -47,9 +47,11 @@ is the name they configure.
 
 Naming a callee under `calls` scopes the restriction that already exists rather than
 redefining it. A built-in name stays bound to the language that defines it, so giving
-Python's `print` an `allow-in` boundary leaves a TypeScript function of that name alone. A
-name the project invents belongs to no language and applies wherever it is called, which is
-what a policy about `loadConfig` means.
+Python's `sys.exit` an `allow-in` boundary leaves a call spelled `sys.exit` in TypeScript alone.
+A name the project invents belongs to no language and applies wherever it is called, which is
+what a policy about `loadConfig` means. Moving the debug-output built-ins to
+`logging/no-production-log` moved their binding with them: `print` named under `calls` is now an
+invented name and applies everywhere, while the logging rule keeps it bound to Python.
 
 The unstated cost is that a project cannot restrict a callee of its own whose name a built-in
 already claims, and the failure is silence rather than a diagnostic. Resolving it needs a
@@ -62,16 +64,16 @@ rule asks — is this name a built-in anywhere, and is it restricted in this cal
 are answered from that table. Splitting them across a list per language meant a new
 restriction had to be added twice, and forgetting the second made a built-in silently
 language-agnostic again. A macro carries its own `!`, so one dialect per
-language suffices and the name alone separates `dbg!` from a `fn dbg`. `Import`, `EnvironmentRead`,
-`ErrorHandler`, `Assertion`, `Mock`, and `DependencyEdge` are planned and are described in the
-[rule roadmap](rule-roadmap.md).
+language suffices and the name alone separates `dbg!` from a `fn dbg`.
+`EnvironmentRead`, `ErrorHandler`, `Assertion`, `Mock`, and `DependencyEdge` are planned and are
+described in the [rule roadmap](rule-roadmap.md).
 
 Source files are identified with repository-relative paths and a shared language enum.
 Ranges use byte offsets internally and derive one-based line and Unicode-scalar-column
 positions only at reporting boundaries.
 
 A range is built by the file it indexes and by nothing else: `SourceFile::range` is the only
-constructor, and it rejects an offset past the end, an offset off a UTF-8 boundary, and a
+constructor that takes offsets, and it rejects an offset past the end, an offset off a UTF-8 boundary, and a
 start after its end. A `SourceRange` that exists is therefore a range that has already been
 checked, so locating one cannot fail, and no fact needs to re-validate what its type already
 records. That is what makes rule evaluation infallible — the single error a rule could once
@@ -184,19 +186,19 @@ vocabulary that it has no member-read form of the constructs these rules police 
 the environment through a call — so a reader can tell the difference between "Rust is not
 violated" and "Rust is not seen".
 
-Functions, calls and accesses share one driver. Each asks the same question of a different
-fact slice — does this item violate a policy, and over what range — so `Ranged` names the
+Functions, calls, accesses and imports share one driver. Each asks the same question of a
+different fact slice — does this item violate a policy, and over what range — so `Ranged` names the
 one thing they have in common and `collect_ranged` walks the slice, honours the severity
 gate, and turns a violation into a finding exactly once. `rules::reference` keeps the
-`CallRule` and `AccessRule` traits, so a reference rule declares what it looks for and the
+`CallRule`, `AccessRule` and `ImportRule` traits, so a reference rule declares what it looks for and the
 driver reads its identity and severity. That is what stops a rule naming another rule's
 identifier or ignoring the severity gate, and a rule that consumes both slices, as the
 environment-read rule does, gets consistent ordering for free.
 
 Underneath all of them is one kernel. `report` takes an iterator of source, range and
 violation, applies the severity gate, and turns each into a finding; every driver builds that
-iterator from its own fact shape and nothing else. Functions, calls and accesses come from a
-slice a `SourceFacts` owns, a file rule's item is the source itself, and a suppression rule's
+iterator from its own fact shape and nothing else. Functions, calls, accesses and imports come
+from a slice a `SourceFacts` owns, a file rule's item is the source itself, and a suppression rule's
 items are rooted off a different slice entirely — shapes that no single signature covered,
 which is why each driver used to carry its own severity check and its own finding loop. The
 gate is now written once, so a driver cannot be added that forgets it. Because the iterator is

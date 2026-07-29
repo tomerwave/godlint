@@ -78,11 +78,11 @@ fn import(node: Node<'_>) -> Option<Node<'_>> {
 }
 
 fn spelled_path(argument: Node<'_>) -> Option<Node<'_>> {
-    if argument.kind() == "scoped_use_list" {
-        return argument.child_by_field_name("path");
+    match argument.kind() {
+        "scoped_use_list" | "use_as_clause" => argument.child_by_field_name("path"),
+        "use_list" => None,
+        _ => Some(argument),
     }
-
-    Some(argument)
 }
 
 fn is_access(_kind: &str) -> bool {

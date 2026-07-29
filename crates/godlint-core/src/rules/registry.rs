@@ -2,9 +2,10 @@ use crate::{
     config::{Config, Severity},
     rules::{
         Rule, accountable_suppression::AccountableSuppression,
-        decision_complexity::DecisionComplexity, direct_environment_read::DirectEnvironmentRead,
-        empty_function::EmptyFunction, explicit_timer_delay::ExplicitTimerDelay,
-        file_size::FileSize, function_nesting::FunctionNesting, function_size::FunctionSize,
+        decision_complexity::DecisionComplexity, dependency_boundary::DependencyBoundary,
+        direct_environment_read::DirectEnvironmentRead, empty_function::EmptyFunction,
+        explicit_timer_delay::ExplicitTimerDelay, file_size::FileSize,
+        function_nesting::FunctionNesting, function_size::FunctionSize,
         function_statements::FunctionStatements, no_comments::NoComments,
         no_dynamic_execution::NoDynamicExecution, no_production_log::NoProductionLog,
         parameter_count::ParameterCount, restricted_call::RestrictedCall,
@@ -89,6 +90,11 @@ severity!(
     restricted_import_severity,
     RestrictedImport,
     restricted_import
+);
+severity!(
+    dependency_boundary_severity,
+    DependencyBoundary,
+    dependency_boundary
 );
 
 const REGISTRATIONS: &[Registration] = &[
@@ -180,6 +186,11 @@ const REGISTRATIONS: &[Registration] = &[
     Registration {
         id: RestrictedImport::ID,
         severity: restricted_import_severity,
+        suppressible: true,
+    },
+    Registration {
+        id: DependencyBoundary::ID,
+        severity: dependency_boundary_severity,
         suppressible: true,
     },
 ];
