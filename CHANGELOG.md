@@ -11,6 +11,12 @@ speaks about.
 
 ### Added
 
+- `tomerwave/godlint@v1` resolves, and each release moves it. The tag is the action's interface
+  version rather than the binary's: the inputs are what it promises and they have not changed, while
+  the command line is still `0.1.x`. It advances only after every registry and every archive has
+  succeeded, so it never points at a half-published release, and a break in the inputs means a `v2`
+  rather than a bump. Exact version tags stay immutable; the floating tag is deliberately outside
+  that rule, since a tag whose purpose is to move cannot be protected against moving.
 - Two labels make the drift check pass, and which one records what happened: `fixes-false-positive`
   when a rule was reporting something it should not have, and `relaxes-a-rule` when the rule was
   narrowed or a threshold loosened. Both are cases where the released binary still reports what the
