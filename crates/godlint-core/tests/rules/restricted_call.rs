@@ -7,7 +7,7 @@ fn violations(path: &str, source: &str, configuration: &str) -> Vec<Violation> {
 }
 
 #[test]
-fn restricts_default_exit_and_debug_calls_in_every_supported_language() {
+fn restricts_default_process_exits_in_every_supported_language() {
     let configuration = concat!(
         "version: 1\n",
         "rules:\n",
@@ -16,26 +16,21 @@ fn restricts_default_exit_and_debug_calls_in_every_supported_language() {
     );
 
     assert_eq!(
-        violations(
-            "src/exit.ts",
-            "process.exit(1);\nconsole.log('debug');",
-            configuration
-        )
-        .len(),
-        2
+        violations("src/exit.ts", "process.exit(1);", configuration).len(),
+        1
     );
     assert_eq!(
-        violations("src/exit.py", "sys.exit(1)\nprint('debug')", configuration).len(),
-        2
+        violations("src/exit.py", "sys.exit(1)", configuration).len(),
+        1
     );
     assert_eq!(
         violations(
             "src/exit.rs",
-            "fn main() {\n    std::process::exit(1);\n    dbg!(1);\n}",
+            "fn main() {\n    std::process::exit(1);\n}",
             configuration
         )
         .len(),
-        2
+        1
     );
 }
 
@@ -129,7 +124,9 @@ fn a_function_is_not_the_macro_that_shares_its_name() {
         "version: 1\n",
         "rules:\n",
         "  architecture/restricted-call:\n",
-        "    severity: error\n"
+        "    severity: error\n",
+        "    calls:\n",
+        "      - name: \"dbg!\"\n"
     );
     let source = concat!(
         "fn dbg(value: u32) -> u32 {\n",
@@ -196,8 +193,8 @@ fn a_configured_name_keeps_the_macro_distinction() {
 
     assert_eq!(
         violations("src/example.rs", source, restricts_function).len(),
-        2,
-        "naming the function restricts it, and the macro stays restricted by default"
+        1,
+        "naming the function restricts it and leaves the macro alone"
     );
 }
 
@@ -209,38 +206,28 @@ fn naming_a_built_in_scopes_it_to_the_language_that_defines_it() {
         "  architecture/restricted-call:\n",
         "    severity: error\n",
         "    calls:\n",
-        "      - name: print\n",
+        "      - name: sys.exit\n",
         "        allow-in:\n",
-        "          - reporting/**\n"
+        "          - entrypoints/**\n"
     );
 
     assert_eq!(
-        violations(
-            "svc.py",
-            "def emit(rows):\n    print(rows)\n",
-            configuration
-        )
-        .len(),
+        violations("svc.py", "def stop():\n    sys.exit(1)\n", configuration).len(),
         1,
-        "Python print is restricted outside its boundary"
+        "Python sys.exit is restricted outside its boundary"
     );
     assert!(
         violations(
-            "reporting/ok.py",
-            "def emit(rows):\n    print(rows)\n",
+            "entrypoints/ok.py",
+            "def stop():\n    sys.exit(1)\n",
             configuration
         )
         .is_empty(),
         "and allowed inside it"
     );
     assert!(
-        violations(
-            "widget.ts",
-            "function print(m: string): string {\n  return m;\n}\nexport const go = () => print(\"x\");\n",
-            configuration
-        )
-        .is_empty(),
-        "scoping Python's built-in must not restrict a TypeScript function of that name"
+        violations("widget.ts", "sys.exit(1);\n", configuration).is_empty(),
+        "scoping Python's built-in must not restrict a call spelled the same in TypeScript"
     );
 }
 

@@ -36,6 +36,9 @@ mod function_statements;
 #[path = "rules/no_comments.rs"]
 mod no_comments;
 
+#[path = "rules/no_production_log.rs"]
+mod no_production_log;
+
 #[path = "rules/no_dynamic_execution.rs"]
 mod no_dynamic_execution;
 

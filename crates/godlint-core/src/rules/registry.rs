@@ -6,9 +6,10 @@ use crate::{
         empty_function::EmptyFunction, explicit_timer_delay::ExplicitTimerDelay,
         file_size::FileSize, function_nesting::FunctionNesting, function_size::FunctionSize,
         function_statements::FunctionStatements, no_comments::NoComments,
-        no_dynamic_execution::NoDynamicExecution, parameter_count::ParameterCount,
-        restricted_call::RestrictedCall, return_count::ReturnCount,
-        todo_requires_reference::TodoRequiresReference, unused_suppression::UnusedSuppression,
+        no_dynamic_execution::NoDynamicExecution, no_production_log::NoProductionLog,
+        parameter_count::ParameterCount, restricted_call::RestrictedCall,
+        return_count::ReturnCount, todo_requires_reference::TodoRequiresReference,
+        unused_suppression::UnusedSuppression,
     },
 };
 
@@ -78,6 +79,11 @@ severity!(
     explicit_timer_delay_severity,
     ExplicitTimerDelay,
     explicit_timer_delay
+);
+severity!(
+    no_production_log_severity,
+    NoProductionLog,
+    no_production_log
 );
 
 const REGISTRATIONS: &[Registration] = &[
@@ -159,6 +165,11 @@ const REGISTRATIONS: &[Registration] = &[
     Registration {
         id: ExplicitTimerDelay::ID,
         severity: explicit_timer_delay_severity,
+        suppressible: true,
+    },
+    Registration {
+        id: NoProductionLog::ID,
+        severity: no_production_log_severity,
         suppressible: true,
     },
 ];

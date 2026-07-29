@@ -3,9 +3,10 @@ use std::num::NonZeroU32;
 use crate::config::{
     AccountableSuppressionRule, DecisionComplexityRule, DirectEnvironmentReadRule,
     EmptyFunctionRule, ExplicitTimerDelayRule, FunctionNestingRule, FunctionStatementsRule,
-    LineLimitRule, NoCommentsRule, NoDynamicExecutionRule, ParameterCountRule, RestrictedCallRule,
-    ReturnCountRule, Rules, Severity, TodoRequiresReferenceRule, UnusedSuppressionRule,
-    default_configuration_paths, default_markers, default_reference_prefixes,
+    LineLimitRule, NoCommentsRule, NoDynamicExecutionRule, NoProductionLogRule, ParameterCountRule,
+    RestrictedCallRule, ReturnCountRule, Rules, Severity, TodoRequiresReferenceRule,
+    UnusedSuppressionRule, default_configuration_paths, default_markers,
+    default_reference_prefixes,
 };
 
 pub const RECOMMENDED: &str = "recommended@1";
@@ -34,6 +35,7 @@ fn recommended(rules: &mut Rules) {
     policy(rules);
     security(rules);
     reliability(rules);
+    logging(rules);
 }
 
 fn maintainability(rules: &mut Rules) {
@@ -131,4 +133,11 @@ fn reliability(rules: &mut Rules) {
         .get_or_insert(ExplicitTimerDelayRule {
             severity: Severity::Error,
         });
+}
+
+fn logging(rules: &mut Rules) {
+    rules.no_production_log.get_or_insert(NoProductionLogRule {
+        severity: Severity::Error,
+        allow_in: Vec::new(),
+    });
 }

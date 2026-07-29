@@ -21,6 +21,7 @@ pub mod function_statements;
 mod line_count;
 pub mod no_comments;
 pub mod no_dynamic_execution;
+pub mod no_production_log;
 pub mod parameter_count;
 mod reference;
 
@@ -70,6 +71,9 @@ pub enum Violation {
         target: String,
     },
     TimerWithoutDelay {
+        callee: String,
+    },
+    ProductionLog {
         callee: String,
     },
 }
@@ -392,6 +396,7 @@ const EVALUATORS: &[Evaluator] = &[
     no_dynamic_execution::evaluate,
     direct_environment_read::evaluate,
     explicit_timer_delay::evaluate,
+    no_production_log::evaluate,
 ];
 
 pub fn evaluate(facts: &[SourceFacts], config: &Config, today: Date) -> Vec<Finding> {
@@ -471,6 +476,10 @@ impl fmt::Display for Violation {
             Self::TimerWithoutDelay { callee } => write!(
                 formatter,
                 "{callee} needs an explicit delay; pass the intended delay in milliseconds."
+            ),
+            Self::ProductionLog { callee } => write!(
+                formatter,
+                "{callee} logs from production code; route it through the project's logger or an approved path."
             ),
         }
     }

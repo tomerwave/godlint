@@ -61,6 +61,8 @@ fixture_tests! {
     direct_environment_read => "direct-environment-read",
     direct_environment_read_clean => "direct-environment-read-clean",
     explicit_timer_delay => "explicit-timer-delay",
+    no_production_log => "no-production-log",
+    no_production_log_clean => "no-production-log-clean",
     explicit_timer_delay_clean => "explicit-timer-delay-clean",
     rust_try_operator => "rust-try-operator",
     severity_below_threshold => "severity-below-threshold",

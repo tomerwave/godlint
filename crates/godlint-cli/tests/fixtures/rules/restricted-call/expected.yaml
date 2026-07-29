@@ -2,11 +2,8 @@ exit-code: 1
 
 stdout: |
   example.js:1:1: error[architecture/restricted-call] process.exit is restricted by project policy.
-  example.js:2:1: error[architecture/restricted-call] console.log is restricted by project policy.
   example.py:1:1: error[architecture/restricted-call] sys.exit is restricted by project policy.
-  example.py:2:1: error[architecture/restricted-call] print is restricted by project policy.
   example.rs:1:1: error[architecture/restricted-call] std::process::exit is restricted by project policy.
-  example.rs:2:1: error[architecture/restricted-call] dbg! is restricted by project policy.
   service.ts:1:1: error[architecture/restricted-call] loadConfig is restricted by project policy.
 
 stderr: ""

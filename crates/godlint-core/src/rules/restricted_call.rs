@@ -16,13 +16,9 @@ enum Dialect {
 
 const DEFAULTS: &[(&str, Dialect)] = &[
     ("process.exit", Dialect::JavaScript),
-    ("console.log", Dialect::JavaScript),
-    ("console.debug", Dialect::JavaScript),
     ("sys.exit", Dialect::Python),
     ("os._exit", Dialect::Python),
-    ("print", Dialect::Python),
     ("std::process::exit", Dialect::Rust),
-    ("dbg!", Dialect::Rust),
 ];
 
 pub struct RestrictedCall;

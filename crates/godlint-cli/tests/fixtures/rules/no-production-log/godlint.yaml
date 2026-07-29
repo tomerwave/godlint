@@ -1,0 +1,10 @@
+version: 1
+
+exclude:
+  - excluded.ts
+
+rules:
+  logging/no-production-log:
+    severity: error
+    allow-in:
+      - scripts/**

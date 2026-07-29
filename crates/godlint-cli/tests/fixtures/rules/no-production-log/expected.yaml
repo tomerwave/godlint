@@ -1,0 +1,9 @@
+exit-code: 1
+
+stdout: |
+  example.js:1:1: error[logging/no-production-log] console.log logs from production code; route it through the project's logger or an approved path.
+  example.py:1:1: error[logging/no-production-log] print logs from production code; route it through the project's logger or an approved path.
+  example.rs:1:1: error[logging/no-production-log] dbg! logs from production code; route it through the project's logger or an approved path.
+  example.ts:1:1: error[logging/no-production-log] console.debug logs from production code; route it through the project's logger or an approved path.
+
+stderr: ""
