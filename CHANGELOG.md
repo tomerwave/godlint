@@ -9,6 +9,19 @@ speaks about.
 
 ## [Unreleased]
 
+### Added
+
+- `check --format <github|json|sarif|terminal>`. `terminal` stays the default. `github` emits
+  workflow-command annotations, so a finding lands on the exact line of a pull request diff without a
+  token and without permissions, which is also what makes it work on a pull request from a fork.
+  `json` and `sarif` are documents for another tool to read, and both are emitted even when there is
+  nothing to report, because a consumer parses a document rather than prose. A format a person reads
+  still says `No findings.`, since silence reads as the tool not having run.
+
+  The annotation format escapes a property and a message differently, which is not cosmetic: `:` and
+  `,` separate properties, so escaping them in the message turned `std::process::exit` into
+  `std%3A%3Aprocess%3A%3Aexit`.
+
 ## [0.1.6] - 2026-07-29
 
 ### Added

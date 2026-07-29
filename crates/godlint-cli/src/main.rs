@@ -3,6 +3,7 @@ use std::process::ExitCode;
 use godlint_core::VERSION;
 
 mod commands;
+mod report;
 mod workspace;
 
 fn main() -> ExitCode {

@@ -101,6 +101,11 @@ above `fail-on`, which is what makes enforcement one line in CI:
 - run: godlint check
 ```
 
+`check --format` decides who is reading. `terminal` is the default; `github` emits annotations so
+findings land on the exact line of a pull request diff; `json` and `sarif` are documents for another
+tool to consume, and both are emitted even when there is nothing to report, because a consumer parses
+a document rather than prose.
+
 Two commands answer the questions that follow. `godlint config validate` rejects a configuration
 before it is trusted, and `godlint suppressions` lists every exemption with its owner and expiry,
 so an exception that has outlived its reason fails the build rather than accumulating quietly.
