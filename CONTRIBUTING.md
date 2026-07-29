@@ -31,17 +31,35 @@ should include valid, invalid, configuration, and suppression fixtures; a safe f
 also needs an expected-output fixture. Public behavior changes need release-note text
 and documentation updates.
 
-When the Rust workspace is introduced, the required local checks will be:
+The required local checks are:
 
 ```bash
 cargo fmt --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps
+python3 scripts/validate-pull-request.py
 ```
 
-Until then, documentation and community changes should be checked for working links,
-accurate scope, and respectful language.
+## Labels
+
+Most labels are applied for you from the paths a pull request touches: `documentation`,
+`rule-proposal`, `tech-debt`, `packaging`. Nothing to do.
+
+Two are yours to apply, and only you can know which fits. The `Action` workflow runs the
+*released* Godlint against the branch, so it goes red whenever a change makes the release
+report something this tree no longer considers a finding. That is legitimate twice:
+
+- `fixes-false-positive` - the rule was reporting something it should not have. The
+  release still reports it because it predates the fix.
+- `relaxes-a-rule` - the rule was deliberately narrowed, or a threshold loosened.
+
+Applying either makes the check pass and records which of the two happened; the
+explanation is printed either way. Applying one to hide a genuine regression defeats the
+only check that compares what Godlint ships against what Godlint demands, so do not.
+
+Adding a rule or tightening a threshold does not need a label. The released binary reports
+less than this tree, not more, and the check stays green.
 
 ## Code of Conduct
 
