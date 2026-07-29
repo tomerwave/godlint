@@ -451,17 +451,17 @@ file, and neither is one of the two rules that hold suppressions to account.
 
 ### Phase 5 — Error handling and testing
 
-These rules need explicit framework or language configuration. They start as warnings
-until real-project fixtures establish precision.
+The test rules need explicit framework configuration. Error-handler policy is syntax-defined and
+ships at error through `recommended@1`.
 
-| Rule | Required fact | Confidence | Initial scope |
-| --- | --- | --- | --- |
-| `reliability/empty-error-handler` | Error-handler fact | High | Empty catch / except bodies with documented exclusions |
-| `reliability/ignored-error` | Error result/exception fact | Medium | Direct discard patterns only |
-| `testing/no-focused-test` | Test fact | High | Configured test framework names and attributes |
-| `testing/no-skipped-test` | Test fact | High | Configured skip APIs and decorators |
-| `testing/assertion-required` | Test and assertion facts | Medium | Configured framework assertion APIs |
-| `testing/no-mock-production-module` | Mock and import facts | Medium | Explicit configured production boundaries |
+| Rule | Status | Required fact | Confidence | Initial scope |
+| --- | --- | --- | --- | --- |
+| `reliability/empty-error-handler` | Shipped | Error-handler fact | High | Empty JavaScript/TypeScript `catch` bodies and Python `except` bodies containing only `pass` |
+| `reliability/ignored-error` | Planned | Error result/exception fact | Medium | Direct discard patterns only |
+| `testing/no-focused-test` | Planned | Test fact | High | Configured test framework names and attributes |
+| `testing/no-skipped-test` | Planned | Test fact | High | Configured skip APIs and decorators |
+| `testing/assertion-required` | Planned | Test and assertion facts | Medium | Configured framework assertion APIs |
+| `testing/no-mock-production-module` | Planned | Mock and import facts | Medium | Explicit configured production boundaries |
 
 ### Phase 6 — Semantic and external capabilities
 

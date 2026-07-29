@@ -27,6 +27,9 @@ speaks about.
   succeeded, so it never points at a half-published release, and a break in the inputs means a `v2`
   rather than a bump. Exact version tags stay immutable; the floating tag is deliberately outside
   that rule, since a tag whose purpose is to move cannot be protected against moving.
+
+- `reliability/empty-error-handler` — reports empty JavaScript/TypeScript `catch` bodies and
+  Python `except` bodies containing only `pass`, so an error cannot be silently discarded.
 - Two labels make the drift check pass, and which one records what happened: `fixes-false-positive`
   when a rule was reporting something it should not have, and `relaxes-a-rule` when the rule was
   narrowed or a threshold loosened. Both are cases where the released binary still reports what the

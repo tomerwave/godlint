@@ -13,6 +13,7 @@ pub mod accountable_suppression;
 pub mod decision_complexity;
 pub mod dependency_boundary;
 pub mod direct_environment_read;
+pub mod empty_error_handler;
 pub mod empty_function;
 pub mod explicit_timer_delay;
 pub mod file_size;
@@ -32,8 +33,8 @@ mod scoped;
 mod violation;
 
 pub use reference::{
-    AccessRule, CallRule, ImportRule, evaluate_access_rule, evaluate_call_rule,
-    evaluate_import_rule,
+    AccessRule, CallRule, ErrorHandlerRule, ImportRule, evaluate_access_rule, evaluate_call_rule,
+    evaluate_error_handler_rule, evaluate_import_rule,
 };
 mod registry;
 pub mod restricted_call;
@@ -367,6 +368,7 @@ const EVALUATORS: &[Evaluator] = &[
     function_nesting::evaluate,
     file_size::evaluate,
     empty_function::evaluate,
+    empty_error_handler::evaluate,
     todo_requires_reference::evaluate,
     parameter_count::evaluate,
     decision_complexity::evaluate,

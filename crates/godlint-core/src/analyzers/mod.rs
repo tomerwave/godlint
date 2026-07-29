@@ -4,8 +4,8 @@ use tree_sitter::{Language as TreeSitterLanguage, Node, Parser};
 
 use crate::{
     facts::{
-        AccessFact, CallFact, CommentFact, FunctionFact, FunctionFactDetails, FunctionFactError,
-        ImportFact,
+        AccessFact, CallFact, CommentFact, ErrorHandlerFact, FunctionFact, FunctionFactDetails,
+        FunctionFactError, ImportFact,
     },
     source::{Language, SourceFile, SourceFileError, SourceRange},
 };
@@ -26,6 +26,7 @@ pub struct SourceFacts {
     accesses: Vec<AccessFact>,
     comments: Vec<CommentFact>,
     calls: Vec<CallFact>,
+    error_handlers: Vec<ErrorHandlerFact>,
     functions: Vec<FunctionFact>,
     imports: Vec<ImportFact>,
 }
@@ -49,6 +50,10 @@ impl SourceFacts {
 
     pub fn calls(&self) -> &[CallFact] {
         &self.calls
+    }
+
+    pub fn error_handlers(&self) -> &[ErrorHandlerFact] {
+        &self.error_handlers
     }
 
     pub fn imports(&self) -> &[ImportFact] {
@@ -106,6 +111,7 @@ pub(crate) fn analyze_with(
         accesses: collected.accesses,
         comments: collected.comments,
         calls: collected.calls,
+        error_handlers: collected.error_handlers,
         functions: collected.functions,
         imports: collected.imports,
     })
@@ -146,6 +152,7 @@ struct Collected {
     functions: Vec<FunctionFact>,
     comments: Vec<CommentFact>,
     calls: Vec<CallFact>,
+    error_handlers: Vec<ErrorHandlerFact>,
     imports: Vec<ImportFact>,
 }
 
@@ -181,11 +188,30 @@ impl Collected {
         vocabulary: &Vocabulary,
     ) -> Result<(), AnalyzerError> {
         self.calls.extend(call_fact(node, source, vocabulary)?);
+        self.error_handlers
+            .extend(error_handler_fact(node, source, vocabulary)?);
         self.accesses.extend(access_fact(node, source, vocabulary)?);
         self.imports.extend(import_fact(node, source, vocabulary)?);
 
         Ok(())
     }
+}
+
+fn error_handler_fact(
+    node: Node<'_>,
+    source: &SourceFile,
+    vocabulary: &Vocabulary,
+) -> Result<Option<ErrorHandlerFact>, AnalyzerError> {
+    let Some(handler) = (vocabulary.error_handler)(node) else {
+        return Ok(None);
+    };
+
+    Ok(Some(ErrorHandlerFact::new(
+        source.clone(),
+        node_range(handler.node, source)?,
+        node_range(handler.body, source)?,
+        handler.body_is_empty,
+    )))
 }
 
 fn collect_source_facts(

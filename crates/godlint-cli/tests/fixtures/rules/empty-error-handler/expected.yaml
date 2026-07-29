@@ -1,0 +1,6 @@
+exit-code: 1
+stdout: |
+  example.js:1:17: error[reliability/empty-error-handler] Error handler has an empty body; handle or re-raise the error.
+  example.py:3:1: error[reliability/empty-error-handler] Error handler has an empty body; handle or re-raise the error.
+  example.ts:3:3: error[reliability/empty-error-handler] Error handler has an empty body; handle or re-raise the error.
+stderr: ""

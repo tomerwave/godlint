@@ -9,6 +9,13 @@ pub(crate) struct Callee<'tree> {
 }
 
 #[derive(Clone, Copy)]
+pub(crate) struct ErrorHandler<'tree> {
+    pub node: Node<'tree>,
+    pub body: Node<'tree>,
+    pub body_is_empty: bool,
+}
+
+#[derive(Clone, Copy)]
 pub(crate) struct Vocabulary {
     pub is_function: fn(&str) -> bool,
     pub is_nesting: fn(&str) -> bool,
@@ -20,6 +27,7 @@ pub(crate) struct Vocabulary {
     pub is_receiver: fn(&str, &str) -> bool,
     pub is_abstract: fn(Node<'_>, &str) -> bool,
     pub callee: fn(Node<'_>) -> Option<Callee<'_>>,
+    pub error_handler: fn(Node<'_>) -> Option<ErrorHandler<'_>>,
     pub is_access: fn(&str) -> bool,
     pub import: fn(Node<'_>) -> Option<Node<'_>>,
     pub comment_kind: fn(Node<'_>, &str) -> Option<CommentKind>,

@@ -4,8 +4,9 @@ use std::path::PathBuf;
 
 use godlint_core::{
     facts::{
-        AccessFact, BlockDepth, CallFact, CommentFact, CommentKind, DecisionPoints, FunctionFact,
-        FunctionFactDetails, FunctionFactError, ParameterCount, ReturnPaths, StatementCount,
+        AccessFact, BlockDepth, CallFact, CommentFact, CommentKind, DecisionPoints,
+        ErrorHandlerFact, FunctionFact, FunctionFactDetails, FunctionFactError, ParameterCount,
+        ReturnPaths, StatementCount,
     },
     source::{SourceFile, SourceRange},
 };
@@ -107,4 +108,13 @@ fn records_an_access() {
         "outer",
         "a target is read from the range rather than stored beside it"
     );
+}
+
+#[test]
+fn records_an_error_handler() {
+    let fact = ErrorHandlerFact::new(source(), range(0, 28), range(11, 28), true);
+
+    assert_eq!(fact.range(), range(0, 28));
+    assert_eq!(fact.body_range(), range(11, 28));
+    assert!(fact.body_is_empty());
 }

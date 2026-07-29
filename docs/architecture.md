@@ -31,8 +31,8 @@ expected: read it here.
 ## Facts
 
 Language adapters retain native AST and parser details. They emit a small shared fact
-model that rules consume without a universal AST. `FunctionFact`, `CommentFact`,
-`CallFact`, `AccessFact`, and `ImportFact` exist today. `CallFact` records a direct callee path, a
+model that rules consume without a universal AST. `FunctionFact`, `CommentFact`, `CallFact`,
+`AccessFact`, `ErrorHandlerFact`, and `ImportFact` exist today. `CallFact` records a direct callee path, a
 source range, argument count, and whether the call site was a macro invocation; `AccessFact` does the same
 for direct member access. Neither resolves aliases, types, or dynamically computed
 properties. The argument count excludes comments: a grammar reports them as named nodes
@@ -65,7 +65,7 @@ are answered from that table. Splitting them across a list per language meant a 
 restriction had to be added twice, and forgetting the second made a built-in silently
 language-agnostic again. A macro carries its own `!`, so one dialect per
 language suffices and the name alone separates `dbg!` from a `fn dbg`.
-`EnvironmentRead`, `ErrorHandler`, `Assertion`, `Mock`, and `DependencyEdge` are planned and are
+`EnvironmentRead`, `Assertion`, `Mock`, and `DependencyEdge` are planned and are
 described in the [rule roadmap](rule-roadmap.md).
 
 Source files are identified with repository-relative paths and a shared language enum.

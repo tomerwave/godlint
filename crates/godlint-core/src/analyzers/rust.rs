@@ -3,7 +3,7 @@ use tree_sitter::Node;
 use crate::{
     analyzers::{
         Analyzer, AnalyzerError, SourceFacts,
-        vocabulary::{Callee, Vocabulary},
+        vocabulary::{Callee, ErrorHandler, Vocabulary},
     },
     facts::CommentKind,
     source::SourceFile,
@@ -28,6 +28,7 @@ const VOCABULARY: Vocabulary = Vocabulary {
     is_receiver,
     is_abstract,
     callee,
+    error_handler,
     is_access,
     import,
     comment_kind,
@@ -67,6 +68,10 @@ fn callee(node: Node<'_>) -> Option<Callee<'_>> {
 
     node.child_by_field_name(field)
         .map(|node| Callee { node, is_macro })
+}
+
+fn error_handler(_node: Node<'_>) -> Option<ErrorHandler<'_>> {
+    None
 }
 
 fn import(node: Node<'_>) -> Option<Node<'_>> {

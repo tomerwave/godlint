@@ -1,0 +1,1 @@
+try { work(); } catch { recover(); }

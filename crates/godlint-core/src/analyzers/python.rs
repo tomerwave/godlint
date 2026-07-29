@@ -3,7 +3,7 @@ use tree_sitter::Node;
 use crate::{
     analyzers::{
         Analyzer, AnalyzerError, SourceFacts,
-        vocabulary::{Callee, Vocabulary, is_leading_block_statement},
+        vocabulary::{Callee, ErrorHandler, Vocabulary, is_leading_block_statement},
     },
     facts::CommentKind,
     source::SourceFile,
@@ -28,6 +28,7 @@ const VOCABULARY: Vocabulary = Vocabulary {
     is_receiver,
     is_abstract,
     callee,
+    error_handler,
     is_access,
     import,
     comment_kind,
@@ -70,6 +71,22 @@ fn callee(node: Node<'_>) -> Option<Callee<'_>> {
             node,
             is_macro: false,
         })
+}
+
+fn error_handler(node: Node<'_>) -> Option<ErrorHandler<'_>> {
+    if node.kind() != "except_clause" {
+        return None;
+    }
+    let body = node.named_child(0)?;
+
+    Some(ErrorHandler {
+        node,
+        body,
+        body_is_empty: body.named_child_count() == 1
+            && body
+                .named_child(0)
+                .is_some_and(|statement| statement.kind() == "pass_statement"),
+    })
 }
 
 fn import(node: Node<'_>) -> Option<Node<'_>> {

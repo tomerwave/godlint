@@ -2,9 +2,9 @@ use std::num::NonZeroU32;
 
 use crate::config::{
     AccountableSuppressionRule, DecisionComplexityRule, DependencyBoundaryRule,
-    DirectEnvironmentReadRule, EmptyFunctionRule, ExplicitTimerDelayRule, FilenameCaseRule,
-    ForbiddenDependencyRule, FunctionNestingRule, FunctionStatementsRule, LineLimitRule,
-    NoCommentsRule, NoDynamicExecutionRule, NoProductionLogRule, ParameterCountRule,
+    DirectEnvironmentReadRule, EmptyErrorHandlerRule, EmptyFunctionRule, ExplicitTimerDelayRule,
+    FilenameCaseRule, ForbiddenDependencyRule, FunctionNestingRule, FunctionStatementsRule,
+    LineLimitRule, NoCommentsRule, NoDynamicExecutionRule, NoProductionLogRule, ParameterCountRule,
     RestrictedCallRule, RestrictedImportRule, ReturnCountRule, Rules, Severity,
     TodoRequiresReferenceRule, UnusedSuppressionRule, default_configuration_paths, default_markers,
     default_reference_prefixes,
@@ -153,6 +153,11 @@ fn reliability(rules: &mut Rules) {
     rules
         .explicit_timer_delay
         .get_or_insert(ExplicitTimerDelayRule {
+            severity: Severity::Error,
+        });
+    rules
+        .empty_error_handler
+        .get_or_insert(EmptyErrorHandlerRule {
             severity: Severity::Error,
         });
 }
