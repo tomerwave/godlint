@@ -375,6 +375,21 @@ A configuration that gives a layer only one of the two is rejected rather than s
 enforcing half a policy. A file no layer contains, or a module no layer names, is outside the
 policy and reported by neither.
 
+`security/forbidden-dependency` reads the same fact but asks a different question, which is why
+it is a separate rule rather than a second spelling of `architecture/restricted-import`. That
+rule matches a module path by prefix, for a boundary inside the repository. This one maps an
+import to the *package* it comes from and matches that name exactly, so naming `lodash` once
+catches `lodash`, `lodash/merge` and anything deeper, while leaving `lodash-es` alone — a
+separately published package whose name merely starts the same way.
+
+What counts as the package is per language: the first path segment in JavaScript and
+TypeScript, or the first two when the name is scoped, so `@corp/legacy/deep` is `@corp/legacy`
+and `@corp/allowed` is a different dependency; the first dotted segment in Python; and the
+first `::` segment in Rust, which also covers `extern crate`. First-party code is not a
+dependency and yields no package at all: a relative import in any language, and `crate`, `self`
+or `super` in Rust. Neither is a platform builtin reached through a protocol, such as
+`node:fs`.
+
 Declared order carries one thing only: the direction a dependency may run. Which layer a file
 or a module belongs to is decided by the most specific declaration that covers it, not by
 whichever was declared first. Those are two different orderings, and conflating them made a
@@ -388,7 +403,7 @@ each appears in the list.
 | `architecture/restricted-import` | Shipped | Direct import fact | High | Ban direct imports of internal or risky modules |
 | `architecture/dependency-boundary` | Shipped | Import fact plus configured path layers | High | Enforce UI → application → domain → infrastructure direction |
 | `architecture/no-cycle` | Planned | Repository graph | High | Report the complete cycle edge chain |
-| `security/forbidden-dependency` | Planned | Package/import mapping | High | Block dependencies by explicit policy |
+| `security/forbidden-dependency` | Shipped | Package/import mapping | High | Block dependencies by explicit policy |
 | `architecture/filename-case` | Planned | Repository path fact | Medium | Support scoped case conventions and generated-file exceptions |
 
 ### Phase 5 — Error handling and testing

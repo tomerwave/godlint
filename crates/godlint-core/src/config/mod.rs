@@ -1,10 +1,11 @@
-use std::{collections::BTreeSet, fs, num::NonZeroU32, path::Path};
+use std::{fs, num::NonZeroU32, path::Path};
 
 use serde::Deserialize;
 
 use crate::suites;
 
 mod error;
+mod validate;
 
 pub use error::ConfigError;
 
@@ -78,6 +79,8 @@ pub struct Rules {
     pub restricted_import: Option<RestrictedImportRule>,
     #[serde(rename = "architecture/dependency-boundary")]
     pub dependency_boundary: Option<DependencyBoundaryRule>,
+    #[serde(rename = "security/forbidden-dependency")]
+    pub forbidden_dependency: Option<ForbiddenDependencyRule>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -118,6 +121,22 @@ pub struct RestrictedImportRule {
     pub severity: Severity,
     #[serde(default)]
     pub modules: Vec<RestrictedImport>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ForbiddenDependencyRule {
+    pub severity: Severity,
+    #[serde(default)]
+    pub packages: Vec<ForbiddenDependency>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ForbiddenDependency {
+    pub name: String,
+    #[serde(default, rename = "allow-in")]
+    pub allow_in: Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -306,238 +325,4 @@ impl Config {
 
         Ok(())
     }
-
-    fn validate(&self) -> Result<(), ConfigError> {
-        [
-            Self::validate_version,
-            Self::validate_exclude,
-            Self::validate_complexity_rule,
-            Self::validate_todo_rule,
-            Self::validate_restricted_call_rule,
-            Self::validate_restricted_import_rule,
-            Self::validate_dependency_boundary_rule,
-            Self::validate_no_production_log_rule,
-            Self::validate_empty_function_rule,
-            Self::validate_direct_environment_read_rule,
-        ]
-        .iter()
-        .try_for_each(|check| check(self))
-    }
-
-    fn validate_version(&self) -> Result<(), ConfigError> {
-        match self.version {
-            1 => Ok(()),
-            version => Err(ConfigError::UnsupportedVersion { version }),
-        }
-    }
-
-    fn validate_exclude(&self) -> Result<(), ConfigError> {
-        match self
-            .exclude
-            .iter()
-            .find(|pattern| pattern.trim().is_empty())
-        {
-            Some(pattern) => Err(ConfigError::InvalidExclude {
-                pattern: pattern.clone(),
-            }),
-            None => Ok(()),
-        }
-    }
-
-    fn validate_complexity_rule(&self) -> Result<(), ConfigError> {
-        if self
-            .rules
-            .decision_complexity
-            .as_ref()
-            .is_some_and(|rule| rule.limit() == 0)
-        {
-            return Err(ConfigError::InvalidComplexityLimit);
-        }
-
-        Ok(())
-    }
-
-    fn validate_todo_rule(&self) -> Result<(), ConfigError> {
-        let Some(rule) = &self.rules.todo_requires_reference else {
-            return Ok(());
-        };
-
-        if rule.markers.is_empty() || any_blank(&rule.markers) {
-            return Err(ConfigError::InvalidTodoMarkers);
-        }
-
-        if rule.reference_prefixes.is_empty()
-            || rule
-                .reference_prefixes
-                .iter()
-                .any(|prefix| prefix_is_unusable(prefix))
-        {
-            return Err(ConfigError::InvalidTodoReferencePrefixes);
-        }
-
-        Ok(())
-    }
-
-    fn validate_restricted_call_rule(&self) -> Result<(), ConfigError> {
-        let Some(rule) = &self.rules.restricted_call else {
-            return Ok(());
-        };
-
-        let mut seen = BTreeSet::new();
-
-        for call in &rule.calls {
-            validate_restricted_call(call)?;
-
-            if !seen.insert(call.name.as_str()) {
-                return Err(ConfigError::DuplicateRestrictedCallName {
-                    name: call.name.clone(),
-                });
-            }
-        }
-
-        Ok(())
-    }
-
-    fn validate_restricted_import_rule(&self) -> Result<(), ConfigError> {
-        let Some(rule) = &self.rules.restricted_import else {
-            return Ok(());
-        };
-
-        let mut seen = BTreeSet::new();
-
-        for module in &rule.modules {
-            validate_restricted_import(module)?;
-
-            if !seen.insert(module.name.as_str()) {
-                return Err(ConfigError::DuplicateRestrictedImportName {
-                    name: module.name.clone(),
-                });
-            }
-        }
-
-        Ok(())
-    }
-
-    fn validate_dependency_boundary_rule(&self) -> Result<(), ConfigError> {
-        let Some(rule) = &self.rules.dependency_boundary else {
-            return Ok(());
-        };
-
-        let mut seen = BTreeSet::new();
-
-        for layer in &rule.layers {
-            validate_layer(layer)?;
-
-            if !seen.insert(layer.name.as_str()) {
-                return Err(ConfigError::DuplicateLayerName {
-                    name: layer.name.clone(),
-                });
-            }
-        }
-
-        Ok(())
-    }
-
-    fn validate_no_production_log_rule(&self) -> Result<(), ConfigError> {
-        if self
-            .rules
-            .no_production_log
-            .as_ref()
-            .is_some_and(|rule| any_blank(&rule.allow_in))
-        {
-            return Err(ConfigError::BlankAllowIn {
-                rule: "logging/no-production-log",
-            });
-        }
-
-        Ok(())
-    }
-
-    fn validate_empty_function_rule(&self) -> Result<(), ConfigError> {
-        if self
-            .rules
-            .empty_function
-            .as_ref()
-            .is_some_and(|rule| any_blank(&rule.allow_names))
-        {
-            return Err(ConfigError::BlankAllowIn {
-                rule: "maintainability/empty-function",
-            });
-        }
-
-        Ok(())
-    }
-
-    fn validate_direct_environment_read_rule(&self) -> Result<(), ConfigError> {
-        if self
-            .rules
-            .direct_environment_read
-            .as_ref()
-            .is_some_and(|rule| any_blank(&rule.allow_in))
-        {
-            return Err(ConfigError::BlankAllowIn {
-                rule: "security/direct-environment-read",
-            });
-        }
-
-        Ok(())
-    }
-}
-
-fn validate_restricted_call(call: &RestrictedCall) -> Result<(), ConfigError> {
-    if call.name.trim().is_empty() {
-        return Err(ConfigError::InvalidRestrictedCallName);
-    }
-
-    if any_blank(&call.allow_in) {
-        return Err(ConfigError::BlankAllowIn {
-            rule: "architecture/restricted-call",
-        });
-    }
-
-    Ok(())
-}
-
-fn validate_restricted_import(module: &RestrictedImport) -> Result<(), ConfigError> {
-    if module.name.trim().is_empty() {
-        return Err(ConfigError::InvalidRestrictedImportName);
-    }
-
-    if any_blank(&module.allow_in) {
-        return Err(ConfigError::BlankAllowIn {
-            rule: "architecture/restricted-import",
-        });
-    }
-
-    Ok(())
-}
-
-fn validate_layer(layer: &Layer) -> Result<(), ConfigError> {
-    if layer.name.trim().is_empty() {
-        return Err(ConfigError::InvalidLayerName);
-    }
-
-    if layer.paths.is_empty() || layer.modules.is_empty() {
-        return Err(ConfigError::EmptyLayer {
-            name: layer.name.clone(),
-        });
-    }
-
-    if any_blank(&layer.paths) || any_blank(&layer.modules) {
-        return Err(ConfigError::BlankAllowIn {
-            rule: "architecture/dependency-boundary",
-        });
-    }
-
-    Ok(())
-}
-
-fn any_blank(values: &[String]) -> bool {
-    values.iter().any(|value| value.trim().is_empty())
-}
-
-fn prefix_is_unusable(prefix: &str) -> bool {
-    let trimmed = prefix.trim();
-
-    trimmed.is_empty() || trimmed.chars().all(|character| character.is_ascii_digit())
 }

@@ -27,6 +27,9 @@ mod explicit_timer_delay;
 #[path = "rules/file_size.rs"]
 mod file_size;
 
+#[path = "rules/forbidden_dependency.rs"]
+mod forbidden_dependency;
+
 #[path = "rules/function_nesting.rs"]
 mod function_nesting;
 

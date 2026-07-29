@@ -5,12 +5,13 @@ use crate::{
         decision_complexity::DecisionComplexity, dependency_boundary::DependencyBoundary,
         direct_environment_read::DirectEnvironmentRead, empty_function::EmptyFunction,
         explicit_timer_delay::ExplicitTimerDelay, file_size::FileSize,
-        function_nesting::FunctionNesting, function_size::FunctionSize,
-        function_statements::FunctionStatements, no_comments::NoComments,
-        no_dynamic_execution::NoDynamicExecution, no_production_log::NoProductionLog,
-        parameter_count::ParameterCount, restricted_call::RestrictedCall,
-        restricted_import::RestrictedImport, return_count::ReturnCount,
-        todo_requires_reference::TodoRequiresReference, unused_suppression::UnusedSuppression,
+        forbidden_dependency::ForbiddenDependency, function_nesting::FunctionNesting,
+        function_size::FunctionSize, function_statements::FunctionStatements,
+        no_comments::NoComments, no_dynamic_execution::NoDynamicExecution,
+        no_production_log::NoProductionLog, parameter_count::ParameterCount,
+        restricted_call::RestrictedCall, restricted_import::RestrictedImport,
+        return_count::ReturnCount, todo_requires_reference::TodoRequiresReference,
+        unused_suppression::UnusedSuppression,
     },
 };
 
@@ -95,6 +96,11 @@ severity!(
     dependency_boundary_severity,
     DependencyBoundary,
     dependency_boundary
+);
+severity!(
+    forbidden_dependency_severity,
+    ForbiddenDependency,
+    forbidden_dependency
 );
 
 const REGISTRATIONS: &[Registration] = &[
@@ -191,6 +197,11 @@ const REGISTRATIONS: &[Registration] = &[
     Registration {
         id: DependencyBoundary::ID,
         severity: dependency_boundary_severity,
+        suppressible: true,
+    },
+    Registration {
+        id: ForbiddenDependency::ID,
+        severity: forbidden_dependency_severity,
         suppressible: true,
     },
 ];

@@ -1,0 +1,11 @@
+version: 1
+
+rules:
+  security/forbidden-dependency:
+    severity: error
+    packages:
+      - name: lodash
+      - name: "@corp/legacy"
+      - name: requests
+        allow-in:
+          - src/vendor/**
