@@ -1,0 +1,111 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  agree:
+    name: Check the tag agrees with the release
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # A tag is the only thing that starts a release, so it is the thing that must agree with
+      # the manifest and the changelog. Publishing is irreversible: a version can be yanked but
+      # never replaced, so these are checked before anything is built.
+      - name: Require the tag, the manifest and the changelog to name one version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: python3 scripts/check-release.py "$TAG"
+
+  binaries:
+    name: Build ${{ matrix.target }}
+    needs: agree
+    runs-on: ${{ matrix.runner }}
+
+    strategy:
+      matrix:
+        include:
+          - target: aarch64-apple-darwin
+            runner: macos-latest
+          - target: x86_64-apple-darwin
+            runner: macos-latest
+          - target: aarch64-unknown-linux-gnu
+            runner: ubuntu-24.04-arm
+          - target: x86_64-unknown-linux-gnu
+            runner: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: rustup toolchain install 1.97.1 --profile minimal
+
+      - run: rustup target add ${{ matrix.target }} --toolchain 1.97.1
+
+      - run: cargo +1.97.1 build --release --locked -p godlint-cli --target ${{ matrix.target }}
+
+      - name: Prove the binary runs and reports its version
+        if: ${{ !startsWith(matrix.target, 'aarch64-unknown') }}
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          printed="$(./target/${{ matrix.target }}/release/godlint --version)"
+          echo "$printed"
+          printf '%s' "$printed" | grep -Fq "${TAG#v}"
+
+      - name: Package
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          install -m 755 "target/$TARGET/release/godlint" godlint
+          tar -czf "godlint-$TARGET.tar.gz" godlint LICENSE README.md
+          shasum -a 256 "godlint-$TARGET.tar.gz" > "godlint-$TARGET.tar.gz.sha256"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: godlint-${{ matrix.target }}
+          path: godlint-${{ matrix.target }}.tar.gz*
+
+  publish:
+    name: Publish to crates.io
+    needs: binaries
+    runs-on: ubuntu-latest
+    environment: crates-io
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: rustup toolchain install 1.97.1 --profile minimal
+
+      # --workspace publishes in dependency order and waits for each crate to appear in the
+      # index, so godlint-cli never races the godlint-core it depends on.
+      - run: cargo +1.97.1 publish --workspace --locked
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+  announce:
+    name: Publish the GitHub release
+    needs: publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create the release from the changelog section
+        env:
+          TAG: ${{ github.ref_name }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 scripts/check-release.py "$TAG" --notes > notes.md
+          gh release create "$TAG" --title "$TAG" --notes-file notes.md artifacts/*

@@ -2,11 +2,14 @@
 
 All notable changes to Godlint will be documented here.
 
-The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the
-project will follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) once
-releases begin.
+The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
+[Semantic Versioning](https://semver.org/spec/v2.0.0.html). Before `1.0`, a `0.x` release may
+change the `godlint-core` API; the command line and the configuration schema are what the version
+speaks about.
 
 ## [Unreleased]
+
+## [0.1.0] - 2026-07-29
 
 ### Added
 
