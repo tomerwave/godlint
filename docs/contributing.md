@@ -45,10 +45,13 @@ For repository changes:
   one machine to check the shim end to end.
 - `The released Godlint agrees with this tree` runs the published binary against your branch. It
   fails when a pull request fixes a false positive or relaxes a rule, because the released binary
-  still reports what the change removed and so cannot approve the tree. Label the pull request
-  `expected-drift` to say that is what happened and the check passes; it returns to green on its own
-  after the next release. Adding a rule or tightening a threshold never lands there, since the
-  released binary is always the more permissive one.
+  still reports what the change removed and so cannot approve the tree. Say which of the two it was
+  and the check passes: `fixes-false-positive` when the rule was reporting something it should not
+  have, `relaxes-a-rule` when the rule itself was narrowed or a threshold loosened. It returns to
+  green on its own after the next release. Neither label belongs on a pull request where the
+  repository has genuinely drifted from the standard it publishes — there the findings are real.
+  Adding a rule or tightening a threshold never lands there, since the released binary is always the
+  more permissive one.
 - `python3 scripts/validate-pull-request.py` enforces the parts of those templates that
   can be checked. Run it locally; CI runs it too. Its change-scoped checks measure the
   branch against `origin/main` rather than the pull request's target, so a stack of pull

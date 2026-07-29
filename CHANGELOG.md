@@ -11,10 +11,13 @@ speaks about.
 
 ### Added
 
-- An `expected-drift` label makes the drift check pass. It fails when a pull request fixes a false
-  positive or relaxes a rule, because the released binary still reports what the change removed. The
-  label says that is what happened, so a disagreement that was stated deliberately reads differently
-  from one that was discovered — and the explanation is still printed either way.
+- Two labels make the drift check pass, and which one records what happened: `fixes-false-positive`
+  when a rule was reporting something it should not have, and `relaxes-a-rule` when the rule was
+  narrowed or a threshold loosened. Both are cases where the released binary still reports what the
+  change removed, so it cannot approve the tree; one label could say a drift was expected but not
+  which kind, and the kind is the part a reader of the history wants. The explanation is printed
+  either way, and neither label belongs on a pull request where the repository has genuinely drifted
+  from the standard it publishes.
 
 ## [0.1.9] - 2026-07-29
 
