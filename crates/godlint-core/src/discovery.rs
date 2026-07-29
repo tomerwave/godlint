@@ -91,10 +91,12 @@ fn is_excluded(path: &Path, scope: &Scope<'_>) -> bool {
         return false;
     };
 
+    let candidate = paths::slashed(candidate);
+
     scope
         .excludes
         .iter()
-        .any(|pattern| glob::matches(pattern, candidate))
+        .any(|pattern| glob::matches(pattern, &candidate))
 }
 
 fn discover_directory(

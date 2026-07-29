@@ -110,3 +110,22 @@ fn rejects_reversed_or_invalid_source_ranges() {
         Err(SourceFileError::InvalidRange { .. })
     ));
 }
+
+#[test]
+fn a_path_reads_with_forward_slashes_whatever_the_platform_uses() {
+    let file = SourceFile::new(
+        PathBuf::from("src").join("ui").join("widget.ts"),
+        "export const value = 1;\n".into(),
+    )
+    .unwrap_or_else(|error| panic!("creates source file: {error}"));
+
+    assert_eq!(
+        file.path_text(),
+        "src/ui/widget.ts",
+        "a policy matches a glob written with forward slashes, so the path it sees uses them too"
+    );
+    assert!(
+        !file.path_text().contains('\\'),
+        "a native separator must not reach a policy"
+    );
+}

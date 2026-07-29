@@ -43,6 +43,6 @@ pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Vec<Finding> {
 fn is_allowed(import: &ImportFact, paths: &[String]) -> bool {
     glob::matches_any(
         paths.iter().map(String::as_str),
-        &import.source().path().to_string_lossy(),
+        import.source().path_text(),
     )
 }

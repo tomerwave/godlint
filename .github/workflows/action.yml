@@ -10,8 +10,11 @@ permissions:
   contents: read
 
 jobs:
-  clean:
-    name: The action passes a clean tree
+  # This compares the released binary against the code in the pull request. It fails when they
+  # disagree, and says which of the two reasons it is, because red that needs a conversation to
+  # interpret is worse than no check. It is not a required check, so it never blocks a merge.
+  repository:
+    name: The released Godlint agrees with this tree
     runs-on: ${{ matrix.runner }}
 
     strategy:
@@ -24,21 +27,50 @@ jobs:
 
       # The action under test is this checkout, so a change to it is exercised by its own pull
       # request rather than only after release.
+      # The repository itself, not a fixture: the action is held to the same tree the rest of CI is,
+      # so a released binary that disagrees with this code is a failure here rather than a surprise
+      # for whoever installs it.
       - uses: ./
         id: godlint
+        continue-on-error: true
         with:
-          working-directory: .github/fixtures/action-clean
           summary: "false"
 
-      - name: A clean tree reports nothing and resolves a version
+      - name: Say whether the release still agrees, and why if it does not
         shell: bash
         env:
-          FINDINGS: ${{ steps.godlint.outputs.findings }}
-          VERSION: ${{ steps.godlint.outputs.version }}
+          OUTCOME: ${{ steps.godlint.outcome }}
         run: |
-          test "$FINDINGS" = "0"
-          test -n "$VERSION"
-          echo "godlint $VERSION reported $FINDINGS findings"
+          annotations="$RUNNER_TEMP/godlint-annotations.txt"
+          version="$(godlint --version | cut -d' ' -f2)"
+
+          if [ "$OUTCOME" = "success" ]; then
+            echo "Godlint $version reports nothing against this tree."
+            exit 0
+          fi
+
+          count="$(grep -c '^::' "$annotations" 2>/dev/null || echo 0)"
+
+          {
+            echo "The released Godlint $version reports $count findings against this tree."
+            echo
+            echo "This means one of two things."
+            echo
+            echo "1. A false positive was fixed here and is not released yet. The released binary"
+            echo "   still reports what the fix removed, so it cannot approve this tree. Expected;"
+            echo "   this job is not required, so merge and it goes green after the next release."
+            echo
+            echo "2. This repository has drifted from the standard it publishes. Then the findings"
+            echo "   below are real and belong fixed here."
+            echo
+            echo "Adding a rule or tightening a threshold does not land here: the released binary is"
+            echo "always the more permissive one, so it stays quiet."
+            echo
+            echo "Rules reported:"
+            sed -n 's/^::[a-z]* .*title=\([^:]*\)::.*/  \1/p' "$annotations" | sort -u
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+          exit 1
 
   dirty:
     name: The action fails a tree with findings

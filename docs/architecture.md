@@ -136,7 +136,10 @@ A rule declares its identity and how to read its severity, then implements one t
 fact scope: a function rule, a file rule, or a comment rule. A file rule receives the source
 file rather than its facts, which is what lets `architecture/filename-case` judge a path without
 reading any syntax. `SourceFile` keeps its path as text beside the `Path`, so a rule that reads a
-name does not allocate one per file. A shared driver per scope
+name does not allocate one per file. That text is spelled with forward slashes on every platform,
+which is not cosmetic: a configuration writes `src/ui/**`, and on Windows a native separator made
+every such pattern match nothing, so excluded directories were scanned and a file name was reported
+as its whole path. A shared driver per scope
 runs it over the fact set, and every scope's driver reports through one kernel. This is why
 the severity gate is evaluated once rather than per function, and why no rule can forget to
 honour it.
