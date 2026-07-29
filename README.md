@@ -50,8 +50,10 @@ duplicates a compiler, a formatter or a type checker.
 
 Deliberately not here: no LLM decides whether CI passes, and there are no third-party plugins yet.
 [The rule roadmap](docs/rule-roadmap.md) records what is coming and why each threshold is the number
-it is. Baselines and diff-aware enforcement — the two things that make adoption gradual in a large
-repository — are on that roadmap rather than in the list above.
+it is. The [best-practices research catalogue](docs/best-practices-research.md) records the larger,
+source-linked candidate backlog and the tool that should own each practice. Baselines and diff-aware
+enforcement — the two things that make adoption gradual in a large repository — are on the roadmap
+rather than in the list above.
 
 ## Install
 

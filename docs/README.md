@@ -15,6 +15,7 @@
 | --- | --- |
 | [Product scope](product-scope.md) | The promise, the MVP boundary, and the non-goals |
 | [Rule roadmap](rule-roadmap.md) | What is shipped, what is next, and why each threshold is the number it is |
+| [Best-practices research catalogue](best-practices-research.md) | Source-linked candidate rules and the tool each practice belongs to |
 | [Architecture](architecture.md) | Crate boundaries, and how a language's parser details stay behind one |
 | [Dogfooding](dogfooding.md) | How Godlint enforces policy on its own repository |
 
