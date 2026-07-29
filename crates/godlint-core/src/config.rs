@@ -373,15 +373,7 @@ impl Config {
         let mut seen = BTreeSet::new();
 
         for call in &rule.calls {
-            if call.name.trim().is_empty() {
-                return Err(ConfigError::InvalidRestrictedCallName);
-            }
-
-            if any_blank(&call.allow_in) {
-                return Err(ConfigError::BlankAllowIn {
-                    rule: "architecture/restricted-call",
-                });
-            }
+            validate_restricted_call(call)?;
 
             if !seen.insert(call.name.as_str()) {
                 return Err(ConfigError::DuplicateRestrictedCallName {
@@ -409,6 +401,20 @@ impl Config {
     }
 }
 
+fn validate_restricted_call(call: &RestrictedCall) -> Result<(), ConfigError> {
+    if call.name.trim().is_empty() {
+        return Err(ConfigError::InvalidRestrictedCallName);
+    }
+
+    if any_blank(&call.allow_in) {
+        return Err(ConfigError::BlankAllowIn {
+            rule: "architecture/restricted-call",
+        });
+    }
+
+    Ok(())
+}
+
 fn any_blank(values: &[String]) -> bool {
     values.iter().any(|value| value.trim().is_empty())
 }
@@ -419,6 +425,19 @@ fn prefix_is_unusable(prefix: &str) -> bool {
     trimmed.is_empty() || trimmed.chars().all(|character| character.is_ascii_digit())
 }
 
+const COMPLEXITY_AT_LEAST_ONE: &str =
+    "maintainability/decision-complexity max-complexity must be at least 1";
+
+const TODO_MARKERS_REQUIRED: &str = "policy/todo-requires-reference markers must not be empty";
+
+const TODO_PREFIXES_REQUIRED: &str =
+    "policy/todo-requires-reference reference-prefixes must not be empty or numeric";
+
+const CALL_NAME_REQUIRED: &str = "architecture/restricted-call call names must not be blank";
+
+const DUPLICATE_CALL: &str = "architecture/restricted-call lists {name} more than once; one entry decides its allow-in \
+     boundary";
+
 impl fmt::Display for ConfigError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -427,41 +446,13 @@ impl fmt::Display for ConfigError {
             Self::UnsupportedVersion { version } => {
                 write!(formatter, "unsupported configuration version: {version}")
             }
-            Self::InvalidComplexityLimit => {
-                write!(
-                    formatter,
-                    "maintainability/decision-complexity max-complexity must be at least 1"
-                )
-            }
-            Self::InvalidTodoMarkers => {
-                write!(
-                    formatter,
-                    "policy/todo-requires-reference markers must not be empty"
-                )
-            }
-            Self::InvalidTodoReferencePrefixes => {
-                write!(
-                    formatter,
-                    "policy/todo-requires-reference reference-prefixes must not be empty or numeric"
-                )
-            }
             Self::UnknownSuite { name } => write!(
                 formatter,
                 "unknown suite {name}; available suites are {}",
                 suites::NAMES.join(", ")
             ),
-            Self::InvalidRestrictedCallName => {
-                write!(
-                    formatter,
-                    "architecture/restricted-call call names must not be blank"
-                )
-            }
             Self::DuplicateRestrictedCallName { name } => {
-                write!(
-                    formatter,
-                    "architecture/restricted-call lists {name} more than once; \
-                     one entry decides its allow-in boundary"
-                )
+                write!(formatter, "{}", DUPLICATE_CALL.replace("{name}", name))
             }
             Self::BlankAllowIn { rule } => {
                 write!(formatter, "{rule} allow-in paths must not be blank")
@@ -469,6 +460,10 @@ impl fmt::Display for ConfigError {
             Self::InvalidExclude { pattern } => {
                 write!(formatter, "exclude pattern must not be blank: {pattern:?}")
             }
+            Self::InvalidComplexityLimit => formatter.write_str(COMPLEXITY_AT_LEAST_ONE),
+            Self::InvalidTodoMarkers => formatter.write_str(TODO_MARKERS_REQUIRED),
+            Self::InvalidTodoReferencePrefixes => formatter.write_str(TODO_PREFIXES_REQUIRED),
+            Self::InvalidRestrictedCallName => formatter.write_str(CALL_NAME_REQUIRED),
         }
     }
 }

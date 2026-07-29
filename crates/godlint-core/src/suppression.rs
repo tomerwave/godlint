@@ -332,15 +332,23 @@ struct Arguments {
 impl Arguments {
     fn absorb(&mut self, token: &str) {
         let Some((key, value)) = token.split_once('=') else {
-            if self.rules.is_empty() {
-                self.rules = rule_list(token);
-            } else {
-                self.unknown_options.push(token.to_owned());
-            }
+            self.absorb_bare(token);
 
             return;
         };
 
+        self.absorb_option(key, value);
+    }
+
+    fn absorb_bare(&mut self, token: &str) {
+        if self.rules.is_empty() {
+            self.rules = rule_list(token);
+        } else {
+            self.unknown_options.push(token.to_owned());
+        }
+    }
+
+    fn absorb_option(&mut self, key: &str, value: &str) {
         let slot = match key {
             OWNER => &mut self.owner,
             EXPIRES => &mut self.expires,
