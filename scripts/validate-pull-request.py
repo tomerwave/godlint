@@ -35,7 +35,6 @@ CONFIG = Path("crates/godlint-core/src/config.rs")
 DOGFOOD = Path("godlint.yaml")
 WORKFLOWS = Path(".github/workflows")
 MUTANTS = Path(".cargo/mutants.toml")
-SUITES = Path("crates/godlint-core/src/suites.rs")
 
 ROADMAP = Path("docs/rule-roadmap.md")
 README = Path("README.md")
@@ -129,17 +128,14 @@ def check_rule(report: Report, module: Path, identifier: str) -> None:
             f"{document}: does not mention {identifier}",
         )
 
-    # A repository adopts rules by naming them or by naming a suite. Godlint does the
-    # latter, so the dogfood check follows the suite: the rule must be one the suite sets.
-    # That the suite sets every rule at error is asserted in tests/suites.rs, where it
-    # cannot drift from the code that expands it.
-    dogfooded = identifier in read(DOGFOOD) or (
-        "suites:" in read(DOGFOOD)
-        and f"rules.{name}.get_or_insert" in re.sub(r"\s+", "", read(SUITES))
-    )
+    # A repository adopts rules by naming them or by naming a suite. Godlint names a suite,
+    # and which rules a suite sets is a question about configuration rather than about
+    # source text: recommended_enables_every_rule_at_error in tests/suites.rs answers it
+    # from the expanded configuration, where it cannot drift. Reading the suite's Rust for
+    # a call spelling would fail on any refactor of it that changed no behaviour.
     report.check(
-        dogfooded,
-        f"{DOGFOOD}: {identifier} is enabled by neither a rules entry nor the adopted suite, "
+        identifier in read(DOGFOOD) or "suites:" in read(DOGFOOD),
+        f"{DOGFOOD}: {identifier} is enabled by neither a rules entry nor an adopted suite, "
         "so Godlint does not dogfood it",
     )
 
