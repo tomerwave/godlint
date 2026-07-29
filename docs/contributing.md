@@ -43,6 +43,12 @@ For repository changes:
   command it installs is executable. `packaging/build-npm.py` assembles the npm packages from the
   binaries the release built; it takes `--only` so a single platform can be built and installed on
   one machine to check the shim end to end.
+- `The released Godlint agrees with this tree` runs the published binary against your branch. It
+  fails when a pull request fixes a false positive or relaxes a rule, because the released binary
+  still reports what the change removed and so cannot approve the tree. Label the pull request
+  `expected-drift` to say that is what happened and the check passes; it returns to green on its own
+  after the next release. Adding a rule or tightening a threshold never lands there, since the
+  released binary is always the more permissive one.
 - `python3 scripts/validate-pull-request.py` enforces the parts of those templates that
   can be checked. Run it locally; CI runs it too. Its change-scoped checks measure the
   branch against `origin/main` rather than the pull request's target, so a stack of pull

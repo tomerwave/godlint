@@ -40,6 +40,7 @@ jobs:
         shell: bash
         env:
           OUTCOME: ${{ steps.godlint.outcome }}
+          DECLARED: ${{ contains(github.event.pull_request.labels.*.name, 'expected-drift') }}
         run: |
           annotations="$RUNNER_TEMP/godlint-annotations.txt"
           version="$(godlint --version | cut -d' ' -f2)"
@@ -56,9 +57,10 @@ jobs:
             echo
             echo "This means one of two things."
             echo
-            echo "1. A false positive was fixed here and is not released yet. The released binary"
-            echo "   still reports what the fix removed, so it cannot approve this tree. Expected;"
-            echo "   this job is not required, so merge and it goes green after the next release."
+            echo "1. A false positive was fixed here, or a rule was relaxed, and it is not"
+            echo "   released yet. The released binary still reports what the change removed, so it"
+            echo "   cannot approve this tree. Label the pull request expected-drift to say so and"
+            echo "   this check passes; it goes green on its own after the next release."
             echo
             echo "2. This repository has drifted from the standard it publishes. Then the findings"
             echo "   below are real and belong fixed here."
@@ -69,6 +71,13 @@ jobs:
             echo "Rules reported:"
             sed -n 's/^::[a-z]* .*title=\([^:]*\)::.*/  \1/p' "$annotations" | sort -u
           } | tee -a "$GITHUB_STEP_SUMMARY"
+
+          # A declared drift passes, because the disagreement was stated deliberately rather than
+          # discovered. The explanation above is still printed, so the reason is on the record.
+          if [ "$DECLARED" = "true" ]; then
+            echo "::notice::Drift declared with expected-drift, so this check passes."
+            exit 0
+          fi
 
           exit 1
 
