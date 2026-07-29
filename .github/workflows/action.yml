@@ -10,14 +10,12 @@ permissions:
   contents: read
 
 jobs:
-  # This compares the released binary against the code in the pull request, which is a signal worth
-  # having and cannot be a gate: the pull request that fixes the binary cannot pass it, because the
-  # fix is not released yet. It reports and does not block. Whether the action itself works is gated
-  # by the job below, which does not depend on the release agreeing with this tree.
+  # This compares the released binary against the code in the pull request. It fails when they
+  # disagree, and says which of the two reasons it is, because red that needs a conversation to
+  # interpret is worse than no check. It is not a required check, so it never blocks a merge.
   repository:
     name: The released Godlint agrees with this tree
     runs-on: ${{ matrix.runner }}
-    continue-on-error: true
 
     strategy:
       fail-fast: false
@@ -38,18 +36,41 @@ jobs:
         with:
           summary: "false"
 
-      - name: Say whether the release still agrees
+      - name: Say whether the release still agrees, and why if it does not
         shell: bash
         env:
           OUTCOME: ${{ steps.godlint.outcome }}
-          VERSION: ${{ steps.godlint.outputs.version }}
         run: |
+          annotations="$RUNNER_TEMP/godlint-annotations.txt"
+          version="$(godlint --version | cut -d' ' -f2)"
+
           if [ "$OUTCOME" = "success" ]; then
-            echo "::notice::Godlint $VERSION reports nothing against this tree."
+            echo "Godlint $version reports nothing against this tree."
             exit 0
           fi
 
-          echo "::notice::The released Godlint reports findings against this tree. Expected while a rule or a fix is merged but not yet released; otherwise this repository has drifted from its own standard."
+          count="$(grep -c '^::' "$annotations" 2>/dev/null || echo 0)"
+
+          {
+            echo "The released Godlint $version reports $count findings against this tree."
+            echo
+            echo "This means one of two things."
+            echo
+            echo "1. A false positive was fixed here and is not released yet. The released binary"
+            echo "   still reports what the fix removed, so it cannot approve this tree. Expected;"
+            echo "   this job is not required, so merge and it goes green after the next release."
+            echo
+            echo "2. This repository has drifted from the standard it publishes. Then the findings"
+            echo "   below are real and belong fixed here."
+            echo
+            echo "Adding a rule or tightening a threshold does not land here: the released binary is"
+            echo "always the more permissive one, so it stays quiet."
+            echo
+            echo "Rules reported:"
+            sed -n 's/^::[a-z]* .*title=\([^:]*\)::.*/  \1/p' "$annotations" | sort -u
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+          exit 1
 
   dirty:
     name: The action fails a tree with findings
