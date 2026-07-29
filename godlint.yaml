@@ -1,11 +1,7 @@
 version: 1
 
-# Findings below this severity are reported without failing the build, which is what
-# lets a new rule be adopted as a warning before it becomes blocking.
 fail-on: error
 
-# Test fixtures are deliberately non-conforming inputs, so they are excluded by path
-# rather than by weakening a rule for the whole repository.
 exclude:
   - .git
   - .mypy_cache
@@ -20,13 +16,7 @@ exclude:
   - target
   - vendor
   - crates/godlint-cli/tests/fixtures
-  # Maintenance scripts are tooling rather than product source. The no-comments policy was
-  # adopted for the Rust codebase, where the reasoning lives in docs/architecture.md
-  # instead; a script that encodes a budget should carry the reason beside the number.
   - scripts
 
-# Godlint holds itself to the suite it publishes. There is no rules block: an override here
-# would be this project exempting itself from its own standard, which is what the suite
-# exists to prevent.
 suites:
   - recommended@1
