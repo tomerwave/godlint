@@ -37,7 +37,7 @@ WORKFLOWS = Path(".github/workflows")
 MUTANTS = Path(".cargo/mutants.toml")
 
 ROADMAP = Path("docs/rule-roadmap.md")
-README = Path("README.md")
+RULES = Path("docs/rules.md")
 CHANGELOG = Path("CHANGELOG.md")
 
 # Behaviour a user can observe. Scan and path discovery belong here because a change to
@@ -57,10 +57,11 @@ class Report:
     failures: list[str] = field(default_factory=list)
     checked: int = 0
 
-    def check(self, condition: bool, message: str) -> None:
+    def check(self, condition: bool, message: str) -> bool:
         self.checked += 1
         if not condition:
             self.failures.append(message)
+        return condition
 
 
 @functools.cache
@@ -122,7 +123,7 @@ def check_rule(report: Report, module: Path, identifier: str) -> None:
         f"{RULE_TESTS_INDEX}: `rules/{name}.rs` is not declared, so its tests never run",
     )
 
-    for document in (ROADMAP, README, CHANGELOG):
+    for document in (ROADMAP, RULES, CHANGELOG):
         report.check(
             identifier in read(document),
             f"{document}: does not mention {identifier}",
@@ -217,6 +218,49 @@ def check_workflows(report: Report) -> None:
     )
 
 
+def heading_slugs(document: Path) -> set[str]:
+    headings = re.findall(r"^#{1,6} (.+)$", read(document), re.MULTILINE)
+    return {
+        re.sub(r"[^a-z0-9 -]", "", heading.lower()).replace(" ", "-")
+        for heading in headings
+    }
+
+
+def check_documentation_links(report: Report) -> None:
+    """A moved document leaves the links to it pointing nowhere, and nothing else notices.
+
+    Only relative links are followed. A broken external URL is a fact about the internet
+    rather than about this commit, and a check that needs the network cannot gate a merge.
+    """
+
+    documents = sorted(
+        path
+        for path in Path(".").rglob("*.md")
+        if not any(part in {".git", "target", "node_modules"} for part in path.parts)
+    )
+
+    for document in documents:
+        for target, fragment in re.findall(
+            r"\[[^\]]*\]\(([^)#\s]+)(#[^)\s]*)?\)", read(document)
+        ):
+            if target.startswith(("http://", "https://", "mailto:")):
+                continue
+
+            destination = (document.parent / target).resolve()
+
+            if not report.check(
+                destination.exists(),
+                f"{document}: links to {target}, which does not exist",
+            ):
+                continue
+
+            if fragment and destination.suffix == ".md":
+                report.check(
+                    fragment[1:] in heading_slugs(destination),
+                    f"{document}: links to {target}{fragment}, and that heading is gone",
+                )
+
+
 def changed_files(base: str) -> list[str]:
     diff = subprocess.run(
         ["git", "diff", "--name-only", f"{base}...HEAD"],
@@ -266,6 +310,7 @@ def main() -> int:
     check_fixtures(report)
     check_mutation_config(report)
     check_workflows(report)
+    check_documentation_links(report)
 
     if arguments.release_line:
         check_change(report, arguments.release_line)

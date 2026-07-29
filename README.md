@@ -9,81 +9,76 @@
 </p>
 
 <p align="center">
-  <a href="LICENSE">MIT License</a> ·
-  <a href="CONTRIBUTING.md">Contributing</a> ·
-  <a href="SECURITY.md">Security</a> ·
-  <a href="CODE_OF_CONDUCT.md">Code of Conduct</a>
+  <a href="https://crates.io/crates/godlint-cli"><img src="https://img.shields.io/crates/v/godlint-cli?label=crates.io" alt="crates.io"></a>
+  <a href="https://www.npmjs.com/package/@godlint/cli"><img src="https://img.shields.io/npm/v/@godlint/cli?label=npm" alt="npm"></a>
+  <a href="https://pypi.org/project/godlint/"><img src="https://img.shields.io/pypi/v/godlint?label=PyPI" alt="PyPI"></a>
+  <a href="https://github.com/tomerwave/godlint/actions/workflows/test.yml"><img src="https://github.com/tomerwave/godlint/actions/workflows/test.yml/badge.svg" alt="Tests"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT License"></a>
 </p>
 
-> **Pre-alpha:** Godlint has an early local CLI and its first cross-language rules.
-> Its public API, configuration format, and rule suites are not stable yet.
+<p align="center">
+  <a href="docs/README.md">Documentation</a> ·
+  <a href="docs/rules.md">Rules</a> ·
+  <a href="docs/configuration.md">Configuration</a> ·
+  <a href="docs/ci.md">CI</a> ·
+  <a href="CONTRIBUTING.md">Contributing</a>
+</p>
 
-Godlint is an open-source, deterministic code-policy engine for polyglot
-repositories. It will help teams define engineering standards once and enforce them
-consistently across Rust, TypeScript/JavaScript, and Python.
+> **Pre-alpha:** Godlint enforces twenty-one rules across three languages and installs from four
+> channels, but its configuration format, rule identifiers and suite contents may still change
+> before `1.0`.
 
-Godlint is designed for architecture, reliability, test quality, security, and
-maintainability policies that single-language linters cannot enforce across a whole
-repository. It will complement established tools such as Clippy, ESLint, Ruff, and
-Pyright—not replace them.
+Godlint is a deterministic code-policy engine for polyglot repositories. It lets a team state an
+engineering standard once and enforce it across Rust, TypeScript, JavaScript and Python, in one
+command, with the same thresholds and the same wording everywhere.
 
-## What Godlint will provide
+It exists for the policies a single-language linter structurally cannot hold: that no layer imports
+upward, that a suppression names an owner and an expiry, that a threshold is the same number in every
+language. It complements Clippy, ESLint, Ruff and Pyright rather than replacing them — nothing here
+duplicates a compiler, a formatter or a type checker.
 
-- One local-first CLI with deterministic pass/fail results.
-- Shared policy concepts with language-aware detection.
-- Repository and cross-language architecture checks.
-- Accountable exceptions: scope, reason, owner, issue, and expiry.
-- Gradual adoption through baselines and diff-aware enforcement.
-- Terminal, JSON, and SARIF reports for local development and CI.
+## What it does today
 
-## Initial scope
+- Twenty-one rules over Rust, TypeScript, JavaScript and Python, from function size to import
+  boundaries. See [the rule reference](docs/rules.md).
+- One suite, `recommended@1`, so a repository adopts a standard in a line rather than twenty-one.
+- Exceptions that expire: every inline suppression carries a reason, an owner and a date, and a rule
+  fails the build when one outlives it.
+- Terminal, JSON, SARIF and GitHub-annotation output, so the same run serves a person, a dashboard
+  and a pull request diff.
+- A GitHub Action that puts each finding on the line it belongs to, with no token and no permissions.
 
-The first release will focus on Rust, TypeScript/JavaScript, and Python. The planned
-MVP emphasizes high-confidence rules: file and function size, complexity,
-centralized configuration, swallowed errors, timeouts, test assertions, policy
-hygiene, and import cycles.
-
-The project will not use an LLM to decide whether CI passes, replace compilers or
-formatters, or support arbitrary third-party plugins in its early releases.
-
-## Status and roadmap
-
-See the [rule roadmap](docs/rule-roadmap.md) for the rule families, thresholds, and
-delivery sequence. The implementation sequence is:
-
-1. Workspace, CLI, configuration, diagnostics, fixtures, and documentation.
-2. Syntax analysis for all three initial languages and common facts.
-3. High-confidence file and repository rules, exceptions, baseline, and SARIF.
-4. Caching, architecture graph, and GitHub Actions integration.
-5. Optional semantic workers and ecosystem-tool adapters.
+Deliberately not here: no LLM decides whether CI passes, and there are no third-party plugins yet.
+[The rule roadmap](docs/rule-roadmap.md) records what is coming and why each threshold is the number
+it is. Baselines and diff-aware enforcement — the two things that make adoption gradual in a large
+repository — are on that roadmap rather than in the list above.
 
 ## Install
 
-A prebuilt binary needs no toolchain. Releases carry Linux and macOS on both architectures,
-Windows, and a statically linked Linux build for containers without glibc. Download the archive for
-your platform from the [latest release](https://github.com/tomerwave/godlint/releases/latest), check
-it against the `.sha256` beside it, and put `godlint` on your `PATH`:
+No Rust toolchain is needed on three of the four channels, which is the point: Godlint lints
+JavaScript, TypeScript and Python, and most people working in those languages do not have one.
+
+| Channel | Command |
+| --- | --- |
+| npm | `npm install --save-dev @godlint/cli` |
+| PyPI | `pip install godlint` |
+| Cargo | `cargo install godlint-cli` |
+| Binary | [latest release](https://github.com/tomerwave/godlint/releases/latest) — Linux, macOS, Windows, plus a static musl build |
+
+Every channel installs the same binary and the same command, `godlint`. The npm package is scoped
+because npm holds the bare name too close to an existing one. Release archives ship a `.sha256`
+beside them:
 
 ```bash
 tar -xzf godlint-x86_64-unknown-linux-gnu.tar.gz
+shasum -a 256 -c godlint-x86_64-unknown-linux-gnu.tar.gz.sha256
 install -m 755 godlint /usr/local/bin/
 ```
 
-On npm, `npm install --save-dev @godlint/cli` fetches only the binary for your platform and needs no
-Rust toolchain, which is the point: Godlint lints JavaScript, TypeScript and Python, and most people
-working in those languages do not have one. The command it installs is `godlint`; the package is
-scoped because npm holds the bare name too close to an existing one.
-
-On PyPI, `pip install godlint` installs the same binary and likewise needs no Rust toolchain.
-
-With a Rust toolchain, `cargo install godlint-cli` builds the same binary. The library crate,
-`godlint-core`, is published because the command line depends on it; its API is not stable before
-`1.0`.
-
-## Use
+## Quickstart
 
 Godlint enforces nothing until a configuration asks it to. Write `godlint.yaml` at the repository
-root and adopt the suite:
+root, adopt the suite, and run it:
 
 ```yaml
 version: 1
@@ -94,181 +89,52 @@ suites: [recommended@1]
 godlint check
 ```
 
-`check` reads the current directory when given no paths. It exits non-zero when a finding is at or
-above `fail-on`, which is what makes enforcement one line in CI:
+`check` reads the current directory when given no paths, and exits non-zero when a finding is at or
+above `fail-on`. That is what makes enforcement one line in any CI system:
 
 ```yaml
 - run: godlint check
 ```
 
-On GitHub, the action installs the binary and puts every finding on the line it belongs to:
+A threshold can be loosened, tightened or declined without abandoning the suite — see
+[configuration](docs/configuration.md) for the whole schema, and
+[inline suppression](docs/suppressions.md) for exempting a single site.
+
+## On GitHub
+
+The action installs the binary and annotates every finding on the line it belongs to:
 
 ```yaml
 - uses: tomerwave/godlint@v1
   with:
-    version: 0.1.6
+    version: 0.1.9
 ```
 
-Findings appear as annotations in Files changed and disappear when they are fixed, so nothing has to
-be resolved by hand. It needs no token and no permissions, which is also why it works on a pull
-request from a fork, where the token is read-only and anything posted through the API fails. Pin
-`version`: the default is the latest release, and a floating version changes what a pull request is
-held to without a commit saying so. Because GitHub renders only so many annotations per run, the job
-summary carries the count for every rule.
+Findings appear in Files changed and disappear when they are fixed. It needs no token and no
+permissions, which is why it also works on a pull request from a fork. Pin `version`: the default is
+the latest release, and a floating one changes what a pull request is held to without a commit saying
+so. [Using Godlint in CI](docs/ci.md) covers the inputs, the output formats and the job summary.
 
-`check --format` decides who is reading. `terminal` is the default; `github` emits annotations so
-findings land on the exact line of a pull request diff; `json` and `sarif` are documents for another
-tool to consume, and both are emitted even when there is nothing to report, because a consumer parses
-a document rather than prose.
+## Documentation
 
-Two commands answer the questions that follow. `godlint config validate` rejects a configuration
-before it is trusted, and `godlint suppressions` lists every exemption with its owner and expiry,
-so an exception that has outlived its reason fails the build rather than accumulating quietly.
-
-## Local development
-
-Godlint currently requires Rust `1.97.1`. After installing Rust with
-[rustup](https://rustup.rs/), run the same checks used by CI:
-
-```bash
-cargo fmt --check
-cargo clippy --workspace --all-targets -- -D warnings
-cargo test --workspace
-RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps
-cargo run -p godlint-cli -- check .
-```
-
-The initial command shell is available with:
-
-```bash
-cargo run -p godlint-cli -- --version
-```
-
-Configuration validation is the first implemented product capability:
-
-```bash
-godlint config validate
-godlint config validate --config path/to/godlint.yaml
-```
-
-The `check` command evaluates the configured rules across Rust,
-TypeScript/JavaScript, and Python source files. Twenty-one rules are implemented:
-
-- `maintainability/file-size` — effective lines in a file.
-- `maintainability/function-size` — effective lines in a function.
-- `maintainability/function-nesting` — how deeply control-flow blocks nest inside a
-  function.
-- `maintainability/parameter-count` — declared parameters, excluding a method receiver.
-- `maintainability/decision-complexity` — branch points in a function. A `match` or
-  `switch` counts once rather than once per arm, and a guard on an arm counts.
-- `maintainability/return-count` — exit paths from a function, explicit or implicit.
-- `maintainability/function-statements` — statements in a function, through nested
-  blocks but not into nested functions.
-- `maintainability/empty-function` — function bodies that appear unintentionally empty.
-- `policy/todo-requires-reference` — TODO-style markers that need an issue reference.
-- `style/no-comments` — commentary where the code should speak for itself.
-- `policy/accountable-suppression` — inline suppressions that cannot account for
-  themselves.
-- `policy/unused-suppression` — inline suppressions that no longer silence an enabled
-  finding.
-- `architecture/restricted-call` — abrupt process exits, plus
-  configured direct callees outside their approved paths.
-- `security/no-dynamic-execution` — JavaScript `eval`, `Function`, and `new Function`;
-  Python `eval` and `exec`.
-- `security/direct-environment-read` — environment access outside a configuration
-  boundary.
-- `reliability/explicit-timer-delay` — JavaScript/TypeScript timers that omit their
-  explicit millisecond delay.
-- `logging/no-production-log` — debug logging outside the paths a repository approves.
-- `architecture/restricted-import` — imports of modules a repository puts behind a boundary.
-- `architecture/dependency-boundary` — a dependency that runs against the declared layer order.
-- `security/forbidden-dependency` — an import of a package the project has ruled out.
-- `architecture/filename-case` — a file name that does not follow the convention for its
-  extension or its declared scope: `PascalCase` for `.tsx`/`.jsx`, `kebab-case` for other
-  JavaScript and TypeScript, `snake_case` for Rust and Python.
-
-The call rules read the callee exactly as it is spelled, and the import rules read the
-module the same way. `std::env::var` is matched and the
-aliased `env::var` after `use std::env` is not, because knowing they name the same function
-needs resolution Godlint does not have yet — see
-[the rule roadmap](docs/rule-roadmap.md) for what that defers. They also have no scope
-analysis, so a local binding that shadows a restricted name is reported: a Python parameter
-called `exec`, or a `const process = …` in TypeScript. Enable them deliberately; each is
-off until a repository configures it.
-
-One consequence of built-in restrictions being language-bound is worth knowing before you
-write a policy: a name a built-in already claims belongs to that built-in's language. Giving
-`sys.exit` an `allow-in` boundary scopes Python's, and a call spelled `sys.exit` in TypeScript
-is left alone — there is no language key to say which you meant, so the policy is silent rather
-than wrong.
-
-A name no built-in claims belongs to no language and applies wherever it is called, which is
-what a policy about `loadConfig` means. `print`, `console.log`, `console.debug` and `dbg!` are
-now in that group rather than the first: `logging/no-production-log` owns them as
-dialect-bound defaults, so naming one under `architecture/restricted-call` restricts it in
-every language. Restrict debug logging through the logging rule, which keeps the binding.
-
-A function means the same thing in every language: Rust `fn` items and closures,
-Python `def` functions and lambdas, and JavaScript/TypeScript function declarations,
-function expressions, methods, and arrow functions. Findings below the configured
-`fail-on` severity are reported without failing the command.
-
-```bash
-godlint check
-godlint check crates
-```
-
-## Policy suites
-
-A suite names a set of rules and their thresholds so a repository adopts a standard in one
-line rather than twenty-one:
-
-```yaml
-version: 1
-suites:
-  - recommended@1
-```
-
-`recommended@1` enables every rule at `error`. Its thresholds are measured rather than
-borrowed — see [the rule roadmap](docs/rule-roadmap.md) for each number and why.
-
-Suites are opt-in: a configuration that names none enforces nothing. A `rules:` entry
-overrides the suite for that rule, in either direction, so a repository can loosen one
-threshold, tighten it, or decline a rule with `severity: off` without abandoning the rest.
-
-## Accountable exceptions
-
-A single site can be exempted from a rule by a comment that says why, who owns it, and
-when the exemption lapses:
-
-```rust
-// godlint-ignore-next-line maintainability/function-size owner=tomer expires=2026-12-31 -- splitting this in #482
-fn long_function() {
-    // ...
-}
-```
-
-`godlint-ignore-enclosing` applies to the whole function containing it. There is no
-file-wide form — that is what `exclude` is for. `policy/accountable-suppression` reports
-a directive with no reason, an unknown rule, or an expiry in the past; and
-`policy/unused-suppression` reports one that no longer hides an enabled finding. Neither
-policy rule can be suppressed. List every exemption in the repository with:
-
-```bash
-godlint suppressions
-```
-
-See [inline suppression](docs/suppressions.md) for the full syntax and semantics.
+| | |
+| --- | --- |
+| [Rule reference](docs/rules.md) | Every rule, what it measures, and what it cannot see yet |
+| [Configuration](docs/configuration.md) | `godlint.yaml`: suites, thresholds, severities, exclusions |
+| [Using Godlint in CI](docs/ci.md) | The action, output formats, annotations |
+| [Inline suppression](docs/suppressions.md) | Exempting a site, accountably |
+| [Rule roadmap](docs/rule-roadmap.md) | What is shipped, what is next, and every threshold's reasoning |
+| [Product scope](docs/product-scope.md) | The promise and the non-goals |
+| [Architecture](docs/architecture.md) | Crate boundaries and how a language stays behind one |
+| [Local development](docs/local-development.md) | Building, testing and running Godlint on itself |
+| [Contributing](CONTRIBUTING.md) | Proposing a rule, opening a pull request |
 
 ## Contributing
 
-We welcome early design feedback, rule ideas backed by concrete examples, parser and
-performance research, documentation improvements, and eventually implementation
-contributions. Please read [CONTRIBUTING.md](CONTRIBUTING.md) and abide by the
-[Code of Conduct](CODE_OF_CONDUCT.md).
-
-Please do not file security vulnerabilities in public issues; use the process in
-[SECURITY.md](SECURITY.md).
+Early design feedback, rule ideas backed by concrete examples, and documentation improvements are all
+useful. Read [CONTRIBUTING.md](CONTRIBUTING.md) and abide by the
+[Code of Conduct](CODE_OF_CONDUCT.md). Please do not file security vulnerabilities in public issues;
+use the process in [SECURITY.md](SECURITY.md).
 
 ## License
 

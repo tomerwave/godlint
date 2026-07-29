@@ -11,6 +11,16 @@ speaks about.
 
 ### Added
 
+- The documentation is a set of documents rather than one README. `docs/rules.md` holds the rule
+  reference, `docs/configuration.md` the `godlint.yaml` schema, `docs/ci.md` the action and the output
+  formats, `docs/local-development.md` the build, `docs/releasing.md` the release, and `docs/README.md`
+  indexes them. The README is what a reader needs to decide whether to try Godlint and how to start;
+  it had grown to hold the full rule reference inside a section called Local development, because a
+  validator check demanded every rule identifier appear in it. That check now asks the rule reference
+  for the same thing, so the invariant survives the move.
+- `validate-pull-request.py` follows every relative link in every Markdown file, and fails on one that
+  points at a missing file or a heading that no longer exists. Nothing caught that before, which is how
+  a documentation split becomes a set of dead links.
 - `tomerwave/godlint@v1` resolves, and each release moves it. The tag is the action's interface
   version rather than the binary's: the inputs are what it promises and they have not changed, while
   the command line is still `0.1.x`. It advances only after every registry and every archive has
@@ -24,6 +34,17 @@ speaks about.
   which kind, and the kind is the part a reader of the history wants. The explanation is printed
   either way, and neither label belongs on a pull request where the repository has genuinely drifted
   from the standard it publishes.
+
+### Fixed
+
+- The README described Godlint in the future tense - what it *would* provide, what the first release
+  *would* focus on, GitHub Actions integration as an unreached phase - while it was shipping on four
+  channels. It now says what the tool does today, and the one claim that was genuinely unshipped,
+  gradual adoption through baselines and diff-aware enforcement, is named as roadmap rather than as a
+  feature.
+- `CONTRIBUTING.md` and `docs/contributing.md` were two documents with one name and no stated
+  difference. The public contribution process is now `CONTRIBUTING.md` alone, and the release process
+  it had absorbed is `docs/releasing.md`.
 
 ## [0.1.9] - 2026-07-29
 
