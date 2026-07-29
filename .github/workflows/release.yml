@@ -165,9 +165,9 @@ jobs:
     runs-on: ubuntu-latest
     environment: npm
 
-    # id-token is what lets npm attach a provenance attestation tying each package to the commit
-    # and workflow that built it. It is kept even while a token authenticates the publish, because
-    # provenance comes from the identity rather than from the credential.
+    # Trusted publishing exchanges this identity for a credential that lives for one publish, so no
+    # npm token is stored, and the same identity is what lets npm attach a provenance attestation
+    # tying each package to the commit and workflow that built it.
     permissions:
       contents: read
       id-token: write
@@ -178,9 +178,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          registry-url: https://registry.npmjs.org
 
-      # Newer than the npm bundled with Node, for provenance and for trusted publishing later.
+      # Newer than the npm bundled with Node, for provenance and for trusted publishing.
       - run: npm install --global npm@latest
 
       - uses: actions/download-artifact@v4
@@ -209,8 +208,6 @@ jobs:
           done < packages/publish-order
 
       - name: Publish in dependency order
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           while read -r package; do
             npm publish "$package" --access public --provenance
@@ -218,7 +215,7 @@ jobs:
 
   announce:
     name: Publish the GitHub release
-    needs: publish
+    needs: [publish, npm]
     runs-on: ubuntu-latest
 
     steps:
