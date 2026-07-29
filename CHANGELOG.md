@@ -265,6 +265,11 @@ releases begin.
 
 ### Changed
 
+- Every rule driver reports through one kernel, so the severity gate and the loop that turns
+  a violation into a finding exist once rather than in each of five drivers. A file rule and a
+  suppression rule had kept their own copies because their items are not a slice a
+  `SourceFacts` owns.
+
 - A source range is built only by the file it indexes, so a range that exists has already
   been checked against that file. Locating one is infallible, no fact re-validates a range
   its type already vouches for, and rule evaluation reports no error at all: the single

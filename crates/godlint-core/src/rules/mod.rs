@@ -203,26 +203,14 @@ pub fn evaluate_suppression_rule<R: SuppressionRule>(
     configuration: &R::Configuration,
     today: Date,
 ) -> Vec<Finding> {
-    let reporting = Reporting::of::<R>(configuration);
-
-    if reporting.severity == Severity::Off {
-        return Vec::new();
-    }
-
-    let mut findings = Vec::new();
-
-    for suppression in suppressions {
-        for violation in R::check(suppression, configuration, today) {
-            findings.push(finding(
-                suppression.source(),
-                suppression.range(),
-                reporting,
-                violation,
-            ));
-        }
-    }
-
-    findings
+    report(
+        Reporting::of::<R>(configuration),
+        suppressions.iter().flat_map(move |suppression| {
+            R::check(suppression, configuration, today)
+                .into_iter()
+                .map(move |violation| (suppression.source(), suppression.range(), violation))
+        }),
+    )
 }
 
 pub fn evaluate_function_rule<R: FunctionRule>(
@@ -255,29 +243,41 @@ pub fn evaluate_function_limit_rule<R: FunctionLimitRule>(
     )
 }
 
-pub(crate) fn collect_findings<'facts, T: 'facts, I>(
-    facts: &'facts [SourceFacts],
+pub(crate) fn report<'a>(
     reporting: Reporting,
-    items: impl Fn(&'facts SourceFacts) -> &'facts [T],
-    report: impl Fn(&'facts T, &'facts SourceFacts) -> I,
-) -> Vec<Finding>
-where
-    I: IntoIterator<Item = (SourceRange, Violation)>,
-{
+    reported: impl IntoIterator<Item = (&'a SourceFile, SourceRange, Violation)>,
+) -> Vec<Finding> {
     if reporting.severity == Severity::Off {
         return Vec::new();
     }
 
-    facts
-        .iter()
-        .flat_map(|source| items(source).iter().map(move |item| (source, item)))
-        .flat_map(|(source, item)| {
-            report(item, source)
-                .into_iter()
-                .map(move |reported| (source, reported))
-        })
-        .map(|(source, (range, violation))| finding(source.source(), range, reporting, violation))
+    reported
+        .into_iter()
+        .map(|(source, range, violation)| finding(source, range, reporting, violation))
         .collect()
+}
+
+pub(crate) fn collect_findings<'facts, T: 'facts, I>(
+    facts: &'facts [SourceFacts],
+    reporting: Reporting,
+    items: impl Fn(&'facts SourceFacts) -> &'facts [T],
+    check: impl Fn(&'facts T, &'facts SourceFacts) -> I,
+) -> Vec<Finding>
+where
+    I: IntoIterator<Item = (SourceRange, Violation)>,
+{
+    let check = &check;
+
+    report(
+        reporting,
+        facts.iter().flat_map(move |source| {
+            items(source).iter().flat_map(move |item| {
+                check(item, source)
+                    .into_iter()
+                    .map(move |(range, violation)| (source.source(), range, violation))
+            })
+        }),
+    )
 }
 
 pub trait Ranged {
@@ -319,23 +319,14 @@ fn evaluate_files(
     reporting: Reporting,
     check: impl Fn(&SourceFacts) -> Option<Violation>,
 ) -> Vec<Finding> {
-    if reporting.severity == Severity::Off {
-        return Vec::new();
-    }
+    report(
+        reporting,
+        facts.iter().filter_map(move |source_facts| {
+            let source = source_facts.source();
 
-    facts
-        .iter()
-        .filter_map(|source_facts| {
-            check(source_facts).map(|violation| {
-                finding(
-                    source_facts.source(),
-                    source_facts.source().full_range(),
-                    reporting,
-                    violation,
-                )
-            })
-        })
-        .collect()
+            check(source_facts).map(|violation| (source, source.full_range(), violation))
+        }),
+    )
 }
 
 pub fn evaluate_comment_rule<R: CommentRule>(

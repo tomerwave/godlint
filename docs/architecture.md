@@ -132,8 +132,9 @@ parser type crosses into rules, findings, or reporters.
 
 A rule declares its identity and how to read its severity, then implements one trait per
 fact scope: a function rule, a file rule, or a comment rule. A shared driver per scope
-runs it over the fact set. This is why the severity gate is evaluated once rather than
-per function, and why no rule can forget to honour it.
+runs it over the fact set, and every scope's driver reports through one kernel. This is why
+the severity gate is evaluated once rather than per function, and why no rule can forget to
+honour it.
 
 Most rules compare one measurement against one ceiling, and those implement a limit
 trait instead: they declare the metric they report under, how to measure it, and how to
@@ -187,7 +188,16 @@ driver reads its identity and severity. That is what stops a rule naming another
 identifier or ignoring the severity gate, and a rule that consumes both slices, as the
 environment-read rule does, gets consistent ordering for free.
 
-Underneath, `collect_findings` accepts any iterable of reported violations rather than a
+Underneath all of them is one kernel. `report` takes an iterator of source, range and
+violation, applies the severity gate, and turns each into a finding; every driver builds that
+iterator from its own fact shape and nothing else. Functions, calls and accesses come from a
+slice a `SourceFacts` owns, a file rule's item is the source itself, and a suppression rule's
+items are rooted off a different slice entirely — shapes that no single signature covered,
+which is why each driver used to carry its own severity check and its own finding loop. The
+gate is now written once, so a driver cannot be added that forgets it. Because the iterator is
+lazy, a rule set to `off` still walks nothing.
+
+`collect_findings` accepts any iterable of reported violations rather than a
 `Vec`. A rule that reports at most one violation per item hands over its `Option` directly,
 so the shared driver costs no allocation on the path that walks every function in a
 repository.
