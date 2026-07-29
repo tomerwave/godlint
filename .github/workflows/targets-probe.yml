@@ -59,8 +59,11 @@ jobs:
           if [ "$RUNNER_OS" = "Windows" ]; then suffix=".exe"; fi
           ./target/${{ matrix.target }}/release/godlint$suffix --version
 
-      - name: Prove a musl binary is static
+      # A musl build exists to run where glibc is absent, so being static is the whole point and
+      # worth asserting. file reports "static-pie linked"; ldd's wording for such a binary varies.
+      - name: Prove the musl binary is static
         if: matrix.musl
         run: |
-          file "target/${{ matrix.target }}/release/godlint"
-          ldd "target/${{ matrix.target }}/release/godlint" 2>&1 | grep -q "not a dynamic executable"
+          described="$(file "target/${{ matrix.target }}/release/godlint")"
+          echo "$described"
+          printf '%s' "$described" | grep -q static

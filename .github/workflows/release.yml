@@ -82,6 +82,15 @@ jobs:
           echo "$printed"
           printf '%s' "$printed" | grep -Fq "${TAG#v}"
 
+      # A musl build exists to run where glibc is absent, so being static is the whole point and
+      # worth asserting. file reports "static-pie linked"; ldd's wording for such a binary varies.
+      - name: Prove the musl binary is static
+        if: matrix.musl
+        run: |
+          described="$(file "target/${{ matrix.target }}/release/godlint")"
+          echo "$described"
+          printf '%s' "$described" | grep -q static
+
       - name: Package
         if: runner.os != 'Windows'
         env:
