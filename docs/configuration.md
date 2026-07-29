@@ -40,9 +40,9 @@ fail-on: warning
 
 ### `exclude`
 
-Godlint already skips the directories nobody wants linted: `.git`, `.next`, `.tox`, `.venv`,
-`__pycache__`, `build`, `coverage`, `dist`, `node_modules`, `target` and `vendor`. Anything listed in
-`exclude` is skipped as well:
+Godlint already skips the directories nobody wants linted: `.git`, `.mypy_cache`, `.next`, `.tox`,
+`.venv`, `__pycache__`, `build`, `coverage`, `dist`, `node_modules`, `target` and `vendor`. Anything
+listed in `exclude` is skipped as well:
 
 ```yaml
 exclude:
