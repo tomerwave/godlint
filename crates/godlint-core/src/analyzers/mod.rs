@@ -209,7 +209,6 @@ fn error_handler_fact(
     Ok(Some(ErrorHandlerFact::new(
         source.clone(),
         node_range(handler.node, source)?,
-        node_range(handler.body, source)?,
         handler.body_is_empty,
     )))
 }

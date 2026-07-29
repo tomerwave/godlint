@@ -77,16 +77,29 @@ fn error_handler(node: Node<'_>) -> Option<ErrorHandler<'_>> {
     if node.kind() != "except_clause" {
         return None;
     }
-    let body = node.named_child(0)?;
+
+    let mut clause = node.walk();
+    let body = node
+        .named_children(&mut clause)
+        .find(|child| child.kind() == "block")?;
+    let mut statements = body.walk();
 
     Some(ErrorHandler {
         node,
-        body,
-        body_is_empty: body.named_child_count() == 1
-            && body
-                .named_child(0)
-                .is_some_and(|statement| statement.kind() == "pass_statement"),
+        body_is_empty: body
+            .named_children(&mut statements)
+            .all(is_placeholder_statement),
     })
+}
+
+fn is_placeholder_statement(statement: Node<'_>) -> bool {
+    match statement.kind() {
+        "pass_statement" => true,
+        "expression_statement" => statement
+            .named_child(0)
+            .is_some_and(|value| value.kind() == "ellipsis"),
+        _ => false,
+    }
 }
 
 fn import(node: Node<'_>) -> Option<Node<'_>> {

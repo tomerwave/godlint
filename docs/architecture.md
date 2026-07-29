@@ -68,6 +68,12 @@ language suffices and the name alone separates `dbg!` from a `fn dbg`.
 `EnvironmentRead`, `Assertion`, `Mock`, and `DependencyEdge` are planned and are
 described in the [rule roadmap](rule-roadmap.md).
 
+`ErrorHandlerFact` records the handler's range and whether its body only stands in for one. The
+adapter finds that body by looking for it rather than by position: a Python `except_clause` puts the
+exception it caught before the block, so the first named child of `except ValueError as error:` is
+the exception, and reading position instead of kind silently limited the rule to a bare `except:` —
+the one form of the clause that a real codebase writes least often.
+
 Source files are identified with repository-relative paths and a shared language enum.
 Ranges use byte offsets internally and derive one-based line and Unicode-scalar-column
 positions only at reporting boundaries.

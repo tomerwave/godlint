@@ -71,10 +71,15 @@ fn error_handler(node: Node<'_>) -> Option<ErrorHandler<'_>> {
     (node.kind() == "catch_clause")
         .then(|| node.child_by_field_name("body"))
         .flatten()
-        .map(|body| ErrorHandler {
-            node,
-            body,
-            body_is_empty: body.named_child_count() == 0,
+        .map(|body| {
+            let mut statements = body.walk();
+
+            ErrorHandler {
+                node,
+                body_is_empty: body
+                    .named_children(&mut statements)
+                    .all(|statement| matches!(statement.kind(), "empty_statement" | "comment")),
+            }
         })
 }
 

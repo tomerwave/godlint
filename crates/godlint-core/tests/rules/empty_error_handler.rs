@@ -34,6 +34,66 @@ fn reports_empty_handlers_in_javascript_typescript_and_python() {
 }
 
 #[test]
+fn reports_a_python_handler_whatever_the_except_clause_names() {
+    for source in [
+        "try:\n    work()\nexcept ValueError:\n    pass",
+        "try:\n    work()\nexcept Exception as error:\n    pass",
+        "try:\n    work()\nexcept (ValueError, TypeError):\n    pass",
+        "try:\n    work()\nexcept* ValueError:\n    pass",
+    ] {
+        assert_eq!(
+            violations("src/example.py", source, ENABLED),
+            vec![Violation::EmptyErrorHandler],
+            "a named exception must not hide the empty body in {source:?}"
+        );
+    }
+}
+
+#[test]
+fn reports_a_body_that_only_stands_in_for_one() {
+    assert_eq!(
+        violations(
+            "src/example.py",
+            "try:\n    work()\nexcept:\n    ...",
+            ENABLED
+        ),
+        vec![Violation::EmptyErrorHandler]
+    );
+    assert_eq!(
+        violations("src/example.js", "try { work(); } catch { ; }", ENABLED),
+        vec![Violation::EmptyErrorHandler]
+    );
+}
+
+#[test]
+fn a_comment_does_not_count_as_handling_the_error() {
+    assert_eq!(
+        violations(
+            "src/example.py",
+            "try:\n    work()\nexcept Exception:\n    # deliberately ignored\n    pass",
+            ENABLED
+        ),
+        vec![Violation::EmptyErrorHandler]
+    );
+    assert_eq!(
+        violations(
+            "src/example.js",
+            "try { work(); } catch (error) { /* deliberately ignored */ }",
+            ENABLED
+        ),
+        vec![Violation::EmptyErrorHandler]
+    );
+    assert_eq!(
+        violations(
+            "src/example.js",
+            "try { work(); } catch (error) {\n  // deliberately ignored\n}",
+            ENABLED
+        ),
+        vec![Violation::EmptyErrorHandler]
+    );
+}
+
+#[test]
 fn permits_handlers_that_handle_or_reraise_errors() {
     assert!(
         violations(
@@ -55,6 +115,14 @@ fn permits_handlers_that_handle_or_reraise_errors() {
         violations(
             "src/example.py",
             "try:\n    work()\nexcept:\n    \"documented\"",
+            ENABLED
+        )
+        .is_empty()
+    );
+    assert!(
+        violations(
+            "src/example.py",
+            "try:\n    work()\nexcept ValueError as error:\n    report(error)",
             ENABLED
         )
         .is_empty()

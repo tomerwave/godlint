@@ -27,9 +27,14 @@ speaks about.
   succeeded, so it never points at a half-published release, and a break in the inputs means a `v2`
   rather than a bump. Exact version tags stay immutable; the floating tag is deliberately outside
   that rule, since a tag whose purpose is to move cannot be protected against moving.
-
-- `reliability/empty-error-handler` — reports empty JavaScript/TypeScript `catch` bodies and
-  Python `except` bodies containing only `pass`, so an error cannot be silently discarded.
+- `reliability/empty-error-handler` — reports an error handler that discards the error: an empty
+  JavaScript or TypeScript `catch` body, and a Python `except` body holding nothing but a
+  placeholder. `pass`, `...` and a lone `;` are placeholders, and so is a comment, in both
+  languages: a comment neither handles the error nor re-raises it, and Godlint already has an
+  accountable way to say a swallow is deliberate — a suppression with an owner and an expiry, which
+  a comment cannot be held to. The exception clause is read for its body wherever that body sits, so
+  `except ValueError as error:` is held to the same standard as a bare `except:`. Rust is out of
+  scope: it has no `catch`, and discarding a `Result` is a separate rule on the roadmap.
 - Two labels make the drift check pass, and which one records what happened: `fixes-false-positive`
   when a rule was reporting something it should not have, and `relaxes-a-rule` when the rule was
   narrowed or a threshold loosened. Both are cases where the released binary still reports what the

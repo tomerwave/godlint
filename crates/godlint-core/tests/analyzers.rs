@@ -195,6 +195,12 @@ fn extracts_empty_error_handlers() {
         ("example.py", "try:\n    work()\nexcept:\n    pass", true),
         (
             "example.py",
+            "try:\n    work()\nexcept Exception as error:\n    pass",
+            true,
+        ),
+        ("example.py", "try:\n    work()\nexcept:\n    ...", true),
+        (
+            "example.py",
             "try:\n    work()\nexcept Exception:\n    raise",
             false,
         ),

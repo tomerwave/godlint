@@ -11,7 +11,6 @@ pub(crate) struct Callee<'tree> {
 #[derive(Clone, Copy)]
 pub(crate) struct ErrorHandler<'tree> {
     pub node: Node<'tree>,
-    pub body: Node<'tree>,
     pub body_is_empty: bool,
 }
 

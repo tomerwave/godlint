@@ -76,7 +76,6 @@ pub struct AccessFact {
 pub struct ErrorHandlerFact {
     source: SourceFile,
     range: SourceRange,
-    body_range: SourceRange,
     body_is_empty: bool,
 }
 
@@ -215,16 +214,10 @@ impl AccessFact {
 }
 
 impl ErrorHandlerFact {
-    pub fn new(
-        source: SourceFile,
-        range: SourceRange,
-        body_range: SourceRange,
-        body_is_empty: bool,
-    ) -> Self {
+    pub fn new(source: SourceFile, range: SourceRange, body_is_empty: bool) -> Self {
         Self {
             source,
             range,
-            body_range,
             body_is_empty,
         }
     }
@@ -235,10 +228,6 @@ impl ErrorHandlerFact {
 
     pub fn range(&self) -> SourceRange {
         self.range
-    }
-
-    pub fn body_range(&self) -> SourceRange {
-        self.body_range
     }
 
     pub fn body_is_empty(&self) -> bool {

@@ -112,9 +112,8 @@ fn records_an_access() {
 
 #[test]
 fn records_an_error_handler() {
-    let fact = ErrorHandlerFact::new(source(), range(0, 28), range(11, 28), true);
+    let fact = ErrorHandlerFact::new(source(), range(0, 28), true);
 
     assert_eq!(fact.range(), range(0, 28));
-    assert_eq!(fact.body_range(), range(11, 28));
     assert!(fact.body_is_empty());
 }
