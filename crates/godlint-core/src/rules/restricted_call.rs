@@ -92,8 +92,5 @@ fn dialect(language: Language) -> Dialect {
 }
 
 fn is_allowed(call: &CallFact, paths: &[String]) -> bool {
-    glob::matches_any(
-        paths.iter().map(String::as_str),
-        &call.source().path().to_string_lossy(),
-    )
+    glob::matches_any(paths.iter().map(String::as_str), call.source().path_text())
 }

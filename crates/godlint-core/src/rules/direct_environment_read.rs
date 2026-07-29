@@ -1,5 +1,3 @@
-use std::path::Path;
-
 use crate::{
     analyzers::SourceFacts,
     config::{Config, DirectEnvironmentReadRule, Severity},
@@ -9,7 +7,7 @@ use crate::{
         AccessRule, CallRule, Finding, Rule, Violation, evaluate_access_rule, evaluate_call_rule,
         when_configured,
     },
-    source::Language,
+    source::{Language, SourceFile},
 };
 
 pub struct DirectEnvironmentRead;
@@ -26,15 +24,14 @@ impl Rule for DirectEnvironmentRead {
 
 impl AccessRule for DirectEnvironmentRead {
     fn check(access: &AccessFact, configuration: &Self::Configuration) -> Option<Violation> {
-        (is_environment_access(access)
-            && !is_allowed(access.source().path(), &configuration.allow_in))
-        .then(|| direct_read_violation(access.target()))
+        (is_environment_access(access) && !is_allowed(access.source(), &configuration.allow_in))
+            .then(|| direct_read_violation(access.target()))
     }
 }
 
 impl CallRule for DirectEnvironmentRead {
     fn check(call: &CallFact, configuration: &Self::Configuration) -> Option<Violation> {
-        (is_environment_call(call) && !is_allowed(call.source().path(), &configuration.allow_in))
+        (is_environment_call(call) && !is_allowed(call.source(), &configuration.allow_in))
             .then(|| direct_read_violation(call.callee()))
     }
 }
@@ -71,6 +68,6 @@ fn direct_read_violation(target: &str) -> Violation {
     }
 }
 
-fn is_allowed(path: &Path, allow_in: &[String]) -> bool {
-    glob::matches_any(allow_in.iter().map(String::as_str), &path.to_string_lossy())
+fn is_allowed(source: &SourceFile, allow_in: &[String]) -> bool {
+    glob::matches_any(allow_in.iter().map(String::as_str), source.path_text())
 }

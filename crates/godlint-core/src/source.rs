@@ -77,7 +77,7 @@ impl SourceFile {
             .map_or(source.as_str(), |stripped| stripped);
 
         Ok(Self {
-            path_text: Arc::from(path.to_string_lossy().into_owned()),
+            path_text: Arc::from(paths::slashed(&path.to_string_lossy()).into_owned()),
             path: Arc::from(path),
             language,
             line_starts: line_starts(source),

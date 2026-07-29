@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     ffi::OsStr,
     fs,
     path::{Component, Path, PathBuf},
@@ -73,4 +74,12 @@ pub fn find_upward(start: &Path, marker: &str) -> Option<PathBuf> {
     }
 
     None
+}
+
+pub fn slashed(text: &str) -> Cow<'_, str> {
+    if text.contains('\\') {
+        Cow::Owned(text.replace('\\', "/"))
+    } else {
+        Cow::Borrowed(text)
+    }
 }

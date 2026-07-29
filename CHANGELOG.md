@@ -11,6 +11,13 @@ speaks about.
 
 ### Fixed
 
+- Godlint works on Windows. A repository-relative path is spelled with forward slashes wherever a
+  policy sees it, so a glob written with `/` matches, and a file name is the last segment rather than
+  the whole path. On Windows every `exclude` pattern silently matched nothing — so excluded
+  directories were scanned — and `architecture/filename-case` reported
+  `crates\godlint-cli\src\main` as a name that is not snake_case. Both were found by running the
+  action against this repository on a Windows runner rather than against a fixture.
+
 - A release is published whether or not one already exists for the tag. Listing an action on the
   Marketplace is done by editing a release, so a release created by hand first made the workflow fail
   at `gh release create` and the archives never attached — leaving the release that the action
