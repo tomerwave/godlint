@@ -33,8 +33,10 @@ For repository changes:
   prints the notes the release will carry. Publishing cannot be undone — a version may be yanked
   but never replaced — so the check runs before anything is built. crates.io is reached with a
   token held as an environment secret, so no other workflow can read it. npm is reached by trusted
-  publishing instead, from its own environment, so no npm token is stored and each package carries a
-  provenance attestation tying it to the commit and workflow that built it. `packaging/build-npm.py` assembles the npm packages from the
+  publishing from its own environment, and each package carries a provenance attestation tying it to
+  the commit and workflow that built it. npm cannot accept a trusted publisher for a name that does
+  not exist, so the first release of a new package authenticates with a token; once the name exists,
+  configure trusted publishing for it and delete the token. `packaging/build-npm.py` assembles the npm packages from the
   binaries the release built; it takes `--only` so a single platform can be built and installed on
   one machine to check the shim end to end.
 - `python3 scripts/validate-pull-request.py` enforces the parts of those templates that

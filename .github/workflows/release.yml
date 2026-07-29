@@ -165,9 +165,9 @@ jobs:
     runs-on: ubuntu-latest
     environment: npm
 
-    # Trusted publishing exchanges this identity for a short-lived credential, so no token is
-    # stored, and it is also what lets npm attach a provenance attestation tying each package to
-    # the commit and workflow that built it.
+    # id-token is what lets npm attach a provenance attestation tying each package to the commit
+    # and workflow that built it. It is kept even while a token authenticates the publish, because
+    # provenance comes from the identity rather than from the credential.
     permissions:
       contents: read
       id-token: write
@@ -178,8 +178,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          registry-url: https://registry.npmjs.org
 
-      # Trusted publishing needs a newer npm than the one bundled with Node.
+      # Newer than the npm bundled with Node, for provenance and for trusted publishing later.
       - run: npm install --global npm@latest
 
       - uses: actions/download-artifact@v4
@@ -194,7 +195,12 @@ jobs:
 
       # Every platform package must exist before the package that names them, or npm resolves an
       # optional dependency that is not published yet and installs no binary at all.
+      # A trusted publisher cannot be configured for a name that does not exist yet, so the first
+      # release authenticates with a token. Once these packages exist, configure trusted publishing
+      # for each and delete both this env block and the secret.
       - name: Publish every platform package, then the one that names them
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           for package in packages/cli-*; do
             npm publish "$package" --access public --provenance
