@@ -39,8 +39,15 @@ def notes(version: str) -> str:
 
     rest = text[start.end() :]
     end = re.search(r"^## ", rest, re.MULTILINE)
+    body = rest[: end.start()].strip() if end else rest.strip()
 
-    return rest[: end.start()].strip() if end else rest.strip()
+    if not body:
+        raise SystemExit(
+            f"{CHANGELOG}: the section for {version} is empty. "
+            "A release with no notes says nothing about what changed."
+        )
+
+    return body
 
 
 def main() -> int:

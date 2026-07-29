@@ -1,4 +1,4 @@
-name: Godlint
+name: Run Godlint
 description: Enforce one code policy across Rust, TypeScript, JavaScript and Python.
 author: Tomer Gal
 
