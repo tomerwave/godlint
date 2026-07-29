@@ -32,10 +32,7 @@ For repository changes:
   already says the same: `python3 scripts/check-release.py v<version>` checks all three agree and
   prints the notes the release will carry. Publishing cannot be undone — a version may be yanked
   but never replaced — so the check runs before anything is built. crates.io is reached with a
-  token held as an environment secret, so no other workflow can read it. That token is temporary:
-  once both crates exist on the registry, configure trusted publishing for them, give the publish
-  job `id-token: write`, and delete the token — a credential that lives for one job cannot leak and
-  cannot expire between releases.
+  token held as an environment secret, so no other workflow can read it.
 - `python3 scripts/validate-pull-request.py` enforces the parts of those templates that
   can be checked. Run it locally; CI runs it too. Its change-scoped checks measure the
   branch against `origin/main` rather than the pull request's target, so a stack of pull

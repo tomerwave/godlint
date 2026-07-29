@@ -87,9 +87,7 @@ jobs:
       - run: rustup toolchain install 1.97.1 --profile minimal
 
       # The token is an environment secret rather than a repository one, so no other workflow
-      # can read it. It is also the reason this job is worth replacing: a token expires on a date
-      # nobody is watching, and the release it breaks is the one being cut. Trusted publishing
-      # takes over once both crates exist on the registry -- see the note in docs/contributing.md.
+      # can read it.
       #
       # --workspace publishes in dependency order and waits for each crate to appear in the
       # index, so godlint-cli never races the godlint-core it depends on.
