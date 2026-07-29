@@ -57,6 +57,46 @@ delivery sequence. The implementation sequence is:
 4. Caching, architecture graph, and GitHub Actions integration.
 5. Optional semantic workers and ecosystem-tool adapters.
 
+## Install
+
+A prebuilt binary needs no toolchain. Download the archive for your platform from the
+[latest release](https://github.com/tomerwave/godlint/releases/latest), check it against the
+`.sha256` beside it, and put `godlint` on your `PATH`:
+
+```bash
+tar -xzf godlint-x86_64-unknown-linux-gnu.tar.gz
+install -m 755 godlint /usr/local/bin/
+```
+
+With a Rust toolchain, `cargo install godlint-cli` builds the same binary. The library crate,
+`godlint-core`, is published because the command line depends on it; its API is not stable before
+`1.0`.
+
+## Use
+
+Godlint enforces nothing until a configuration asks it to. Write `godlint.yaml` at the repository
+root and adopt the suite:
+
+```yaml
+version: 1
+suites: [recommended@1]
+```
+
+```bash
+godlint check
+```
+
+`check` reads the current directory when given no paths. It exits non-zero when a finding is at or
+above `fail-on`, which is what makes enforcement one line in CI:
+
+```yaml
+- run: godlint check
+```
+
+Two commands answer the questions that follow. `godlint config validate` rejects a configuration
+before it is trusted, and `godlint suppressions` lists every exemption with its owner and expiry,
+so an exception that has outlived its reason fails the build rather than accumulating quietly.
+
 ## Local development
 
 Godlint currently requires Rust `1.97.1`. After installing Rust with

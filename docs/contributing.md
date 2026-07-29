@@ -27,6 +27,12 @@ For repository changes:
 - Pick the pull request template that matches the change: `new-rule` when adding or
   changing a rule, `infrastructure` for build, CI, tooling, or documentation work. Append
   `?template=new-rule.md` or `?template=infrastructure.md` to the pull request URL.
+- Releases are tag-driven and only a repository administrator can create the tag. Before tagging,
+  rename the changelog's `Unreleased` section to the version and make sure the workspace version
+  already says the same: `python3 scripts/check-release.py v<version>` checks all three agree and
+  prints the notes the release will carry. Publishing cannot be undone — a version may be yanked
+  but never replaced — so the check runs before anything is built. crates.io is reached with a
+  token held as an environment secret, so no other workflow can read it.
 - `python3 scripts/validate-pull-request.py` enforces the parts of those templates that
   can be checked. Run it locally; CI runs it too. Its change-scoped checks measure the
   branch against `origin/main` rather than the pull request's target, so a stack of pull

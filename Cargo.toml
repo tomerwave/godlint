@@ -14,7 +14,7 @@ description = "A deterministic code-policy engine for polyglot repositories."
 license = "MIT"
 repository = "https://github.com/tomerwave/godlint"
 keywords = ["lint", "static-analysis", "code-quality", "policy"]
-categories = ["development-tools", "development-tools::cargo-plugins"]
+categories = ["command-line-utilities", "development-tools"]
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
