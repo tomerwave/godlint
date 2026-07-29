@@ -254,33 +254,44 @@ pub fn evaluate_function_limit_rule<R: FunctionLimitRule>(
     )
 }
 
-fn evaluate_functions(
-    facts: &[SourceFacts],
+pub(crate) fn collect_findings<'facts, T: 'facts>(
+    facts: &'facts [SourceFacts],
     reporting: Reporting,
-    check: impl Fn(&FunctionFact, &SourceFacts) -> Option<Violation>,
+    items: impl Fn(&'facts SourceFacts) -> &'facts [T],
+    report: impl Fn(&'facts T, &'facts SourceFacts) -> Vec<(SourceRange, Violation)>,
 ) -> Result<Vec<Finding>, RuleError> {
     if reporting.severity == Severity::Off {
         return Ok(Vec::new());
     }
 
-    let mut findings = Vec::new();
+    facts
+        .iter()
+        .flat_map(|source| items(source).iter().map(move |item| (source, item)))
+        .flat_map(|(source, item)| {
+            report(item, source)
+                .into_iter()
+                .map(move |reported| (source, reported))
+        })
+        .map(|(source, (range, violation))| finding(source.source(), range, reporting, violation))
+        .collect()
+}
 
-    for source_facts in facts {
-        for function in source_facts.functions() {
-            let Some(violation) = check(function, source_facts) else {
-                continue;
-            };
-
-            findings.push(finding(
-                source_facts.source(),
-                function.range(),
-                reporting,
-                violation,
-            )?);
-        }
-    }
-
-    Ok(findings)
+fn evaluate_functions(
+    facts: &[SourceFacts],
+    reporting: Reporting,
+    check: impl Fn(&FunctionFact, &SourceFacts) -> Option<Violation>,
+) -> Result<Vec<Finding>, RuleError> {
+    collect_findings(
+        facts,
+        reporting,
+        SourceFacts::functions,
+        |function, source| {
+            check(function, source)
+                .map(|violation| (function.range(), violation))
+                .into_iter()
+                .collect()
+        },
+    )
 }
 
 pub fn evaluate_file_limit_rule<R: FileLimitRule>(
@@ -324,23 +335,12 @@ pub fn evaluate_comment_rule<R: CommentRule>(
     facts: &[SourceFacts],
     configuration: &R::Configuration,
 ) -> Result<Vec<Finding>, RuleError> {
-    let reporting = Reporting::of::<R>(configuration);
-
-    if reporting.severity == Severity::Off {
-        return Ok(Vec::new());
-    }
-
-    let mut findings = Vec::new();
-
-    for source_facts in facts {
-        for comment in source_facts.comments() {
-            for (range, violation) in R::check(comment, configuration) {
-                findings.push(finding(source_facts.source(), range, reporting, violation)?);
-            }
-        }
-    }
-
-    Ok(findings)
+    collect_findings(
+        facts,
+        Reporting::of::<R>(configuration),
+        SourceFacts::comments,
+        |comment, _| R::check(comment, configuration),
+    )
 }
 
 #[derive(Clone, Copy)]

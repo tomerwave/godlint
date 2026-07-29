@@ -6,20 +6,16 @@ use std::{
 const REPOSITORY_MARKER: &str = ".git";
 
 pub fn normalize(path: &Path) -> Option<PathBuf> {
-    let mut normalized = PathBuf::new();
+    path.components().try_fold(PathBuf::new(), absorb)
+}
 
-    for component in path.components() {
-        match component {
-            Component::CurDir => {}
-            Component::Normal(part) => normalized.push(part),
-            Component::ParentDir => {
-                if !normalized.pop() {
-                    return None;
-                }
-            }
-            Component::Prefix(prefix) => normalized.push(prefix.as_os_str()),
-            Component::RootDir => normalized.push(component.as_os_str()),
-        }
+fn absorb(mut normalized: PathBuf, component: Component<'_>) -> Option<PathBuf> {
+    match component {
+        Component::CurDir => {}
+        Component::Normal(part) => normalized.push(part),
+        Component::ParentDir => normalized.pop().then_some(())?,
+        Component::Prefix(prefix) => normalized.push(prefix.as_os_str()),
+        Component::RootDir => normalized.push(component.as_os_str()),
     }
 
     Some(normalized)
@@ -37,17 +33,16 @@ pub fn contains_symlink(root: &Path, path: &Path) -> bool {
     };
     let mut current = root.to_path_buf();
 
-    for component in relative.components() {
-        if let Component::Normal(name) = component {
+    relative
+        .components()
+        .filter_map(|component| match component {
+            Component::Normal(name) => Some(name),
+            _ => None,
+        })
+        .any(|name| {
             current.push(name);
-
-            if is_symlink(&current) {
-                return true;
-            }
-        }
-    }
-
-    false
+            is_symlink(&current)
+        })
 }
 
 pub fn climbs(path: &Path) -> bool {
