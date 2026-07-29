@@ -74,6 +74,8 @@ Rust toolchain, which is the point: Godlint lints JavaScript, TypeScript and Pyt
 working in those languages do not have one. The command it installs is `godlint`; the package is
 scoped because npm holds the bare name too close to an existing one.
 
+On PyPI, `pip install godlint` installs the same binary and likewise needs no Rust toolchain.
+
 With a Rust toolchain, `cargo install godlint-cli` builds the same binary. The library crate,
 `godlint-core`, is published because the command line depends on it; its API is not stable before
 `1.0`.

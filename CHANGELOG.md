@@ -9,6 +9,18 @@ speaks about.
 
 ## [Unreleased]
 
+## [0.1.6] - 2026-07-29
+
+### Added
+
+- A PyPI package. `pip install godlint` installs a binary and needs no Rust toolchain, the same
+  reasoning as the npm package. Wheels repackage the binaries the release already built and
+  version-checked rather than compiling them again, so every channel ships the same file per
+  platform. pip distinguishes glibc from musl by wheel tag, unlike npm, so both get their own
+  wheel: seven in total across macOS, Linux and Windows. Published by trusted publishing, so no
+  PyPI token exists.
+
+
 ## [0.1.5] - 2026-07-29
 
 ### Changed
