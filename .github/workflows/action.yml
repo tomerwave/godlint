@@ -55,12 +55,17 @@ jobs:
         with:
           working-directory: .github/fixtures/action-dirty
 
-      - name: A tree with findings fails and counts them
+      # The summary rather than the findings output: a composite action does not export its outputs
+      # when it fails, and failing is what this asserts. The summary is written before that, and it
+      # is what a person reads, so it is the better thing to hold to.
+      - name: A tree with findings fails and says which rules
         shell: bash
         env:
           OUTCOME: ${{ steps.godlint.outcome }}
-          FINDINGS: ${{ steps.godlint.outputs.findings }}
         run: |
+          set -euo pipefail
+
           test "$OUTCOME" = "failure"
-          test "$FINDINGS" -ge 2
-          echo "the action failed as it should, with $FINDINGS findings"
+          grep -q 'architecture/filename-case' "$GITHUB_STEP_SUMMARY"
+          grep -q 'logging/no-production-log' "$GITHUB_STEP_SUMMARY"
+          echo "the action failed as it should, and named both rules in the summary"
