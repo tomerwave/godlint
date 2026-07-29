@@ -23,12 +23,7 @@ impl FileLimitRule for FileSize {
     const METRIC: Metric = Metric::FileLines;
 
     fn measure(facts: &SourceFacts, configuration: &Self::Configuration) -> u32 {
-        line_count::effective_line_count(
-            facts,
-            facts.source().full_range(),
-            configuration.skip_blank_lines,
-            configuration.skip_comments,
-        )
+        line_count::effective_line_count(facts, facts.source().full_range(), configuration.into())
     }
 
     fn max(configuration: &Self::Configuration) -> u32 {

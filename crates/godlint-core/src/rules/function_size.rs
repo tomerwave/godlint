@@ -28,12 +28,7 @@ impl FunctionLimitRule for FunctionSize {
         facts: &SourceFacts,
         configuration: &Self::Configuration,
     ) -> u32 {
-        line_count::effective_line_count(
-            facts,
-            function.range(),
-            configuration.skip_blank_lines,
-            configuration.skip_comments,
-        )
+        line_count::effective_line_count(facts, function.range(), configuration.into())
     }
 
     fn max(configuration: &Self::Configuration) -> u32 {

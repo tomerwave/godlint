@@ -34,6 +34,12 @@ pub fn discover(paths: &[PathBuf], scope: &Scope<'_>) -> Result<Vec<PathBuf>, Di
     Ok(files.into_iter().collect())
 }
 
+enum Walk {
+    Skip,
+    File,
+    Directory,
+}
+
 fn discover_path(
     path: &Path,
     scope: &Scope<'_>,
@@ -45,21 +51,38 @@ fn discover_path(
         source,
     })?;
 
+    match classify(path, scope, &metadata, is_requested_root) {
+        Walk::Skip => Ok(()),
+        Walk::File => {
+            add_supported_file(path, files);
+
+            Ok(())
+        }
+        Walk::Directory => discover_directory(path, scope, files),
+    }
+}
+
+fn classify(
+    path: &Path,
+    scope: &Scope<'_>,
+    metadata: &fs::Metadata,
+    is_requested_root: bool,
+) -> Walk {
     if metadata.file_type().is_symlink() || is_excluded(path, scope) {
-        return Ok(());
+        return Walk::Skip;
     }
 
     if metadata.is_file() {
-        add_supported_file(path, files);
-    } else if metadata.is_dir() {
-        if !is_requested_root && paths::is_repository_root(path) {
-            return Ok(());
-        }
-
-        discover_directory(path, scope, files)?;
+        return Walk::File;
     }
 
-    Ok(())
+    let descends = metadata.is_dir() && (is_requested_root || !paths::is_repository_root(path));
+
+    if descends {
+        return Walk::Directory;
+    }
+
+    Walk::Skip
 }
 
 fn is_excluded(path: &Path, scope: &Scope<'_>) -> bool {
@@ -79,28 +102,31 @@ fn discover_directory(
     scope: &Scope<'_>,
     files: &mut BTreeSet<PathBuf>,
 ) -> Result<(), DiscoveryError> {
-    let entries = fs::read_dir(directory).map_err(|source| DiscoveryError::ReadDirectory {
-        path: directory.to_path_buf(),
-        source,
-    })?;
-    let mut paths = Vec::new();
-
-    for entry in entries {
-        let entry = entry.map_err(|source| DiscoveryError::ReadDirectory {
-            path: directory.to_path_buf(),
-            source,
-        })?;
-
-        paths.push(entry.path());
-    }
+    let mut paths = entry_paths(directory)?;
 
     paths.sort();
 
-    for path in paths {
-        discover_path(&path, scope, files, false)?;
-    }
+    paths
+        .into_iter()
+        .try_for_each(|path| discover_path(&path, scope, files, false))
+}
 
-    Ok(())
+fn entry_paths(directory: &Path) -> Result<Vec<PathBuf>, DiscoveryError> {
+    fs::read_dir(directory)
+        .map_err(|source| unreadable(directory, source))?
+        .map(|entry| {
+            entry
+                .map(|entry| entry.path())
+                .map_err(|source| unreadable(directory, source))
+        })
+        .collect()
+}
+
+fn unreadable(directory: &Path, source: std::io::Error) -> DiscoveryError {
+    DiscoveryError::ReadDirectory {
+        path: directory.to_path_buf(),
+        source,
+    }
 }
 
 fn add_supported_file(path: &Path, files: &mut BTreeSet<PathBuf>) {
