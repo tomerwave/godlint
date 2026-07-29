@@ -35,7 +35,7 @@ fn ecmascript_package(module: &str) -> Option<&str> {
         return non_empty(first);
     }
 
-    let scoped = first_segment(module.get(first.len() + 1..)?, "/");
+    let scoped = non_empty(first_segment(module.get(first.len() + 1..)?, "/"))?;
 
     non_empty(&module[..first.len() + 1 + scoped.len()])
 }
@@ -49,7 +49,9 @@ fn python_package(module: &str) -> Option<&str> {
 }
 
 fn rust_package(module: &str) -> Option<&str> {
-    match first_segment(module, "::") {
+    let path = module.strip_prefix("::").unwrap_or(module);
+
+    match first_segment(path, "::") {
         "crate" | "self" | "super" => None,
         root => non_empty(root),
     }

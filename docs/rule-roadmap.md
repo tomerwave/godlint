@@ -387,8 +387,15 @@ TypeScript, or the first two when the name is scoped, so `@corp/legacy/deep` is 
 and `@corp/allowed` is a different dependency; the first dotted segment in Python; and the
 first `::` segment in Rust, which also covers `extern crate`. First-party code is not a
 dependency and yields no package at all: a relative import in any language, and `crate`, `self`
-or `super` in Rust. Neither is a platform builtin reached through a protocol, such as
-`node:fs`.
+or `super` in Rust, after a leading `::` is stripped so that `::serde` is read as the crate
+`serde` rather than as nothing. Neither is a specifier containing a colon — which covers a
+platform builtin such as `node:fs`, a URL, and a Windows path alike — nor one rooted at `/`.
+
+Only a static `import`, `export ... from`, or the equivalent declaration in each language
+produces an import fact. A `require()` call, a dynamic `import()`, and TypeScript's
+`import x = require(...)` are calls rather than declarations, so neither import rule sees them.
+That is the same boundary `architecture/restricted-call` covers from the other side, and it is
+the first gap to close if these rules are relied on for dependency policy.
 
 Declared order carries one thing only: the direction a dependency may run. Which layer a file
 or a module belongs to is decided by the most specific declaration that covers it, not by
