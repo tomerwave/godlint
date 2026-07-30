@@ -6,11 +6,12 @@ use crate::{
     facts::{
         AccessFact, CallArgument, CallFact, CallTarget, CommentFact, ConditionFact,
         ErrorHandlerFact, FunctionFact, FunctionFactDetails, FunctionFactError, ImportFact,
+        TestFact, TestFactDetails, TestFocus,
     },
     source::{Language, SourceFile, SourceFileError, SourceRange},
 };
 
-use self::vocabulary::Vocabulary;
+use self::vocabulary::{Focus, Vocabulary};
 
 mod ecmascript;
 mod javascript;
@@ -31,6 +32,7 @@ pub struct SourceFacts {
     error_handlers: Vec<ErrorHandlerFact>,
     functions: Vec<FunctionFact>,
     imports: Vec<ImportFact>,
+    tests: Vec<TestFact>,
 }
 
 impl SourceFacts {
@@ -68,6 +70,10 @@ impl SourceFacts {
 
     pub fn imports(&self) -> &[ImportFact] {
         &self.imports
+    }
+
+    pub fn tests(&self) -> &[TestFact] {
+        &self.tests
     }
 }
 
@@ -123,6 +129,7 @@ pub(crate) fn analyze_with(
         error_handlers: collected.error_handlers,
         functions: collected.functions,
         imports: collected.imports,
+        tests: collected.tests,
     })
 }
 
@@ -154,6 +161,7 @@ struct Collected {
     unparsed: Vec<SourceRange>,
     accesses: Vec<AccessFact>,
     functions: Vec<FunctionFact>,
+    tests: Vec<TestFact>,
     comments: Vec<CommentFact>,
     calls: Vec<CallFact>,
     conditions: Vec<ConditionFact>,
@@ -180,6 +188,7 @@ impl Collected {
     ) -> Result<(), AnalyzerError> {
         self.functions
             .extend(function_fact(node, source, vocabulary)?);
+        self.tests.extend(test_fact(node, source, vocabulary)?);
         self.comments
             .extend(comment_fact(node, source, vocabulary)?);
 
@@ -222,6 +231,40 @@ impl Collected {
 
         Ok(())
     }
+}
+
+fn test_fact(
+    node: Node<'_>,
+    source: &SourceFile,
+    vocabulary: &Vocabulary,
+) -> Result<Option<TestFact>, AnalyzerError> {
+    let Some(declaration) = (vocabulary.test)(node, source.source()) else {
+        return Ok(None);
+    };
+
+    Ok(Some(TestFact::new(
+        source.clone(),
+        node_range(declaration.node, source)?,
+        TestFactDetails {
+            name: text_of(declaration.name, source).map(str::to_owned),
+            marker: text_of(Some(declaration.marker), source)
+                .unwrap_or_default()
+                .to_owned(),
+            focus: focus_of(declaration.focus),
+        },
+    )))
+}
+
+fn focus_of(focus: Focus) -> TestFocus {
+    match focus {
+        Focus::Ordinary => TestFocus::Ordinary,
+        Focus::Only => TestFocus::Only,
+        Focus::Skipped => TestFocus::Skipped,
+    }
+}
+
+fn text_of<'source>(node: Option<Node<'_>>, source: &'source SourceFile) -> Option<&'source str> {
+    source.source().get(node?.byte_range())
 }
 
 fn error_handler_fact(

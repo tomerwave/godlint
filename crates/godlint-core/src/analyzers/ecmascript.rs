@@ -1,7 +1,8 @@
 use tree_sitter::Node;
 
 use super::vocabulary::{
-    Argument, Callee, Cognition, Condition, ErrorHandler, Vocabulary, literal_value, plain_path,
+    Argument, Callee, Cognition, Condition, ErrorHandler, Focus, TestDeclaration, Vocabulary,
+    literal_value, plain_path,
 };
 use crate::facts::CommentKind;
 
@@ -23,6 +24,7 @@ pub(super) const VOCABULARY: Vocabulary = Vocabulary {
     direct_path,
     argument,
     literal,
+    test,
     import,
     comment_kind,
     has_implicit_tail_return,
@@ -169,6 +171,53 @@ fn count_condition_operators(node: Node<'_>) -> u32 {
 
 fn direct_path(text: &str) -> Option<String> {
     plain_path(&text.replace("?.", "."))
+}
+
+const RUNNERS: [&str; 5] = ["it", "test", "describe", "suite", "context"];
+
+fn test<'tree>(node: Node<'tree>, source: &str) -> Option<TestDeclaration<'tree>> {
+    if node.kind() != "call_expression" {
+        return None;
+    }
+
+    let callee = node.child_by_field_name("function")?;
+    let spelled = source.get(callee.byte_range())?;
+    let (runner, suffix) = spelled.split_once('.').unwrap_or((spelled, ""));
+
+    if !RUNNERS.contains(&runner) {
+        return None;
+    }
+
+    Some(TestDeclaration {
+        node,
+        name: first_string(node),
+        marker: callee,
+        focus: focus_of(suffix),
+    })
+}
+
+fn focus_of(suffix: &str) -> Focus {
+    match suffix {
+        "only" => Focus::Only,
+        "skip" | "todo" => Focus::Skipped,
+        _ => Focus::Ordinary,
+    }
+}
+
+fn first_string(node: Node<'_>) -> Option<Node<'_>> {
+    let arguments = node.child_by_field_name("arguments")?;
+    let mut cursor = arguments.walk();
+
+    arguments
+        .named_children(&mut cursor)
+        .find(|argument| argument.kind() == "string")
+        .and_then(|string| {
+            let mut inner = string.walk();
+
+            string
+                .children(&mut inner)
+                .find(|child| child.kind() == "string_fragment")
+        })
 }
 
 fn argument(node: Node<'_>) -> Option<Argument<'_>> {

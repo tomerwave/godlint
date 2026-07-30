@@ -7,6 +7,22 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 change the `godlint-core` API; the command line and the configuration schema are what the version
 speaks about.
 
+## [Unreleased]
+
+### Added
+
+- Test facts. A rule can ask whether a declaration is a test, what its name is, which marker made it
+  one, and whether that marker carried focus or skipping. What counts as a test is a framework
+  question rather than a language one, so each language module answers it: Rust reads the attributes
+  preceding a function, which stack, so `#[test]` and `#[ignore]` in either order describe the same
+  test; Python reads a `test_` prefix or a `pytest.mark` decorator; JavaScript and TypeScript read a
+  runner call and its member, so `it.only` and `describe.skip` carry focus in the name. The fact stops
+  at syntax: a rule that wants to treat a path as a test directory combines the fact with a glob,
+  because an analyzer sees no configuration. This unblocks `testing/no-focused-test`,
+  `no-skipped-test`, `no-empty-test`, `no-conditional-test-logic`, `no-sleep-in-test`,
+  `no-randomness-without-seed` and `no-network-in-unit-test`, each of which asks about other facts
+  falling inside a test's range.
+
 ## [0.2.0] - 2026-07-30
 
 ### Added

@@ -32,7 +32,7 @@ expected: read it here.
 
 Language adapters retain native AST and parser details. They emit a small shared fact
 model that rules consume without a universal AST. `FunctionFact`, `CommentFact`, `CallFact`,
-`AccessFact`, `ErrorHandlerFact`, and `ImportFact` exist today. `CallFact` records a direct callee path, a
+`AccessFact`, `ErrorHandlerFact`, `ImportFact`, and `TestFact` exist today. `CallFact` records a direct callee path, a
 source range, argument count, and whether the call site was a macro invocation; `AccessFact` does the same
 for direct member access. Neither resolves aliases, types, or dynamically computed
 properties.
@@ -79,6 +79,28 @@ spelling of a callee, and the path allowance every one of these rules needs, so 
 answer those questions the same way rather than four similar ways.
 `EnvironmentRead`, `Assertion`, `Mock`, and `DependencyEdge` are planned and are
 described in the [rule roadmap](rule-roadmap.md).
+
+`TestFact` records that a declaration is a test: its range, its name, the marker that made it one,
+and whether that marker carried focus or skipping. What counts as a test is a framework question
+rather than a language one, and the three conventions have nothing structurally in common, so each
+language module answers it. Rust reads the attributes preceding a function, which are siblings rather
+than children and which stack, so `#[test]` and `#[ignore]` in either order describe the same test.
+Python reads a `test_` prefix or a `pytest.mark` decorator, taking the callee when the decorator is
+called so `@pytest.mark.parametrize('x', [1])` reports the marker and not its arguments. JavaScript
+and TypeScript read a call to a runner and its member, so `it.only` and `describe.skip` carry focus in
+the name.
+
+The fact stops at syntax, which is narrower than the proposal it came from. That asked for the marker
+*or the path* that made something a test, and for framework names to be configurable. An analyzer
+sees neither: it is handed one file and no configuration, and adding either would make fact
+extraction depend on policy. A rule has both, so a rule that wants to treat everything under `tests/`
+as a test combines this fact with a path glob, the way the call rules already combine a callee with
+`allow-in`.
+
+Nothing about a test's contents is stored. The seven rules waiting on this ask whether a test is
+empty, whether it branches, and whether it sleeps or reaches the network — all of which are questions
+about other facts falling inside the test's range, which `TestFact::contains` answers. Copying a
+body's statistics into the fact would duplicate what `FunctionFact` already measured.
 
 `ErrorHandlerFact` records the handler's range and whether its body only stands in for one. The
 adapter finds that body by looking for it rather than by position: a Python `except_clause` puts the

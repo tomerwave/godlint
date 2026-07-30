@@ -14,6 +14,21 @@ pub(crate) struct ErrorHandler<'tree> {
     pub body_is_empty: bool,
 }
 
+#[derive(Clone, Copy, Eq, PartialEq)]
+pub(crate) enum Focus {
+    Ordinary,
+    Only,
+    Skipped,
+}
+
+#[derive(Clone, Copy)]
+pub(crate) struct TestDeclaration<'tree> {
+    pub node: Node<'tree>,
+    pub name: Option<Node<'tree>>,
+    pub marker: Node<'tree>,
+    pub focus: Focus,
+}
+
 #[derive(Clone, Copy)]
 pub(crate) struct Argument<'tree> {
     pub name: Option<Node<'tree>>,
@@ -52,6 +67,7 @@ pub(crate) struct Vocabulary {
     pub direct_path: fn(&str) -> Option<String>,
     pub argument: fn(Node<'_>) -> Option<Argument<'_>>,
     pub literal: fn(Node<'_>, &str) -> Option<String>,
+    pub test: for<'tree> fn(Node<'tree>, &str) -> Option<TestDeclaration<'tree>>,
     pub import: fn(Node<'_>) -> Option<Node<'_>>,
     pub comment_kind: fn(Node<'_>, &str) -> Option<CommentKind>,
     pub has_implicit_tail_return: fn(Node<'_>) -> bool,

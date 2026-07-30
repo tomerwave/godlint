@@ -61,6 +61,61 @@ pub struct CallFact {
     arguments: Vec<CallArgument>,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum TestFocus {
+    Ordinary,
+    Only,
+    Skipped,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct TestFactDetails {
+    pub name: Option<String>,
+    pub marker: String,
+    pub focus: TestFocus,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct TestFact {
+    source: SourceFile,
+    range: SourceRange,
+    details: TestFactDetails,
+}
+
+impl TestFact {
+    pub fn new(source: SourceFile, range: SourceRange, details: TestFactDetails) -> Self {
+        Self {
+            source,
+            range,
+            details,
+        }
+    }
+
+    pub fn source(&self) -> &SourceFile {
+        &self.source
+    }
+
+    pub fn range(&self) -> SourceRange {
+        self.range
+    }
+
+    pub fn name(&self) -> Option<&str> {
+        self.details.name.as_deref()
+    }
+
+    pub fn marker(&self) -> &str {
+        &self.details.marker
+    }
+
+    pub fn focus(&self) -> TestFocus {
+        self.details.focus
+    }
+
+    pub fn contains(&self, range: SourceRange) -> bool {
+        self.range.start() <= range.start() && range.end() <= self.range.end()
+    }
+}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CallArgument {
     pub name: Option<String>,
