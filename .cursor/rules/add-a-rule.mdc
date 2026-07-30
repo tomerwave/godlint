@@ -1,0 +1,22 @@
+---
+description: Implementing a Godlint rule that already has an approved proposal
+globs: crates/godlint-core/src/rules/**,crates/godlint-cli/tests/fixtures/rules/**,crates/godlint-core/tests/rules/**
+alwaysApply: false
+---
+
+Read `docs/skills/add-a-rule.md` in full before touching this code — one rule touches ten places:
+`rules/mod.rs`, `config/mod.rs`, `rules/registry.rs`, a fixture directory, unit tests plus their
+declaration in `tests/rules.rs`, and three documents that must all name the identifier
+(`docs/rule-roadmap.md`, `docs/rules.md`, `CHANGELOG.md`), plus dogfooding it in `godlint.yaml`.
+
+Run before opening a pull request:
+
+```bash
+python3 scripts/validate-pull-request.py
+cargo llvm-cov --workspace --json --output-path coverage.json
+python3 scripts/check-rule-coverage.py coverage.json
+```
+
+Write a fixture for every syntactic form that produces the fact this rule reads, not one fixture
+per rule. No comments in this file — the "why" belongs in `docs/rules.md` or
+`docs/architecture.md`.

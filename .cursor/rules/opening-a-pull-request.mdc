@@ -1,0 +1,10 @@
+---
+description: Opening a pull request against Godlint
+alwaysApply: false
+---
+
+Read `CONTRIBUTING.md` in full — branch prefix, template choice, and what the two drift labels
+mean. `validate-pull-request.py`'s change-scoped checks measure against the release line, not the
+branch's own target, so a stack of pull requests needs one changelog entry for the whole change.
+Most labels apply automatically from the paths touched; only the two drift labels
+(`fixes-false-positive` / `relaxes-a-rule`) are ever applied by hand.
