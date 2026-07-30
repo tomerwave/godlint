@@ -15,6 +15,12 @@ pub(crate) struct ErrorHandler<'tree> {
 }
 
 #[derive(Clone, Copy)]
+pub(crate) struct Condition<'tree> {
+    pub node: Node<'tree>,
+    pub operator_count: u32,
+}
+
+#[derive(Clone, Copy)]
 pub(crate) struct Vocabulary {
     pub is_function: fn(&str) -> bool,
     pub is_nesting: fn(&str) -> bool,
@@ -27,6 +33,7 @@ pub(crate) struct Vocabulary {
     pub is_abstract: fn(Node<'_>, &str) -> bool,
     pub callee: fn(Node<'_>) -> Option<Callee<'_>>,
     pub error_handler: fn(Node<'_>) -> Option<ErrorHandler<'_>>,
+    pub condition: fn(Node<'_>) -> Option<Condition<'_>>,
     pub is_access: fn(&str) -> bool,
     pub import: fn(Node<'_>) -> Option<Node<'_>>,
     pub comment_kind: fn(Node<'_>, &str) -> Option<CommentKind>,

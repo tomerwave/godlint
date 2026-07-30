@@ -80,6 +80,13 @@ pub struct ErrorHandlerFact {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ConditionFact {
+    source: SourceFile,
+    range: SourceRange,
+    operator_count: u32,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct FunctionFact {
     source: SourceFile,
     name: Option<String>,
@@ -232,6 +239,28 @@ impl ErrorHandlerFact {
 
     pub fn body_is_empty(&self) -> bool {
         self.body_is_empty
+    }
+}
+
+impl ConditionFact {
+    pub fn new(source: SourceFile, range: SourceRange, operator_count: u32) -> Self {
+        Self {
+            source,
+            range,
+            operator_count,
+        }
+    }
+
+    pub fn source(&self) -> &SourceFile {
+        &self.source
+    }
+
+    pub fn range(&self) -> SourceRange {
+        self.range
+    }
+
+    pub fn operator_count(&self) -> u32 {
+        self.operator_count
     }
 }
 

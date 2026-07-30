@@ -11,6 +11,12 @@ speaks about.
 
 ### Added
 
+- `maintainability/condition-complexity` — reports a single `if` or `while` condition that combines
+  more `&&`, `||`, or ternary operators than the configured limit (3 in `recommended@1`, measured
+  against this repository). `decision-complexity` deliberately does not count these operators, so a
+  five-part boolean condition and a one-part one score identically today; this rule closes that gap.
+  Counting is flat — three operators cost three, whichever operators they are — and a standalone
+  ternary not attached to an `if`/`while` is out of scope.
 - The documentation is a set of documents rather than one README. `docs/rules.md` holds the rule
   reference, `docs/configuration.md` the `godlint.yaml` schema, `docs/ci.md` the action and the output
   formats, `docs/local-development.md` the build, `docs/releasing.md` the release, and `docs/README.md`

@@ -55,6 +55,8 @@ pub struct Rules {
     pub parameter_count: Option<ParameterCountRule>,
     #[serde(rename = "maintainability/decision-complexity")]
     pub decision_complexity: Option<DecisionComplexityRule>,
+    #[serde(rename = "maintainability/condition-complexity")]
+    pub condition_complexity: Option<ConditionComplexityRule>,
     #[serde(rename = "maintainability/return-count")]
     pub return_count: Option<ReturnCountRule>,
     #[serde(rename = "maintainability/function-statements")]
@@ -278,6 +280,7 @@ count_limit_rules! {
     DecisionComplexityRule { "max-complexity" => max_complexity },
     ReturnCountRule { "max-returns" => max_returns },
     FunctionStatementsRule { "max-statements" => max_statements },
+    ConditionComplexityRule { "max-operators" => max_operators },
 }
 
 #[derive(Debug, Deserialize)]

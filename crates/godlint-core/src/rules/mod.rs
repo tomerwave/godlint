@@ -10,6 +10,7 @@ use crate::{
 };
 
 pub mod accountable_suppression;
+pub mod condition_complexity;
 pub mod decision_complexity;
 pub mod dependency_boundary;
 pub mod direct_environment_read;
@@ -33,8 +34,8 @@ mod scoped;
 mod violation;
 
 pub use reference::{
-    AccessRule, CallRule, ErrorHandlerRule, ImportRule, evaluate_access_rule, evaluate_call_rule,
-    evaluate_error_handler_rule, evaluate_import_rule,
+    AccessRule, CallRule, ConditionRule, ErrorHandlerRule, ImportRule, evaluate_access_rule,
+    evaluate_call_rule, evaluate_condition_rule, evaluate_error_handler_rule, evaluate_import_rule,
 };
 mod registry;
 pub mod restricted_call;
@@ -55,6 +56,7 @@ pub enum Metric {
     Complexity,
     ReturnPaths,
     StatementCount,
+    ConditionOperators,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -98,6 +100,12 @@ impl Metric {
             }
             Self::StatementCount => {
                 write!(formatter, "Function has {actual} statements (max {max}).")
+            }
+            Self::ConditionOperators => {
+                write!(
+                    formatter,
+                    "Condition combines {actual} operators; the limit is {max}."
+                )
             }
         }
     }
@@ -372,6 +380,7 @@ const EVALUATORS: &[Evaluator] = &[
     todo_requires_reference::evaluate,
     parameter_count::evaluate,
     decision_complexity::evaluate,
+    condition_complexity::evaluate,
     return_count::evaluate,
     function_statements::evaluate,
     no_comments::evaluate,

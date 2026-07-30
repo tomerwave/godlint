@@ -1,6 +1,6 @@
 # Rule reference
 
-Twenty-two rules are implemented. Every one has an identifier of the form `family/name`, which is
+Twenty-three rules are implemented. Every one has an identifier of the form `family/name`, which is
 what a configuration entry and a suppression directive both name. [The rule roadmap](rule-roadmap.md)
 records the families still to come, and the reasoning behind each threshold `recommended@1` sets.
 
@@ -13,12 +13,21 @@ records the families still to come, and the reasoning behind each threshold `rec
 | `maintainability/function-nesting` | How deeply control-flow blocks nest inside a function |
 | `maintainability/parameter-count` | Declared parameters, excluding a method receiver |
 | `maintainability/decision-complexity` | Branch points in a function |
+| `maintainability/condition-complexity` | `&&`, `\|\|`, and ternary operators combined in a single condition |
 | `maintainability/return-count` | Exit paths from a function, explicit or implicit |
 | `maintainability/function-statements` | Statements in a function |
 | `maintainability/empty-function` | Function bodies that appear unintentionally empty |
 
 `decision-complexity` counts a `match` or `switch` once rather than once per arm, and a guard on an
 arm counts. `function-statements` counts through nested blocks but not into nested functions.
+
+`decision-complexity` deliberately does not count short-circuit boolean operators, so a five-part
+condition on one `if` scores the same as a one-part condition. `condition-complexity` is the
+counterpart that does: it counts `&&`, `||`, and a nested ternary, per `if` and `while` condition,
+flatly — three operators cost three, whichever operators they are. A standalone ternary not
+attached to an `if` or `while` is out of scope, and a nested function inside a condition (a
+callback passed to `.some()`, for instance) is not descended into: that closure's own logic is not
+this condition's operator count.
 
 ## Policy
 

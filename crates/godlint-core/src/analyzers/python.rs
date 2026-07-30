@@ -3,7 +3,7 @@ use tree_sitter::Node;
 use crate::{
     analyzers::{
         Analyzer, AnalyzerError, SourceFacts,
-        vocabulary::{Callee, ErrorHandler, Vocabulary, is_leading_block_statement},
+        vocabulary::{Callee, Condition, ErrorHandler, Vocabulary, is_leading_block_statement},
     },
     facts::CommentKind,
     source::SourceFile,
@@ -29,6 +29,7 @@ const VOCABULARY: Vocabulary = Vocabulary {
     is_abstract,
     callee,
     error_handler,
+    condition,
     is_access,
     import,
     comment_kind,
@@ -90,6 +91,33 @@ fn error_handler(node: Node<'_>) -> Option<ErrorHandler<'_>> {
             .named_children(&mut statements)
             .all(is_placeholder_statement),
     })
+}
+
+fn condition(node: Node<'_>) -> Option<Condition<'_>> {
+    let condition = match node.kind() {
+        "if_statement" | "while_statement" | "elif_clause" => {
+            node.child_by_field_name("condition")?
+        }
+        _ => return None,
+    };
+
+    Some(Condition {
+        node: condition,
+        operator_count: count_condition_operators(condition),
+    })
+}
+
+fn count_condition_operators(node: Node<'_>) -> u32 {
+    let is_operator = matches!(node.kind(), "boolean_operator" | "conditional_expression");
+
+    let mut cursor = node.walk();
+    let children = node
+        .children(&mut cursor)
+        .filter(|child| !is_function(child.kind()))
+        .map(count_condition_operators)
+        .sum::<u32>();
+
+    u32::from(is_operator) + children
 }
 
 fn is_placeholder_statement(statement: Node<'_>) -> bool {

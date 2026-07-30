@@ -2,10 +2,10 @@ use crate::{
     config::{Config, Severity},
     rules::{
         Rule, accountable_suppression::AccountableSuppression,
-        decision_complexity::DecisionComplexity, dependency_boundary::DependencyBoundary,
-        direct_environment_read::DirectEnvironmentRead, empty_error_handler::EmptyErrorHandler,
-        empty_function::EmptyFunction, explicit_timer_delay::ExplicitTimerDelay,
-        file_size::FileSize, filename_case::FilenameCase,
+        condition_complexity::ConditionComplexity, decision_complexity::DecisionComplexity,
+        dependency_boundary::DependencyBoundary, direct_environment_read::DirectEnvironmentRead,
+        empty_error_handler::EmptyErrorHandler, empty_function::EmptyFunction,
+        explicit_timer_delay::ExplicitTimerDelay, file_size::FileSize, filename_case::FilenameCase,
         forbidden_dependency::ForbiddenDependency, function_nesting::FunctionNesting,
         function_size::FunctionSize, function_statements::FunctionStatements,
         no_comments::NoComments, no_dynamic_execution::NoDynamicExecution,
@@ -48,6 +48,11 @@ severity!(
     decision_complexity_severity,
     DecisionComplexity,
     decision_complexity
+);
+severity!(
+    condition_complexity_severity,
+    ConditionComplexity,
+    condition_complexity
 );
 severity!(return_count_severity, ReturnCount, return_count);
 severity!(
@@ -144,6 +149,11 @@ const REGISTRATIONS: &[Registration] = &[
     Registration {
         id: DecisionComplexity::ID,
         severity: decision_complexity_severity,
+        suppressible: true,
+    },
+    Registration {
+        id: ConditionComplexity::ID,
+        severity: condition_complexity_severity,
         suppressible: true,
     },
     Registration {
