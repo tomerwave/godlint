@@ -30,6 +30,7 @@ pub mod module_independence;
 mod module_path;
 pub mod no_comments;
 pub mod no_dynamic_execution;
+pub mod no_insecure_random;
 pub mod no_production_log;
 pub mod parameter_count;
 mod reference;
@@ -397,6 +398,7 @@ const EVALUATORS: &[Evaluator] = &[
     no_dynamic_execution::evaluate,
     direct_environment_read::evaluate,
     explicit_timer_delay::evaluate,
+    no_insecure_random::evaluate,
     no_production_log::evaluate,
     restricted_import::evaluate,
     dependency_boundary::evaluate,

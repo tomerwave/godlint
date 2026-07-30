@@ -5,10 +5,10 @@ use crate::config::{
     DecisionComplexityRule, DependencyBoundaryRule, DirectEnvironmentReadRule,
     EmptyErrorHandlerRule, EmptyFunctionRule, ExplicitTimerDelayRule, FilenameCaseRule,
     ForbiddenDependencyRule, FunctionNestingRule, FunctionStatementsRule, LineLimitRule,
-    ModuleIndependenceRule, NoCommentsRule, NoDynamicExecutionRule, NoProductionLogRule,
-    ParameterCountRule, RestrictedCallRule, RestrictedImportRule, ReturnCountRule, Rules, Severity,
-    TodoRequiresReferenceRule, UnusedSuppressionRule, default_configuration_paths, default_markers,
-    default_reference_prefixes,
+    ModuleIndependenceRule, NoCommentsRule, NoDynamicExecutionRule, NoInsecureRandomRule,
+    NoProductionLogRule, ParameterCountRule, RestrictedCallRule, RestrictedImportRule,
+    ReturnCountRule, Rules, Severity, TodoRequiresReferenceRule, UnusedSuppressionRule,
+    default_configuration_paths, default_markers, default_reference_prefixes,
 };
 
 pub const RECOMMENDED: &str = "recommended@1";
@@ -170,6 +170,12 @@ fn security(rules: &mut Rules) {
     rules
         .no_dynamic_execution
         .get_or_insert(NoDynamicExecutionRule { severity: error });
+    rules
+        .no_insecure_random
+        .get_or_insert(NoInsecureRandomRule {
+            severity: error,
+            allow_in: Vec::new(),
+        });
     rules
         .direct_environment_read
         .get_or_insert_with(|| DirectEnvironmentReadRule {

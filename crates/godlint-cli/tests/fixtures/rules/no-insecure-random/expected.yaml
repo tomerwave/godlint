@@ -1,0 +1,9 @@
+exit-code: 1
+
+stdout: |
+  example.js:1:15: error[security/no-insecure-random] Math.random is predictable; use crypto.getRandomValues for a value that must not be guessable.
+  example.py:1:9: error[security/no-insecure-random] random.choice is predictable; use secrets for a value that must not be guessable.
+  example.rs:2:5: error[security/no-insecure-random] rand::random is predictable; use rand::rngs::OsRng for a value that must not be guessable.
+  example.ts:1:23: error[security/no-insecure-random] Math.random is predictable; use crypto.getRandomValues for a value that must not be guessable.
+
+stderr: ""

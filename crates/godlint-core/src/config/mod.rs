@@ -79,6 +79,8 @@ pub struct Rules {
     pub explicit_timer_delay: Option<ExplicitTimerDelayRule>,
     #[serde(rename = "reliability/empty-error-handler")]
     pub empty_error_handler: Option<EmptyErrorHandlerRule>,
+    #[serde(rename = "security/no-insecure-random")]
+    pub no_insecure_random: Option<NoInsecureRandomRule>,
     #[serde(rename = "logging/no-production-log")]
     pub no_production_log: Option<NoProductionLogRule>,
     #[serde(rename = "architecture/restricted-import")]
@@ -239,6 +241,14 @@ pub struct NoDynamicExecutionRule {
 pub struct DirectEnvironmentReadRule {
     pub severity: Severity,
     #[serde(default = "default_configuration_paths", rename = "allow-in")]
+    pub allow_in: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct NoInsecureRandomRule {
+    pub severity: Severity,
+    #[serde(default, rename = "allow-in")]
     pub allow_in: Vec<String>,
 }
 
