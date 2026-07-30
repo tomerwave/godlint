@@ -1,7 +1,7 @@
 # godlint
 
-Command-line interface for [Godlint](https://github.com/tomerwave/godlint), a deterministic
-code-policy engine for Rust, TypeScript, JavaScript and Python.
+Command-line interface for [Godlint](https://github.com/tomerwave/godlint), the executable
+engineering constitution for repositories maintained by humans and coding agents.
 
 ```sh
 cargo install godlint-cli

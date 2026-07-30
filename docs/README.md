@@ -1,5 +1,9 @@
 # Godlint documentation
 
+Godlint is the executable engineering constitution for repositories maintained by
+humans and coding agents. Start with the rule reference to use it or the product scope
+to understand what belongs in it.
+
 ## Using Godlint
 
 | | |
@@ -13,7 +17,7 @@
 
 | | |
 | --- | --- |
-| [Product scope](product-scope.md) | The promise, the MVP boundary, and the non-goals |
+| [Product scope](product-scope.md) | The vision, product promise, boundaries, and success criteria |
 | [Rule roadmap](rule-roadmap.md) | What is shipped, what is next, and why each threshold is the number it is |
 | [Architecture](architecture.md) | Crate boundaries, and how a language's parser details stay behind one |
 | [Dogfooding](dogfooding.md) | How Godlint enforces policy on its own repository |

@@ -56,8 +56,8 @@ suppression comment. When a single site rather than a whole file needs an exempt
 
 ## Suites
 
-A suite names a set of rules and their thresholds, so a repository adopts a standard in one line
-rather than twenty-one:
+A suite names a set of rules and their thresholds, so a repository adopts a standard
+without naming every rule individually:
 
 ```yaml
 version: 1
