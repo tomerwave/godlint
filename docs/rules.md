@@ -302,10 +302,34 @@ only where a rule takes paths from configuration, as `no-network-in-unit-test` d
 | Rule | What it reports |
 | --- | --- |
 | `architecture/restricted-call` | An abrupt process exit, plus configured callees outside their approved paths |
+| `architecture/no-internal-import` | An import that reaches past a package's public surface: a path segment named `internal`, `private`, `impl` or `_internal`, a Python segment beginning with `_`, or a build-output segment `dist`, `src` or `build`, which reports at warning. `allow` exempts a module the project must reach into |
 | `architecture/restricted-import` | An import of a module a repository puts behind a boundary |
 | `architecture/dependency-boundary` | A dependency that runs against the declared layer order |
 | `architecture/module-independence` | A dependency between modules declared independent of each other |
 | `architecture/filename-case` | A file name that does not follow the convention for its extension or scope |
+
+`no-internal-import` reads the import path and nothing else, which is honest but has consequences. A
+marker only counts *after* the first segment, so `src/utils` — a path alias to this project's own code —
+is silent while `some-lib/src/deep` is not, and `from __future__ import annotations` is silent while
+`package._private.helpers` is not. A relative import is always silent: your own internals are yours to
+reach into. An alias in a bundler or `tsconfig` escapes the rule entirely, the same limitation
+`architecture/restricted-import` documents.
+
+Two tiers, because two of these conventions are not the same claim. `internal`, `private`, `impl` and a
+Python `_` prefix say *the author did not mean this for you*, and report at error. `dist`, `src` and
+`build` merely name build output, which some packages publish as their documented entry, so they report
+at warning. A path naming both is certain, and the message names the marker that decided it.
+
+One false positive survives and is worth knowing before adopting the rule at error. A project's own
+tests importing its own package **absolutely** are reported, because only relative imports are exempt:
+requests' `tests/test_utils.py` does `from requests._internal_utils import ...`, and that reads exactly
+like reaching into a third party. Measured against requests, flask, express and zod, it was the only
+finding of any kind. `allow` is the remedy today — `allow: ["requests/**"]` — and the real fix is for the
+rule to recognise a first segment that names a package in the scanned tree, which needs repository
+layout it does not currently see.
+
+Rust is out of scope. Module privacy there is enforced by the compiler, so a module you are able to
+import is one its author made public, and there is no reaching past anything to report.
 
 `module-independence` is the counterpart to `dependency-boundary`, for the constraint layering cannot
 express. A layer order says a dependency is wrong in one direction; independence says it is wrong in

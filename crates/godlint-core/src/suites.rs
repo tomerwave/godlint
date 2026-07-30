@@ -6,11 +6,11 @@ use crate::config::{
     DirectEnvironmentReadRule, EmptyErrorHandlerRule, EmptyFunctionRule, ExplicitTimerDelayRule,
     FilenameCaseRule, ForbiddenDependencyRule, FunctionNestingRule, FunctionStatementsRule,
     LineLimitRule, ModuleIndependenceRule, NoCommentsRule, NoDynamicExecutionRule, NoEmptyTestRule,
-    NoFocusedTestRule, NoInsecureRandomRule, NoNetworkInUnitTestRule, NoProductionLogRule,
-    NoRandomnessWithoutSeedRule, NoShellCommandRule, NoSkippedTestRule, NoSleepInTestRule,
-    NoTestHelperInProductionRule, NoWeakHashRule, ParameterCountRule, RestrictedCallRule,
-    RestrictedImportRule, ReturnCountRule, Rules, Severity, TodoRequiresReferenceRule,
-    UnusedSuppressionRule, default_configuration_paths, default_markers,
+    NoFocusedTestRule, NoInsecureRandomRule, NoInternalImportRule, NoNetworkInUnitTestRule,
+    NoProductionLogRule, NoRandomnessWithoutSeedRule, NoShellCommandRule, NoSkippedTestRule,
+    NoSleepInTestRule, NoTestHelperInProductionRule, NoWeakHashRule, ParameterCountRule,
+    RestrictedCallRule, RestrictedImportRule, ReturnCountRule, Rules, Severity,
+    TodoRequiresReferenceRule, UnusedSuppressionRule, default_configuration_paths, default_markers,
     default_reference_prefixes, default_test_helpers, default_test_paths,
 };
 
@@ -158,6 +158,12 @@ fn boundaries(rules: &mut Rules) {
         severity: error,
         modules: Vec::new(),
     });
+    rules
+        .no_internal_import
+        .get_or_insert(NoInternalImportRule {
+            severity: error,
+            allow: Vec::new(),
+        });
     rules
         .dependency_boundary
         .get_or_insert(DependencyBoundaryRule {

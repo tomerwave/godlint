@@ -35,6 +35,7 @@ pub mod no_dynamic_execution;
 pub mod no_empty_test;
 pub mod no_focused_test;
 pub mod no_insecure_random;
+pub mod no_internal_import;
 pub mod no_network_in_unit_test;
 pub mod no_production_log;
 pub mod no_randomness_without_seed;
@@ -415,6 +416,7 @@ const EVALUATORS: &[Evaluator] = &[
     no_empty_test::evaluate,
     no_focused_test::evaluate,
     no_insecure_random::evaluate,
+    no_internal_import::evaluate,
     no_network_in_unit_test::evaluate,
     no_production_log::evaluate,
     no_randomness_without_seed::evaluate,
