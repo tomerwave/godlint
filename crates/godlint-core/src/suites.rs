@@ -5,11 +5,11 @@ use crate::config::{
     DecisionComplexityRule, DependencyBoundaryRule, DirectEnvironmentReadRule,
     EmptyErrorHandlerRule, EmptyFunctionRule, ExplicitTimerDelayRule, FilenameCaseRule,
     ForbiddenDependencyRule, FunctionNestingRule, FunctionStatementsRule, LineLimitRule,
-    ModuleIndependenceRule, NoCommentsRule, NoDynamicExecutionRule, NoFocusedTestRule,
-    NoInsecureRandomRule, NoProductionLogRule, NoSkippedTestRule, NoWeakHashRule,
-    ParameterCountRule, RestrictedCallRule, RestrictedImportRule, ReturnCountRule, Rules, Severity,
-    TodoRequiresReferenceRule, UnusedSuppressionRule, default_configuration_paths, default_markers,
-    default_reference_prefixes,
+    ModuleIndependenceRule, NoCommentsRule, NoDynamicExecutionRule, NoEmptyTestRule,
+    NoFocusedTestRule, NoInsecureRandomRule, NoProductionLogRule, NoSkippedTestRule,
+    NoWeakHashRule, ParameterCountRule, RestrictedCallRule, RestrictedImportRule, ReturnCountRule,
+    Rules, Severity, TodoRequiresReferenceRule, UnusedSuppressionRule, default_configuration_paths,
+    default_markers, default_reference_prefixes,
 };
 
 pub const RECOMMENDED: &str = "recommended@1";
@@ -219,6 +219,9 @@ fn testing(rules: &mut Rules) {
     rules
         .no_focused_test
         .get_or_insert(NoFocusedTestRule { severity: error });
+    rules
+        .no_empty_test
+        .get_or_insert(NoEmptyTestRule { severity: error });
     rules
         .no_skipped_test
         .get_or_insert(NoSkippedTestRule { severity: error });

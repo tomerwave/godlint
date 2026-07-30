@@ -94,7 +94,12 @@ Rust is out of scope. It has no `catch`, and a discarded `Result` is `reliabilit
 | Rule | What it reports |
 | --- | --- |
 | `testing/no-focused-test` | A test or suite marked to run on its own: `it.only`, `describe.only` and the other runners' `.only` |
+| `testing/no-empty-test` | A test whose body does nothing, so it cannot fail |
 | `testing/no-skipped-test` | A test that does not run: `.skip` or `.todo` in JavaScript and TypeScript, `#[ignore]` beside `#[test]` in Rust, and a `pytest.mark.skip` or `unittest.skip` decorator in Python |
+
+`no-empty-test` reads the test's own body rather than any function inside it, so a test that registers
+an empty callback is not empty itself. A test with no body to read at all, such as `it.todo('later')`,
+is not reported here — that it does not run is `no-skipped-test`'s finding.
 
 What counts as a test is decided by syntax alone — a runner call, a `#[test]` attribute, a `test_`
 prefix or a `pytest.mark` decorator. Neither rule knows about test directories, because an analyzer

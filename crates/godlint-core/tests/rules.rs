@@ -60,6 +60,9 @@ mod no_comments;
 #[path = "rules/no_insecure_random.rs"]
 mod no_insecure_random;
 
+#[path = "rules/no_empty_test.rs"]
+mod no_empty_test;
+
 #[path = "rules/no_focused_test.rs"]
 mod no_focused_test;
 

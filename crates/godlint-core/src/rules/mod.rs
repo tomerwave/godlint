@@ -18,6 +18,7 @@ pub mod dependency_boundary;
 pub mod direct_environment_read;
 pub mod empty_error_handler;
 pub mod empty_function;
+mod enclosing;
 pub mod explicit_timer_delay;
 pub mod file_size;
 pub mod filename_case;
@@ -30,6 +31,7 @@ pub mod module_independence;
 mod module_path;
 pub mod no_comments;
 pub mod no_dynamic_execution;
+pub mod no_empty_test;
 pub mod no_focused_test;
 pub mod no_insecure_random;
 pub mod no_production_log;
@@ -403,6 +405,7 @@ const EVALUATORS: &[Evaluator] = &[
     no_dynamic_execution::evaluate,
     direct_environment_read::evaluate,
     explicit_timer_delay::evaluate,
+    no_empty_test::evaluate,
     no_focused_test::evaluate,
     no_insecure_random::evaluate,
     no_production_log::evaluate,
