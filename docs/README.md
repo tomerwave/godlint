@@ -17,6 +17,7 @@
 | [Rule roadmap](rule-roadmap.md) | What is shipped, what is next, and why each threshold is the number it is |
 | [Architecture](architecture.md) | Crate boundaries, and how a language's parser details stay behind one |
 | [Dogfooding](dogfooding.md) | How Godlint enforces policy on its own repository |
+| [Code-quality audit](code-quality-audit-2026-07-30.md) | Confirmed gaps, evidence, and rule candidates |
 
 ## Working on Godlint
 

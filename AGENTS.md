@@ -17,6 +17,8 @@ change:
 - [Local development](docs/local-development.md) — the build and the checks CI runs.
 - [Releasing](docs/releasing.md) — the tag-driven release and the registries.
 - [Contributing](CONTRIBUTING.md) — change conventions, branch naming, pull request templates, labels.
+- [Code-quality audit](docs/code-quality-audit-2026-07-30.md) — confirmed gaps, evidence, and rule
+  candidates.
 
 ## Skills
 
@@ -73,14 +75,11 @@ copy of each procedure, not three.
 
 ## Current implementation status
 
-The workspace, CLI, configuration validation and discovery, source discovery, and ten
-rules are implemented: `maintainability/file-size`, `function-size`, `function-nesting`,
-`parameter-count`, `decision-complexity`, `return-count`, `function-statements`,
-`empty-function`, `policy/todo-requires-reference`, and `style/no-comments`. CI dogfoods
-all ten against this repository through `godlint check .`. Phases 1 and 2 of the
-[rule roadmap](docs/rule-roadmap.md) are complete; call facts, imports, and the
-repository graph are not. Do not add semantic workers or new crate boundaries without a
-proven need.
+The workspace, CLI, configuration validation and discovery, source discovery, and twenty-five
+rules are implemented. Call, access, import, error-handler, and condition facts support the
+shipped organization, security, reliability, and maintainability policies. CI dogfoods every
+rule through `godlint check .`. The repository graph and semantic workers are not implemented.
+Do not add either or introduce new crate boundaries without a proven need.
 
 A function means the same thing in every language, and rules depend on that: Rust `fn`
 items and closures, Python `def` functions and lambdas, and JavaScript/TypeScript
