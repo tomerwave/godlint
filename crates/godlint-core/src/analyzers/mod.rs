@@ -23,6 +23,7 @@ mod vocabulary;
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SourceFacts {
     source: SourceFile,
+    unparsed: Vec<SourceRange>,
     accesses: Vec<AccessFact>,
     comments: Vec<CommentFact>,
     calls: Vec<CallFact>,
@@ -35,6 +36,10 @@ pub struct SourceFacts {
 impl SourceFacts {
     pub fn source(&self) -> &SourceFile {
         &self.source
+    }
+
+    pub fn unparsed(&self) -> &[SourceRange] {
+        &self.unparsed
     }
 
     pub fn functions(&self) -> &[FunctionFact] {
@@ -79,9 +84,6 @@ pub enum AnalyzerError {
     MissingSyntaxTree {
         path: PathBuf,
     },
-    InvalidSyntax {
-        path: PathBuf,
-    },
     InvalidRange {
         path: PathBuf,
         source: SourceFileError,
@@ -113,6 +115,7 @@ pub(crate) fn analyze_with(
 
     Ok(SourceFacts {
         source: source.clone(),
+        unparsed: collected.unparsed,
         accesses: collected.accesses,
         comments: collected.comments,
         calls: collected.calls,
@@ -143,17 +146,12 @@ fn parse(
                 path: source.path().to_path_buf(),
             })?;
 
-    if tree.root_node().has_error() {
-        return Err(AnalyzerError::InvalidSyntax {
-            path: source.path().to_path_buf(),
-        });
-    }
-
     Ok(tree)
 }
 
 #[derive(Default)]
 struct Collected {
+    unparsed: Vec<SourceRange>,
     accesses: Vec<AccessFact>,
     functions: Vec<FunctionFact>,
     comments: Vec<CommentFact>,
@@ -264,8 +262,25 @@ fn collect_source_facts(
     vocabulary: &Vocabulary,
     collected: &mut Collected,
 ) -> Result<(), AnalyzerError> {
-    collected.absorb(node, source, vocabulary)?;
+    if !node.has_error() {
+        collected.absorb(node, source, vocabulary)?;
 
+        return absorb_children(node, source, vocabulary, collected);
+    }
+
+    if node.is_error() || node.is_missing() {
+        collected.unparsed.push(node_range(node, source)?);
+    }
+
+    absorb_children(node, source, vocabulary, collected)
+}
+
+fn absorb_children(
+    node: Node<'_>,
+    source: &SourceFile,
+    vocabulary: &Vocabulary,
+    collected: &mut Collected,
+) -> Result<(), AnalyzerError> {
     let mut cursor = node.walk();
 
     for child in node.children(&mut cursor) {
@@ -452,9 +467,6 @@ impl fmt::Display for AnalyzerError {
                     path.display()
                 )
             }
-            Self::InvalidSyntax { path } => {
-                write!(formatter, "invalid syntax in {}", path.display())
-            }
             Self::InvalidRange { path, source } => {
                 write!(formatter, "invalid range in {}: {source}", path.display())
             }
@@ -475,7 +487,7 @@ impl Error for AnalyzerError {
             Self::ConfiguresParser { source, .. } => Some(source),
             Self::InvalidRange { source, .. } => Some(source),
             Self::InvalidFunction { source, .. } => Some(source),
-            Self::MissingSyntaxTree { .. } | Self::InvalidSyntax { .. } => None,
+            Self::MissingSyntaxTree { .. } => None,
         }
     }
 }

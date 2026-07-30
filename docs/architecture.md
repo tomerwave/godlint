@@ -381,6 +381,18 @@ messages, the suppression audit, and the unknown-argument error. A rendered esca
 readable rather than merely stripped, because a reviewer needs to see that a name contains
 something odd. The machine-readable formats escape the same characters as JSON `\u`
 sequences, which keeps a document parseable and a consumer that prints it raw safe.
+A file the grammar only partly understands is scanned rather than refused. Every node whose subtree
+parsed is judged; a node containing an error is skipped, and the position is reported so the reader
+knows part of the file went unjudged. Skipping the subtree rather than the file is what keeps this from
+becoming a source of false findings: a function whose body failed to parse would otherwise read as
+empty, and a rule would report something the author never wrote.
+
+The cost of the previous behaviour was measured on a real repository rather than guessed at.
+`tree-sitter-typescript` does not implement variance annotations on type parameters, which TypeScript
+added in 4.7, so `interface A<in T>` produces one error node. Four files in Zod contain that syntax; all
+of their 905 functions parse cleanly, and refusing the file discarded every one of them along with 1726
+findings. Nothing in the output said so, because a lost file leaves no trace in a findings count.
+
 Discovery draws the same line by where a path came from. A path the user named on the
 command line is fatal: they asked for it, so a partial answer would be a wrong answer.
 Anything reached while walking below such a path becomes a recorded failure instead — an

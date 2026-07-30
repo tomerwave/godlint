@@ -478,7 +478,7 @@ fn a_scan_issue_outranks_a_finding_without_hiding_it() {
         "the finding it did produce must still be reported: {stdout}"
     );
     assert!(
-        stderr_of(&output).contains("src/bad.rs: invalid syntax"),
+        stderr_of(&output).contains("src/bad.rs: syntax not recognised at line 1"),
         "unexpected stderr: {}",
         stderr_of(&output)
     );
