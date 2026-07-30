@@ -1,0 +1,8 @@
+exit-code: 1
+
+stdout: |
+  example.py:3:13: error[security/no-weak-hash] hashlib.md5 is not collision resistant; use hashlib.sha256 where collision resistance matters.
+  example.rs:2:5: error[security/no-weak-hash] md5::compute is not collision resistant; use sha2::Sha256 where collision resistance matters.
+  legacy.py:3:15: error[security/no-weak-hash] hashlib.sha1 is not collision resistant; use hashlib.sha256 where collision resistance matters.
+
+stderr: ""

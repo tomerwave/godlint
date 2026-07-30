@@ -32,6 +32,7 @@ pub mod no_comments;
 pub mod no_dynamic_execution;
 pub mod no_insecure_random;
 pub mod no_production_log;
+pub mod no_weak_hash;
 pub mod parameter_count;
 mod reference;
 mod scoped;
@@ -400,6 +401,7 @@ const EVALUATORS: &[Evaluator] = &[
     explicit_timer_delay::evaluate,
     no_insecure_random::evaluate,
     no_production_log::evaluate,
+    no_weak_hash::evaluate,
     restricted_import::evaluate,
     dependency_boundary::evaluate,
     module_independence::evaluate,

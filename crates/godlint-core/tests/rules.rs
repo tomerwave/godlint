@@ -63,6 +63,9 @@ mod no_insecure_random;
 #[path = "rules/no_production_log.rs"]
 mod no_production_log;
 
+#[path = "rules/no_weak_hash.rs"]
+mod no_weak_hash;
+
 #[path = "rules/no_dynamic_execution.rs"]
 mod no_dynamic_execution;
 

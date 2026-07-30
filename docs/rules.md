@@ -65,6 +65,7 @@ Neither policy rule about suppressions can itself be suppressed. See
 | --- | --- |
 | `security/no-dynamic-execution` | JavaScript `eval`, `Function`, `new Function`; Python `eval`, `exec`. A global-object spelling of the same built-in counts: `globalThis`, `window`, `self`, or `global` in JavaScript and TypeScript, and `builtins` in Python |
 | `security/direct-environment-read` | Environment access outside a configuration boundary |
+| `security/no-weak-hash` | MD5 or SHA-1 where the algorithm is part of the callee: Python `hashlib.md5`/`hashlib.sha1`, Rust `md5::compute`, `Md5::new`, `Sha1::new`. Not JavaScript or TypeScript — see below. `allow-in` exempts a cache key or an ETag, where collision resistance is not the point |
 | `security/no-insecure-random` | A general-purpose random generator, which is predictable: JavaScript `Math.random` and `crypto.pseudoRandomBytes`, Python's `random` module, Rust `rand::random` and `rand::thread_rng`. `allow-in` exempts a path where unpredictability is not the point |
 | `security/forbidden-dependency` | An import of a package the project has ruled out |
 
@@ -148,6 +149,27 @@ they name the same function needs resolution Godlint does not have yet —
 They also have no scope analysis, so a local binding that shadows a restricted name is reported: a
 Python parameter called `exec`, or a `const process = …` in TypeScript. Enable them deliberately; each
 is off until a repository configures it.
+
+They read the callee and not the arguments, so a policy about a value passed *to* a call cannot be
+expressed. `crypto.createHash("md5")` and `crypto.createHash("sha256")` are the same callee, and
+Python's `hashlib.new("md5")` is the same as any other `hashlib.new`. That is why
+`security/no-weak-hash` covers Python and Rust, where the algorithm is part of the name, and covers
+JavaScript and TypeScript not at all: matching `crypto.createHash` would report every SHA-256 call as
+a weak hash, and a security rule that is wrong on the safe case is worse than one that stays quiet.
+A call-argument fact is what closes that.
+
+The comparison is worth recording, because this is a place where the obvious implementation is the
+one to avoid. SonarJS `S4790` does read the argument, and its documented failure mode is a false
+positive whenever the value cannot be inferred — a variable rather than a literal — which is why it
+ships as a review-required hotspot rather than as an error. `eslint-plugin-security` has no weak-hash
+rule at all, and its one randomness rule matches a callee name and nothing else. So the honest form
+here is to report a literal the rule can read and stay silent on anything it cannot, which is
+narrower than Sonar and correct where Sonar guesses.
+
+Inside a Rust macro invocation they see nothing. A grammar keeps a macro's arguments as an unparsed
+token tree, so `md5::compute(payload)` reports on its own and the same call inside
+`format!("{:x}", md5::compute(payload))` does not. This holds for every call rule, and the failure is
+silence rather than a diagnostic.
 
 ## Which language a restriction belongs to
 

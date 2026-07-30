@@ -38,6 +38,10 @@ pub enum Violation {
         callee: String,
         secure: String,
     },
+    WeakHash {
+        callee: String,
+        strong: String,
+    },
     RestrictedImport {
         module: String,
     },
@@ -91,6 +95,20 @@ const UNUSED_SUPPRESSION: &str =
 
 const COMMENT_NOT_PERMITTED: &str = "Comment is not permitted; express the intent in the code.";
 
+fn weak_hash(formatter: &mut fmt::Formatter<'_>, callee: &str, strong: &str) -> fmt::Result {
+    write!(
+        formatter,
+        "{callee} is not collision resistant; use {strong} where collision resistance matters."
+    )
+}
+
+fn insecure_random(formatter: &mut fmt::Formatter<'_>, callee: &str, secure: &str) -> fmt::Result {
+    write!(
+        formatter,
+        "{callee} is predictable; use {secure} for a value that must not be guessable."
+    )
+}
+
 impl fmt::Display for Violation {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -136,10 +154,8 @@ impl fmt::Display for Violation {
             ),
             Self::RestrictedImport { module } => write!(formatter, "{module} {RESTRICTED_IMPORT}"),
             Self::ProductionLog { callee } => write!(formatter, "{callee} {PRODUCTION_LOG}"),
-            Self::InsecureRandom { callee, secure } => write!(
-                formatter,
-                "{callee} is predictable; use {secure} for a value that must not be guessable."
-            ),
+            Self::WeakHash { callee, strong } => weak_hash(formatter, callee, strong),
+            Self::InsecureRandom { callee, secure } => insecure_random(formatter, callee, secure),
         }
     }
 }
