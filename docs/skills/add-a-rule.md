@@ -6,7 +6,7 @@ Implements a rule that already has an approved proposal (see
 a style preference. If you do all of these, the validator passes; if you skip one, it tells you
 which.
 
-## The ten places one rule touches
+## The places one rule touches
 
 | # | File | What's required, and why a miss is silent |
 | --- | --- | --- |
@@ -15,6 +15,7 @@ which.
 | 3 | `crates/godlint-core/src/config/mod.rs` | A field on `Rules` renamed to the identifier via `#[serde(rename = "family/name")]` — without this the rule cannot be configured |
 | 4 | `crates/godlint-core/src/rules/registry.rs` | `id: <Struct>::ID` in `REGISTRATIONS` — without this a suppression naming the rule is silently treated as a typo, and `policy/unused-suppression` can never count its suppressions as used |
 | 5 | `crates/godlint-cli/tests/fixtures/rules/<slug>/` | A fixture directory: per-language `example.*` files, `godlint.yaml`, `expected.yaml` |
+| 5b | `crates/godlint-cli/tests/e2e.rs` | Each new fixture directory declared, or `every_fixture_directory_is_declared` fails with two long sorted sets and no hint which name is missing |
 | 6 | `crates/godlint-core/tests/rules/<name>.rs` | Unit tests |
 | 7 | `crates/godlint-core/tests/rules.rs` | The unit test file declared, or it never runs |
 | 8 | `docs/rule-roadmap.md`, `docs/rules.md`, `CHANGELOG.md` | All three must mention the identifier |
@@ -27,7 +28,7 @@ guessing the shape.
 ## Two more places, only if the rule carries a numeric threshold into `recommended@1`
 
 If the new rule has a `max-*` field and you add it to a suite, two hand-maintained tables outside
-the ten places above also need the new entry, or the build fails with a message that does not look
+the places above also need the new entry, or the build fails with a message that does not look
 like it is about your rule at all:
 
 - `crates/godlint-core/tests/suites.rs`, the `configured_line_limits`/`configured_count_limits`
@@ -38,7 +39,7 @@ like it is about your rule at all:
   and `every_registered_rule_reads_its_own_configuration` fails with a YAML parse error that names
   the missing field, not the missing table entry.
 
-Neither is optional, and neither is discoverable from the ten-point checklist above — both were
+Neither is optional, and neither is discoverable from the checklist above — both were
 found by running the full test suite, not by reading a spec.
 
 ## Two different things are both called "coverage" — don't confuse them

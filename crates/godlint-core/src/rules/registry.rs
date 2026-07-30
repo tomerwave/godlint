@@ -10,10 +10,11 @@ use crate::{
         forbidden_dependency::ForbiddenDependency, function_nesting::FunctionNesting,
         function_size::FunctionSize, function_statements::FunctionStatements,
         module_independence::ModuleIndependence, no_comments::NoComments,
-        no_dynamic_execution::NoDynamicExecution, no_production_log::NoProductionLog,
-        parameter_count::ParameterCount, restricted_call::RestrictedCall,
-        restricted_import::RestrictedImport, return_count::ReturnCount,
-        todo_requires_reference::TodoRequiresReference, unused_suppression::UnusedSuppression,
+        no_dynamic_execution::NoDynamicExecution, no_insecure_random::NoInsecureRandom,
+        no_production_log::NoProductionLog, parameter_count::ParameterCount,
+        restricted_call::RestrictedCall, restricted_import::RestrictedImport,
+        return_count::ReturnCount, todo_requires_reference::TodoRequiresReference,
+        unused_suppression::UnusedSuppression,
     },
 };
 
@@ -98,6 +99,11 @@ severity!(
     empty_error_handler_severity,
     EmptyErrorHandler,
     empty_error_handler
+);
+severity!(
+    no_insecure_random_severity,
+    NoInsecureRandom,
+    no_insecure_random
 );
 severity!(
     no_production_log_severity,
@@ -220,6 +226,11 @@ const REGISTRATIONS: &[Registration] = &[
     Registration {
         id: EmptyErrorHandler::ID,
         severity: empty_error_handler_severity,
+        suppressible: true,
+    },
+    Registration {
+        id: NoInsecureRandom::ID,
+        severity: no_insecure_random_severity,
         suppressible: true,
     },
     Registration {

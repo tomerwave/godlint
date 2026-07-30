@@ -57,6 +57,9 @@ mod module_independence;
 #[path = "rules/no_comments.rs"]
 mod no_comments;
 
+#[path = "rules/no_insecure_random.rs"]
+mod no_insecure_random;
+
 #[path = "rules/no_production_log.rs"]
 mod no_production_log;
 

@@ -1,9 +1,9 @@
 ---
 name: add-a-rule
-description: Use when implementing a Godlint rule that already has an approved proposal — writing the rule, its fixtures, tests and documentation. Follows the ten-point checklist in docs/skills/add-a-rule.md that mirrors scripts/validate-pull-request.py.
+description: Use when implementing a Godlint rule that already has an approved proposal — writing the rule, its fixtures, tests and documentation. Follows the checklist in docs/skills/add-a-rule.md that mirrors scripts/validate-pull-request.py.
 ---
 
-Read `docs/skills/add-a-rule.md` in full and follow it. In short, one rule touches ten places:
+Read `docs/skills/add-a-rule.md` in full and follow it. In short, one rule touches these places:
 `rules/mod.rs` (module + evaluator registration), `config/mod.rs` (the configurable field),
 `rules/registry.rs` (the suppression-visible id), a fixture directory under
 `crates/godlint-cli/tests/fixtures/rules/`, unit tests plus their declaration in

@@ -34,6 +34,10 @@ pub enum Violation {
     ProductionLog {
         callee: String,
     },
+    InsecureRandom {
+        callee: String,
+        secure: String,
+    },
     RestrictedImport {
         module: String,
     },
@@ -132,6 +136,10 @@ impl fmt::Display for Violation {
             ),
             Self::RestrictedImport { module } => write!(formatter, "{module} {RESTRICTED_IMPORT}"),
             Self::ProductionLog { callee } => write!(formatter, "{callee} {PRODUCTION_LOG}"),
+            Self::InsecureRandom { callee, secure } => write!(
+                formatter,
+                "{callee} is predictable; use {secure} for a value that must not be guessable."
+            ),
         }
     }
 }

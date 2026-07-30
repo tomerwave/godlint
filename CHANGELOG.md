@@ -11,6 +11,13 @@ speaks about.
 
 ### Added
 
+- `security/no-insecure-random` — reports a general-purpose random generator, which is predictable by
+  design: JavaScript `Math.random` and `crypto.pseudoRandomBytes`, Python's `random` module, and Rust
+  `rand::random`/`rand::thread_rng`.
+  The message names the secure generator of the language it reports in — `crypto.getRandomValues`,
+  `secrets`, or `rand::rngs::OsRng` — which is the thing a configured call list cannot do. `allow-in`
+  exempts a path where unpredictability is not the point, such as jitter or a test fixture. The first
+  rule built on the shared call catalogue: a table, a message, and a per-language remedy.
 - `architecture/module-independence` — reports a dependency between modules a repository has declared
   independent of each other. `architecture/dependency-boundary` orders layers, so a dependency is wrong in
   one direction only; sibling isolation is wrong in both, and that is the constraint that keeps two feature
