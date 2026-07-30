@@ -291,7 +291,28 @@ fn macro_operands(node: Node<'_>) -> usize {
         return 0;
     };
 
-    kinds.iter().filter(|kind| **kind == ",").count() + usize::from(*last != ",")
+    separators(&kinds) + usize::from(*last != ",")
+}
+
+fn separators(kinds: &[&str]) -> usize {
+    let mut depth = 0_usize;
+    let mut separators = 0;
+
+    for (index, kind) in kinds.iter().enumerate() {
+        match *kind {
+            "<" if depth > 0
+                || index.checked_sub(1).map(|previous| kinds[previous]) == Some("::") =>
+            {
+                depth += 1;
+            }
+            ">" => depth = depth.saturating_sub(1),
+            ">>" => depth = depth.saturating_sub(2),
+            "," if depth == 0 => separators += 1,
+            _ => {}
+        }
+    }
+
+    separators
 }
 
 fn literal(node: Node<'_>, source: &str) -> Option<String> {

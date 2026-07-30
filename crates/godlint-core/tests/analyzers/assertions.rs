@@ -148,6 +148,58 @@ fn counts_a_rust_nested_comma_once() {
 }
 
 #[test]
+fn does_not_count_a_comma_inside_a_turbofish() {
+    let cases = [
+        (
+            "#[test]\nfn a() {\n    assert_eq!(HashMap::<String, u32>::new(), m);\n}\n",
+            2,
+        ),
+        (
+            "#[test]\nfn a() {\n    assert!(x == Foo::<A, B>::new());\n}\n",
+            1,
+        ),
+        ("#[test]\nfn a() {\n    assert_eq!(f::<A, B>(), c);\n}\n", 2),
+        (
+            "#[test]\nfn a() {\n    assert_eq!(HashMap::<String, Vec<u32>>::new(), m);\n}\n",
+            2,
+        ),
+        (
+            "#[test]\nfn a() {\n    assert_eq!(f::<Vec<u8>, Vec<u16>>(), c);\n}\n",
+            2,
+        ),
+    ];
+
+    for (source, operands) in cases {
+        assert_eq!(
+            found("a.rs", source).first().map(|(_, _, count)| *count),
+            Some(operands),
+            "a comma separating type arguments is not separating operands: {source}"
+        );
+    }
+}
+
+#[test]
+fn still_counts_a_comparison_and_the_message_after_it() {
+    assert_eq!(
+        found("a.rs", "#[test]\nfn a() {\n    assert!(a < b);\n}\n"),
+        vec![("assert".to_owned(), true, 1)],
+        "a less-than is not a generic opener, so nothing may be swallowed after it"
+    );
+    assert_eq!(
+        found("a.rs", "#[test]\nfn a() {\n    assert_eq!(a >> b, c);\n}\n"),
+        vec![("assert_eq".to_owned(), true, 2)],
+        "a shift closes no generic, and tree-sitter spells it with the same token"
+    );
+    assert_eq!(
+        found(
+            "a.rs",
+            "#[test]\nfn a() {\n    assert!(a < b, \"explains\");\n}\n"
+        ),
+        vec![("assert".to_owned(), true, 2)]
+    );
+}
+
+#[test]
 fn does_not_treat_another_rust_macro_as_an_assertion() {
     assert!(names("a.rs", "#[test]\nfn a() {\n    println!(\"{a}\");\n}\n").is_empty());
     assert!(names("a.rs", "#[test]\nfn a() {\n    vec![1, 2];\n}\n").is_empty());

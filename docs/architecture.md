@@ -130,8 +130,20 @@ that owns it, and every rule asking "does this test assert" works by range conta
 
 `operands` counts what the assertion was given, so a Rust `assert!(value, "explains")` is two. Reaching
 that number in Rust means counting commas in a `token_tree`, because tree-sitter does not parse a macro's
-arguments; commas inside a nested tree belong to that tree, and a trailing comma is punctuation. Both
-are pinned by a test, because both were wrong first.
+arguments, and every part of that count was wrong before it was right. Commas inside a nested tree belong
+to that tree. A trailing comma is punctuation. And a comma between *type* arguments separates nothing:
+`assert_eq!(HashMap::<String, u32>::new(), m)` takes two operands, not three. Type arguments are found by
+the turbofish, because in expression position generics need one — a bare `<` is a comparison, and
+swallowing everything after it would lose the message in `assert!(a < b, "explains")`. tree-sitter spells
+`>>` as a single token, which closes two levels and is also the shift operator, so it saturates rather
+than underflows. Each of those four is pinned by a test.
+
+Three boundaries are deliberate and none is a defect, but none was obvious either. A path-qualified macro
+is not an assertion: `static_assertions::assert_eq!` is a compile-time check rather than a test
+assertion, and the cost is that `core::assert_eq!` is missed too. `should`-style JavaScript —
+`x.should.equal(1)` — is not recorded, because the assertion is a property access rather than a call.
+Neither is `raises(...)` reached through `from pytest import raises`; that is the same alias limit the
+call rules document. All three want either a name list a repository can extend or import resolution.
 
 The fact deliberately does not record whether an operand *was* the message. That takes a per-name arity
 table for three ecosystems — `assert.equal(a, b, msg)` puts it third and `chai.expect(value, msg)`

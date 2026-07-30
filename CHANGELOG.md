@@ -75,7 +75,9 @@ speaks about.
   the matcher is a second call on the same chain. An assertion also carries its own text, so
   `no-duplicate-assertion` can compare two of them. Whether an operand was the *message* is not
   recorded: that needs a per-name arity table for three ecosystems, and a wrong one would demand a
-  message from Jest's `expect`, which has none. This unblocks `testing/assertion-required`,
+  message from Jest's `expect`, which has none. Three boundaries are deliberate: a path-qualified macro
+  such as `static_assertions::assert_eq!` is not recorded, nor is `should`-style JavaScript, nor
+  `raises(...)` reached through an aliased import. This unblocks `testing/assertion-required`,
   `no-conditional-test-logic`, `no-duplicate-assertion` and, with that table, `assertion-message-required`.
 - Test facts. A rule can ask whether a declaration is a test, what its name is, which marker made it
   one, and whether that marker carried focus or skipping. What counts as a test is a framework
