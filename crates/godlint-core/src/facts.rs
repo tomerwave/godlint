@@ -118,6 +118,53 @@ impl TestFact {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub struct AssertionFactDetails {
+    pub target: CallTarget,
+    pub operands: usize,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct AssertionFact {
+    source: SourceFile,
+    range: SourceRange,
+    details: AssertionFactDetails,
+}
+
+impl AssertionFact {
+    pub fn new(source: SourceFile, range: SourceRange, details: AssertionFactDetails) -> Self {
+        Self {
+            source,
+            range,
+            details,
+        }
+    }
+
+    pub fn source(&self) -> &SourceFile {
+        &self.source
+    }
+
+    pub fn range(&self) -> SourceRange {
+        self.range
+    }
+
+    pub fn name(&self) -> &str {
+        &self.details.target.path
+    }
+
+    pub fn is_macro(&self) -> bool {
+        self.details.target.is_macro
+    }
+
+    pub fn operands(&self) -> usize {
+        self.details.operands
+    }
+
+    pub fn text(&self) -> &str {
+        &self.source.source()[self.range.start()..self.range.end()]
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CallArgument {
     pub name: Option<String>,
     pub literal: Option<String>,

@@ -7,6 +7,9 @@ use crate::{
         AccessFact, CallArgument, CallFact, CallFactDetails, CallTarget, CommentFact,
         ConditionFact, ErrorHandlerFact, FunctionFact, FunctionFactDetails, FunctionFactError,
         ImportFact, TestFact, TestFactDetails, TestFocus,
+        AccessFact, AssertionFact, AssertionFactDetails, CallArgument, CallFact, CallTarget,
+        CommentFact, ConditionFact, ErrorHandlerFact, FunctionFact, FunctionFactDetails,
+        FunctionFactError, ImportFact, TestFact, TestFactDetails, TestFocus,
     },
     source::{Language, SourceFile, SourceFileError, SourceRange},
 };
@@ -33,6 +36,7 @@ pub struct SourceFacts {
     functions: Vec<FunctionFact>,
     imports: Vec<ImportFact>,
     tests: Vec<TestFact>,
+    assertions: Vec<AssertionFact>,
 }
 
 impl SourceFacts {
@@ -74,6 +78,10 @@ impl SourceFacts {
 
     pub fn tests(&self) -> &[TestFact] {
         &self.tests
+    }
+
+    pub fn assertions(&self) -> &[AssertionFact] {
+        &self.assertions
     }
 }
 
@@ -130,6 +138,7 @@ pub(crate) fn analyze_with(
         functions: collected.functions,
         imports: collected.imports,
         tests: collected.tests,
+        assertions: collected.assertions,
     })
 }
 
@@ -167,6 +176,7 @@ struct Collected {
     conditions: Vec<ConditionFact>,
     error_handlers: Vec<ErrorHandlerFact>,
     imports: Vec<ImportFact>,
+    assertions: Vec<AssertionFact>,
 }
 
 impl Collected {
@@ -212,6 +222,8 @@ impl Collected {
         vocabulary: &Vocabulary,
     ) -> Result<(), AnalyzerError> {
         self.calls.extend(call_fact(node, source, vocabulary)?);
+        self.assertions
+            .extend(assertion_fact(node, source, vocabulary)?);
         self.conditions
             .extend(condition_fact(node, source, vocabulary)?);
         self.error_handlers
@@ -231,6 +243,28 @@ impl Collected {
 
         Ok(())
     }
+}
+
+fn assertion_fact(
+    node: Node<'_>,
+    source: &SourceFile,
+    vocabulary: &Vocabulary,
+) -> Result<Option<AssertionFact>, AnalyzerError> {
+    let Some(assertion) = (vocabulary.assertion)(node, source.source()) else {
+        return Ok(None);
+    };
+
+    Ok(Some(AssertionFact::new(
+        source.clone(),
+        node_range(assertion.node, source)?,
+        AssertionFactDetails {
+            target: CallTarget {
+                path: assertion.name,
+                is_macro: assertion.is_macro,
+            },
+            operands: assertion.operands,
+        },
+    )))
 }
 
 fn test_fact(

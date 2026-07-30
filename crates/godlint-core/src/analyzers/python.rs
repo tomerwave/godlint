@@ -4,8 +4,9 @@ use crate::{
     analyzers::{
         Analyzer, AnalyzerError, SourceFacts,
         vocabulary::{
-            Argument, Callee, Cognition, Condition, ErrorHandler, Focus, TestDeclaration,
-            Vocabulary, is_leading_block_statement, literal_value, plain_path,
+            Argument, Assertion, Callee, Cognition, Condition, ErrorHandler, Focus,
+            TestDeclaration, Vocabulary, argument_operands, is_leading_block_statement,
+            literal_value, named_operands, plain_path,
         },
     },
     facts::CommentKind,
@@ -39,6 +40,7 @@ const VOCABULARY: Vocabulary = Vocabulary {
     argument,
     literal,
     test,
+    assertion,
     import,
     comment_kind,
     has_implicit_tail_return,
@@ -279,6 +281,81 @@ fn literal(node: Node<'_>, source: &str) -> Option<String> {
         }
         _ => None,
     }
+}
+
+fn assertion<'tree>(node: Node<'tree>, source: &str) -> Option<Assertion<'tree>> {
+    if node.kind() == "assert_statement" {
+        return Some(Assertion {
+            node,
+            name: "assert".to_owned(),
+            is_macro: false,
+            operands: named_operands(node),
+        });
+    }
+
+    let callee = (node.kind() == "call")
+        .then(|| node.child_by_field_name("function"))
+        .flatten()?;
+    let text = source.get(callee.byte_range())?;
+
+    names_an_assertion(text).then(|| Assertion {
+        node,
+        name: text.to_owned(),
+        is_macro: false,
+        operands: argument_operands(node),
+    })
+}
+
+const UNITTEST: [&str; 26] = [
+    "assertAlmostEqual",
+    "assertCountEqual",
+    "assertDictEqual",
+    "assertEqual",
+    "assertFalse",
+    "assertGreater",
+    "assertGreaterEqual",
+    "assertIn",
+    "assertIs",
+    "assertIsInstance",
+    "assertIsNone",
+    "assertIsNot",
+    "assertIsNotNone",
+    "assertLess",
+    "assertLessEqual",
+    "assertListEqual",
+    "assertNotEqual",
+    "assertNotIn",
+    "assertNotIsInstance",
+    "assertRaises",
+    "assertRaisesRegex",
+    "assertRegex",
+    "assertSetEqual",
+    "assertTrue",
+    "assertTupleEqual",
+    "assertWarns",
+];
+
+const MOCK: [&str; 7] = [
+    "assert_any_call",
+    "assert_awaited",
+    "assert_called",
+    "assert_called_once",
+    "assert_called_once_with",
+    "assert_called_with",
+    "assert_not_called",
+];
+
+const PYTEST: [&str; 2] = ["pytest.raises", "pytest.warns"];
+
+fn names_an_assertion(text: &str) -> bool {
+    let Some(last) = text.rsplit('.').next() else {
+        return false;
+    };
+
+    PYTEST.contains(&text)
+        || UNITTEST.contains(&last)
+        || MOCK.contains(&last)
+        || last == "assert_that"
 }
 
 fn is_access(kind: &str) -> bool {

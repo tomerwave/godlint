@@ -29,6 +29,14 @@ pub(crate) struct TestDeclaration<'tree> {
     pub focus: Focus,
 }
 
+#[derive(Clone)]
+pub(crate) struct Assertion<'tree> {
+    pub node: Node<'tree>,
+    pub name: String,
+    pub is_macro: bool,
+    pub operands: usize,
+}
+
 #[derive(Clone, Copy)]
 pub(crate) struct Argument<'tree> {
     pub name: Option<Node<'tree>>,
@@ -68,6 +76,7 @@ pub(crate) struct Vocabulary {
     pub argument: fn(Node<'_>) -> Option<Argument<'_>>,
     pub literal: fn(Node<'_>, &str) -> Option<String>,
     pub test: for<'tree> fn(Node<'tree>, &str) -> Option<TestDeclaration<'tree>>,
+    pub assertion: for<'tree> fn(Node<'tree>, &str) -> Option<Assertion<'tree>>,
     pub import: fn(Node<'_>) -> Option<Node<'_>>,
     pub comment_kind: fn(Node<'_>, &str) -> Option<CommentKind>,
     pub has_implicit_tail_return: fn(Node<'_>) -> bool,
@@ -81,6 +90,19 @@ pub(crate) fn literal_value(node: Node<'_>, source: &str, content: &str) -> Stri
         .and_then(|child| source.get(child.byte_range()))
         .unwrap_or_default()
         .to_owned()
+}
+
+pub(crate) fn named_operands(node: Node<'_>) -> usize {
+    let mut cursor = node.walk();
+
+    node.named_children(&mut cursor)
+        .filter(|child| !child.is_extra())
+        .count()
+}
+
+pub(crate) fn argument_operands(node: Node<'_>) -> usize {
+    node.child_by_field_name("arguments")
+        .map_or(0, named_operands)
 }
 
 pub(crate) fn plain_path(text: &str) -> Option<String> {

@@ -4,8 +4,8 @@ use crate::{
     analyzers::{
         Analyzer, AnalyzerError, SourceFacts,
         vocabulary::{
-            Argument, Callee, Cognition, Condition, ErrorHandler, Focus, TestDeclaration,
-            Vocabulary, literal_value, plain_path,
+            Argument, Assertion, Callee, Cognition, Condition, ErrorHandler, Focus,
+            TestDeclaration, Vocabulary, literal_value, plain_path,
         },
     },
     facts::CommentKind,
@@ -39,6 +39,7 @@ const VOCABULARY: Vocabulary = Vocabulary {
     argument,
     literal,
     test,
+    assertion,
     import,
     comment_kind,
     has_implicit_tail_return,
@@ -229,6 +230,68 @@ fn argument(node: Node<'_>) -> Option<Argument<'_>> {
         name: None,
         value: node,
     })
+}
+
+const ASSERTIONS: [&str; 6] = [
+    "assert",
+    "assert_eq",
+    "assert_ne",
+    "debug_assert",
+    "debug_assert_eq",
+    "debug_assert_ne",
+];
+
+fn assertion<'tree>(node: Node<'tree>, source: &str) -> Option<Assertion<'tree>> {
+    if node.kind() == "function_item" {
+        return panicking_assertion(node, source);
+    }
+
+    if node.kind() != "macro_invocation" {
+        return None;
+    }
+
+    let name = node.child_by_field_name("macro")?;
+    let text = source.get(name.byte_range())?;
+
+    ASSERTIONS.contains(&text).then(|| Assertion {
+        node,
+        name: text.to_owned(),
+        is_macro: true,
+        operands: macro_operands(node),
+    })
+}
+
+fn panicking_assertion<'tree>(node: Node<'tree>, source: &str) -> Option<Assertion<'tree>> {
+    preceding_attributes(node, source)
+        .iter()
+        .any(|(name, _)| name.split('(').next() == Some("should_panic"))
+        .then(|| Assertion {
+            node,
+            name: "should_panic".to_owned(),
+            is_macro: false,
+            operands: 0,
+        })
+}
+
+fn macro_operands(node: Node<'_>) -> usize {
+    let mut children = node.walk();
+    let Some(tree) = node
+        .children(&mut children)
+        .find(|child| child.kind() == "token_tree")
+    else {
+        return 0;
+    };
+    let mut tokens = tree.walk();
+    let kinds: Vec<&str> = tree
+        .children(&mut tokens)
+        .map(|token| token.kind())
+        .filter(|kind| !matches!(*kind, "(" | ")" | "[" | "]" | "{" | "}"))
+        .collect();
+    let Some(last) = kinds.last() else {
+        return 0;
+    };
+
+    kinds.iter().filter(|kind| **kind == ",").count() + usize::from(*last != ",")
 }
 
 fn literal(node: Node<'_>, source: &str) -> Option<String> {

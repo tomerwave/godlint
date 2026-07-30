@@ -61,6 +61,22 @@ speaks about.
   TypeScript, `#[ignore]` beside `#[test]` in Rust in either order, and a `pytest.mark.skip` or
   `unittest.skip` decorator in Python. A skipped test rots without anything noticing, so the rule asks
   for it to be deleted, fixed, or suppressed with an owner and an expiry.
+- Assertion facts. A rule can ask which calls in a file are assertions, what each is called, and how
+  many operands it took. Which calls count is a framework question rather than a language one, so each
+  language module answers it, and each answers a different shape: Python has assertion syntax, so
+  `assert value == 1` is a statement no call fact would have seen; Rust's assertions are macros, matched
+  against the six names exactly; JavaScript has neither, so the fact reads the callee for `expect` and
+  the `assert` module, including the type assertions `expectTypeOf` and `assertType`, which a typed suite
+  may use to the exclusion of every other kind. Rust's `#[should_panic]` is recorded too — the attribute is the assertion, and
+  without it every `should_panic` test would look assertion-free — at the function's range rather than
+  the attribute's, so it falls inside the test that owns it. The names are explicit sets rather than an
+  `assert` prefix, because a prefix
+  claims a domain helper called `assert_invariant`. `expect(value).toBe(1)` is one assertion, not two —
+  the matcher is a second call on the same chain. An assertion also carries its own text, so
+  `no-duplicate-assertion` can compare two of them. Whether an operand was the *message* is not
+  recorded: that needs a per-name arity table for three ecosystems, and a wrong one would demand a
+  message from Jest's `expect`, which has none. This unblocks `testing/assertion-required`,
+  `no-conditional-test-logic`, `no-duplicate-assertion` and, with that table, `assertion-message-required`.
 - Test facts. A rule can ask whether a declaration is a test, what its name is, which marker made it
   one, and whether that marker carried focus or skipping. What counts as a test is a framework
   question rather than a language one, so each language module answers it: Rust reads the attributes

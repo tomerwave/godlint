@@ -1,8 +1,8 @@
 use tree_sitter::Node;
 
 use super::vocabulary::{
-    Argument, Callee, Cognition, Condition, ErrorHandler, Focus, TestDeclaration, Vocabulary,
-    literal_value, plain_path,
+    Argument, Assertion, Callee, Cognition, Condition, ErrorHandler, Focus, TestDeclaration,
+    Vocabulary, argument_operands, literal_value, plain_path,
 };
 use crate::facts::CommentKind;
 
@@ -25,6 +25,7 @@ pub(super) const VOCABULARY: Vocabulary = Vocabulary {
     argument,
     literal,
     test,
+    assertion,
     import,
     comment_kind,
     has_implicit_tail_return,
@@ -235,6 +236,35 @@ fn literal(node: Node<'_>, source: &str) -> Option<String> {
         }
         _ => None,
     }
+}
+
+fn assertion<'tree>(node: Node<'tree>, source: &str) -> Option<Assertion<'tree>> {
+    if node.kind() != "call_expression" {
+        return None;
+    }
+
+    let callee = node.child_by_field_name("function")?;
+    let text = source.get(callee.byte_range())?.replace("?.", ".");
+
+    names_an_assertion(&text).then(|| Assertion {
+        node,
+        is_macro: false,
+        operands: argument_operands(node),
+        name: text,
+    })
+}
+
+const ASSERTING: [&str; 3] = ["expect", "expectTypeOf", "assertType"];
+
+fn names_an_assertion(path: &str) -> bool {
+    let mut segments = path.split('.');
+    let first = segments.next();
+
+    first == Some("assert")
+        || path
+            .rsplit('.')
+            .next()
+            .is_some_and(|last| ASSERTING.contains(&last))
 }
 
 fn is_access(kind: &str) -> bool {

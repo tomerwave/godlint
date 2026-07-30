@@ -7,6 +7,9 @@ use godlint_core::{analyzers::analyze, facts::CommentKind, source::SourceFile};
 #[path = "analyzers/arguments.rs"]
 mod arguments;
 
+#[path = "analyzers/assertions.rs"]
+mod assertions;
+
 #[path = "analyzers/tests.rs"]
 mod tests;
 
