@@ -63,7 +63,7 @@ Neither policy rule about suppressions can itself be suppressed. See
 
 | Rule | What it reports |
 | --- | --- |
-| `security/no-dynamic-execution` | JavaScript `eval`, `Function`, `new Function`; Python `eval`, `exec` |
+| `security/no-dynamic-execution` | JavaScript `eval`, `Function`, `new Function`; Python `eval`, `exec`. A global-object spelling of the same built-in counts: `globalThis`, `window`, `self`, or `global` in JavaScript and TypeScript, and `builtins` in Python |
 | `security/direct-environment-read` | Environment access outside a configuration boundary |
 | `security/forbidden-dependency` | An import of a package the project has ruled out |
 

@@ -29,7 +29,7 @@ fn main() -> ExitCode {
 fn unknown_command(arguments: &[String]) -> ExitCode {
     eprintln!(
         "Unknown command or arguments: {}\n\n{}",
-        arguments.join(" "),
+        report::visible(&arguments.join(" ")),
         commands::usage()
     );
 

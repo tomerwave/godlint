@@ -1,49 +1,34 @@
 #![allow(clippy::expect_used, clippy::unwrap_used)]
 
-use std::{
-    fs,
-    io::ErrorKind,
-    path::{Path, PathBuf},
-    process,
-    sync::atomic::{AtomicU64, Ordering},
-};
+use std::path::Path;
 
 use godlint_core::scan::{MAX_SOURCE_BYTES, ScanReport, scan};
 
-static NEXT_ID: AtomicU64 = AtomicU64::new(0);
+#[path = "support/temporary.rs"]
+mod temporary;
+
+use temporary::TemporaryDirectory;
 
 struct Repository {
-    path: PathBuf,
+    directory: TemporaryDirectory,
 }
 
 impl Repository {
     fn new() -> Self {
-        loop {
-            let id = NEXT_ID.fetch_add(1, Ordering::Relaxed);
-            let path = std::env::temp_dir().join(format!("godlint-scan-{}-{id}", process::id()));
-
-            match fs::create_dir(&path) {
-                Ok(()) => return Self { path },
-                Err(error) if error.kind() == ErrorKind::AlreadyExists => (),
-                Err(error) => panic!("creates repository: {error}"),
-            }
+        Self {
+            directory: TemporaryDirectory::new("scan"),
         }
     }
 
     fn write(&self, relative_path: &str, contents: &str) {
-        fs::write(self.path.join(relative_path), contents)
-            .unwrap_or_else(|error| panic!("writes {relative_path}: {error}"));
+        self.directory.write(relative_path, contents);
     }
 
     fn scan(&self) -> ScanReport {
-        scan(&self.path, std::slice::from_ref(&self.path), &[])
-            .unwrap_or_else(|error| panic!("scans repository: {error}"))
-    }
-}
+        let root = self.directory.path();
 
-impl Drop for Repository {
-    fn drop(&mut self) {
-        let _ = fs::remove_dir_all(&self.path);
+        scan(root, &[root.to_path_buf()], &[])
+            .unwrap_or_else(|error| panic!("scans repository: {error}"))
     }
 }
 

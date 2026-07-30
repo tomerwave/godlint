@@ -8,5 +8,9 @@ stdout: |
   example.py:1:1: error[security/direct-environment-read] os.getenv reads environment directly; read configuration through a config boundary instead.
   example.py:2:1: error[security/direct-environment-read] os.environ reads environment directly; read configuration through a config boundary instead.
   example.rs:1:1: error[security/direct-environment-read] std::env::var reads environment directly; read configuration through a config boundary instead.
+  optional.js:1:1: error[security/direct-environment-read] process.env reads environment directly; read configuration through a config boundary instead.
+  optional.jsx:1:1: error[security/direct-environment-read] process.env reads environment directly; read configuration through a config boundary instead.
+  optional.ts:1:1: error[security/direct-environment-read] process.env reads environment directly; read configuration through a config boundary instead.
+  optional.tsx:1:1: error[security/direct-environment-read] process.env reads environment directly; read configuration through a config boundary instead.
 
 stderr: ""

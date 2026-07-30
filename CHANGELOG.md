@@ -74,6 +74,30 @@ speaks about.
   four-mebibyte ceiling, and a file above it is reported as a scan issue naming the limit instead of
   being loaded. The bound is on the read rather than on a size checked beforehand, so the allocation
   is limited by construction.
+- `security/no-dynamic-execution` missed a built-in reached through the global object, so
+  `globalThis.eval(code)` was silent while `eval(code)` reported. The rule now strips a known global
+  prefix before matching: `globalThis`, `window`, `self`, and `global` in JavaScript and TypeScript,
+  and `builtins` in Python. Python's `self` is deliberately not on that list, because there it names
+  the instance a method was called on rather than the global scope. A finding still reports the
+  spelling the file used. An alias such as `const e = globalThis.eval` still escapes, which needs
+  value tracking rather than a longer list.
+- `security/direct-environment-read` missed `process?.env.PORT` while reporting
+  `process.env?.PORT`. Optional member access denotes the same read, so which spelling an author
+  chose decided whether the policy applied. A callee and an access target are now resolved when the
+  fact is built rather than read back out of the source range, and the language module decides which
+  spellings name one path. Optional calls resolve the same way, so `outer?.parse(input)` and
+  `outer.parse?.(input)` both reach `architecture/restricted-call` as `outer.parse`.
+- A filename could rewrite the report about it. Godlint printed repository paths, messages, and
+  arguments unescaped, so an escape sequence in a name repainted the surrounding output and a newline
+  turned one finding into what read as two. Every diagnostic now goes through one escaping boundary:
+  a control character is rendered readably in the terminal and GitHub formats, and as a `\u` escape in
+  JSON and SARIF. The machine-readable formats also escape the control characters above `0x7f`, which
+  they previously passed through.
+- A directory Godlint could not read discarded every finding from the rest of the run. Discovery now
+  reports the files it found alongside the failures it hit: a path named on the command line is still
+  fatal, because a partial answer to an explicit request is a wrong answer, while anything reached
+  below such a path becomes a scan issue and costs its own contents only. The exit code still says
+  something went wrong, so degrading never turns into passing.
 - The README described Godlint in the future tense - what it *would* provide, what the first release
   *would* focus on, GitHub Actions integration as an unreached phase - while it was shipping on four
   channels. It now says what the tool does today, and the one claim that was genuinely unshipped,

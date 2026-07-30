@@ -4,8 +4,8 @@ use tree_sitter::{Language as TreeSitterLanguage, Node, Parser};
 
 use crate::{
     facts::{
-        AccessFact, CallFact, CommentFact, ConditionFact, ErrorHandlerFact, FunctionFact,
-        FunctionFactDetails, FunctionFactError, ImportFact,
+        AccessFact, CallFact, CallTarget, CommentFact, ConditionFact, ErrorHandlerFact,
+        FunctionFact, FunctionFactDetails, FunctionFactError, ImportFact,
     },
     source::{Language, SourceFile, SourceFileError, SourceRange},
 };
@@ -283,15 +283,18 @@ fn call_fact(
     let Some(callee) = (vocabulary.callee)(node) else {
         return Ok(None);
     };
-    if direct_path(callee.node, source).is_none() {
+    let Some(path) = direct_path(callee.node, source, vocabulary) else {
         return Ok(None);
-    }
-
+    };
     let range = node_range(callee.node, source)?;
+
     Ok(Some(CallFact::new(
         source.clone(),
         range,
-        callee.is_macro,
+        CallTarget {
+            path,
+            is_macro: callee.is_macro,
+        },
         argument_count(node),
     )))
 }
@@ -317,13 +320,12 @@ fn access_fact(
         return Ok(None);
     }
 
-    if direct_path(node, source).is_none() {
+    let Some(path) = direct_path(node, source, vocabulary) else {
         return Ok(None);
-    }
-
+    };
     let range = node_range(node, source)?;
 
-    Ok(Some(AccessFact::new(source.clone(), range)))
+    Ok(Some(AccessFact::new(source.clone(), range, path)))
 }
 
 fn import_fact(
@@ -339,18 +341,11 @@ fn import_fact(
     Ok(Some(ImportFact::new(source.clone(), range)))
 }
 
-fn direct_path<'source>(node: Node<'_>, source: &'source SourceFile) -> Option<&'source str> {
+fn direct_path(node: Node<'_>, source: &SourceFile, vocabulary: &Vocabulary) -> Option<String> {
     source
         .source()
         .get(node.byte_range())
-        .filter(|text| is_direct_path(text))
-}
-
-fn is_direct_path(text: &str) -> bool {
-    !text.is_empty()
-        && text
-            .chars()
-            .all(|character| character.is_alphanumeric() || "_.:".contains(character))
+        .and_then(|text| (vocabulary.direct_path)(text))
 }
 
 fn comment_fact(

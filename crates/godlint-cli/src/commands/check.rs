@@ -30,7 +30,7 @@ fn check(arguments: &[String]) -> ExitCode {
     match run_check(arguments) {
         Ok(exit_code) => exit_code,
         Err(message) => {
-            eprintln!("{message}");
+            eprintln!("{}", report::visible(&message));
             ExitCode::from(2)
         }
     }
@@ -118,7 +118,11 @@ fn print_report(format: Format, findings: &[Finding], report: &ScanReport) {
 
 fn print_issues(report: &ScanReport) {
     for issue in &report.issues {
-        eprintln!("{}: {}", issue.path.display(), issue.message);
+        eprintln!(
+            "{}: {}",
+            report::visible(&issue.path.display().to_string()),
+            report::visible(&issue.message)
+        );
     }
 }
 

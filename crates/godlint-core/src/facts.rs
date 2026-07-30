@@ -57,8 +57,14 @@ pub struct CommentFact {
 pub struct CallFact {
     source: SourceFile,
     range: SourceRange,
-    is_macro: bool,
+    target: CallTarget,
     argument_count: usize,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CallTarget {
+    pub path: String,
+    pub is_macro: bool,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -71,6 +77,7 @@ pub struct ImportFact {
 pub struct AccessFact {
     source: SourceFile,
     range: SourceRange,
+    target: String,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -155,13 +162,13 @@ impl CallFact {
     pub fn new(
         source: SourceFile,
         range: SourceRange,
-        is_macro: bool,
+        target: CallTarget,
         argument_count: usize,
     ) -> Self {
         Self {
             source,
             range,
-            is_macro,
+            target,
             argument_count,
         }
     }
@@ -175,11 +182,11 @@ impl CallFact {
     }
 
     pub fn callee(&self) -> &str {
-        &self.source.source()[self.range.start()..self.range.end()]
+        &self.target.path
     }
 
     pub fn is_macro(&self) -> bool {
-        self.is_macro
+        self.target.is_macro
     }
 
     pub const fn argument_count(&self) -> usize {
@@ -206,8 +213,12 @@ impl ImportFact {
 }
 
 impl AccessFact {
-    pub fn new(source: SourceFile, range: SourceRange) -> Self {
-        Self { source, range }
+    pub fn new(source: SourceFile, range: SourceRange, target: String) -> Self {
+        Self {
+            source,
+            range,
+            target,
+        }
     }
 
     pub fn source(&self) -> &SourceFile {
@@ -219,7 +230,7 @@ impl AccessFact {
     }
 
     pub fn target(&self) -> &str {
-        &self.source.source()[self.range.start()..self.range.end()]
+        &self.target
     }
 }
 

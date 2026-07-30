@@ -12,6 +12,7 @@ use crate::{
 };
 
 pub const MAX_SOURCE_BYTES: u64 = 4 * 1024 * 1024;
+const UNREADABLE: &str = "unable to discover";
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ScanIssue {
@@ -33,13 +34,14 @@ pub enum ScanError {
 
 pub fn scan(root: &Path, paths: &[PathBuf], excludes: &[String]) -> Result<ScanReport, ScanError> {
     let scope = Scope { root, excludes };
-    let files = discover(paths, &scope).map_err(|source| ScanError::DiscoversFiles { source })?;
+    let discovered =
+        discover(paths, &scope).map_err(|source| ScanError::DiscoversFiles { source })?;
     let mut report = ScanReport {
         facts: Vec::new(),
-        issues: Vec::new(),
+        issues: discovery_issues(root, discovered.failures),
     };
 
-    for path in files {
+    for path in discovered.files {
         scan_file(root, &path, &mut report)?;
     }
 
@@ -48,6 +50,20 @@ pub fn scan(root: &Path, paths: &[PathBuf], excludes: &[String]) -> Result<ScanR
         .sort_by(|left, right| (&left.path, &left.message).cmp(&(&right.path, &right.message)));
 
     Ok(report)
+}
+
+fn discovery_issues(root: &Path, failures: Vec<DiscoveryError>) -> Vec<ScanIssue> {
+    failures
+        .into_iter()
+        .map(|failure| ScanIssue {
+            path: relative_to(root, failure.path()),
+            message: format!("{UNREADABLE}: {}", failure.reason()),
+        })
+        .collect()
+}
+
+fn relative_to(root: &Path, path: &Path) -> PathBuf {
+    path.strip_prefix(root).unwrap_or(path).to_path_buf()
 }
 
 fn scan_file(root: &Path, path: &Path, report: &mut ScanReport) -> Result<(), ScanError> {
