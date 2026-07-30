@@ -1,0 +1,11 @@
+---
+description: Preparing or verifying a Godlint release
+globs: .github/workflows/release.yml,packaging/**,CHANGELOG.md
+alwaysApply: false
+---
+
+Read `docs/releasing.md` in full — it is the release process, not a summary of it. Only a
+repository administrator can create the release tag; the GitHub release is published last, after
+crates.io, npm and PyPI have all succeeded, never before. If you are not that administrator,
+prepare everything up to `python3 scripts/check-release.py v<version>` passing and hand off the
+tag creation.

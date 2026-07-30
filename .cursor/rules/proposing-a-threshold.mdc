@@ -1,0 +1,10 @@
+---
+description: Choosing a numeric threshold (a max, a limit, a count) for a Godlint rule
+alwaysApply: false
+---
+
+Read `docs/skills/proposing-a-threshold.md` in full. Godlint's convention is that a threshold is
+measured against this repository's real source, not borrowed from another linter's default:
+write a short script measuring the metric, look at the distribution (p50/p90/p95/p99/max) rather
+than the average, and pick a number that is tight but passes on this repository today — or record
+that it doesn't and why. State the measurement, not just the chosen number.

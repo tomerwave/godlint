@@ -26,3 +26,6 @@
 | [Testing strategy](testing.md) | Fixture-first testing and the required validation layers |
 | [Releasing](releasing.md) | The tag-driven release, the registries, and the floating `v1` tag |
 | [Contributing](../CONTRIBUTING.md) | Proposing a rule, branch naming, labels |
+| [Propose a rule](skills/propose-a-rule.md) | The three decidability filters and the standard issue shape |
+| [Add a rule](skills/add-a-rule.md) | The ten places one rule touches, mirrored from the validator |
+| [Propose a threshold](skills/proposing-a-threshold.md) | Measuring a limit against this repository instead of borrowing one |

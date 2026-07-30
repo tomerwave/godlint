@@ -1,0 +1,13 @@
+---
+description: Proposing a new Godlint rule, or reconsidering one previously marked "do not build"
+alwaysApply: false
+---
+
+Read `docs/skills/propose-a-rule.md` in full and follow it before filing the issue.
+
+Apply the three filters in order: decidable without types; has a specific false-positive case
+that configuration can exempt; has a measurable threshold (see `docs/skills/proposing-a-threshold.md`).
+File using the `rule_proposal.yml` template's shape — policy problem, blocked, examples, scope,
+remediation, false positive, source, definition of done — and verify every cited URL actually
+resolves before it goes in the issue. Label with `rule-proposal`, a priority, and any blocker
+(`needs-a-fact` / `needs-a-subsystem` / `needs-a-language`).

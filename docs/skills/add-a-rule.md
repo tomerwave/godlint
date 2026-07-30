@@ -1,0 +1,74 @@
+# Skill: add a rule
+
+Implements a rule that already has an approved proposal (see
+[propose a rule](propose-a-rule.md) if it doesn't yet). This checklist mirrors
+`scripts/validate-pull-request.py` exactly — every item here is a real check that runs in CI, not
+a style preference. If you do all of these, the validator passes; if you skip one, it tells you
+which.
+
+## The ten places one rule touches
+
+| # | File | What's required, and why a miss is silent |
+| --- | --- | --- |
+| 1 | `crates/godlint-core/src/rules/mod.rs` | `pub mod <name>;` |
+| 2 | `crates/godlint-core/src/rules/mod.rs` | `<name>::evaluate` listed in `EVALUATORS` — without this the rule compiles and never runs |
+| 3 | `crates/godlint-core/src/config/mod.rs` | A field on `Rules` renamed to the identifier via `#[serde(rename = "family/name")]` — without this the rule cannot be configured |
+| 4 | `crates/godlint-core/src/rules/registry.rs` | `id: <Struct>::ID` in `REGISTRATIONS` — without this a suppression naming the rule is silently treated as a typo, and `policy/unused-suppression` can never count its suppressions as used |
+| 5 | `crates/godlint-cli/tests/fixtures/rules/<slug>/` | A fixture directory: per-language `example.*` files, `godlint.yaml`, `expected.yaml` |
+| 6 | `crates/godlint-core/tests/rules/<name>.rs` | Unit tests |
+| 7 | `crates/godlint-core/tests/rules.rs` | The unit test file declared, or it never runs |
+| 8 | `docs/rule-roadmap.md`, `docs/rules.md`, `CHANGELOG.md` | All three must mention the identifier |
+| 9 | `godlint.yaml` | The rule dogfooded — named directly, or covered by an adopted suite |
+| 10 | fixture set | At least one fixture where it **fires**, and at least one where it is **configured and stays silent** — proving both directions, not just the positive case |
+
+Existing fixture directories run 3–12 files each; look at a rule in the same family before
+guessing the shape.
+
+## Two different things are both called "coverage" — don't confuse them
+
+- **Fixture coverage** (item 10 above, checked by `validate-pull-request.py`): does a fixture
+  *exist* proving the rule fires and proving it stays silent. This is presence, not percentage.
+- **Line coverage** (`scripts/check-rule-coverage.py`, run against `cargo llvm-cov` output): what
+  percentage of the rule's own source lines executed during the whole test run. This one **fails
+  in both directions** — under budget is undertested, comfortably over budget means the budget
+  stopped meaning anything and should come down.
+
+Run both before opening a pull request:
+
+```bash
+python3 scripts/validate-pull-request.py
+cargo llvm-cov --workspace --json --output-path coverage.json
+python3 scripts/check-rule-coverage.py coverage.json
+```
+
+## The fixture obligation from #88
+
+`reliability/empty-error-handler` shipped mutation-clean, passed every gate above, and still
+missed its main case — `except ValueError: pass` — because every fixture and every unit test used
+only a bare `except:`. The tests were written from the same blind spot as the code.
+
+**Write a fixture for every syntactic form that produces the underlying fact, not one fixture per
+rule.** If the rule reads a Python `except` clause, write one with no exception named, one with a
+named exception, one with `as` binding, one with a tuple of exceptions. If it reads a JS `catch`,
+write one with and without the bound parameter. The rule is only as good as the shapes it was
+checked against.
+
+## No comments in `src/`
+
+`style/no-comments` runs at `error` over this repository's own source, including new rule code.
+Reasoning that would have been a comment belongs in a doc under `docs/`, linked from the
+architecture guide if it explains a shared mechanism, or from the rule's own row in
+`docs/rules.md` if it's specific to that rule.
+
+## Order that avoids rework
+
+1. Confirm the fact this rule needs already exists (`crates/godlint-core/src/facts.rs`). If not,
+   that's a different skill — a fact is its own change, reviewed on its own.
+2. Write the fixtures first: valid, invalid, and — where the rule can be misconfigured — a
+   fixture proving that too. Fixtures are the spec; write them before the rule reads them wrong.
+3. Implement the rule and wire in items 1–4.
+4. Write unit tests (items 6–7), covering every syntactic form per the fixture obligation above.
+5. Dogfood it (item 9) and run `godlint check .` against this repository — if it fires here,
+   fix the finding or reconsider the rule, don't suppress it to make the number look clean.
+6. Documentation and changelog (item 8) last, once the rule's actual behaviour is settled — not
+   before, or the docs describe an intention rather than what shipped.

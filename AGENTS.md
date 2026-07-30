@@ -18,6 +18,24 @@ change:
 - [Releasing](docs/releasing.md) — the tag-driven release and the registries.
 - [Contributing](CONTRIBUTING.md) — change conventions, branch naming, pull request templates, labels.
 
+## Skills
+
+Step-by-step procedures for the recurring tasks in this repository. Follow the linked document in
+full before starting the task — these are not summaries of it.
+
+- [Propose a rule](docs/skills/propose-a-rule.md) — turn a candidate practice into a filed issue,
+  including the three decidability filters and the standard issue shape.
+- [Add a rule](docs/skills/add-a-rule.md) — implement an approved proposal: the ten places one
+  rule touches, mirrored from `scripts/validate-pull-request.py`.
+- [Propose a threshold](docs/skills/proposing-a-threshold.md) — measure a numeric limit against
+  this repository rather than borrowing one from another linter.
+- [Releasing](docs/releasing.md) — the tag-driven release process.
+- [Opening a pull request](CONTRIBUTING.md) — branch naming, templates, and the drift labels.
+
+Claude Code additionally reads these as `.claude/skills/<name>/SKILL.md`; Cursor reads them as
+`.cursor/rules/<name>.mdc`. All three point at the same document in `docs/skills/` — there is one
+copy of each procedure, not three.
+
 ## Operating rules
 
 - Be concise, always. Report the finding, the evidence, and the decision — not the
