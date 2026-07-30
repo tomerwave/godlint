@@ -69,6 +69,12 @@ speaks about.
 
 ### Fixed
 
+- A filename could rewrite the report about it. Godlint printed repository paths, messages, and
+  arguments unescaped, so an escape sequence in a name repainted the surrounding output and a newline
+  turned one finding into what read as two. Every diagnostic now goes through one escaping boundary:
+  a control character is rendered readably in the terminal and GitHub formats, and as a `\u` escape in
+  JSON and SARIF. The machine-readable formats also escape the control characters above `0x7f`, which
+  they previously passed through.
 - The README described Godlint in the future tense - what it *would* provide, what the first release
   *would* focus on, GitHub Actions integration as an unreached phase - while it was shipping on four
   channels. It now says what the tool does today, and the one claim that was genuinely unshipped,
