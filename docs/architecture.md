@@ -318,6 +318,15 @@ A failure specific to one file — unreadable bytes, invalid syntax — is recor
 that file and reported alongside the findings. It must not abort the run, because
 discarding every other finding turns one bad file into a silent pass.
 
+A file is read through a bounded reader with a four-mebibyte ceiling, and one above it is
+recorded as an issue rather than loaded. The bound is on the read rather than on a size
+checked first, so the allocation is limited by construction and a file that grows between
+the check and the read cannot get past it. Four mebibytes is far above anything written by
+hand — the largest source file here is fourteen kilobytes — and near where a single file
+starts to dominate a run: parsing costs roughly half a second per mebibyte, so a
+seventeen-mebibyte file measured nine seconds on its own. A file that large is generated
+rather than authored, and a repository that wants it scanned anyway should say so by
+excluding less rather than by having no limit at all.
 ## Reporting untrusted text
 
 Every path, message, and argument Godlint prints comes from the repository it was pointed

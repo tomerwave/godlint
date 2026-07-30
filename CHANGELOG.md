@@ -69,6 +69,11 @@ speaks about.
 
 ### Fixed
 
+- A source file was read whole with no size bound, so one very large file in a scanned tree could
+  exhaust memory before anything inspected it. Files are now read through a bounded reader with a
+  four-mebibyte ceiling, and a file above it is reported as a scan issue naming the limit instead of
+  being loaded. The bound is on the read rather than on a size checked beforehand, so the allocation
+  is limited by construction.
 - `security/no-dynamic-execution` missed a built-in reached through the global object, so
   `globalThis.eval(code)` was silent while `eval(code)` reported. The rule now strips a known global
   prefix before matching: `globalThis`, `window`, `self`, and `global` in JavaScript and TypeScript,
