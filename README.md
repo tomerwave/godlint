@@ -139,3 +139,4 @@ use the process in [SECURITY.md](SECURITY.md).
 ## License
 
 Godlint is released under the [MIT License](LICENSE).
+\n## style/no-commented-code\nDisallow commented-out code lines.
