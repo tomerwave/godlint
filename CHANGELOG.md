@@ -11,6 +11,14 @@ speaks about.
 
 ### Added
 
+- `security/no-weak-hash` — reports MD5 and SHA-1 where the algorithm is part of the callee: Python
+  `hashlib.md5`/`hashlib.sha1` and Rust `md5::compute`, `Md5::new`, `Sha1::new`. The message names a
+  replacement the language can use. `allow-in` exempts a cache key or an ETag, where collision
+  resistance is not the point. It deliberately does not cover JavaScript or TypeScript: the algorithm
+  there is an argument (`crypto.createHash("md5")`), the call rules read only the callee, and matching
+  `crypto.createHash` would report every SHA-256 call as a weak hash. `docs/rules.md` records that
+  boundary, together with a second one found while building this: inside a Rust macro invocation the
+  call rules see nothing, because a grammar keeps a macro's arguments as an unparsed token tree.
 - `security/no-insecure-random` — reports a general-purpose random generator, which is predictable by
   design: JavaScript `Math.random` and `crypto.pseudoRandomBytes`, Python's `random` module, and Rust
   `rand::random`/`rand::thread_rng`.

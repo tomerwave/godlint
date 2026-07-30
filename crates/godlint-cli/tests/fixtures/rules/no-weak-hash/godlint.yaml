@@ -1,0 +1,10 @@
+version: 1
+
+exclude:
+  - excluded.py
+
+rules:
+  security/no-weak-hash:
+    severity: error
+    allow-in:
+      - cache/**

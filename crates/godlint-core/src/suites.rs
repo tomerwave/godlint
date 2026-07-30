@@ -6,9 +6,10 @@ use crate::config::{
     EmptyErrorHandlerRule, EmptyFunctionRule, ExplicitTimerDelayRule, FilenameCaseRule,
     ForbiddenDependencyRule, FunctionNestingRule, FunctionStatementsRule, LineLimitRule,
     ModuleIndependenceRule, NoCommentsRule, NoDynamicExecutionRule, NoInsecureRandomRule,
-    NoProductionLogRule, ParameterCountRule, RestrictedCallRule, RestrictedImportRule,
-    ReturnCountRule, Rules, Severity, TodoRequiresReferenceRule, UnusedSuppressionRule,
-    default_configuration_paths, default_markers, default_reference_prefixes,
+    NoProductionLogRule, NoWeakHashRule, ParameterCountRule, RestrictedCallRule,
+    RestrictedImportRule, ReturnCountRule, Rules, Severity, TodoRequiresReferenceRule,
+    UnusedSuppressionRule, default_configuration_paths, default_markers,
+    default_reference_prefixes,
 };
 
 pub const RECOMMENDED: &str = "recommended@1";
@@ -134,6 +135,11 @@ fn policy(rules: &mut Rules) {
 }
 
 fn security(rules: &mut Rules) {
+    boundaries(rules);
+    dangerous_apis(rules);
+}
+
+fn boundaries(rules: &mut Rules) {
     let error = Severity::Error;
 
     rules.restricted_call.get_or_insert(RestrictedCallRule {
@@ -167,6 +173,11 @@ fn security(rules: &mut Rules) {
             severity: error,
             sets: Vec::new(),
         });
+}
+
+fn dangerous_apis(rules: &mut Rules) {
+    let error = Severity::Error;
+
     rules
         .no_dynamic_execution
         .get_or_insert(NoDynamicExecutionRule { severity: error });
@@ -176,6 +187,10 @@ fn security(rules: &mut Rules) {
             severity: error,
             allow_in: Vec::new(),
         });
+    rules.no_weak_hash.get_or_insert(NoWeakHashRule {
+        severity: error,
+        allow_in: Vec::new(),
+    });
     rules
         .direct_environment_read
         .get_or_insert_with(|| DirectEnvironmentReadRule {
