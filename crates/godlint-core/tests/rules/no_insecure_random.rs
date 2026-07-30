@@ -59,6 +59,20 @@ fn names_the_secure_generator_of_the_language_it_reports() {
 }
 
 #[test]
+fn reports_the_pseudo_random_bytes_helper() {
+    assert_eq!(
+        violations(
+            "src/a.js",
+            "const b = crypto.pseudoRandomBytes(16);",
+            ENABLED
+        )
+        .len(),
+        1,
+        "the name says pseudo; it is the one JavaScript case a callee match can decide"
+    );
+}
+
+#[test]
 fn keeps_a_secure_generator() {
     assert!(violations("src/a.py", "v = secrets.token_urlsafe(24)", ENABLED).is_empty());
     assert!(

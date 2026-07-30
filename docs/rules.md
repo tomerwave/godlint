@@ -65,7 +65,7 @@ Neither policy rule about suppressions can itself be suppressed. See
 | --- | --- |
 | `security/no-dynamic-execution` | JavaScript `eval`, `Function`, `new Function`; Python `eval`, `exec`. A global-object spelling of the same built-in counts: `globalThis`, `window`, `self`, or `global` in JavaScript and TypeScript, and `builtins` in Python |
 | `security/direct-environment-read` | Environment access outside a configuration boundary |
-| `security/no-insecure-random` | A general-purpose random generator, which is predictable: JavaScript `Math.random`, Python's `random` module, Rust `rand::random` and `rand::thread_rng`. `allow-in` exempts a path where unpredictability is not the point |
+| `security/no-insecure-random` | A general-purpose random generator, which is predictable: JavaScript `Math.random` and `crypto.pseudoRandomBytes`, Python's `random` module, Rust `rand::random` and `rand::thread_rng`. `allow-in` exempts a path where unpredictability is not the point |
 | `security/forbidden-dependency` | An import of a package the project has ruled out |
 
 ## Reliability

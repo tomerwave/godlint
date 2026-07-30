@@ -12,6 +12,7 @@ use crate::{
 
 const GENERATORS: Catalogue = Catalogue(&[
     ("Math.random", Dialect::JavaScript),
+    ("crypto.pseudoRandomBytes", Dialect::JavaScript),
     ("random.random", Dialect::Python),
     ("random.randint", Dialect::Python),
     ("random.randrange", Dialect::Python),
