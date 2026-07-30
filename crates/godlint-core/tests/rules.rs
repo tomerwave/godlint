@@ -69,6 +69,9 @@ mod no_focused_test;
 #[path = "rules/no_production_log.rs"]
 mod no_production_log;
 
+#[path = "rules/no_randomness_without_seed.rs"]
+mod no_randomness_without_seed;
+
 #[path = "rules/no_skipped_test.rs"]
 mod no_skipped_test;
 

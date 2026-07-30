@@ -294,6 +294,7 @@ semantic capability exists.
 | `testing/no-empty-test` | Shipped | High | Test fact and the body it encloses | Refuse a test that cannot fail |
 | `testing/no-skipped-test` | Shipped | High | Test fact focus | Refuse a test that does not run without an owner and an expiry |
 | `testing/no-sleep-in-test` | Shipped | High | Callee match against a per-language catalogue, scoped to calls inside a test | Refuse a test that waits on the clock rather than on the condition |
+| `testing/no-randomness-without-seed` | Shipped | High | Generator catalogue scoped to calls inside a test, exempting a file that seeds | Refuse a test whose failure cannot be reproduced |
 | `security/no-weak-hash` | Shipped | High | Direct callee match, plus a literal algorithm argument to a hash factory | Require a collision-resistant hash where collision resistance matters |
 | `reliability/explicit-timer-delay` | Shipped | High | Direct JavaScript/TypeScript timer calls with fewer than two arguments | Require an intentional delay value |
 | `logging/no-production-log` | Shipped | High | Direct logging callee match | Ban debug logging outside approved paths |
@@ -476,6 +477,7 @@ ships at error through `recommended@1`.
 | `testing/no-focused-test` | Planned | Test fact | High | Configured test framework names and attributes |
 | `testing/no-skipped-test` | Planned | Test fact | High | Configured skip APIs and decorators |
 | `testing/no-sleep-in-test` | Shipped | Test fact | High | Per-language sleep catalogue, scoped to calls inside a test |
+| `testing/no-randomness-without-seed` | Shipped | Test fact | High | Generator catalogue scoped to calls inside a test |
 | `testing/assertion-required` | Planned | Test and assertion facts | Medium | Configured framework assertion APIs |
 | `testing/no-mock-production-module` | Planned | Mock and import facts | Medium | Explicit configured production boundaries |
 

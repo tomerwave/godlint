@@ -97,6 +97,7 @@ Rust is out of scope. It has no `catch`, and a discarded `Result` is `reliabilit
 | `testing/no-empty-test` | A test whose body does nothing, so it cannot fail |
 | `testing/no-skipped-test` | A test that does not run: `.skip` or `.todo` in JavaScript and TypeScript, `#[ignore]` beside `#[test]` in Rust, and a `pytest.mark.skip` or `unittest.skip` decorator in Python |
 | `testing/no-sleep-in-test` | A test that waits on the clock: `time.sleep` or `asyncio.sleep` in Python, `thread::sleep` or `tokio::time::sleep` in Rust, and `page.waitForTimeout` or `browser.pause` in JavaScript and TypeScript |
+| `testing/no-randomness-without-seed` | A test drawing from a general-purpose generator in a file that never seeds one, so a failure cannot be reproduced |
 
 `no-empty-test` reads the test's own body rather than any function inside it, so a test that registers
 an empty callback is not empty itself. A test with no body to read at all, such as `it.todo('later')`,
@@ -140,6 +141,18 @@ defect.
 The false positive: a mocked sleep. `with patch("time.sleep"): time.sleep(999)` is instant and is still
 reported, because seeing the patch takes the same resolution the alias gap needs. Suppress it where it
 matters.
+
+`no-randomness-without-seed` shares its generator catalogue with `security/no-insecure-random`: the
+same call is unpredictable to an attacker and unreproducible to whoever has to read the failure. The
+two rules differ in what excuses it. Seeding is a property of the file rather than of the call, because
+`random.seed(1)` and `random.sample(...)` are separate calls and the second is what a rule sees, so a
+file containing any seeding call is exempt in full. That under-reports — a seeded test beside an
+unseeded one silences both — which is the safe direction for a rule enabled at error. A seed spelled
+for another language does not count.
+
+Property-based suites are the false positive to configure around. Their own generators are not in the
+catalogue, so most are already silent; `allow-in` covers a suite that draws from the standard library
+on purpose and reports its own seed.
 
 What counts as a test is decided by syntax alone — a runner call, a `#[test]` attribute, a `test_`
 prefix or a `pytest.mark` decorator. Neither rule knows about test directories, because an analyzer

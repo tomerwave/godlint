@@ -11,6 +11,21 @@ pub(super) enum Dialect {
     Rust,
 }
 
+pub(super) const GENERATORS: Catalogue = Catalogue(&[
+    ("Math.random", Dialect::JavaScript),
+    ("crypto.pseudoRandomBytes", Dialect::JavaScript),
+    ("random.random", Dialect::Python),
+    ("random.randint", Dialect::Python),
+    ("random.randrange", Dialect::Python),
+    ("random.choice", Dialect::Python),
+    ("random.choices", Dialect::Python),
+    ("random.sample", Dialect::Python),
+    ("random.shuffle", Dialect::Python),
+    ("random.uniform", Dialect::Python),
+    ("rand::random", Dialect::Rust),
+    ("rand::thread_rng", Dialect::Rust),
+]);
+
 pub(super) struct Catalogue(pub(super) &'static [(&'static str, Dialect)]);
 
 impl Catalogue {

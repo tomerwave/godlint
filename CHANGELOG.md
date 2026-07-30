@@ -27,6 +27,14 @@ speaks about.
   tempting hiding place and needs a fixture fact to see. A sleep reached through an alias is not reported,
   because that takes import resolution; and a mocked sleep under
   `patch("time.sleep")` is reported although it is instant, for the same reason the alias escapes.
+
+- `testing/no-randomness-without-seed` — reports a test drawing from a general-purpose generator in a
+  file that never seeds one. A failure there cannot be reproduced, so the report is not actionable. The
+  catalogue is shared with `security/no-insecure-random`, because the same call is unpredictable to an
+  attacker and unreproducible to a reader. Seeding is read per file rather than per call, since
+  `random.seed(1)` and `random.sample(...)` are separate calls: any seeding call exempts the file. That
+  under-reports rather than over-reports, and `allow-in` covers a property-based suite that draws from
+  the standard library on purpose.
 - Rules can now ask about a call that falls inside a test. `CallInTestRule` reads the call facts of a
   file, keeps only those a test's range encloses, and hands the rule the whole file's facts beside the
   call, so a rule can also ask what else the file does. That is the shape shared by `no-sleep-in-test`,

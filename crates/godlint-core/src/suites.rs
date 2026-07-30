@@ -6,8 +6,8 @@ use crate::config::{
     EmptyErrorHandlerRule, EmptyFunctionRule, ExplicitTimerDelayRule, FilenameCaseRule,
     ForbiddenDependencyRule, FunctionNestingRule, FunctionStatementsRule, LineLimitRule,
     ModuleIndependenceRule, NoCommentsRule, NoDynamicExecutionRule, NoEmptyTestRule,
-    NoFocusedTestRule, NoInsecureRandomRule, NoProductionLogRule, NoSkippedTestRule,
-    NoSleepInTestRule, NoWeakHashRule, ParameterCountRule, RestrictedCallRule,
+    NoFocusedTestRule, NoInsecureRandomRule, NoProductionLogRule, NoRandomnessWithoutSeedRule,
+    NoSkippedTestRule, NoSleepInTestRule, NoWeakHashRule, ParameterCountRule, RestrictedCallRule,
     RestrictedImportRule, ReturnCountRule, Rules, Severity, TodoRequiresReferenceRule,
     UnusedSuppressionRule, default_configuration_paths, default_markers,
     default_reference_prefixes,
@@ -229,6 +229,12 @@ fn testing(rules: &mut Rules) {
     rules
         .no_sleep_in_test
         .get_or_insert(NoSleepInTestRule { severity: error });
+    rules
+        .no_randomness_without_seed
+        .get_or_insert(NoRandomnessWithoutSeedRule {
+            severity: error,
+            allow_in: Vec::new(),
+        });
 }
 
 fn logging(rules: &mut Rules) {

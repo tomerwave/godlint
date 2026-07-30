@@ -54,6 +54,9 @@ pub enum Violation {
     SleepInTest {
         callee: String,
     },
+    UnseededRandom {
+        callee: String,
+    },
     RestrictedImport {
         module: String,
     },
@@ -136,6 +139,11 @@ const SLEEP_IN_TEST: &str = concat!(
     "condition instead."
 );
 
+const UNSEEDED_RANDOM: &str = concat!(
+    "is unseeded, so a failure here cannot be reproduced; seed the generator, or use a fixed ",
+    "fixture."
+);
+
 const COMMENT_NOT_PERMITTED: &str = "Comment is not permitted; express the intent in the code.";
 
 fn unverified_hash(formatter: &mut fmt::Formatter<'_>, callee: &str) -> fmt::Result {
@@ -209,6 +217,7 @@ impl fmt::Display for Violation {
             Self::SkippedTest => write!(formatter, "{SKIPPED_TEST}"),
             Self::EmptyTest => formatter.write_str(EMPTY_TEST),
             Self::SleepInTest { callee } => write!(formatter, "{callee} {SLEEP_IN_TEST}"),
+            Self::UnseededRandom { callee } => write!(formatter, "{callee} {UNSEEDED_RANDOM}"),
             Self::InsecureRandom { callee, secure } => insecure_random(formatter, callee, secure),
         }
     }
