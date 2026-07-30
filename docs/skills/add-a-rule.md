@@ -24,6 +24,23 @@ which.
 Existing fixture directories run 3–12 files each; look at a rule in the same family before
 guessing the shape.
 
+## Two more places, only if the rule carries a numeric threshold into `recommended@1`
+
+If the new rule has a `max-*` field and you add it to a suite, two hand-maintained tables outside
+the ten places above also need the new entry, or the build fails with a message that does not look
+like it is about your rule at all:
+
+- `crates/godlint-core/tests/suites.rs`, the `configured_line_limits`/`configured_count_limits`
+  functions — asserted against `docs/rule-roadmap.md`'s `recommended@1` table with the message
+  *"the table is the source"*. Miss this and `recommended_carries_the_documented_thresholds` fails.
+- `crates/godlint-core/tests/rules/registry.rs`, the `limits()` function — a minimal
+  `key: 1` snippet used to prove every registered rule reads only its own configuration. Miss this
+  and `every_registered_rule_reads_its_own_configuration` fails with a YAML parse error that names
+  the missing field, not the missing table entry.
+
+Neither is optional, and neither is discoverable from the ten-point checklist above — both were
+found by running the full test suite, not by reading a spec.
+
 ## Two different things are both called "coverage" — don't confuse them
 
 - **Fixture coverage** (item 10 above, checked by `validate-pull-request.py`): does a fixture
