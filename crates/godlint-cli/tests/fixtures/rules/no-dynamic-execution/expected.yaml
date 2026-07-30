@@ -6,5 +6,11 @@ stdout: |
   example.js:2:1: error[security/no-dynamic-execution] Function executes dynamically generated code; use an explicit, reviewed boundary instead.
   example.py:1:1: error[security/no-dynamic-execution] eval executes dynamically generated code; use an explicit, reviewed boundary instead.
   example.py:2:1: error[security/no-dynamic-execution] exec executes dynamically generated code; use an explicit, reviewed boundary instead.
+  global.js:1:1: error[security/no-dynamic-execution] globalThis.eval executes dynamically generated code; use an explicit, reviewed boundary instead.
+  global.js:2:1: error[security/no-dynamic-execution] window.eval executes dynamically generated code; use an explicit, reviewed boundary instead.
+  global.js:3:1: error[security/no-dynamic-execution] self.Function executes dynamically generated code; use an explicit, reviewed boundary instead.
+  global.js:4:1: error[security/no-dynamic-execution] global.eval executes dynamically generated code; use an explicit, reviewed boundary instead.
+  global.py:1:1: error[security/no-dynamic-execution] builtins.eval executes dynamically generated code; use an explicit, reviewed boundary instead.
+  global.py:2:1: error[security/no-dynamic-execution] builtins.exec executes dynamically generated code; use an explicit, reviewed boundary instead.
 
 stderr: ""

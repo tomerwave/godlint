@@ -283,7 +283,7 @@ semantic capability exists.
 | Rule | Confidence | Initial detection | Example policy |
 | --- | --- | --- | --- |
 | `architecture/restricted-call` | Shipped | High | Direct callee and macro match | Block direct process exits and debug output by default; configure calls such as `loadConfig` with `allow-in` path globs |
-| `security/no-dynamic-execution` | Shipped | High | Direct JavaScript/Python callee match | Block JavaScript `eval`/`Function` and Python `eval`/`exec` |
+| `security/no-dynamic-execution` | Shipped | High | Direct JavaScript/Python callee match | Block JavaScript `eval`/`Function` and Python `eval`/`exec`, including a global-object spelling of either |
 | `security/direct-environment-read` | Shipped | High | Direct platform API match | Require a single configuration boundary |
 | `reliability/explicit-timer-delay` | Shipped | High | Direct JavaScript/TypeScript timer calls with fewer than two arguments | Require an intentional delay value |
 | `logging/no-production-log` | Shipped | High | Direct logging callee match | Ban debug logging outside approved paths |

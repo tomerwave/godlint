@@ -238,6 +238,16 @@ current line cannot matter to any later line. Without it, counting a file costs 
 count times its comment count, which is invisible on ordinary source and pronounced on a
 heavily annotated file.
 
+A built-in reached through the global object is the same built-in, so
+`security/no-dynamic-execution` strips a known global prefix before matching a callee:
+`globalThis.eval` is `eval`. Which names denote the global scope is language-specific rather
+than a shared list. JavaScript and TypeScript have four — `globalThis`, `window`, `self`, and
+`global` — and Python has `builtins`. Python's `self` is deliberately absent: there it names
+the instance a method was called on, so treating it as a global would report every
+`self.eval` method a project writes. A prefix list is a stopgap rather than resolution — a
+project that aliases `const e = globalThis.eval` still escapes, and closing that needs the
+value tracking no fact model here provides.
+
 ## Configuration
 
 Two rules share `LineLimitRule` because `function-size` and `file-size` ask the same
