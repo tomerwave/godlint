@@ -1,8 +1,12 @@
 # Rule roadmap
 
-Godlint is a cross-language policy engine. It should enforce the rules that need one
-organization-level decision across Rust, JavaScript/TypeScript, and Python. It should
-not reimplement formatters, compilers, or each language's general-purpose linter.
+Godlint is the executable engineering constitution for repositories maintained by
+humans and coding agents. This roadmap prioritizes deterministic rules that preserve
+repository intent as code output scales.
+
+It should enforce decisions that need one organization-level policy across Rust,
+JavaScript/TypeScript, and Python. It should not reimplement formatters, compilers, or
+each language's general-purpose linter.
 
 ## Product boundary
 
