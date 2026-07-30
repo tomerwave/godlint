@@ -313,6 +313,12 @@ messages, the suppression audit, and the unknown-argument error. A rendered esca
 readable rather than merely stripped, because a reviewer needs to see that a name contains
 something odd. The machine-readable formats escape the same characters as JSON `\u`
 sequences, which keeps a document parseable and a consumer that prints it raw safe.
+Discovery draws the same line by where a path came from. A path the user named on the
+command line is fatal: they asked for it, so a partial answer would be a wrong answer.
+Anything reached while walking below such a path becomes a recorded failure instead — an
+unreadable subdirectory costs its own contents and nothing else. Both shapes still end the
+run with the exit code that says something went wrong, so degrading is not the same as
+passing.
 
 ## Crate boundaries
 

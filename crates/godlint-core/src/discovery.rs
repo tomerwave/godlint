@@ -24,41 +24,90 @@ pub struct Scope<'a> {
     pub excludes: &'a [String],
 }
 
-pub fn discover(paths: &[PathBuf], scope: &Scope<'_>) -> Result<Vec<PathBuf>, DiscoveryError> {
-    let mut files = BTreeSet::new();
-
-    for path in paths {
-        discover_path(path, scope, &mut files, true)?;
-    }
-
-    Ok(files.into_iter().collect())
+pub struct Discovery {
+    pub files: Vec<PathBuf>,
+    pub failures: Vec<DiscoveryError>,
 }
 
-enum Walk {
+pub fn discover(paths: &[PathBuf], scope: &Scope<'_>) -> Result<Discovery, DiscoveryError> {
+    let mut walk = Walk {
+        scope,
+        files: BTreeSet::new(),
+        failures: Vec::new(),
+    };
+
+    for path in paths {
+        walk.requested(path)?;
+    }
+
+    Ok(walk.finish())
+}
+
+enum Kind {
     Skip,
     File,
     Directory,
 }
 
-fn discover_path(
-    path: &Path,
-    scope: &Scope<'_>,
-    files: &mut BTreeSet<PathBuf>,
-    is_requested_root: bool,
-) -> Result<(), DiscoveryError> {
-    let metadata = fs::symlink_metadata(path).map_err(|source| DiscoveryError::ReadMetadata {
-        path: path.to_path_buf(),
-        source,
-    })?;
+struct Walk<'a> {
+    scope: &'a Scope<'a>,
+    files: BTreeSet<PathBuf>,
+    failures: Vec<DiscoveryError>,
+}
 
-    match classify(path, scope, &metadata, is_requested_root) {
-        Walk::Skip => Ok(()),
-        Walk::File => {
-            add_supported_file(path, files);
+impl Walk<'_> {
+    fn requested(&mut self, path: &Path) -> Result<(), DiscoveryError> {
+        let metadata =
+            fs::symlink_metadata(path).map_err(|source| unreadable_metadata(path, source))?;
 
-            Ok(())
+        match classify(path, self.scope, &metadata, true) {
+            Kind::Skip => (),
+            Kind::File => self.add_supported_file(path),
+            Kind::Directory => self.enter(sorted_entry_paths(path)?),
         }
-        Walk::Directory => discover_directory(path, scope, files),
+
+        Ok(())
+    }
+
+    fn enter(&mut self, paths: Vec<PathBuf>) {
+        for path in paths {
+            self.descend(&path);
+        }
+    }
+
+    fn descend(&mut self, path: &Path) {
+        match fs::symlink_metadata(path) {
+            Ok(metadata) => self.visit(path, &metadata),
+            Err(source) => self.failures.push(unreadable_metadata(path, source)),
+        }
+    }
+
+    fn visit(&mut self, path: &Path, metadata: &fs::Metadata) {
+        match classify(path, self.scope, metadata, false) {
+            Kind::Skip => (),
+            Kind::File => self.add_supported_file(path),
+            Kind::Directory => self.walk_directory(path),
+        }
+    }
+
+    fn walk_directory(&mut self, directory: &Path) {
+        match sorted_entry_paths(directory) {
+            Ok(paths) => self.enter(paths),
+            Err(failure) => self.failures.push(failure),
+        }
+    }
+
+    fn add_supported_file(&mut self, path: &Path) {
+        if Language::from_path(path).is_some() {
+            self.files.insert(path.to_path_buf());
+        }
+    }
+
+    fn finish(self) -> Discovery {
+        Discovery {
+            files: self.files.into_iter().collect(),
+            failures: self.failures,
+        }
     }
 }
 
@@ -67,22 +116,22 @@ fn classify(
     scope: &Scope<'_>,
     metadata: &fs::Metadata,
     is_requested_root: bool,
-) -> Walk {
+) -> Kind {
     if metadata.file_type().is_symlink() || is_excluded(path, scope) {
-        return Walk::Skip;
+        return Kind::Skip;
     }
 
     if metadata.is_file() {
-        return Walk::File;
+        return Kind::File;
     }
 
     let descends = metadata.is_dir() && (is_requested_root || !paths::is_repository_root(path));
 
     if descends {
-        return Walk::Directory;
+        return Kind::Directory;
     }
 
-    Walk::Skip
+    Kind::Skip
 }
 
 fn is_excluded(path: &Path, scope: &Scope<'_>) -> bool {
@@ -99,18 +148,12 @@ fn is_excluded(path: &Path, scope: &Scope<'_>) -> bool {
         .any(|pattern| glob::matches(pattern, &candidate))
 }
 
-fn discover_directory(
-    directory: &Path,
-    scope: &Scope<'_>,
-    files: &mut BTreeSet<PathBuf>,
-) -> Result<(), DiscoveryError> {
+fn sorted_entry_paths(directory: &Path) -> Result<Vec<PathBuf>, DiscoveryError> {
     let mut paths = entry_paths(directory)?;
 
     paths.sort();
 
-    paths
-        .into_iter()
-        .try_for_each(|path| discover_path(&path, scope, files, false))
+    Ok(paths)
 }
 
 fn entry_paths(directory: &Path) -> Result<Vec<PathBuf>, DiscoveryError> {
@@ -131,9 +174,26 @@ fn unreadable(directory: &Path, source: std::io::Error) -> DiscoveryError {
     }
 }
 
-fn add_supported_file(path: &Path, files: &mut BTreeSet<PathBuf>) {
-    if Language::from_path(path).is_some() {
-        files.insert(path.to_path_buf());
+fn unreadable_metadata(path: &Path, source: std::io::Error) -> DiscoveryError {
+    DiscoveryError::ReadMetadata {
+        path: path.to_path_buf(),
+        source,
+    }
+}
+
+impl DiscoveryError {
+    pub fn path(&self) -> &Path {
+        match self {
+            Self::ReadDirectory { path, .. } | Self::ReadMetadata { path, .. } => path,
+        }
+    }
+
+    pub fn reason(&self) -> String {
+        match self {
+            Self::ReadDirectory { source, .. } | Self::ReadMetadata { source, .. } => {
+                source.to_string()
+            }
+        }
     }
 }
 
