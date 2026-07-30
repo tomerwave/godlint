@@ -2,13 +2,22 @@ use crate::{
     analyzers::SourceFacts,
     config::{Config, DirectEnvironmentReadRule, Severity},
     facts::{AccessFact, CallFact},
-    glob,
     rules::{
-        AccessRule, CallRule, Finding, Rule, Violation, evaluate_access_rule, evaluate_call_rule,
-        when_configured,
+        AccessRule, CallRule, Finding, Rule, Violation,
+        catalogue::{Catalogue, Dialect, is_allowed},
+        evaluate_access_rule, evaluate_call_rule, when_configured,
     },
-    source::{Language, SourceFile},
 };
+
+const READS: Catalogue = Catalogue(&[
+    ("process.env", Dialect::JavaScript),
+    ("os.environ", Dialect::Python),
+]);
+
+const READERS: Catalogue = Catalogue(&[
+    ("os.getenv", Dialect::Python),
+    ("std::env::var", Dialect::Rust),
+]);
 
 pub struct DirectEnvironmentRead;
 
@@ -47,27 +56,15 @@ pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Vec<Finding> {
 }
 
 fn is_environment_access(access: &AccessFact) -> bool {
-    match access.source().language() {
-        Language::JavaScript | Language::TypeScript => access.target() == "process.env",
-        Language::Python => access.target() == "os.environ",
-        Language::Rust => false,
-    }
+    READS.speaks(access.source().language(), access.target())
 }
 
 fn is_environment_call(call: &CallFact) -> bool {
-    match call.source().language() {
-        Language::Python => call.callee() == "os.getenv",
-        Language::Rust => call.callee() == "std::env::var",
-        Language::JavaScript | Language::TypeScript => false,
-    }
+    READERS.speaks(call.source().language(), call.callee())
 }
 
 fn direct_read_violation(target: &str) -> Violation {
     Violation::DirectEnvironmentRead {
         target: target.to_owned(),
     }
-}
-
-fn is_allowed(source: &SourceFile, allow_in: &[String]) -> bool {
-    glob::matches_any(allow_in.iter().map(String::as_str), source.path_text())
 }

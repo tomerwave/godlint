@@ -2,24 +2,19 @@ use crate::{
     analyzers::SourceFacts,
     config::{Config, RestrictedCall as RestrictedCallConfiguration, RestrictedCallRule, Severity},
     facts::CallFact,
-    glob,
-    rules::{CallRule, Finding, Rule, Violation, evaluate_call_rule, when_configured},
-    source::Language,
+    rules::{
+        CallRule, Finding, Rule, Violation,
+        catalogue::{Catalogue, Dialect, is_allowed, spelled},
+        evaluate_call_rule, when_configured,
+    },
 };
 
-#[derive(Clone, Copy, Eq, PartialEq)]
-enum Dialect {
-    JavaScript,
-    Python,
-    Rust,
-}
-
-const DEFAULTS: &[(&str, Dialect)] = &[
+const BUILT_INS: Catalogue = Catalogue(&[
     ("process.exit", Dialect::JavaScript),
     ("sys.exit", Dialect::Python),
     ("os._exit", Dialect::Python),
     ("std::process::exit", Dialect::Rust),
-];
+]);
 
 pub struct RestrictedCall;
 
@@ -47,50 +42,17 @@ pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Vec<Finding> {
     })
 }
 
-fn spelled(call: &CallFact) -> String {
-    let callee = call.callee();
-
-    if call.is_macro() {
-        format!("{callee}!")
-    } else {
-        callee.to_owned()
-    }
-}
-
 fn is_restricted(call: &CallFact, restrictions: &[RestrictedCallConfiguration]) -> bool {
     let name = spelled(call);
     let configured = restrictions
         .iter()
         .find(|restriction| restriction.name == name);
-    let restricted = if is_built_in(&name) {
-        is_built_in_of(call, &name)
+    let restricted = if BUILT_INS.lists(&name) {
+        BUILT_INS.speaks(call.source().language(), &name)
     } else {
         configured.is_some()
     };
 
-    restricted && !configured.is_some_and(|restriction| is_allowed(call, &restriction.allow_in))
-}
-
-fn is_built_in(name: &str) -> bool {
-    DEFAULTS.iter().any(|(default, _)| *default == name)
-}
-
-fn is_built_in_of(call: &CallFact, name: &str) -> bool {
-    let dialect = dialect(call.source().language());
-
-    DEFAULTS
-        .iter()
-        .any(|(default, spoken)| *default == name && *spoken == dialect)
-}
-
-fn dialect(language: Language) -> Dialect {
-    match language {
-        Language::JavaScript | Language::TypeScript => Dialect::JavaScript,
-        Language::Python => Dialect::Python,
-        Language::Rust => Dialect::Rust,
-    }
-}
-
-fn is_allowed(call: &CallFact, paths: &[String]) -> bool {
-    glob::matches_any(paths.iter().map(String::as_str), call.source().path_text())
+    restricted
+        && !configured.is_some_and(|restriction| is_allowed(call.source(), &restriction.allow_in))
 }

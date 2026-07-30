@@ -10,6 +10,7 @@ use crate::{
 };
 
 pub mod accountable_suppression;
+mod catalogue;
 pub mod cognitive_complexity;
 pub mod condition_complexity;
 pub mod decision_complexity;

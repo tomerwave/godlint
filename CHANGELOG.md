@@ -67,6 +67,20 @@ speaks about.
   either way, and neither label belongs on a pull request where the repository has genuinely drifted
   from the standard it publishes.
 
+### Changed
+
+- Whether a curated call list ships as configuration or as a named rule is now decided and recorded in
+  the architecture guide: ship the opinion as a named rule, keep `architecture/restricted-call` for policy
+  Godlint has no opinion about. A configured list cannot say why it exists, so its message cannot say what
+  to do instead, and it cannot carry a stable identifier for a suppression to survive a configuration edit.
+  `rules::catalogue` now owns the machinery all four call-matching rules shared — the dialect table, the
+  dialect a language speaks, the macro-aware spelling of a callee, and the path allowance — so a new named
+  rule costs a table and a message rather than a copy of the engine. `architecture/restricted-call` went
+  from 96 lines to 58 and `logging/no-production-log` from 85 to 50. No rule changes behaviour: output is
+  byte-identical across all 52 fixtures. Replacing a per-language match with a catalogue lookup also
+  removed an arm that could never execute, so the rule-coverage budget drops from two documented
+  unreachable lines to one.
+
 ### Fixed
 
 - A source file was read whole with no size bound, so one very large file in a scanned tree could

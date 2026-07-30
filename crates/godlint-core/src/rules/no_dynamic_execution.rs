@@ -2,9 +2,20 @@ use crate::{
     analyzers::SourceFacts,
     config::{Config, NoDynamicExecutionRule, Severity},
     facts::CallFact,
-    rules::{CallRule, Finding, Rule, Violation, evaluate_call_rule, when_configured},
+    rules::{
+        CallRule, Finding, Rule, Violation,
+        catalogue::{Catalogue, Dialect},
+        evaluate_call_rule, when_configured,
+    },
     source::Language,
 };
+
+const EXECUTORS: Catalogue = Catalogue(&[
+    ("eval", Dialect::JavaScript),
+    ("Function", Dialect::JavaScript),
+    ("eval", Dialect::Python),
+    ("exec", Dialect::Python),
+]);
 
 pub struct NoDynamicExecution;
 
@@ -37,13 +48,8 @@ const PYTHON_GLOBALS: [&str; 1] = ["builtins"];
 
 fn is_dynamic_execution(call: &CallFact) -> bool {
     let language = call.source().language();
-    let callee = unqualified(call.callee(), globals(language));
 
-    match language {
-        Language::JavaScript | Language::TypeScript => matches!(callee, "eval" | "Function"),
-        Language::Python => matches!(callee, "eval" | "exec"),
-        Language::Rust => false,
-    }
+    EXECUTORS.speaks(language, unqualified(call.callee(), globals(language)))
 }
 
 fn globals(language: Language) -> &'static [&'static str] {

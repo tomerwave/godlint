@@ -32,10 +32,6 @@ RULES = "/src/rules/"
 # pushes the count over, and a budget left above reality is reported too, which is how that
 # collapse showed up here rather than as silent slack.
 BUDGET = {
-    # `Language::Rust => false` in `is_environment_access`. Rust states in its vocabulary
-    # that it has no member-access form, so no Rust file produces an access fact; the arm
-    # exists to make the compiler demand a decision when a language is added.
-    "src/rules/direct_environment_read.rs": 1,
     # The marker range is derived from a comment range that is already valid and can only
     # narrow it, so asking the file for it cannot fail.
     "src/rules/todo_requires_reference.rs": 1,
