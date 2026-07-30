@@ -1,5 +1,5 @@
-const child_process = require("child_process");
+const cp = require("child_process");
 
 function deploy(branch) {
-  child_process.exec(`git checkout ${branch}`);
+  cp.exec(`git checkout ${branch}`);
 }

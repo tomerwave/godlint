@@ -7,6 +7,7 @@ use crate::{
         catalogue::{Catalogue, Dialect, matches, spelled},
         collect_ranged, when_configured,
     },
+    source::Language,
 };
 
 const SHELLING: Catalogue = Catalogue(&[
@@ -14,10 +15,6 @@ const SHELLING: Catalogue = Catalogue(&[
     ("os.popen", Dialect::Python),
     ("commands.getoutput", Dialect::Python),
     ("commands.getstatusoutput", Dialect::Python),
-    ("child_process.exec", Dialect::JavaScript),
-    ("child_process.execSync", Dialect::JavaScript),
-    ("childProcess.exec", Dialect::JavaScript),
-    ("childProcess.execSync", Dialect::JavaScript),
 ]);
 
 const IMPORTED: Catalogue = Catalogue(&[
@@ -37,6 +34,10 @@ const SHELLS: [&str; 8] = [
 ];
 
 const PROCESS_MODULES: [&str; 2] = ["child_process", "node:child_process"];
+
+const MODULE_RECEIVERS: [&str; 2] = ["child_process", "childProcess"];
+
+const ALIAS_RECEIVERS: [&str; 1] = ["cp"];
 
 pub struct NoShellCommand;
 
@@ -77,30 +78,48 @@ fn shell_of(call: &CallFact, facts: &SourceFacts) -> Option<String> {
     let name = spelled(call);
     let language = call.source().language();
 
-    if asks_for_a_shell(call) {
-        return Some("shell=True".to_owned());
+    if let Some(value) = requested_shell(call) {
+        return Some(format!("shell={value}"));
     }
 
-    if SHELLING.speaks(language, &name)
-        || (IMPORTED.speaks(language, &name) && imports_a_process_module(facts))
-    {
+    if SHELLING.speaks(language, &name) || shells_through_the_module(facts, language, &name) {
         return Some(name);
     }
 
     launched_shell(call, &name).map(|program| format!("{name}(\"{program}\")"))
 }
 
-fn asks_for_a_shell(call: &CallFact) -> bool {
+const TRUTHY: [&str; 2] = ["True", "1"];
+
+fn requested_shell(call: &CallFact) -> Option<&str> {
     call.named("shell")
         .and_then(|argument| argument.literal.as_deref())
-        == Some("True")
+        .filter(|value| TRUTHY.contains(value))
 }
 
 fn launched_shell<'call>(call: &'call CallFact, name: &str) -> Option<&'call str> {
     name.ends_with("Command::new")
         .then(|| call.positional_literal(0))
         .flatten()
-        .filter(|program| SHELLS.contains(program))
+        .filter(|program| SHELLS.contains(&basename(program)))
+}
+
+fn basename(program: &str) -> &str {
+    program.rsplit(['/', '\\']).next().unwrap_or(program)
+}
+
+fn shells_through_the_module(facts: &SourceFacts, language: Language, name: &str) -> bool {
+    let (receiver, member) = name.split_once('.').unwrap_or(("", name));
+
+    if !IMPORTED.speaks(language, member) {
+        return false;
+    }
+
+    if MODULE_RECEIVERS.contains(&receiver) {
+        return true;
+    }
+
+    (receiver.is_empty() || ALIAS_RECEIVERS.contains(&receiver)) && imports_a_process_module(facts)
 }
 
 fn imports_a_process_module(facts: &SourceFacts) -> bool {

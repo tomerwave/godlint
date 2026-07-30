@@ -116,6 +116,70 @@ fn reads_both_halves_of_a_require() {
 }
 
 #[test]
+fn reads_a_shell_reached_through_a_module_alias() {
+    let cases = [
+        "import cp from \"child_process\";\ncp.execSync(command);\n",
+        "import * as cp from \"node:child_process\";\ncp.exec(command);\n",
+        "const childProcess = require(\"child_process\");\nchildProcess.exec(command);\n",
+    ];
+
+    for source in cases {
+        assert_eq!(
+            reported("src/deploy.js", source).len(),
+            1,
+            "aliasing the module is the common spelling: {source}"
+        );
+    }
+}
+
+#[test]
+fn keeps_a_member_call_on_a_receiver_that_is_not_the_module() {
+    let source = concat!(
+        "const { execFile } = require(\"child_process\");\n",
+        "const found = pattern.exec(reference);\n",
+        "const direct = /re/.exec(reference);\n"
+    );
+
+    assert!(
+        reported("src/parse.js", source).is_empty(),
+        "a regular expression in a file that imports the module is still a regular expression, and \
+         accepting any receiver would report every one of them"
+    );
+}
+
+#[test]
+fn reads_a_shell_named_by_an_absolute_path() {
+    for program in ["/bin/sh", "/bin/bash", "/usr/bin/pwsh"] {
+        let source = format!("fn a() {{\n    Command::new(\"{program}\").arg(b);\n}}\n");
+
+        assert_eq!(
+            reported("src/deploy.rs", &source).len(),
+            1,
+            "an absolute path is the same shell: {program}"
+        );
+    }
+    assert!(
+        reported(
+            "src/deploy.rs",
+            "fn a() {\n    Command::new(\"/usr/bin/git\").arg(b);\n}\n"
+        )
+        .is_empty()
+    );
+}
+
+#[test]
+fn reads_a_truthy_shell_keyword_and_names_what_was_written() {
+    assert_eq!(
+        message("src/deploy.py", "subprocess.run(command, shell=1)")
+            .split_whitespace()
+            .next(),
+        Some("shell=1"),
+        "Python accepts any truthy value, and the message should quote what was written"
+    );
+    assert!(reported("src/deploy.py", "subprocess.run(command, shell=0)").is_empty());
+}
+
+#[test]
 fn keeps_a_regular_expression_exec() {
     assert!(
         reported("src/parse.js", "const m = pattern.exec(reference);").is_empty(),

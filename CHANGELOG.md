@@ -63,8 +63,9 @@ speaks about.
   for it to be deleted, fixed, or suppressed with an owner and an expiry.
 - `security/no-shell-command` — reports a command run through a shell, where any interpolated value
   becomes executable. The three languages put the defect in three different places, so the rule reads
-  three signals. Python's callee is innocent and the argument is the finding, so `shell=True` is what the
-  message names, and `shell=False` is read rather than merely looked for. JavaScript's callee is the
+  three signals. Python's callee is innocent and the argument is the finding, so the check is callee-blind — any call
+  passing a truthy `shell=` reports, which is what sees `sp.run(...)` and `run(...)` after an aliased or
+  `from` import without listing either — and `shell=False` is read rather than merely looked for. JavaScript's callee is the
   finding — `exec` shells out, `execFile` does not — but the common spelling destructures it, so a bare
   `exec` counts only where the file imports `child_process` by `import` or `require`; without that
   import the same name is a regular expression's `exec`, so `pattern.exec(reference)` is silent. Rust's

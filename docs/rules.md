@@ -71,14 +71,20 @@ Neither policy rule about suppressions can itself be suppressed. See
 | `security/forbidden-dependency` | An import of a package the project has ruled out |
 
 `no-shell-command` reads three different signals, because the languages put the defect in three
-different places. In Python the callee is innocent and the *argument* is the finding, so `shell=True`
-is what the message names; `shell=False` and `check=True` are read rather than merely looked for. In
+different places. In Python the callee is innocent and the *argument* is the finding, so the check is
+callee-blind: **any** call passing a truthy `shell=` reports, not only a `subprocess` launcher. That is
+what lets it see `sp.run(...)` after `import subprocess as sp`, and `run(...)` after `from subprocess
+import run`, without listing either. The price is that a domain function of your own taking a `shell`
+keyword is reported too. `shell=False` and `shell=0` are read rather than merely looked for. In
 JavaScript the callee is the finding — `exec` shells out and `execFile` does not — but the common
 spelling destructures it, so a bare `exec` counts only in a file that imports `child_process`, by
-either `import` or `require`. Without that import the same name is a regular expression's `exec`,
-which is why `pattern.exec(reference)` is silent. In Rust the program is the finding, so
-`Command::new("sh")` is reported and `Command::new("git")` is not; a program Godlint cannot read is
-left alone.
+either `import` or `require`. A member call is read the same way with one difference: a receiver spelled
+`child_process` or `childProcess` names the module itself and needs no corroboration, while a short alias
+(`cp`) is only the module in a file that imports it. Both halves are load-bearing — without the import a
+bare `exec` is a regular expression's, and accepting *any* receiver in a file that imports the module
+reports every regular expression in it. The cost is that an unusual alias is missed. In Rust the program is the finding, so
+`Command::new("sh")` is reported and `Command::new("git")` is not, by basename, so `/bin/sh` counts; a
+program Godlint cannot read is left alone.
 
 A literal command with nothing interpolated is reported too. It is not injectable today, but the
 argument-array form is no harder to write, and a rule that reports only interpolated strings would
