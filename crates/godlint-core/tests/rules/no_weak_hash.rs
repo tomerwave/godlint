@@ -1,6 +1,8 @@
 use godlint_core::rules::{Violation, no_weak_hash};
 
-use super::support::rule_violations;
+use godlint_core::config::Severity;
+
+use super::support::{rule_findings, rule_violations};
 
 const ENABLED: &str = "version: 1\nrules:\n  security/no-weak-hash:\n    severity: error\n";
 
@@ -56,12 +58,110 @@ fn keeps_a_collision_resistant_hash() {
 }
 
 #[test]
-fn does_not_read_an_algorithm_passed_as_an_argument() {
-    assert!(
-        violations("src/a.js", "const h = crypto.createHash(\"md5\");", ENABLED).is_empty(),
-        "the algorithm is an argument here, and reporting the callee would also report sha256"
+fn reads_a_weak_algorithm_named_by_a_literal_argument() {
+    assert_eq!(
+        violations("src/a.js", "const h = crypto.createHash(\"md5\");", ENABLED).len(),
+        1
     );
-    assert!(violations("src/a.py", "h = hashlib.new(\"md5\")", ENABLED).is_empty());
+    assert_eq!(
+        violations(
+            "src/a.ts",
+            "const h = crypto.createHmac(\"sha1\", key);",
+            ENABLED
+        )
+        .len(),
+        1
+    );
+    assert_eq!(
+        violations("src/a.py", "h = hashlib.new(\"md5\")", ENABLED).len(),
+        1
+    );
+}
+
+#[test]
+fn reads_the_algorithm_however_it_is_spelled() {
+    for spelling in ["\"MD5\"", "\"Md5\"", "\"md-5\"", "\"md_5\""] {
+        assert_eq!(
+            violations(
+                "src/a.js",
+                &format!("const h = crypto.createHash({spelling});"),
+                ENABLED
+            )
+            .len(),
+            1,
+            "{spelling} names the same algorithm"
+        );
+    }
+}
+
+#[test]
+fn keeps_a_strong_algorithm_named_by_a_literal_argument() {
+    assert!(violations("src/a.js", "crypto.createHash(\"sha256\");", ENABLED).is_empty());
+    assert!(violations("src/a.py", "hashlib.new(\"sha512\")", ENABLED).is_empty());
+}
+
+fn severities(path: &str, source: &str, configuration: &str) -> Vec<Severity> {
+    rule_findings(no_weak_hash::evaluate, path, source, configuration)
+        .into_iter()
+        .map(|finding| finding.severity)
+        .collect()
+}
+
+#[test]
+fn reports_an_algorithm_it_cannot_read_as_a_warning_rather_than_an_error() {
+    assert_eq!(
+        severities("src/a.js", "crypto.createHash(algo);", ENABLED),
+        vec![Severity::Warning],
+        "the rule is configured at error, and this finding is a question rather than an answer"
+    );
+    assert_eq!(
+        severities("src/a.py", "hashlib.new(algo)", ENABLED),
+        vec![Severity::Warning]
+    );
+    assert_eq!(
+        severities("src/a.js", "crypto.createHash(pick() + s);", ENABLED),
+        vec![Severity::Warning]
+    );
+}
+
+#[test]
+fn keeps_a_readable_algorithm_at_the_configured_severity() {
+    assert_eq!(
+        severities("src/a.js", "crypto.createHash(\"md5\");", ENABLED),
+        vec![Severity::Error]
+    );
+}
+
+#[test]
+fn a_cap_lowers_a_severity_and_never_raises_one() {
+    let configuration = "version: 1\nrules:\n  security/no-weak-hash:\n    severity: info\n";
+
+    assert_eq!(
+        severities("src/a.js", "crypto.createHash(algo);", configuration),
+        vec![Severity::Info],
+        "a repository that asked for info does not get a warning back"
+    );
+}
+
+#[test]
+fn stays_silent_when_there_is_no_algorithm_to_read() {
+    assert!(
+        violations("src/a.js", "crypto.createHash();", ENABLED).is_empty(),
+        "no argument at all is not a weak hash"
+    );
+}
+
+#[test]
+fn names_the_replacement_in_the_language_it_reports() {
+    let js = violations("src/a.js", "crypto.createHash(\"md5\");", ENABLED);
+
+    assert!(
+        js.first()
+            .expect("reports javascript")
+            .to_string()
+            .contains("use sha256"),
+        "the Node spelling, not the Rust crate"
+    );
 }
 
 #[test]

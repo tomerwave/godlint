@@ -1,8 +1,12 @@
 exit-code: 1
 
 stdout: |
+  argument.js:1:14: error[security/no-weak-hash] md5 is not collision resistant; use sha256 where collision resistance matters.
+  argument.js:3:17: warning[security/no-weak-hash] crypto.createHash takes its algorithm from a value Godlint cannot read; name the algorithm inline, or confirm it is not a broken one.
   example.py:3:13: error[security/no-weak-hash] hashlib.md5 is not collision resistant; use hashlib.sha256 where collision resistance matters.
   example.rs:2:5: error[security/no-weak-hash] md5::compute is not collision resistant; use sha2::Sha256 where collision resistance matters.
+  factory.py:3:8: error[security/no-weak-hash] sha1 is not collision resistant; use hashlib.sha256 where collision resistance matters.
+  factory.py:4:11: warning[security/no-weak-hash] hashlib.new takes its algorithm from a value Godlint cannot read; name the algorithm inline, or confirm it is not a broken one.
   legacy.py:3:15: error[security/no-weak-hash] hashlib.sha1 is not collision resistant; use hashlib.sha256 where collision resistance matters.
 
 stderr: ""

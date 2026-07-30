@@ -4,8 +4,8 @@ use crate::{
     analyzers::{
         Analyzer, AnalyzerError, SourceFacts,
         vocabulary::{
-            Callee, Cognition, Condition, ErrorHandler, Vocabulary, is_leading_block_statement,
-            plain_path,
+            Argument, Callee, Cognition, Condition, ErrorHandler, Vocabulary,
+            is_leading_block_statement, literal_value, plain_path,
         },
     },
     facts::CommentKind,
@@ -36,6 +36,8 @@ const VOCABULARY: Vocabulary = Vocabulary {
     cognition,
     is_access,
     direct_path,
+    argument,
+    literal,
     import,
     comment_kind,
     has_implicit_tail_return,
@@ -189,6 +191,30 @@ fn spelled_module(name: Node<'_>) -> Option<Node<'_>> {
 
 fn direct_path(text: &str) -> Option<String> {
     plain_path(text)
+}
+
+fn argument(node: Node<'_>) -> Option<Argument<'_>> {
+    if node.kind() == "keyword_argument" {
+        return Some(Argument {
+            name: node.child_by_field_name("name"),
+            value: node.child_by_field_name("value")?,
+        });
+    }
+
+    Some(Argument {
+        name: None,
+        value: node,
+    })
+}
+
+fn literal(node: Node<'_>, source: &str) -> Option<String> {
+    match node.kind() {
+        "string" | "concatenated_string" => Some(literal_value(node, source, "string_content")),
+        "integer" | "float" | "true" | "false" | "none" => {
+            Some(source.get(node.byte_range())?.to_owned())
+        }
+        _ => None,
+    }
 }
 
 fn is_access(kind: &str) -> bool {

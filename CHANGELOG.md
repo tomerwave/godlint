@@ -11,14 +11,21 @@ speaks about.
 
 ### Added
 
-- `security/no-weak-hash` — reports MD5 and SHA-1 where the algorithm is part of the callee: Python
-  `hashlib.md5`/`hashlib.sha1` and Rust `md5::compute`, `Md5::new`, `Sha1::new`. The message names a
-  replacement the language can use. `allow-in` exempts a cache key or an ETag, where collision
-  resistance is not the point. It deliberately does not cover JavaScript or TypeScript: the algorithm
-  there is an argument (`crypto.createHash("md5")`), the call rules read only the callee, and matching
-  `crypto.createHash` would report every SHA-256 call as a weak hash. `docs/rules.md` records that
-  boundary, together with a second one found while building this: inside a Rust macro invocation the
-  call rules see nothing, because a grammar keeps a macro's arguments as an unparsed token tree.
+- Call facts carry their arguments: whether each one was positional or keyword-named, and its literal
+  value where the value is a literal. A value that is not a literal reads as present with an unknown
+  value and is never guessed at, which is what lets a rule stay silent instead of reporting a maybe.
+  Quoting and string syntax are per-language judgements, so each language module decides what a literal
+  is and what its value is; the extractor names no node kind.
+- A rule can report one finding below the severity it is configured at, when it is sure something is
+  worth saying but not sure enough to block. The configured severity stays a ceiling the repository
+  sets: a cap can only lower a finding, never raise it, so a rule configured at `info` still reports
+  `info`. One shared line applies it, and every existing rule is unchanged.
+- `security/no-weak-hash` now also reports a broken algorithm named by a literal argument to a hash
+  factory: `crypto.createHash("md5")`, `crypto.createHmac("sha1", …)`, and `hashlib.new("md5")`,
+  case- and separator-insensitive so `MD5` and `sha-1` count. It covers JavaScript and TypeScript as a
+  result, which it previously did not. `crypto.createHash(algorithm)` reports at **warning** with a
+  message saying the algorithm could not be read — SonarJS reports the same case as an ordinary finding
+  and is wrong whenever the value is SHA-256, so the severity carries the uncertainty instead.
 - `security/no-insecure-random` — reports a general-purpose random generator, which is predictable by
   design: JavaScript `Math.random` and `crypto.pseudoRandomBytes`, Python's `random` module, and Rust
   `rand::random`/`rand::thread_rng`.

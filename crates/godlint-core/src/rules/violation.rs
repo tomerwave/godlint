@@ -1,6 +1,9 @@
 use std::fmt;
 
-use crate::rules::{Metric, SuppressionDefect};
+use crate::{
+    config::Severity,
+    rules::{Metric, SuppressionDefect},
+};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Violation {
@@ -39,8 +42,11 @@ pub enum Violation {
         secure: String,
     },
     WeakHash {
-        callee: String,
+        weak: String,
         strong: String,
+    },
+    UnverifiedHash {
+        callee: String,
     },
     RestrictedImport {
         module: String,
@@ -93,12 +99,21 @@ const PRODUCTION_LOG: &str =
 const UNUSED_SUPPRESSION: &str =
     "Suppression does not silence an enabled finding; remove it or narrow the rule.";
 
+const UNVERIFIED_HASH: &str = concat!(
+    "takes its algorithm from a value Godlint cannot read; name the algorithm inline, ",
+    "or confirm it is not a broken one."
+);
+
 const COMMENT_NOT_PERMITTED: &str = "Comment is not permitted; express the intent in the code.";
 
-fn weak_hash(formatter: &mut fmt::Formatter<'_>, callee: &str, strong: &str) -> fmt::Result {
+fn unverified_hash(formatter: &mut fmt::Formatter<'_>, callee: &str) -> fmt::Result {
+    write!(formatter, "{callee} {UNVERIFIED_HASH}")
+}
+
+fn weak_hash(formatter: &mut fmt::Formatter<'_>, weak: &str, strong: &str) -> fmt::Result {
     write!(
         formatter,
-        "{callee} is not collision resistant; use {strong} where collision resistance matters."
+        "{weak} is not collision resistant; use {strong} where collision resistance matters."
     )
 }
 
@@ -107,6 +122,15 @@ fn insecure_random(formatter: &mut fmt::Formatter<'_>, callee: &str, secure: &st
         formatter,
         "{callee} is predictable; use {secure} for a value that must not be guessable."
     )
+}
+
+impl Violation {
+    pub(crate) fn cap(&self) -> Severity {
+        match self {
+            Self::UnverifiedHash { .. } => Severity::Warning,
+            _ => Severity::Error,
+        }
+    }
 }
 
 impl fmt::Display for Violation {
@@ -154,7 +178,8 @@ impl fmt::Display for Violation {
             ),
             Self::RestrictedImport { module } => write!(formatter, "{module} {RESTRICTED_IMPORT}"),
             Self::ProductionLog { callee } => write!(formatter, "{callee} {PRODUCTION_LOG}"),
-            Self::WeakHash { callee, strong } => weak_hash(formatter, callee, strong),
+            Self::WeakHash { weak, strong } => weak_hash(formatter, weak, strong),
+            Self::UnverifiedHash { callee } => unverified_hash(formatter, callee),
             Self::InsecureRandom { callee, secure } => insecure_random(formatter, callee, secure),
         }
     }

@@ -7,7 +7,24 @@ use crate::{
         catalogue::{Catalogue, Dialect, is_allowed, spelled},
         evaluate_call_rule, when_configured,
     },
+    source::Language,
 };
+
+const FACTORIES: Catalogue = Catalogue(&[
+    ("crypto.createHash", Dialect::JavaScript),
+    ("crypto.createHmac", Dialect::JavaScript),
+    ("hashlib.new", Dialect::Python),
+]);
+
+const WEAK_ALGORITHMS: [&str; 7] = [
+    "md2",
+    "md4",
+    "md5",
+    "sha1",
+    "ripemd",
+    "ripemd128",
+    "ripemd160",
+];
 
 const WEAK: Catalogue = Catalogue(&[
     ("hashlib.md5", Dialect::Python),
@@ -31,15 +48,42 @@ impl Rule for NoWeakHash {
 
 impl CallRule for NoWeakHash {
     fn check(call: &CallFact, configuration: &Self::Configuration) -> Option<Violation> {
-        let name = spelled(call);
         let source = call.source();
 
-        (WEAK.speaks(source.language(), &name) && !is_allowed(source, &configuration.allow_in))
-            .then(|| Violation::WeakHash {
-                callee: name.clone(),
-                strong: strong_hash(&name).to_owned(),
-            })
+        if is_allowed(source, &configuration.allow_in) {
+            return None;
+        }
+
+        hash_violation(call, spelled(call))
     }
+}
+
+fn hash_violation(call: &CallFact, name: String) -> Option<Violation> {
+    let language = call.source().language();
+    let strong = strong_hash(language).to_owned();
+
+    if WEAK.speaks(language, &name) {
+        return Some(Violation::WeakHash { weak: name, strong });
+    }
+
+    if !FACTORIES.speaks(language, &name) {
+        return None;
+    }
+
+    match &call.positional(0)?.literal {
+        Some(algorithm) => {
+            weak_algorithm(algorithm).map(|weak| Violation::WeakHash { weak, strong })
+        }
+        None => Some(Violation::UnverifiedHash { callee: name }),
+    }
+}
+
+fn weak_algorithm(algorithm: &str) -> Option<String> {
+    let normalized = algorithm.to_lowercase().replace(['-', '_'], "");
+
+    WEAK_ALGORITHMS
+        .contains(&normalized.as_str())
+        .then_some(normalized)
 }
 
 pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Vec<Finding> {
@@ -48,10 +92,10 @@ pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Vec<Finding> {
     })
 }
 
-fn strong_hash(callee: &str) -> &'static str {
-    if callee.starts_with("hashlib.") {
-        "hashlib.sha256"
-    } else {
-        "sha2::Sha256"
+fn strong_hash(language: Language) -> &'static str {
+    match language {
+        Language::JavaScript | Language::TypeScript => "sha256",
+        Language::Python => "hashlib.sha256",
+        Language::Rust => "sha2::Sha256",
     }
 }

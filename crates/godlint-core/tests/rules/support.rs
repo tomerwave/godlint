@@ -28,6 +28,15 @@ pub(super) fn rule_violations(
         .collect()
 }
 
+pub(super) fn rule_findings(
+    evaluate: fn(&[SourceFacts], &Config) -> Vec<Finding>,
+    path: &str,
+    source: &str,
+    configuration: &str,
+) -> Vec<Finding> {
+    evaluate(&[facts(path, source)], &config(configuration))
+}
+
 pub(super) fn facts(path: &str, source: &str) -> SourceFacts {
     let source = SourceFile::new(PathBuf::from(path), source.into())
         .unwrap_or_else(|error| panic!("creates source file: {error}"));
