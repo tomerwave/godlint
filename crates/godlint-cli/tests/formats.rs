@@ -204,12 +204,8 @@ fn a_format_with_no_name_is_refused() {
 }
 
 #[cfg(unix)]
-fn hostile_name(directory: &Path, name: &str) {
-    fs::write(
-        directory.join(name),
-        "fn main() {\n    std::process::exit(1);\n}\n",
-    )
-    .unwrap_or_else(|error| panic!("writes {name}: {error}"));
+fn hostile_name(directory: &TemporaryDirectory, name: &str) {
+    directory.write(name, "fn main() {\n    std::process::exit(1);\n}\n");
 }
 
 #[cfg(unix)]
@@ -223,7 +219,7 @@ fn a_control_sequence_in_a_path_never_reaches_the_output_raw() {
     hostile_name(&directory, "we\u{1b}[31mird.rs");
 
     for format in ["terminal", "github", "json", "sarif"] {
-        let printed = checked(&directory, &["--format", format]);
+        let printed = checked(directory.path(), &["--format", format]);
 
         assert!(
             !printed.contains('\u{1b}'),
@@ -246,7 +242,7 @@ fn a_newline_in_a_path_does_not_forge_a_second_finding() {
 
     hostile_name(&directory, "two\nlines.rs");
 
-    let printed = checked(&directory, &["--format", "terminal"]);
+    let printed = checked(directory.path(), &["--format", "terminal"]);
 
     assert_eq!(
         printed.lines().count(),
