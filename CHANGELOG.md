@@ -11,6 +11,17 @@ speaks about.
 
 ### Added
 
+- A real-world corpus gate: `corpus/repositories.json` pins nine repositories to a commit and
+  `scripts/check-real-world.py` requires that Godlint can still read them. The gate is unreadable
+  files, never findings, because findings change whenever a rule changes while a file Godlint cannot
+  read is a defect whatever the rules say. Each repository carries a budget that fails in both
+  directions, as the rule-coverage one does. Four of the nine are awkward on purpose: Deno mixes Rust
+  and TypeScript, Sentry is a Python and TSX monolith, Home Assistant is eighteen thousand Python
+  files, and VS Code is the largest TypeScript tree. Writing it found three grammar gaps that no
+  fixture would have: TypeScript 4.7 variance annotations, a generic type argument on a tagged
+  template as `styled('a')<{x?: boolean}>` (408 files in Sentry alone), and PEP 696 type-parameter
+  defaults.
+
 - Call facts carry their arguments: whether each one was positional or keyword-named, and its literal
   value where the value is a literal. A value that is not a literal reads as present with an unknown
   value and is never guessed at, which is what lets a rule stay silent instead of reporting a maybe.

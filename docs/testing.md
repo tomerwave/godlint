@@ -44,6 +44,35 @@ fails rather than sharing, and retries on the one collision a recycled process i
 still produce. It removes the tree on drop, so a suite leaves nothing behind for the next
 run to read.
 
+## The real-world corpus
+
+Nine repositories pinned to a commit, listed in `corpus/repositories.json` and checked by
+`scripts/check-real-world.py`. Four are single-language and small, and read cleanly. Five are there
+because they are awkward: Deno mixes Rust and TypeScript, Sentry is a Python and TSX monolith,
+Home Assistant is eighteen thousand Python files, and VS Code is the largest TypeScript tree.
+
+The gate is **unreadable files, never findings.** Findings change whenever a rule changes, so
+gating on them would fail on every rule this repository ships and would be switched off within a
+week. A file Godlint cannot read is a defect whatever the rules say, and it is the failure that
+hides: the file contributes nothing and the loss leaves no trace in a findings count.
+
+Each repository carries a budget rather than a list of paths, because one of them is at four
+hundred and enumerating those would bury the reason under the data. The budget fails in both
+directions, exactly as the rule-coverage one does: above it is a regression, and below it means a
+grammar learned the syntax and the number is now reserving silence for the next failure.
+
+Writing it down found three grammar gaps that no fixture would have, because a fixture is written
+by someone who already knows the syntax:
+
+| syntax | grammar | seen in |
+| --- | --- | --- |
+| `interface A<in T>`, TypeScript 4.7 variance | `tree-sitter-typescript` | 4 files in Zod |
+| ``styled('a')<{x?: boolean}>`css` `` | `tree-sitter-typescript` (tsx) | 408 files in Sentry |
+| `class A[T = int]`, PEP 696 defaults | `tree-sitter-python` | 11 in Home Assistant, 3 in Sentry |
+
+Each is a construct real projects compile and ship today. Before Godlint judged the part of a file
+that parsed, every one of those files contributed nothing at all.
+
 ## Proving the fixtures are adequate
 
 A fixture proves a rule fires. Nothing about a passing suite proves the suite would have
@@ -129,4 +158,4 @@ The validation stack is:
 3. CLI/repository integration tests for product contracts.
 4. Mutation testing over the rules layer, to establish that the fixtures and unit tests
    exercise the decisions a rule makes.
-5. A pinned real-world corpus for runtime and false-positive regression measurement.
+5. A pinned real-world corpus, which asks whether Godlint can still read code that ships.
