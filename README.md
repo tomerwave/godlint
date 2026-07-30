@@ -139,3 +139,6 @@ use the process in [SECURITY.md](SECURITY.md).
 ## License
 
 Godlint is released under the [MIT License](LICENSE).
+
+## maintainability/no-duplicate-string
+Detects repeated string literals in a file.
