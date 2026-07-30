@@ -3,7 +3,7 @@ use tree_sitter::Node;
 use crate::{
     analyzers::{
         Analyzer, AnalyzerError, SourceFacts,
-        vocabulary::{Callee, ErrorHandler, Vocabulary},
+        vocabulary::{Callee, Condition, ErrorHandler, Vocabulary},
     },
     facts::CommentKind,
     source::SourceFile,
@@ -29,6 +29,7 @@ const VOCABULARY: Vocabulary = Vocabulary {
     is_abstract,
     callee,
     error_handler,
+    condition,
     is_access,
     import,
     comment_kind,
@@ -72,6 +73,34 @@ fn callee(node: Node<'_>) -> Option<Callee<'_>> {
 
 fn error_handler(_node: Node<'_>) -> Option<ErrorHandler<'_>> {
     None
+}
+
+fn condition(node: Node<'_>) -> Option<Condition<'_>> {
+    let condition = match node.kind() {
+        "if_expression" | "while_expression" => node.child_by_field_name("condition")?,
+        _ => return None,
+    };
+
+    Some(Condition {
+        node: condition,
+        operator_count: count_condition_operators(condition),
+    })
+}
+
+fn count_condition_operators(node: Node<'_>) -> u32 {
+    let is_logical_operator = node.kind() == "binary_expression"
+        && node
+            .child_by_field_name("operator")
+            .is_some_and(|operator| matches!(operator.kind(), "&&" | "||"));
+
+    let mut cursor = node.walk();
+    let children = node
+        .children(&mut cursor)
+        .filter(|child| !is_function(child.kind()))
+        .map(count_condition_operators)
+        .sum::<u32>();
+
+    u32::from(is_logical_operator) + children
 }
 
 fn import(node: Node<'_>) -> Option<Node<'_>> {

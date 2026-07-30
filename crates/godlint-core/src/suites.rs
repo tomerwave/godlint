@@ -1,13 +1,13 @@
 use std::num::NonZeroU32;
 
 use crate::config::{
-    AccountableSuppressionRule, DecisionComplexityRule, DependencyBoundaryRule,
-    DirectEnvironmentReadRule, EmptyErrorHandlerRule, EmptyFunctionRule, ExplicitTimerDelayRule,
-    FilenameCaseRule, ForbiddenDependencyRule, FunctionNestingRule, FunctionStatementsRule,
-    LineLimitRule, NoCommentsRule, NoDynamicExecutionRule, NoProductionLogRule, ParameterCountRule,
-    RestrictedCallRule, RestrictedImportRule, ReturnCountRule, Rules, Severity,
-    TodoRequiresReferenceRule, UnusedSuppressionRule, default_configuration_paths, default_markers,
-    default_reference_prefixes,
+    AccountableSuppressionRule, ConditionComplexityRule, DecisionComplexityRule,
+    DependencyBoundaryRule, DirectEnvironmentReadRule, EmptyErrorHandlerRule, EmptyFunctionRule,
+    ExplicitTimerDelayRule, FilenameCaseRule, ForbiddenDependencyRule, FunctionNestingRule,
+    FunctionStatementsRule, LineLimitRule, NoCommentsRule, NoDynamicExecutionRule,
+    NoProductionLogRule, ParameterCountRule, RestrictedCallRule, RestrictedImportRule,
+    ReturnCountRule, Rules, Severity, TodoRequiresReferenceRule, UnusedSuppressionRule,
+    default_configuration_paths, default_markers, default_reference_prefixes,
 };
 
 pub const RECOMMENDED: &str = "recommended@1";
@@ -67,6 +67,12 @@ fn maintainability(rules: &mut Rules) {
         .get_or_insert(DecisionComplexityRule {
             severity: error,
             max_complexity: 5,
+        });
+    rules
+        .condition_complexity
+        .get_or_insert(ConditionComplexityRule {
+            severity: error,
+            max_operators: 3,
         });
     rules.return_count.get_or_insert(ReturnCountRule {
         severity: error,

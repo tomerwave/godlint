@@ -90,7 +90,7 @@ fn documented_rule(cell: &str) -> Option<&str> {
         .filter(|rule| rule.starts_with("maintainability/"))
 }
 
-fn configured_limits(config: &Config) -> Vec<(String, u32)> {
+fn configured_line_limits(config: &Config) -> Vec<(&'static str, u32)> {
     let rules = &config.rules;
 
     vec![
@@ -102,6 +102,13 @@ fn configured_limits(config: &Config) -> Vec<(String, u32)> {
             "maintainability/function-size",
             rules.function_size.as_ref().expect("size").max_lines.get(),
         ),
+    ]
+}
+
+fn configured_count_limits(config: &Config) -> Vec<(&'static str, u32)> {
+    let rules = &config.rules;
+
+    vec![
         (
             "maintainability/function-nesting",
             rules.function_nesting.as_ref().expect("nesting").limit(),
@@ -119,6 +126,14 @@ fn configured_limits(config: &Config) -> Vec<(String, u32)> {
                 .limit(),
         ),
         (
+            "maintainability/condition-complexity",
+            rules
+                .condition_complexity
+                .as_ref()
+                .expect("operators")
+                .limit(),
+        ),
+        (
             "maintainability/return-count",
             rules.return_count.as_ref().expect("returns").limit(),
         ),
@@ -131,9 +146,14 @@ fn configured_limits(config: &Config) -> Vec<(String, u32)> {
                 .limit(),
         ),
     ]
-    .into_iter()
-    .map(|(rule, limit)| (rule.to_owned(), limit))
-    .collect()
+}
+
+fn configured_limits(config: &Config) -> Vec<(String, u32)> {
+    configured_line_limits(config)
+        .into_iter()
+        .chain(configured_count_limits(config))
+        .map(|(rule, limit)| (rule.to_owned(), limit))
+        .collect()
 }
 
 #[test]

@@ -4,8 +4,8 @@ use tree_sitter::{Language as TreeSitterLanguage, Node, Parser};
 
 use crate::{
     facts::{
-        AccessFact, CallFact, CommentFact, ErrorHandlerFact, FunctionFact, FunctionFactDetails,
-        FunctionFactError, ImportFact,
+        AccessFact, CallFact, CommentFact, ConditionFact, ErrorHandlerFact, FunctionFact,
+        FunctionFactDetails, FunctionFactError, ImportFact,
     },
     source::{Language, SourceFile, SourceFileError, SourceRange},
 };
@@ -26,6 +26,7 @@ pub struct SourceFacts {
     accesses: Vec<AccessFact>,
     comments: Vec<CommentFact>,
     calls: Vec<CallFact>,
+    conditions: Vec<ConditionFact>,
     error_handlers: Vec<ErrorHandlerFact>,
     functions: Vec<FunctionFact>,
     imports: Vec<ImportFact>,
@@ -54,6 +55,10 @@ impl SourceFacts {
 
     pub fn error_handlers(&self) -> &[ErrorHandlerFact] {
         &self.error_handlers
+    }
+
+    pub fn conditions(&self) -> &[ConditionFact] {
+        &self.conditions
     }
 
     pub fn imports(&self) -> &[ImportFact] {
@@ -111,6 +116,7 @@ pub(crate) fn analyze_with(
         accesses: collected.accesses,
         comments: collected.comments,
         calls: collected.calls,
+        conditions: collected.conditions,
         error_handlers: collected.error_handlers,
         functions: collected.functions,
         imports: collected.imports,
@@ -152,6 +158,7 @@ struct Collected {
     functions: Vec<FunctionFact>,
     comments: Vec<CommentFact>,
     calls: Vec<CallFact>,
+    conditions: Vec<ConditionFact>,
     error_handlers: Vec<ErrorHandlerFact>,
     imports: Vec<ImportFact>,
 }
@@ -187,9 +194,31 @@ impl Collected {
         source: &SourceFile,
         vocabulary: &Vocabulary,
     ) -> Result<(), AnalyzerError> {
+        self.absorb_expressions(node, source, vocabulary)?;
+        self.absorb_paths(node, source, vocabulary)
+    }
+
+    fn absorb_expressions(
+        &mut self,
+        node: Node<'_>,
+        source: &SourceFile,
+        vocabulary: &Vocabulary,
+    ) -> Result<(), AnalyzerError> {
         self.calls.extend(call_fact(node, source, vocabulary)?);
+        self.conditions
+            .extend(condition_fact(node, source, vocabulary)?);
         self.error_handlers
             .extend(error_handler_fact(node, source, vocabulary)?);
+
+        Ok(())
+    }
+
+    fn absorb_paths(
+        &mut self,
+        node: Node<'_>,
+        source: &SourceFile,
+        vocabulary: &Vocabulary,
+    ) -> Result<(), AnalyzerError> {
         self.accesses.extend(access_fact(node, source, vocabulary)?);
         self.imports.extend(import_fact(node, source, vocabulary)?);
 
@@ -210,6 +239,22 @@ fn error_handler_fact(
         source.clone(),
         node_range(handler.node, source)?,
         handler.body_is_empty,
+    )))
+}
+
+fn condition_fact(
+    node: Node<'_>,
+    source: &SourceFile,
+    vocabulary: &Vocabulary,
+) -> Result<Option<ConditionFact>, AnalyzerError> {
+    let Some(condition) = (vocabulary.condition)(node) else {
+        return Ok(None);
+    };
+
+    Ok(Some(ConditionFact::new(
+        source.clone(),
+        node_range(condition.node, source)?,
+        condition.operator_count,
     )))
 }
 

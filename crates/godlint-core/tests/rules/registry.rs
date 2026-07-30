@@ -22,6 +22,7 @@ fn limits(rule_id: &str) -> String {
         "maintainability/function-nesting" => "max-depth",
         "maintainability/parameter-count" => "max-parameters",
         "maintainability/decision-complexity" => "max-complexity",
+        "maintainability/condition-complexity" => "max-operators",
         "maintainability/return-count" => "max-returns",
         "maintainability/function-statements" => "max-statements",
         _ => return String::new(),

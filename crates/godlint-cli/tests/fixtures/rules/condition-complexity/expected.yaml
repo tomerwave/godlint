@@ -1,0 +1,12 @@
+exit-code: 1
+
+stdout: |
+  example.js:2:6: error[maintainability/condition-complexity] Condition combines 2 operators; the limit is 1.
+  example.js:3:6: error[maintainability/condition-complexity] Condition combines 2 operators; the limit is 1.
+  example.py:2:8: error[maintainability/condition-complexity] Condition combines 2 operators; the limit is 1.
+  example.py:4:8: error[maintainability/condition-complexity] Condition combines 2 operators; the limit is 1.
+  example.rs:2:8: error[maintainability/condition-complexity] Condition combines 2 operators; the limit is 1.
+  example.rs:3:11: error[maintainability/condition-complexity] Condition combines 2 operators; the limit is 1.
+  example.ts:2:6: error[maintainability/condition-complexity] Condition combines 2 operators; the limit is 1.
+
+stderr: ""
