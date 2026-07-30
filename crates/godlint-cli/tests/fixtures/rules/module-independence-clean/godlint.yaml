@@ -1,0 +1,18 @@
+version: 1
+
+rules:
+  architecture/module-independence:
+    severity: error
+    sets:
+      - name: features
+        members:
+          - name: billing
+            paths:
+              - src/billing/**
+            modules:
+              - crate::billing
+          - name: notifications
+            paths:
+              - src/notifications/**
+            modules:
+              - crate::notifications

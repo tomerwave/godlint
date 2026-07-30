@@ -25,6 +25,7 @@ pub mod function_nesting;
 pub mod function_size;
 pub mod function_statements;
 mod line_count;
+pub mod module_independence;
 mod module_path;
 pub mod no_comments;
 pub mod no_dynamic_execution;
@@ -398,6 +399,7 @@ const EVALUATORS: &[Evaluator] = &[
     no_production_log::evaluate,
     restricted_import::evaluate,
     dependency_boundary::evaluate,
+    module_independence::evaluate,
     forbidden_dependency::evaluate,
     filename_case::evaluate,
 ];

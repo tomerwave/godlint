@@ -413,6 +413,7 @@ each appears in the list.
 | --- | --- | --- | --- | --- |
 | `architecture/restricted-import` | Shipped | Direct import fact | High | Ban direct imports of internal or risky modules |
 | `architecture/dependency-boundary` | Shipped | Import fact plus configured path layers | High | Enforce UI → application → domain → infrastructure direction |
+| `architecture/module-independence` | Shipped | Import fact plus configured path members | High | Sibling isolation, which a layer order cannot express: a dependency between two members is wrong in both directions rather than one |
 | `architecture/no-cycle` | Planned | Repository graph | High | Report the complete cycle edge chain |
 | `security/forbidden-dependency` | Shipped | Package/import mapping | High | Block dependencies by explicit policy |
 | `architecture/filename-case` | Shipped | Repository path fact | Medium | Support scoped case conventions and generated-file exceptions |

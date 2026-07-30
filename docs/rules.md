@@ -1,6 +1,6 @@
 # Rule reference
 
-Twenty-four rules are implemented. Every one has an identifier of the form `family/name`, which is
+Twenty-five rules are implemented. Every one has an identifier of the form `family/name`, which is
 what a configuration entry and a suppression directive both name. [The rule roadmap](rule-roadmap.md)
 records the families still to come, and the reasoning behind each threshold `recommended@1` sets.
 
@@ -100,7 +100,32 @@ Rust is out of scope. It has no `catch`, and a discarded `Result` is `reliabilit
 | `architecture/restricted-call` | An abrupt process exit, plus configured callees outside their approved paths |
 | `architecture/restricted-import` | An import of a module a repository puts behind a boundary |
 | `architecture/dependency-boundary` | A dependency that runs against the declared layer order |
+| `architecture/module-independence` | A dependency between modules declared independent of each other |
 | `architecture/filename-case` | A file name that does not follow the convention for its extension or scope |
+
+`module-independence` is the counterpart to `dependency-boundary`, for the constraint layering cannot
+express. A layer order says a dependency is wrong in one direction; independence says it is wrong in
+*both*, which is what keeps two feature modules from quietly growing into one. Each member declares the
+same two halves a layer does — the `paths` it contains and the `modules` that name it — and a set is
+violated when one member reaches another:
+
+```yaml
+architecture/module-independence:
+  severity: error
+  sets:
+    - name: features
+      members:
+        - name: billing
+          paths: [src/billing/**]
+          modules: [crate::billing]
+        - name: notifications
+          paths: [src/notifications/**]
+          modules: [crate::notifications]
+```
+
+Three things are deliberately not violations: a member importing its own internals, a file outside the
+set importing a member, and a member importing anything the set does not name. The set constrains its
+members' dependencies on each other, not everyone else's.
 
 `filename-case` expects `PascalCase` for `.tsx` and `.jsx`, `kebab-case` for other JavaScript and
 TypeScript, and `snake_case` for Rust and Python.

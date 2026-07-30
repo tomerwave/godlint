@@ -53,6 +53,8 @@ fixture_tests! {
     function_statements => "function-statements",
     invalid_syntax => "invalid-syntax",
     marker_word_boundary => "marker-word-boundary",
+    module_independence => "module-independence",
+    module_independence_clean => "module-independence-clean",
     multiway_branch => "multiway-branch",
     no_comments => "no-comments",
     no_comments_strict => "no-comments-strict",
