@@ -11,6 +11,14 @@ speaks about.
 
 ### Added
 
+- `architecture/module-independence` — reports a dependency between modules a repository has declared
+  independent of each other. `architecture/dependency-boundary` orders layers, so a dependency is wrong in
+  one direction only; sibling isolation is wrong in both, and that is the constraint that keeps two feature
+  modules from quietly becoming one. A member declares the same two halves a layer does, so the existing
+  path and module matching is reused rather than reinvented, and `recommended@1` adopts it with no sets
+  configured — like the other architecture rules it enforces nothing until a repository names something.
+  A member importing its own internals, a file outside the set importing a member, and a member importing
+  something the set does not name are all deliberately silent.
 - `maintainability/cognitive-complexity` — measures how hard a function is to follow rather than how
   many paths run through it, weighting nested control flow: every branch costs one plus the nesting depth
   it sits at, so four flat guard clauses cost 4 while four nested branches cost 10. `decision-complexity`

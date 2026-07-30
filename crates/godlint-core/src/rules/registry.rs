@@ -9,11 +9,11 @@ use crate::{
         file_size::FileSize, filename_case::FilenameCase,
         forbidden_dependency::ForbiddenDependency, function_nesting::FunctionNesting,
         function_size::FunctionSize, function_statements::FunctionStatements,
-        no_comments::NoComments, no_dynamic_execution::NoDynamicExecution,
-        no_production_log::NoProductionLog, parameter_count::ParameterCount,
-        restricted_call::RestrictedCall, restricted_import::RestrictedImport,
-        return_count::ReturnCount, todo_requires_reference::TodoRequiresReference,
-        unused_suppression::UnusedSuppression,
+        module_independence::ModuleIndependence, no_comments::NoComments,
+        no_dynamic_execution::NoDynamicExecution, no_production_log::NoProductionLog,
+        parameter_count::ParameterCount, restricted_call::RestrictedCall,
+        restricted_import::RestrictedImport, return_count::ReturnCount,
+        todo_requires_reference::TodoRequiresReference, unused_suppression::UnusedSuppression,
     },
 };
 
@@ -118,6 +118,11 @@ severity!(
     forbidden_dependency_severity,
     ForbiddenDependency,
     forbidden_dependency
+);
+severity!(
+    module_independence_severity,
+    ModuleIndependence,
+    module_independence
 );
 severity!(filename_case_severity, FilenameCase, filename_case);
 
@@ -235,6 +240,11 @@ const REGISTRATIONS: &[Registration] = &[
     Registration {
         id: ForbiddenDependency::ID,
         severity: forbidden_dependency_severity,
+        suppressible: true,
+    },
+    Registration {
+        id: ModuleIndependence::ID,
+        severity: module_independence_severity,
         suppressible: true,
     },
     Registration {

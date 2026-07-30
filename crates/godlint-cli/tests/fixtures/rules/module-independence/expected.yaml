@@ -1,0 +1,7 @@
+exit-code: 1
+
+stdout: |
+  src/billing/example.rs:1:5: error[architecture/module-independence] billing must not depend on notifications; features declares them independent of each other.
+  src/notifications/example.rs:1:5: error[architecture/module-independence] notifications must not depend on billing; features declares them independent of each other.
+
+stderr: ""

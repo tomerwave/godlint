@@ -32,9 +32,11 @@ pub enum ConfigError {
         name: String,
     },
     EmptyLayer {
+        rule: &'static str,
         name: String,
     },
     DuplicateLayerName {
+        rule: &'static str,
         name: String,
     },
     DuplicateRestrictedImportName {
@@ -110,14 +112,12 @@ impl fmt::Display for ConfigError {
             Self::DuplicatePackageName { name } => {
                 duplicate(formatter, "security/forbidden-dependency", name)
             }
-            Self::EmptyLayer { name } => write!(
-                formatter,
-                "architecture/dependency-boundary layer {name} {LAYER_NEEDS_BOTH}"
-            ),
-            Self::DuplicateLayerName { name } => write!(
-                formatter,
-                "architecture/dependency-boundary lists layer {name} {LAYER_POSITION}"
-            ),
+            Self::EmptyLayer { rule, name } => {
+                write!(formatter, "{rule} {name} {LAYER_NEEDS_BOTH}")
+            }
+            Self::DuplicateLayerName { rule, name } => {
+                write!(formatter, "{rule} lists {name} {LAYER_POSITION}")
+            }
             Self::DuplicateRestrictedImportName { name } => {
                 duplicate(formatter, "architecture/restricted-import", name)
             }

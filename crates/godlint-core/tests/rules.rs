@@ -51,6 +51,9 @@ mod function_size;
 #[path = "rules/function_statements.rs"]
 mod function_statements;
 
+#[path = "rules/module_independence.rs"]
+mod module_independence;
+
 #[path = "rules/no_comments.rs"]
 mod no_comments;
 

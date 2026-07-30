@@ -5,8 +5,8 @@ use crate::config::{
     DecisionComplexityRule, DependencyBoundaryRule, DirectEnvironmentReadRule,
     EmptyErrorHandlerRule, EmptyFunctionRule, ExplicitTimerDelayRule, FilenameCaseRule,
     ForbiddenDependencyRule, FunctionNestingRule, FunctionStatementsRule, LineLimitRule,
-    NoCommentsRule, NoDynamicExecutionRule, NoProductionLogRule, ParameterCountRule,
-    RestrictedCallRule, RestrictedImportRule, ReturnCountRule, Rules, Severity,
+    ModuleIndependenceRule, NoCommentsRule, NoDynamicExecutionRule, NoProductionLogRule,
+    ParameterCountRule, RestrictedCallRule, RestrictedImportRule, ReturnCountRule, Rules, Severity,
     TodoRequiresReferenceRule, UnusedSuppressionRule, default_configuration_paths, default_markers,
     default_reference_prefixes,
 };
@@ -160,6 +160,12 @@ fn security(rules: &mut Rules) {
         .get_or_insert(ForbiddenDependencyRule {
             severity: error,
             packages: Vec::new(),
+        });
+    rules
+        .module_independence
+        .get_or_insert(ModuleIndependenceRule {
+            severity: error,
+            sets: Vec::new(),
         });
     rules
         .no_dynamic_execution

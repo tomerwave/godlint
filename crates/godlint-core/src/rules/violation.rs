@@ -41,6 +41,11 @@ pub enum Violation {
         from: String,
         to: String,
     },
+    BrokeIndependence {
+        set: String,
+        from: String,
+        to: String,
+    },
     ForbiddenDependency {
         package: String,
     },
@@ -120,6 +125,10 @@ impl fmt::Display for Violation {
             Self::CrossedBoundary { from, to } => write!(
                 formatter,
                 "{from} must not depend on {to}; the dependency runs against the declared layer order."
+            ),
+            Self::BrokeIndependence { set, from, to } => write!(
+                formatter,
+                "{from} must not depend on {to}; {set} declares them independent of each other."
             ),
             Self::RestrictedImport { module } => write!(formatter, "{module} {RESTRICTED_IMPORT}"),
             Self::ProductionLog { callee } => write!(formatter, "{callee} {PRODUCTION_LOG}"),

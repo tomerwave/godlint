@@ -85,6 +85,8 @@ pub struct Rules {
     pub restricted_import: Option<RestrictedImportRule>,
     #[serde(rename = "architecture/dependency-boundary")]
     pub dependency_boundary: Option<DependencyBoundaryRule>,
+    #[serde(rename = "architecture/module-independence")]
+    pub module_independence: Option<ModuleIndependenceRule>,
     #[serde(rename = "security/forbidden-dependency")]
     pub forbidden_dependency: Option<ForbiddenDependencyRule>,
     #[serde(rename = "architecture/filename-case")]
@@ -190,6 +192,22 @@ pub struct DependencyBoundaryRule {
     pub severity: Severity,
     #[serde(default)]
     pub layers: Vec<Layer>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ModuleIndependenceRule {
+    pub severity: Severity,
+    #[serde(default)]
+    pub sets: Vec<IndependentSet>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct IndependentSet {
+    pub name: String,
+    #[serde(default)]
+    pub members: Vec<Layer>,
 }
 
 #[derive(Debug, Deserialize)]

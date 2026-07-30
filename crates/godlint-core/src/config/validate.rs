@@ -1,7 +1,11 @@
 use std::collections::BTreeSet;
 
+const DEPENDENCY_BOUNDARY: &str = "architecture/dependency-boundary layer";
+const MODULE_INDEPENDENCE: &str = "architecture/module-independence member";
+
 use crate::config::{
-    Config, ConfigError, ForbiddenDependency, Layer, RestrictedCall, RestrictedImport,
+    Config, ConfigError, ForbiddenDependency, IndependentSet, Layer, RestrictedCall,
+    RestrictedImport,
 };
 
 impl Config {
@@ -14,6 +18,7 @@ impl Config {
             Self::validate_restricted_call_rule,
             Self::validate_restricted_import_rule,
             Self::validate_dependency_boundary_rule,
+            Self::validate_module_independence_rule,
             Self::validate_forbidden_dependency_rule,
             Self::validate_filename_case_rule,
             Self::validate_no_production_log_rule,
@@ -118,6 +123,14 @@ impl Config {
         Ok(())
     }
 
+    fn validate_module_independence_rule(&self) -> Result<(), ConfigError> {
+        let Some(rule) = &self.rules.module_independence else {
+            return Ok(());
+        };
+
+        rule.sets.iter().try_for_each(validate_independent_set)
+    }
+
     fn validate_dependency_boundary_rule(&self) -> Result<(), ConfigError> {
         let Some(rule) = &self.rules.dependency_boundary else {
             return Ok(());
@@ -126,10 +139,11 @@ impl Config {
         let mut seen = BTreeSet::new();
 
         for layer in &rule.layers {
-            validate_layer(layer)?;
+            validate_layer(DEPENDENCY_BOUNDARY, layer)?;
 
             if !seen.insert(layer.name.as_str()) {
                 return Err(ConfigError::DuplicateLayerName {
+                    rule: DEPENDENCY_BOUNDARY,
                     name: layer.name.clone(),
                 });
             }
@@ -265,13 +279,35 @@ fn validate_forbidden_dependency(package: &ForbiddenDependency) -> Result<(), Co
     Ok(())
 }
 
-fn validate_layer(layer: &Layer) -> Result<(), ConfigError> {
+fn validate_independent_set(set: &IndependentSet) -> Result<(), ConfigError> {
+    if set.name.trim().is_empty() {
+        return Err(ConfigError::InvalidLayerName);
+    }
+
+    let mut seen = BTreeSet::new();
+
+    for member in &set.members {
+        validate_layer(MODULE_INDEPENDENCE, member)?;
+
+        if !seen.insert(member.name.as_str()) {
+            return Err(ConfigError::DuplicateLayerName {
+                rule: MODULE_INDEPENDENCE,
+                name: member.name.clone(),
+            });
+        }
+    }
+
+    Ok(())
+}
+
+fn validate_layer(rule: &'static str, layer: &Layer) -> Result<(), ConfigError> {
     if layer.name.trim().is_empty() {
         return Err(ConfigError::InvalidLayerName);
     }
 
     if layer.paths.is_empty() || layer.modules.is_empty() {
         return Err(ConfigError::EmptyLayer {
+            rule,
             name: layer.name.clone(),
         });
     }
