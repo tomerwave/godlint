@@ -557,3 +557,28 @@ fn a_repeated_option_keeps_the_first_value_and_is_recorded() {
     );
     assert_eq!(suppression.repeated_options(), ["expires"]);
 }
+
+#[test]
+fn a_directive_on_a_docstrings_opening_line_occupies_that_line() {
+    let source = concat!(
+        "# godlint-ignore-next-line style/no-comments owner=x expires=2099-01-01 -- reason\n",
+        "\"\"\"godlint-ignore-next-line style/no-comments owner=x expires=2099-01-01 -- reason\n",
+        "more prose\n",
+        "\"\"\"\n",
+        "value = 1\n",
+    );
+    let body = concat!(
+        "version: 1\n",
+        "rules:\n",
+        "  style/no-comments:\n",
+        "    severity: error\n",
+        "    allow-doc-comments: false\n",
+    );
+
+    assert_eq!(
+        surviving("src/example.py", source, body),
+        [(2, 1)],
+        "the docstring's opening line holds a directive, so the line-1 directive skips past it \
+         rather than spending itself on the docstring; the docstring's own prose is still reported"
+    );
+}
