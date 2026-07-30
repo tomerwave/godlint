@@ -1,7 +1,8 @@
 # Using Godlint in CI
 
-Godlint is a single binary that exits non-zero when a finding is at or above `fail-on`, so enforcement
-is one line in any CI system:
+CI is the canonical, deterministic enforcement point shared by human and agent-authored
+changes. Godlint is a single binary that exits non-zero when a finding is at or above
+`fail-on`, so enforcement is one line in any CI system:
 
 ```yaml
 - run: godlint check

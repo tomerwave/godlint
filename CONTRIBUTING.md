@@ -1,7 +1,8 @@
 # Contributing to Godlint
 
-Godlint is pre-alpha, so clear problem statements, fixture-quality examples and design feedback are as
-useful as code.
+Godlint is building the executable engineering constitution for human- and agent-maintained
+repositories. It is pre-alpha, so real policy problems, fixture-quality examples and design feedback
+are as useful as code.
 
 Start with [local development](docs/local-development.md) for the build and the checks CI runs.
 
@@ -17,6 +18,7 @@ Start with [local development](docs/local-development.md) for the build and the 
 
 ## Design principles
 
+- Encode durable engineering decisions that humans and agents must follow alike.
 - Only deterministic analysis decides CI pass or fail.
 - Prefer high-confidence, explainable findings over broad heuristics.
 - Keep native parser details inside language adapters; share small, versioned facts.
