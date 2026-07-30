@@ -139,3 +139,4 @@ use the process in [SECURITY.md](SECURITY.md).
 ## License
 
 Godlint is released under the [MIT License](LICENSE).
+Built rules at .godlint/rules/style/no-commented-code.toml (stub)
