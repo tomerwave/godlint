@@ -367,13 +367,14 @@ fn finding(
     violation: Violation,
 ) -> Finding {
     let location = source.location(range);
+    let severity = reporting.severity.min(violation.cap());
 
     Finding {
         path: source.path().to_path_buf(),
         range,
         line: location.start.line,
         column: location.start.column,
-        severity: reporting.severity,
+        severity,
         rule_id: reporting.rule_id,
         violation,
     }

@@ -4,9 +4,9 @@ use std::path::PathBuf;
 
 use godlint_core::{
     facts::{
-        AccessFact, BlockDepth, CallFact, CallTarget, CognitiveScore, CommentFact, CommentKind,
-        DecisionPoints, ErrorHandlerFact, FunctionFact, FunctionFactDetails, FunctionFactError,
-        ParameterCount, ReturnPaths, StatementCount,
+        AccessFact, BlockDepth, CallArgument, CallFact, CallTarget, CognitiveScore, CommentFact,
+        CommentKind, DecisionPoints, ErrorHandlerFact, FunctionFact, FunctionFactDetails,
+        FunctionFactError, ParameterCount, ReturnPaths, StatementCount,
     },
     source::{SourceFile, SourceRange},
 };
@@ -95,7 +95,16 @@ fn records_a_call() {
             path: "inner".to_owned(),
             is_macro: false,
         },
-        2,
+        vec![
+            CallArgument {
+                name: None,
+                literal: Some("1".to_owned()),
+            },
+            CallArgument {
+                name: Some("flag".to_owned()),
+                literal: Some("true".to_owned()),
+            },
+        ],
     );
 
     assert_eq!(fact.range(), range(17, 22));
@@ -106,6 +115,17 @@ fn records_a_call() {
     );
     assert!(!fact.is_macro());
     assert_eq!(fact.argument_count(), 2);
+    assert_eq!(
+        fact.positional_literal(0),
+        Some("1"),
+        "a positional index counts only the positional arguments"
+    );
+    assert_eq!(fact.positional_literal(1), None);
+    assert_eq!(
+        fact.named("flag").and_then(|a| a.literal.as_deref()),
+        Some("true")
+    );
+    assert!(fact.named("missing").is_none());
 }
 
 #[test]

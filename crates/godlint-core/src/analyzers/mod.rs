@@ -4,8 +4,8 @@ use tree_sitter::{Language as TreeSitterLanguage, Node, Parser};
 
 use crate::{
     facts::{
-        AccessFact, CallFact, CallTarget, CommentFact, ConditionFact, ErrorHandlerFact,
-        FunctionFact, FunctionFactDetails, FunctionFactError, ImportFact,
+        AccessFact, CallArgument, CallFact, CallTarget, CommentFact, ConditionFact,
+        ErrorHandlerFact, FunctionFact, FunctionFactDetails, FunctionFactError, ImportFact,
     },
     source::{Language, SourceFile, SourceFileError, SourceRange},
 };
@@ -295,20 +295,41 @@ fn call_fact(
             path,
             is_macro: callee.is_macro,
         },
-        argument_count(node),
+        call_arguments(node, source, vocabulary),
     )))
 }
 
-fn argument_count(node: Node<'_>) -> usize {
+fn call_arguments(
+    node: Node<'_>,
+    source: &SourceFile,
+    vocabulary: &Vocabulary,
+) -> Vec<CallArgument> {
     let Some(arguments) = node.child_by_field_name("arguments") else {
-        return 0;
+        return Vec::new();
     };
     let mut cursor = arguments.walk();
 
     arguments
         .named_children(&mut cursor)
         .filter(|argument| !argument.is_extra())
-        .count()
+        .filter_map(|argument| call_argument(argument, source, vocabulary))
+        .collect()
+}
+
+fn call_argument(
+    node: Node<'_>,
+    source: &SourceFile,
+    vocabulary: &Vocabulary,
+) -> Option<CallArgument> {
+    let argument = (vocabulary.argument)(node)?;
+
+    Some(CallArgument {
+        name: argument
+            .name
+            .and_then(|name| source.source().get(name.byte_range()))
+            .map(str::to_owned),
+        literal: (vocabulary.literal)(argument.value, source.source()),
+    })
 }
 
 fn access_fact(

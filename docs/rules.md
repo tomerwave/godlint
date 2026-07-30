@@ -65,7 +65,7 @@ Neither policy rule about suppressions can itself be suppressed. See
 | --- | --- |
 | `security/no-dynamic-execution` | JavaScript `eval`, `Function`, `new Function`; Python `eval`, `exec`. A global-object spelling of the same built-in counts: `globalThis`, `window`, `self`, or `global` in JavaScript and TypeScript, and `builtins` in Python |
 | `security/direct-environment-read` | Environment access outside a configuration boundary |
-| `security/no-weak-hash` | MD5 or SHA-1 where the algorithm is part of the callee: Python `hashlib.md5`/`hashlib.sha1`, Rust `md5::compute`, `Md5::new`, `Sha1::new`. Not JavaScript or TypeScript — see below. `allow-in` exempts a cache key or an ETag, where collision resistance is not the point |
+| `security/no-weak-hash` | A broken hash algorithm, named either by the callee — Python `hashlib.md5`/`hashlib.sha1`, Rust `md5::compute`, `Md5::new`, `Sha1::new` — or by a literal argument to a factory: `crypto.createHash("md5")`, `crypto.createHmac("sha1", …)`, `hashlib.new("md5")`. Spelling and case do not matter (`MD5`, `sha-1`). An algorithm it cannot read reports at warning rather than at the configured severity. `allow-in` exempts a cache key or an ETag, where collision resistance is not the point |
 | `security/no-insecure-random` | A general-purpose random generator, which is predictable: JavaScript `Math.random` and `crypto.pseudoRandomBytes`, Python's `random` module, Rust `rand::random` and `rand::thread_rng`. `allow-in` exempts a path where unpredictability is not the point |
 | `security/forbidden-dependency` | An import of a package the project has ruled out |
 
@@ -158,13 +158,24 @@ JavaScript and TypeScript not at all: matching `crypto.createHash` would report 
 a weak hash, and a security rule that is wrong on the safe case is worse than one that stays quiet.
 A call-argument fact is what closes that.
 
-The comparison is worth recording, because this is a place where the obvious implementation is the
-one to avoid. SonarJS `S4790` does read the argument, and its documented failure mode is a false
-positive whenever the value cannot be inferred — a variable rather than a literal — which is why it
-ships as a review-required hotspot rather than as an error. `eslint-plugin-security` has no weak-hash
-rule at all, and its one randomness rule matches a callee name and nothing else. So the honest form
-here is to report a literal the rule can read and stay silent on anything it cannot, which is
-narrower than Sonar and correct where Sonar guesses.
+A literal argument is readable, and `security/no-weak-hash` uses that: `crypto.createHash("md5")` is
+reported and `crypto.createHash("sha256")` is not. A value that is not a literal is a different case,
+and it reports at warning rather than at the rule's configured severity: something worth a look, not
+something worth failing a build over.
+
+The comparison is worth recording. SonarJS `S4790` reports the non-literal case as an ordinary finding,
+and its documented failure mode is a false positive whenever the value cannot be inferred — which is
+why it ships as a review-required hotspot rather than as an error. `eslint-plugin-security` has no
+weak-hash rule at all, and its one randomness rule matches a callee name and nothing else. Godlint
+splits the difference by severity instead of by rule: what it can read is an error, what it cannot is a
+warning that says so, and the reader can tell which is which from the message.
+
+How the two tiers divide real code was measured rather than assumed. Across 22,562 Python files in a
+stdlib and site-packages tree there are 90 direct `hashlib.md5`/`hashlib.sha1` calls and 40
+`hashlib.new` calls, of which 13 name their algorithm with a literal. So 103 sites land in the certain
+tier and 27 in the uncertain one, and those 27 cluster in hashing library code that parameterises the
+algorithm on purpose — which is exactly the code where an error would be wrong and a warning is the
+honest answer.
 
 Inside a Rust macro invocation they see nothing. A grammar keeps a macro's arguments as an unparsed
 token tree, so `md5::compute(payload)` reports on its own and the same call inside
@@ -189,3 +200,14 @@ logging through the logging rule, which keeps the binding.
 A finding below the configured `fail-on` severity is reported without failing the command, which is
 how a rule can be adopted as a warning before it is adopted as a gate. See
 [configuration](configuration.md).
+
+One finding can report below the severity its rule is configured at, when the rule is certain
+something is wrong but not certain enough to block. `security/no-weak-hash` is the case that exists:
+`crypto.createHash("md5")` names a broken algorithm and reports at the configured severity, while
+`crypto.createHash(algorithm)` reports at warning, because the algorithm might be SHA-256 and Godlint
+cannot tell. The message says which of the two it is, so a reader is never left guessing why one line
+is an error and the next is not.
+
+A rule can only lower a finding this way, never raise it: a repository that configured the rule at
+`info` still gets `info`. That direction is deliberate — the configured severity is a ceiling the
+repository sets, and no rule may argue with it.

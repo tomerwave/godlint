@@ -238,6 +238,15 @@ lazy, a rule set to `off` still walks nothing.
 so the shared driver costs no allocation on the path that walks every function in a
 repository.
 
+A finding's severity is the rule's configured severity, capped by what the violation itself claims to
+know. `Violation::cap` answers that, and the single place a finding is built applies it, so no rule
+carries its own severity logic. The cap can only lower: the configured severity is a ceiling a
+repository sets, and a rule that could raise it would make configuration advisory. The default is
+certain — one catch-all arm rather than an entry per variant, because a violation is normally an answer
+rather than a question, and thirty arms restating that would be noise. `UnverifiedHash` is the one
+exception today: `crypto.createHash(algorithm)` is a call worth mentioning and not a call worth
+failing, since the value might be SHA-256.
+
 `rules::line_count` identifies commentary from the comment facts the analyzer already
 produced rather than by re-scanning text for `//` and `#`. Re-lexing there would
 duplicate the parser, put language knowledge in the rules layer, and get string

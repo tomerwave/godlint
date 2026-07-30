@@ -58,7 +58,13 @@ pub struct CallFact {
     source: SourceFile,
     range: SourceRange,
     target: CallTarget,
-    argument_count: usize,
+    arguments: Vec<CallArgument>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CallArgument {
+    pub name: Option<String>,
+    pub literal: Option<String>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -163,13 +169,13 @@ impl CallFact {
         source: SourceFile,
         range: SourceRange,
         target: CallTarget,
-        argument_count: usize,
+        arguments: Vec<CallArgument>,
     ) -> Self {
         Self {
             source,
             range,
             target,
-            argument_count,
+            arguments,
         }
     }
 
@@ -189,8 +195,30 @@ impl CallFact {
         self.target.is_macro
     }
 
-    pub const fn argument_count(&self) -> usize {
-        self.argument_count
+    pub fn argument_count(&self) -> usize {
+        self.arguments.len()
+    }
+
+    pub fn arguments(&self) -> &[CallArgument] {
+        &self.arguments
+    }
+
+    pub fn positional(&self, index: usize) -> Option<&CallArgument> {
+        self.arguments
+            .iter()
+            .filter(|argument| argument.name.is_none())
+            .nth(index)
+    }
+
+    pub fn positional_literal(&self, index: usize) -> Option<&str> {
+        self.positional(index)
+            .and_then(|argument| argument.literal.as_deref())
+    }
+
+    pub fn named(&self, name: &str) -> Option<&CallArgument> {
+        self.arguments
+            .iter()
+            .find(|argument| argument.name.as_deref() == Some(name))
     }
 }
 

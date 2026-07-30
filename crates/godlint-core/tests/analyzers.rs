@@ -8,6 +8,9 @@ use godlint_core::{
     source::SourceFile,
 };
 
+#[path = "analyzers/arguments.rs"]
+mod arguments;
+
 const SUPPORTED: [&str; 11] = [
     "rs", "js", "jsx", "mjs", "cjs", "ts", "tsx", "mts", "cts", "py", "pyi",
 ];
