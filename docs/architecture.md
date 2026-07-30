@@ -74,6 +74,9 @@ are answered from that table. Splitting them across a list per language meant a 
 restriction had to be added twice, and forgetting the second made a built-in silently
 language-agnostic again. A macro carries its own `!`, so one dialect per
 language suffices and the name alone separates `dbg!` from a `fn dbg`.
+`rules::catalogue` owns that table shape, the dialect a language speaks, the macro-aware
+spelling of a callee, and the path allowance every one of these rules needs, so four rules
+answer those questions the same way rather than four similar ways.
 `EnvironmentRead`, `Assertion`, `Mock`, and `DependencyEdge` are planned and are
 described in the [rule roadmap](rule-roadmap.md).
 
@@ -246,6 +249,34 @@ a cursor forward instead of re-examining every comment: a comment that ends befo
 current line cannot matter to any later line. Without it, counting a file costs its line
 count times its comment count, which is invisible on ordinary source and pronounced on a
 heavily annotated file.
+
+## Named policy or configuration
+
+Several rules are, mechanically, `architecture/restricted-call` with a curated list:
+`security/no-dynamic-execution` and `logging/no-production-log` today, and insecure
+randomness, weak hashing, dangerous deserialization and dangerous HTML sinks next. They
+could each be a suite entry instead of a rule file. They are rules.
+
+Ship the opinion as a named rule; keep the generic rule for policy Godlint has no opinion
+about. A configured list cannot say *why* it exists, so its message cannot say what to do
+instead — and `std::process::exit is restricted by project policy` is the message that has
+already been called unreadable in review. A named rule also carries a stable identifier, so
+a suppression survives a configuration edit; its own severity, without splitting a list; and
+its own documentation row, fixtures, and coverage budget. ESLint ships `no-restricted-syntax`
+and `no-eval`, and everyone uses `no-eval`.
+
+The cost that argument has to answer is duplication, and the answer is `rules::catalogue`.
+The generic rule was 96 lines against the named rule's 66, and most of the difference was
+machinery both needed: the dialect table, the dialect a language speaks, the macro-aware
+spelling, the path allowance. With those shared, `architecture/restricted-call` is 58 lines
+and `logging/no-production-log` is 50, so a new named rule costs a table and a message rather
+than a copy of the engine.
+
+One boundary holds regardless: **catalogues are data, identities are code.** Rule identifiers
+stay a static table, because `policy/accountable-suppression` and `policy/unused-suppression`
+validate suppressions against it, and that is what makes a mistyped suppression a reported
+error instead of a silent no-op. A suite that could invent identifiers would take that ground
+truth away.
 
 A built-in reached through the global object is the same built-in, so
 `security/no-dynamic-execution` strips a known global prefix before matching a callee:

@@ -2,19 +2,14 @@ use crate::{
     analyzers::SourceFacts,
     config::{Config, NoProductionLogRule, Severity},
     facts::CallFact,
-    glob,
-    rules::{CallRule, Finding, Rule, Violation, evaluate_call_rule, when_configured},
-    source::Language,
+    rules::{
+        CallRule, Finding, Rule, Violation,
+        catalogue::{Catalogue, Dialect, is_allowed, spelled},
+        evaluate_call_rule, when_configured,
+    },
 };
 
-#[derive(Clone, Copy, Eq, PartialEq)]
-enum Dialect {
-    JavaScript,
-    Python,
-    Rust,
-}
-
-const LOGGERS: &[(&str, Dialect)] = &[
+const LOGGERS: Catalogue = Catalogue(&[
     ("console.log", Dialect::JavaScript),
     ("console.debug", Dialect::JavaScript),
     ("console.info", Dialect::JavaScript),
@@ -22,7 +17,7 @@ const LOGGERS: &[(&str, Dialect)] = &[
     ("print", Dialect::Python),
     ("pprint.pprint", Dialect::Python),
     ("dbg!", Dialect::Rust),
-];
+]);
 
 pub struct NoProductionLog;
 
@@ -39,12 +34,12 @@ impl Rule for NoProductionLog {
 impl CallRule for NoProductionLog {
     fn check(call: &CallFact, configuration: &Self::Configuration) -> Option<Violation> {
         let name = spelled(call);
+        let source = call.source();
 
-        (is_logger(call, &name) && !is_allowed(call, &configuration.allow_in)).then(|| {
-            Violation::ProductionLog {
+        (LOGGERS.speaks(source.language(), &name) && !is_allowed(source, &configuration.allow_in))
+            .then(|| Violation::ProductionLog {
                 callee: name.clone(),
-            }
-        })
+            })
     }
 }
 
@@ -52,34 +47,4 @@ pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Vec<Finding> {
     when_configured(config.rules.no_production_log.as_ref(), |rule| {
         evaluate_call_rule::<NoProductionLog>(facts, rule)
     })
-}
-
-fn spelled(call: &CallFact) -> String {
-    let callee = call.callee();
-
-    if call.is_macro() {
-        format!("{callee}!")
-    } else {
-        callee.to_owned()
-    }
-}
-
-fn is_logger(call: &CallFact, name: &str) -> bool {
-    let spoken = dialect(call.source().language());
-
-    LOGGERS
-        .iter()
-        .any(|(logger, dialect)| *logger == name && *dialect == spoken)
-}
-
-fn dialect(language: Language) -> Dialect {
-    match language {
-        Language::JavaScript | Language::TypeScript => Dialect::JavaScript,
-        Language::Python => Dialect::Python,
-        Language::Rust => Dialect::Rust,
-    }
-}
-
-fn is_allowed(call: &CallFact, paths: &[String]) -> bool {
-    glob::matches_any(paths.iter().map(String::as_str), call.source().path_text())
 }
