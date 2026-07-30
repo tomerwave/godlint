@@ -1,6 +1,9 @@
 #![allow(clippy::expect_used, clippy::unwrap_used)]
 
-use std::path::{Path, PathBuf};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 use godlint_core::{
     config::DEFAULT_EXCLUDES,
@@ -260,7 +263,7 @@ fn an_unreadable_directory_does_not_discard_the_rest_of_the_walk() {
     repository.create_file("readable.rs");
     repository.create_file("denied/hidden.rs");
 
-    let denied = repository.path.join("denied");
+    let denied = repository.path().join("denied");
 
     assert!(
         deny_access(&denied),
@@ -268,7 +271,7 @@ fn an_unreadable_directory_does_not_discard_the_rest_of_the_walk() {
     );
 
     let discovered = repository
-        .walk(std::slice::from_ref(&repository.path), &defaults())
+        .walk(&[repository.path().to_path_buf()], &defaults())
         .unwrap_or_else(|error| panic!("keeps walking past an unreadable directory: {error}"));
 
     restore_access(&denied);
@@ -289,7 +292,7 @@ fn an_unreadable_requested_root_is_still_fatal() {
 
     repository.create_file("denied/hidden.rs");
 
-    let denied = repository.path.join("denied");
+    let denied = repository.path().join("denied");
 
     assert!(deny_access(&denied), "the root must be unreadable");
 
