@@ -3,6 +3,7 @@
 # reader cannot see. It earned its place: an off-by-one in the containment test shipped past
 # review, and a `<=` to `<` mutant is exactly the shape of it.
 examine_globs = [
+    "crates/godlint-core/src/analyzers/*.rs",
     "crates/godlint-core/src/rules/*.rs",
     "crates/godlint-core/src/suppression.rs",
 ]

@@ -4,8 +4,8 @@ use crate::{
     analyzers::{
         Analyzer, AnalyzerError, SourceFacts,
         vocabulary::{
-            Argument, Callee, Cognition, Condition, ErrorHandler, Vocabulary,
-            is_leading_block_statement, literal_value, plain_path,
+            Argument, Callee, Cognition, Condition, ErrorHandler, Focus, TestDeclaration,
+            Vocabulary, is_leading_block_statement, literal_value, plain_path,
         },
     },
     facts::CommentKind,
@@ -38,6 +38,7 @@ const VOCABULARY: Vocabulary = Vocabulary {
     direct_path,
     argument,
     literal,
+    test,
     import,
     comment_kind,
     has_implicit_tail_return,
@@ -191,6 +192,69 @@ fn spelled_module(name: Node<'_>) -> Option<Node<'_>> {
 
 fn direct_path(text: &str) -> Option<String> {
     plain_path(text)
+}
+
+fn test<'tree>(node: Node<'tree>, source: &str) -> Option<TestDeclaration<'tree>> {
+    if node.kind() != "function_definition" {
+        return None;
+    }
+
+    let name = node.child_by_field_name("name")?;
+    let decorators = decorators_of(node, source);
+    let marked = decorators
+        .iter()
+        .find(|(text, _)| text.starts_with("pytest.mark."));
+    let named = source
+        .get(name.byte_range())
+        .is_some_and(|text| text.starts_with("test_") || text == "test");
+
+    if !named && marked.is_none() {
+        return None;
+    }
+
+    Some(TestDeclaration {
+        node,
+        name: Some(name),
+        marker: marked.map_or(name, |(_, node)| *node),
+        focus: python_focus(&decorators),
+    })
+}
+
+fn python_focus(decorators: &[(&str, Node<'_>)]) -> Focus {
+    let skipped = decorators
+        .iter()
+        .any(|(text, _)| text.starts_with("pytest.mark.skip") || text.starts_with("unittest.skip"));
+
+    if skipped {
+        Focus::Skipped
+    } else {
+        Focus::Ordinary
+    }
+}
+
+fn decorators_of<'tree, 'source>(
+    node: Node<'tree>,
+    source: &'source str,
+) -> Vec<(&'source str, Node<'tree>)> {
+    let Some(parent) = node.parent().filter(|p| p.kind() == "decorated_definition") else {
+        return Vec::new();
+    };
+    let mut cursor = parent.walk();
+
+    parent
+        .named_children(&mut cursor)
+        .filter(|child| child.kind() == "decorator")
+        .filter_map(|decorator| {
+            let inner = decorator.named_child(0)?;
+            let marker = if inner.kind() == "call" {
+                inner.child_by_field_name("function")?
+            } else {
+                inner
+            };
+
+            Some((source.get(marker.byte_range())?, marker))
+        })
+        .collect()
 }
 
 fn argument(node: Node<'_>) -> Option<Argument<'_>> {

@@ -7,6 +7,9 @@ use godlint_core::{analyzers::analyze, facts::CommentKind, source::SourceFile};
 #[path = "analyzers/arguments.rs"]
 mod arguments;
 
+#[path = "analyzers/tests.rs"]
+mod tests;
+
 const SUPPORTED: [&str; 11] = [
     "rs", "js", "jsx", "mjs", "cjs", "ts", "tsx", "mts", "cts", "py", "pyi",
 ];

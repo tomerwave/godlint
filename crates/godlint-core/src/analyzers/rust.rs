@@ -4,8 +4,8 @@ use crate::{
     analyzers::{
         Analyzer, AnalyzerError, SourceFacts,
         vocabulary::{
-            Argument, Callee, Cognition, Condition, ErrorHandler, Vocabulary, literal_value,
-            plain_path,
+            Argument, Callee, Cognition, Condition, ErrorHandler, Focus, TestDeclaration,
+            Vocabulary, literal_value, plain_path,
         },
     },
     facts::CommentKind,
@@ -38,6 +38,7 @@ const VOCABULARY: Vocabulary = Vocabulary {
     direct_path,
     argument,
     literal,
+    test,
     import,
     comment_kind,
     has_implicit_tail_return,
@@ -174,6 +175,53 @@ fn spelled_path(argument: Node<'_>) -> Option<Node<'_>> {
 
 fn direct_path(text: &str) -> Option<String> {
     plain_path(text)
+}
+
+fn test<'tree>(node: Node<'tree>, source: &str) -> Option<TestDeclaration<'tree>> {
+    if node.kind() != "function_item" {
+        return None;
+    }
+
+    let attributes = preceding_attributes(node, source);
+    let marker = attributes
+        .iter()
+        .find(|(name, _)| name.rsplit("::").next() == Some("test"))?;
+    let skipped = attributes.iter().any(|(name, _)| *name == "ignore");
+
+    Some(TestDeclaration {
+        node,
+        name: node.child_by_field_name("name"),
+        marker: marker.1,
+        focus: if skipped {
+            Focus::Skipped
+        } else {
+            Focus::Ordinary
+        },
+    })
+}
+
+fn preceding_attributes<'tree, 'source>(
+    node: Node<'tree>,
+    source: &'source str,
+) -> Vec<(&'source str, Node<'tree>)> {
+    let mut attributes = Vec::new();
+    let mut previous = node.prev_named_sibling();
+
+    while let Some(item) = previous {
+        if item.kind() != "attribute_item" {
+            break;
+        }
+
+        if let Some(attribute) = item.named_child(0)
+            && let Some(text) = source.get(attribute.byte_range())
+        {
+            attributes.push((text, attribute));
+        }
+
+        previous = item.prev_named_sibling();
+    }
+
+    attributes
 }
 
 fn argument(node: Node<'_>) -> Option<Argument<'_>> {
