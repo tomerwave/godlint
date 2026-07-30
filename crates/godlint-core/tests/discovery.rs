@@ -1,10 +1,13 @@
 #![allow(clippy::expect_used, clippy::unwrap_used)]
 
-use std::path::{Path, PathBuf};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 use godlint_core::{
     config::DEFAULT_EXCLUDES,
-    discovery::{DiscoveryError, Scope, discover},
+    discovery::{Discovery, DiscoveryError, Scope, discover},
 };
 
 #[path = "support/temporary.rs"]
@@ -44,6 +47,11 @@ impl Repository {
         paths: &[PathBuf],
         excludes: &[String],
     ) -> Result<Vec<PathBuf>, DiscoveryError> {
+        self.walk(paths, excludes)
+            .map(|discovered| discovered.files)
+    }
+
+    fn walk(&self, paths: &[PathBuf], excludes: &[String]) -> Result<Discovery, DiscoveryError> {
         discover(
             paths,
             &Scope {
@@ -226,5 +234,74 @@ fn treats_a_git_directory_and_a_git_file_alike() {
     assert!(
         relative_paths(&repository, discovered).is_empty(),
         "a worktree or submodule .git file marks a boundary exactly as a directory does"
+    );
+}
+
+#[cfg(unix)]
+fn deny_access(path: &Path) -> bool {
+    use std::os::unix::fs::PermissionsExt;
+
+    fs::set_permissions(path, fs::Permissions::from_mode(0o000))
+        .unwrap_or_else(|error| panic!("removes permissions: {error}"));
+
+    fs::read_dir(path).is_err()
+}
+
+#[cfg(unix)]
+fn restore_access(path: &Path) {
+    use std::os::unix::fs::PermissionsExt;
+
+    fs::set_permissions(path, fs::Permissions::from_mode(0o700))
+        .unwrap_or_else(|error| panic!("restores permissions: {error}"));
+}
+
+#[cfg(unix)]
+#[test]
+fn an_unreadable_directory_does_not_discard_the_rest_of_the_walk() {
+    let repository = Repository::new();
+
+    repository.create_file("readable.rs");
+    repository.create_file("denied/hidden.rs");
+
+    let denied = repository.path().join("denied");
+
+    assert!(
+        deny_access(&denied),
+        "the test cannot prove degradation while the directory is still readable"
+    );
+
+    let discovered = repository
+        .walk(&[repository.path().to_path_buf()], &defaults())
+        .unwrap_or_else(|error| panic!("keeps walking past an unreadable directory: {error}"));
+
+    restore_access(&denied);
+
+    assert_eq!(
+        relative_paths(&repository, discovered.files),
+        vec![Path::new("readable.rs").to_path_buf()],
+        "a sibling of an unreadable directory must survive"
+    );
+    assert_eq!(discovered.failures.len(), 1);
+    assert_eq!(discovered.failures[0].path(), denied);
+}
+
+#[cfg(unix)]
+#[test]
+fn an_unreadable_requested_root_is_still_fatal() {
+    let repository = Repository::new();
+
+    repository.create_file("denied/hidden.rs");
+
+    let denied = repository.path().join("denied");
+
+    assert!(deny_access(&denied), "the root must be unreadable");
+
+    let result = repository.walk(std::slice::from_ref(&denied), &defaults());
+
+    restore_access(&denied);
+
+    assert!(
+        matches!(result, Err(DiscoveryError::ReadDirectory { .. })),
+        "a path the user named by hand is not a partial result"
     );
 }

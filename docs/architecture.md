@@ -299,6 +299,13 @@ A failure specific to one file — unreadable bytes, invalid syntax — is recor
 that file and reported alongside the findings. It must not abort the run, because
 discarding every other finding turns one bad file into a silent pass.
 
+Discovery draws the same line by where a path came from. A path the user named on the
+command line is fatal: they asked for it, so a partial answer would be a wrong answer.
+Anything reached while walking below such a path becomes a recorded failure instead — an
+unreadable subdirectory costs its own contents and nothing else. Both shapes still end the
+run with the exit code that says something went wrong, so degrading is not the same as
+passing.
+
 ## Crate boundaries
 
 Start with only `godlint-cli` and `godlint-core`. Add fixture-test support,
