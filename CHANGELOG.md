@@ -69,6 +69,12 @@ speaks about.
 
 ### Fixed
 
+- A filename could rewrite the report about it. Godlint printed repository paths, messages, and
+  arguments unescaped, so an escape sequence in a name repainted the surrounding output and a newline
+  turned one finding into what read as two. Every diagnostic now goes through one escaping boundary:
+  a control character is rendered readably in the terminal and GitHub formats, and as a `\u` escape in
+  JSON and SARIF. The machine-readable formats also escape the control characters above `0x7f`, which
+  they previously passed through.
 - A directory Godlint could not read discarded every finding from the rest of the run. Discovery now
   reports the files it found alongside the failures it hit: a path named on the command line is still
   fatal, because a partial answer to an explicit request is a wrong answer, while anything reached

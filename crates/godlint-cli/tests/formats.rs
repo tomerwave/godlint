@@ -202,3 +202,52 @@ fn a_format_with_no_name_is_refused() {
     assert_eq!(output.status.code(), Some(2));
     assert!(String::from_utf8_lossy(&output.stderr).contains("needs a format"));
 }
+
+#[cfg(unix)]
+fn hostile_name(directory: &TemporaryDirectory, name: &str) {
+    directory.write(name, "fn main() {\n    std::process::exit(1);\n}\n");
+}
+
+#[cfg(unix)]
+#[test]
+fn a_control_sequence_in_a_path_never_reaches_the_output_raw() {
+    let directory = scratch(&[(
+        "godlint.yaml",
+        "version: 1\nrules:\n  architecture/restricted-call:\n    severity: error\n",
+    )]);
+
+    hostile_name(&directory, "we\u{1b}[31mird.rs");
+
+    for format in ["terminal", "github", "json", "sarif"] {
+        let printed = checked(directory.path(), &["--format", format]);
+
+        assert!(
+            !printed.contains('\u{1b}'),
+            "{format} passed an escape byte through: {printed:?}"
+        );
+        assert!(
+            printed.contains("we") && printed.contains("ird.rs"),
+            "{format} lost the path it was reporting: {printed}"
+        );
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn a_newline_in_a_path_does_not_forge_a_second_finding() {
+    let directory = scratch(&[(
+        "godlint.yaml",
+        "version: 1\nrules:\n  architecture/restricted-call:\n    severity: error\n",
+    )]);
+
+    hostile_name(&directory, "two\nlines.rs");
+
+    let printed = checked(directory.path(), &["--format", "terminal"]);
+
+    assert_eq!(
+        printed.lines().count(),
+        1,
+        "one finding must read as one line: {printed:?}"
+    );
+    assert!(printed.contains("two\\nlines.rs"), "{printed:?}");
+}
