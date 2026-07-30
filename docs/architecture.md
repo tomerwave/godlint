@@ -35,7 +35,16 @@ model that rules consume without a universal AST. `FunctionFact`, `CommentFact`,
 `AccessFact`, `ErrorHandlerFact`, and `ImportFact` exist today. `CallFact` records a direct callee path, a
 source range, argument count, and whether the call site was a macro invocation; `AccessFact` does the same
 for direct member access. Neither resolves aliases, types, or dynamically computed
-properties. The argument count excludes comments: a grammar reports them as named nodes
+properties.
+
+A callee and an access target are resolved when the fact is built rather than read back out
+of the range, because the path a rule matches is not always the text a file spells. The
+range still locates the finding, so a report points at what the author wrote. Which
+spellings denote the same path is a per-language judgement and belongs to the language
+module: `process?.env` and `process.env` are one read, so JavaScript and TypeScript
+normalize optional member access before answering, while Rust and Python have no such form
+and answer with the plain spelling. Deciding this in the shared extractor would have put
+one language's punctuation in code that must not know any. The argument count excludes comments: a grammar reports them as named nodes
 inside the argument list, so counting named children alone would read
 `setTimeout(work /*, 100 */)` as a call that passes two arguments.
 
@@ -308,6 +317,27 @@ only in output.
 A failure specific to one file — unreadable bytes, invalid syntax — is recorded against
 that file and reported alongside the findings. It must not abort the run, because
 discarding every other finding turns one bad file into a silent pass.
+
+## Reporting untrusted text
+
+Every path, message, and argument Godlint prints comes from the repository it was pointed
+at, so none of it is trusted to be printable. A control character reaching a terminal is
+not cosmetic: an escape sequence repaints or hides the lines around it, and a newline in a
+filename turns one finding into what reads as two. Both let a file being reported on edit
+the report about it.
+
+`report::visible` is the one place that decides how a control character is rendered, and
+every diagnostic goes through it — the reporters, the scan issues, the configuration
+messages, the suppression audit, and the unknown-argument error. A rendered escape is
+readable rather than merely stripped, because a reviewer needs to see that a name contains
+something odd. The machine-readable formats escape the same characters as JSON `\u`
+sequences, which keeps a document parseable and a consumer that prints it raw safe.
+Discovery draws the same line by where a path came from. A path the user named on the
+command line is fatal: they asked for it, so a partial answer would be a wrong answer.
+Anything reached while walking below such a path becomes a recorded failure instead — an
+unreadable subdirectory costs its own contents and nothing else. Both shapes still end the
+run with the exit code that says something went wrong, so degrading is not the same as
+passing.
 
 ## Crate boundaries
 

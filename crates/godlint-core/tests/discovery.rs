@@ -3,42 +3,35 @@
 use std::{
     fs,
     path::{Path, PathBuf},
-    sync::atomic::{AtomicU64, Ordering},
-    time::{SystemTime, UNIX_EPOCH},
 };
 
 use godlint_core::{
     config::DEFAULT_EXCLUDES,
-    discovery::{DiscoveryError, Scope, discover},
+    discovery::{Discovery, DiscoveryError, Scope, discover},
 };
 
-static NEXT_REPOSITORY_ID: AtomicU64 = AtomicU64::new(0);
+#[path = "support/temporary.rs"]
+mod temporary;
+
+use temporary::TemporaryDirectory;
 
 struct Repository {
-    path: PathBuf,
+    directory: TemporaryDirectory,
 }
 
 impl Repository {
     fn new() -> Self {
-        let timestamp = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map_or(0, |duration| duration.as_nanos());
-        let id = NEXT_REPOSITORY_ID.fetch_add(1, Ordering::Relaxed);
-        let path = std::env::temp_dir().join(format!("godlint-discovery-{timestamp}-{id}"));
+        Self {
+            directory: TemporaryDirectory::new("discovery"),
+        }
+    }
 
-        fs::create_dir(&path).unwrap_or_else(|error| panic!("creates repository: {error}"));
-
-        Self { path }
+    fn path(&self) -> &Path {
+        self.directory.path()
     }
 
     fn create_file(&self, relative_path: &str) {
-        let path = self.path.join(relative_path);
-
-        if let Some(parent) = path.parent() {
-            fs::create_dir_all(parent).unwrap_or_else(|error| panic!("creates parent: {error}"));
-        }
-
-        fs::write(path, "source").unwrap_or_else(|error| panic!("writes source file: {error}"));
+        self.directory.write(relative_path, "source");
     }
 
     fn discover(&self) -> Result<Vec<PathBuf>, DiscoveryError> {
@@ -46,7 +39,7 @@ impl Repository {
     }
 
     fn discover_excluding(&self, excludes: &[String]) -> Result<Vec<PathBuf>, DiscoveryError> {
-        self.discover_paths(std::slice::from_ref(&self.path), excludes)
+        self.discover_paths(&[self.path().to_path_buf()], excludes)
     }
 
     fn discover_paths(
@@ -54,20 +47,18 @@ impl Repository {
         paths: &[PathBuf],
         excludes: &[String],
     ) -> Result<Vec<PathBuf>, DiscoveryError> {
+        self.walk(paths, excludes)
+            .map(|discovered| discovered.files)
+    }
+
+    fn walk(&self, paths: &[PathBuf], excludes: &[String]) -> Result<Discovery, DiscoveryError> {
         discover(
             paths,
             &Scope {
-                root: &self.path,
+                root: self.path(),
                 excludes,
             },
         )
-    }
-}
-
-impl Drop for Repository {
-    fn drop(&mut self) {
-        fs::remove_dir_all(&self.path)
-            .unwrap_or_else(|error| panic!("removes repository: {error}"));
     }
 }
 
@@ -75,7 +66,7 @@ fn relative_paths(repository: &Repository, paths: Vec<PathBuf>) -> Vec<PathBuf> 
     paths
         .into_iter()
         .map(|path| {
-            path.strip_prefix(&repository.path)
+            path.strip_prefix(repository.path())
                 .unwrap_or_else(|error| panic!("makes path relative: {error}"))
                 .to_path_buf()
         })
@@ -194,7 +185,7 @@ fn skips_a_nested_repository_unless_it_is_explicitly_requested() {
         vec![Path::new("outer.rs").to_path_buf()]
     );
 
-    let nested = repository.path.join("nested");
+    let nested = repository.path().join("nested");
     let discovered = repository
         .discover_paths(std::slice::from_ref(&nested), &defaults())
         .unwrap_or_else(|error| panic!("discovers requested nested repository: {error}"));
@@ -243,5 +234,74 @@ fn treats_a_git_directory_and_a_git_file_alike() {
     assert!(
         relative_paths(&repository, discovered).is_empty(),
         "a worktree or submodule .git file marks a boundary exactly as a directory does"
+    );
+}
+
+#[cfg(unix)]
+fn deny_access(path: &Path) -> bool {
+    use std::os::unix::fs::PermissionsExt;
+
+    fs::set_permissions(path, fs::Permissions::from_mode(0o000))
+        .unwrap_or_else(|error| panic!("removes permissions: {error}"));
+
+    fs::read_dir(path).is_err()
+}
+
+#[cfg(unix)]
+fn restore_access(path: &Path) {
+    use std::os::unix::fs::PermissionsExt;
+
+    fs::set_permissions(path, fs::Permissions::from_mode(0o700))
+        .unwrap_or_else(|error| panic!("restores permissions: {error}"));
+}
+
+#[cfg(unix)]
+#[test]
+fn an_unreadable_directory_does_not_discard_the_rest_of_the_walk() {
+    let repository = Repository::new();
+
+    repository.create_file("readable.rs");
+    repository.create_file("denied/hidden.rs");
+
+    let denied = repository.path().join("denied");
+
+    assert!(
+        deny_access(&denied),
+        "the test cannot prove degradation while the directory is still readable"
+    );
+
+    let discovered = repository
+        .walk(&[repository.path().to_path_buf()], &defaults())
+        .unwrap_or_else(|error| panic!("keeps walking past an unreadable directory: {error}"));
+
+    restore_access(&denied);
+
+    assert_eq!(
+        relative_paths(&repository, discovered.files),
+        vec![Path::new("readable.rs").to_path_buf()],
+        "a sibling of an unreadable directory must survive"
+    );
+    assert_eq!(discovered.failures.len(), 1);
+    assert_eq!(discovered.failures[0].path(), denied);
+}
+
+#[cfg(unix)]
+#[test]
+fn an_unreadable_requested_root_is_still_fatal() {
+    let repository = Repository::new();
+
+    repository.create_file("denied/hidden.rs");
+
+    let denied = repository.path().join("denied");
+
+    assert!(deny_access(&denied), "the root must be unreadable");
+
+    let result = repository.walk(std::slice::from_ref(&denied), &defaults());
+
+    restore_access(&denied);
+
+    assert!(
+        matches!(result, Err(DiscoveryError::ReadDirectory { .. })),
+        "a path the user named by hand is not a partial result"
     );
 }

@@ -1,35 +1,16 @@
 #![allow(clippy::expect_used, clippy::unwrap_used)]
 
-use std::{
-    fs,
-    path::PathBuf,
-    sync::atomic::{AtomicU64, Ordering},
-    time::{SystemTime, UNIX_EPOCH},
-};
-
 use godlint_core::config::{Config, ConfigError};
 
-static NEXT_CONFIG_ID: AtomicU64 = AtomicU64::new(0);
+#[path = "support/temporary.rs"]
+mod temporary;
 
-fn config_file(contents: &str) -> PathBuf {
-    let timestamp = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map_or(0, |duration| duration.as_nanos());
-    let id = NEXT_CONFIG_ID.fetch_add(1, Ordering::Relaxed);
-    let path = std::env::temp_dir().join(format!("godlint-config-{timestamp}-{id}.yaml"));
-
-    fs::write(&path, contents).unwrap_or_else(|error| panic!("writes config: {error}"));
-
-    path
-}
+use temporary::TemporaryDirectory;
 
 fn load(contents: &str) -> Result<Config, ConfigError> {
-    let path = config_file(contents);
-    let result = Config::load(&path);
+    let directory = TemporaryDirectory::new("config");
 
-    fs::remove_file(path).unwrap_or_else(|error| panic!("removes config: {error}"));
-
-    result
+    Config::load(directory.write("godlint.yaml", contents))
 }
 
 #[test]

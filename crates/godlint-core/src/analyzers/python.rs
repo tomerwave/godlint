@@ -5,6 +5,7 @@ use crate::{
         Analyzer, AnalyzerError, SourceFacts,
         vocabulary::{
             Callee, Cognition, Condition, ErrorHandler, Vocabulary, is_leading_block_statement,
+            plain_path,
         },
     },
     facts::CommentKind,
@@ -34,6 +35,7 @@ const VOCABULARY: Vocabulary = Vocabulary {
     condition,
     cognition,
     is_access,
+    direct_path,
     import,
     comment_kind,
     has_implicit_tail_return,
@@ -183,6 +185,10 @@ fn spelled_module(name: Node<'_>) -> Option<Node<'_>> {
     }
 
     Some(name)
+}
+
+fn direct_path(text: &str) -> Option<String> {
+    plain_path(text)
 }
 
 fn is_access(kind: &str) -> bool {

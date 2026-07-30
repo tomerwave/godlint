@@ -45,15 +45,37 @@ fn lines(findings: &[Finding], render_one: impl Fn(&Finding) -> String) -> Strin
         .join("\n")
 }
 
+pub fn visible(text: &str) -> String {
+    let mut rendered = String::with_capacity(text.len());
+
+    for character in text.chars() {
+        push_visible(character, &mut rendered);
+    }
+
+    rendered
+}
+
+fn push_visible(character: char, rendered: &mut String) {
+    match character {
+        '\n' => rendered.push_str("\\n"),
+        '\r' => rendered.push_str("\\r"),
+        '\t' => rendered.push_str("\\t"),
+        control if control.is_control() => {
+            rendered.push_str(&format!("\\u{{{:04x}}}", control as u32));
+        }
+        other => rendered.push(other),
+    }
+}
+
 fn terminal(finding: &Finding) -> String {
     format!(
         "{}:{}:{}: {}[{}] {}",
-        finding.path.display(),
+        visible(&finding.path.display().to_string()),
         finding.line,
         finding.column,
         severity_name(finding.severity),
         finding.rule_id,
-        finding.message()
+        visible(&finding.message())
     )
 }
 
@@ -171,15 +193,15 @@ fn escape(character: char, json: &mut String) {
         '\n' => json.push_str("\\n"),
         '\r' => json.push_str("\\r"),
         '\t' => json.push_str("\\t"),
-        control if control < ' ' => json.push_str(&format!("\\u{:04x}", control as u32)),
+        control if control.is_control() => {
+            json.push_str(&format!("\\u{:04x}", control as u32));
+        }
         other => json.push(other),
     }
 }
 
 fn message(text: &str) -> String {
-    text.replace('%', "%25")
-        .replace('\r', "%0D")
-        .replace('\n', "%0A")
+    visible(text).replace('%', "%25")
 }
 
 fn property(text: &str) -> String {

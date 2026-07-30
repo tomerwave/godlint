@@ -362,6 +362,65 @@ fn extracts_direct_environment_accesses() {
 }
 
 #[test]
+fn an_optional_member_access_names_the_same_path_as_a_plain_one() {
+    for extension in ["js", "jsx", "ts", "tsx", "mjs", "cjs", "mts", "cts"] {
+        let path = format!("example.{extension}");
+
+        for contents in [
+            "const value = process?.env.VALUE;",
+            "const value = process.env?.VALUE;",
+            "const value = process?.env?.VALUE;",
+        ] {
+            let facts = analyze(&source(&path, contents))
+                .unwrap_or_else(|error| panic!("analyzes {path}: {error}"));
+            let accesses: Vec<&str> = facts
+                .accesses()
+                .iter()
+                .map(|access| access.target())
+                .collect();
+
+            assert!(
+                accesses.contains(&"process.env"),
+                "optional access is the same read: {path} {contents} gave {accesses:?}"
+            );
+        }
+    }
+}
+
+#[test]
+fn an_optional_call_names_the_same_callee_as_a_plain_one() {
+    let cases = [
+        ("parse?.(input)", "parse"),
+        ("outer?.parse(input)", "outer.parse"),
+        ("outer.parse?.(input)", "outer.parse"),
+    ];
+
+    for (contents, expected) in cases {
+        let facts = analyze(&source("example.ts", contents))
+            .unwrap_or_else(|error| panic!("analyzes: {error}"));
+        let calls: Vec<&str> = facts.calls().iter().map(|call| call.callee()).collect();
+
+        assert!(calls.contains(&expected), "{contents} gave {calls:?}");
+    }
+}
+
+#[test]
+fn a_computed_member_access_is_not_a_direct_path() {
+    let facts = analyze(&source("example.ts", "const value = process[key].VALUE;"))
+        .unwrap_or_else(|error| panic!("analyzes: {error}"));
+    let accesses: Vec<&str> = facts
+        .accesses()
+        .iter()
+        .map(|access| access.target())
+        .collect();
+
+    assert!(
+        !accesses.iter().any(|target| target.contains('[')),
+        "a dynamically computed property is not a path a rule can match: {accesses:?}"
+    );
+}
+
+#[test]
 fn records_whether_a_call_was_a_macro_invocation() {
     let facts = analyze(&source(
         "example.rs",

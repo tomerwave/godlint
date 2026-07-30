@@ -34,6 +34,16 @@ Use focused integration tests for small deterministic invariants that are hard t
 diagnose through rule fixtures: configuration merging, glob behavior, source ranges,
 fingerprints, cache keys, diff parsing, and graph algorithms.
 
+A test that needs scratch files on disk takes them from `TemporaryDirectory` in each
+crate's `tests/support/temporary.rs`, never by building a name under the shared temporary
+root. A name built from a clock and a process-local counter is not unique across
+processes: `SystemTime::now` advances in microsecond steps rather than per call, and every
+process allocates the same first counter value, so two concurrent test processes can agree
+on a path. `TemporaryDirectory` claims its directory with a single `create_dir`, which
+fails rather than sharing, and retries on the one collision a recycled process id can
+still produce. It removes the tree on drop, so a suite leaves nothing behind for the next
+run to read.
+
 ## Proving the fixtures are adequate
 
 A fixture proves a rule fires. Nothing about a passing suite proves the suite would have
