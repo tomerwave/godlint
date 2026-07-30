@@ -52,6 +52,9 @@ pub enum Violation {
     SkippedTest,
     EmptyTest,
     MissingAssertion,
+    ShellCommand {
+        shell: String,
+    },
     SleepInTest {
         callee: String,
     },
@@ -156,6 +159,11 @@ const MISSING_ASSERTION: &str = concat!(
     "do, or name the helper that asserts for it in extra-assertions."
 );
 
+const SHELL_COMMAND: &str = concat!(
+    "runs its argument through a shell, so any value interpolated into it becomes executable; ",
+    "pass the program and its arguments as an array instead."
+);
+
 const COMMENT_NOT_PERMITTED: &str = "Comment is not permitted; express the intent in the code.";
 
 fn unverified_hash(formatter: &mut fmt::Formatter<'_>, callee: &str) -> fmt::Result {
@@ -249,6 +257,7 @@ impl fmt::Display for Violation {
             Self::SkippedTest => write!(formatter, "{SKIPPED_TEST}"),
             Self::EmptyTest => formatter.write_str(EMPTY_TEST),
             Self::MissingAssertion => formatter.write_str(MISSING_ASSERTION),
+            Self::ShellCommand { shell } => write!(formatter, "{shell} {SHELL_COMMAND}"),
             Self::SleepInTest { callee } => write!(formatter, "{callee} {SLEEP_IN_TEST}"),
             Self::UnseededRandom { callee, remedy } => unseeded(formatter, callee, remedy),
             Self::NetworkInUnitTest { callee } => {

@@ -1,0 +1,10 @@
+exit-code: 1
+
+stdout: |
+  destructured.js:4:3: error[security/no-shell-command] exec runs its argument through a shell, so any value interpolated into it becomes executable; pass the program and its arguments as an array instead.
+  example.js:4:3: error[security/no-shell-command] child_process.exec runs its argument through a shell, so any value interpolated into it becomes executable; pass the program and its arguments as an array instead.
+  example.py:6:5: error[security/no-shell-command] shell=True runs its argument through a shell, so any value interpolated into it becomes executable; pass the program and its arguments as an array instead.
+  example.py:7:5: error[security/no-shell-command] os.system runs its argument through a shell, so any value interpolated into it becomes executable; pass the program and its arguments as an array instead.
+  example.rs:2:5: error[security/no-shell-command] Command::new("sh") runs its argument through a shell, so any value interpolated into it becomes executable; pass the program and its arguments as an array instead.
+  required.js:4:3: error[security/no-shell-command] execSync runs its argument through a shell, so any value interpolated into it becomes executable; pass the program and its arguments as an array instead.
+stderr: ""

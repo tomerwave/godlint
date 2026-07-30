@@ -1,0 +1,5 @@
+version: 1
+
+rules:
+  security/no-shell-command:
+    severity: error
