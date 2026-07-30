@@ -55,19 +55,51 @@ repository — are on that roadmap rather than in the list above.
 
 ## Install
 
-No Rust toolchain is needed on three of the four channels, which is the point: Godlint lints
-JavaScript, TypeScript and Python, and most people working in those languages do not have one.
+No Rust toolchain is needed except on the Cargo channel, which is the point: Godlint lints
+JavaScript, TypeScript and Python, and most people working in those languages do not have one. Use
+whichever package manager your project already uses — every one of these installs the same binary and
+the same command, `godlint`.
 
-| Channel | Command |
-| --- | --- |
-| npm | `npm install --save-dev @godlint/cli` |
-| PyPI | `pip install godlint` |
-| Cargo | `cargo install godlint-cli` |
-| Binary | [latest release](https://github.com/tomerwave/godlint/releases/latest) — Linux, macOS, Windows, plus a static musl build |
+**In a JavaScript or TypeScript project**
 
-Every channel installs the same binary and the same command, `godlint`. The npm package is scoped
-because npm holds the bare name too close to an existing one. Release archives ship a `.sha256`
-beside them:
+```bash
+npm install --save-dev @godlint/cli
+pnpm add -D @godlint/cli
+yarn add -D @godlint/cli
+bun add -d @godlint/cli
+```
+
+**In a Python project**
+
+```bash
+uv add --dev godlint          # uv-managed project
+uv pip install godlint        # into an activated or explicit environment
+pip install godlint
+```
+
+**As a standalone command, outside any project**
+
+```bash
+uv tool install godlint
+pipx install godlint
+cargo install godlint-cli     # the one channel that needs a Rust toolchain
+```
+
+**Without installing anything**
+
+```bash
+uvx godlint check
+npx @godlint/cli check
+bunx @godlint/cli check
+```
+
+**As a prebuilt binary** — [latest release](https://github.com/tomerwave/godlint/releases/latest),
+covering Linux, macOS, Windows, and a statically linked musl build for containers without glibc.
+
+The npm package is scoped because npm holds the bare name too close to an existing one, and it carries
+each platform's binary as an optional dependency with no install script, so your package manager fetches
+only the one it needs and `--ignore-scripts` changes nothing. Release archives ship a `.sha256` beside
+them:
 
 ```bash
 tar -xzf godlint-x86_64-unknown-linux-gnu.tar.gz
