@@ -1,27 +1,17 @@
 #![allow(clippy::expect_used, clippy::unwrap_used)]
 
-use std::{
-    fs,
-    path::{Path, PathBuf},
-    process::Command,
-    sync::atomic::{AtomicU64, Ordering},
-    time::{SystemTime, UNIX_EPOCH},
-};
+use std::{path::Path, process::Command};
 
-static NEXT_ID: AtomicU64 = AtomicU64::new(0);
+#[path = "support/temporary.rs"]
+mod temporary;
 
-fn scratch(files: &[(&str, &str)]) -> PathBuf {
-    let timestamp = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map_or(0, |duration| duration.as_nanos());
-    let id = NEXT_ID.fetch_add(1, Ordering::Relaxed);
-    let directory = std::env::temp_dir().join(format!("godlint-format-{timestamp}-{id}"));
+use temporary::TemporaryDirectory;
 
-    fs::create_dir_all(&directory).unwrap_or_else(|error| panic!("creates scratch: {error}"));
+fn scratch(files: &[(&str, &str)]) -> TemporaryDirectory {
+    let directory = TemporaryDirectory::new("format");
 
     for (name, contents) in files {
-        fs::write(directory.join(name), contents)
-            .unwrap_or_else(|error| panic!("writes {name}: {error}"));
+        directory.write(name, contents);
     }
 
     directory
@@ -38,7 +28,7 @@ fn checked(directory: &Path, format: &[&str]) -> String {
     String::from_utf8_lossy(&output.stdout).into_owned()
 }
 
-fn restricted_call() -> PathBuf {
+fn restricted_call() -> TemporaryDirectory {
     scratch(&[
         (
             "godlint.yaml",
@@ -50,7 +40,7 @@ fn restricted_call() -> PathBuf {
 
 #[test]
 fn an_annotation_keeps_a_colon_in_the_message_and_escapes_one_in_a_property() {
-    let printed = checked(&restricted_call(), &["--format", "github"]);
+    let printed = checked(restricted_call().path(), &["--format", "github"]);
 
     assert!(
         printed.contains("::std::process::exit is restricted"),
@@ -64,7 +54,7 @@ fn an_annotation_keeps_a_colon_in_the_message_and_escapes_one_in_a_property() {
 
 #[test]
 fn an_annotation_names_the_file_the_line_and_the_column() {
-    let printed = checked(&restricted_call(), &["--format", "github"]);
+    let printed = checked(restricted_call().path(), &["--format", "github"]);
 
     assert!(
         printed.starts_with("::error file=main.rs,line=2,col=5,"),
@@ -88,14 +78,14 @@ fn a_warning_and_an_error_take_different_annotation_levels() {
     ]);
 
     assert!(
-        checked(&directory, &["--format", "github"]).starts_with("::warning "),
+        checked(directory.path(), &["--format", "github"]).starts_with("::warning "),
         "a warning is not an error annotation"
     );
 }
 
 #[test]
 fn json_is_parseable_and_names_every_field() {
-    let printed = checked(&restricted_call(), &["--format=json"]);
+    let printed = checked(restricted_call().path(), &["--format=json"]);
 
     for fragment in [
         "\"version\":",
@@ -130,7 +120,7 @@ fn json_escapes_a_quote_and_a_backslash_in_a_message() {
         ),
         ("main.rs", "use a\\b::thing;\n"),
     ]);
-    let printed = checked(&directory, &["--format", "json"]);
+    let printed = checked(directory.path(), &["--format", "json"]);
 
     assert!(
         !printed.contains("\\\"") || printed.contains("\\\\"),
@@ -140,7 +130,7 @@ fn json_escapes_a_quote_and_a_backslash_in_a_message() {
 
 #[test]
 fn sarif_carries_the_schema_the_level_and_one_rule_per_identifier() {
-    let printed = checked(&restricted_call(), &["--format", "sarif"]);
+    let printed = checked(restricted_call().path(), &["--format", "sarif"]);
 
     for fragment in [
         "\"version\":\"2.1.0\"",
@@ -163,13 +153,13 @@ fn a_machine_readable_format_emits_a_document_when_there_is_nothing_to_report() 
     let directory = scratch(&[("godlint.yaml", "version: 1\n")]);
 
     assert!(
-        checked(&directory, &["--format", "json"]).contains("\"findings\":[]"),
+        checked(directory.path(), &["--format", "json"]).contains("\"findings\":[]"),
         "a consumer parses a document, so an empty run is still a document"
     );
-    assert!(checked(&directory, &["--format", "sarif"]).contains("\"results\":[]"));
+    assert!(checked(directory.path(), &["--format", "sarif"]).contains("\"results\":[]"));
     for format in ["github", "terminal"] {
         assert_eq!(
-            checked(&directory, &["--format", format]).trim(),
+            checked(directory.path(), &["--format", format]).trim(),
             "No findings.",
             "a log a person reads says so, because silence reads as the tool not having run"
         );
@@ -181,8 +171,8 @@ fn the_default_format_is_the_terminal_one() {
     let directory = restricted_call();
 
     assert_eq!(
-        checked(&directory, &[]),
-        checked(&directory, &["--format", "terminal"])
+        checked(directory.path(), &[]),
+        checked(directory.path(), &["--format", "terminal"])
     );
 }
 
@@ -211,4 +201,53 @@ fn a_format_with_no_name_is_refused() {
 
     assert_eq!(output.status.code(), Some(2));
     assert!(String::from_utf8_lossy(&output.stderr).contains("needs a format"));
+}
+
+#[cfg(unix)]
+fn hostile_name(directory: &TemporaryDirectory, name: &str) {
+    directory.write(name, "fn main() {\n    std::process::exit(1);\n}\n");
+}
+
+#[cfg(unix)]
+#[test]
+fn a_control_sequence_in_a_path_never_reaches_the_output_raw() {
+    let directory = scratch(&[(
+        "godlint.yaml",
+        "version: 1\nrules:\n  architecture/restricted-call:\n    severity: error\n",
+    )]);
+
+    hostile_name(&directory, "we\u{1b}[31mird.rs");
+
+    for format in ["terminal", "github", "json", "sarif"] {
+        let printed = checked(directory.path(), &["--format", format]);
+
+        assert!(
+            !printed.contains('\u{1b}'),
+            "{format} passed an escape byte through: {printed:?}"
+        );
+        assert!(
+            printed.contains("we") && printed.contains("ird.rs"),
+            "{format} lost the path it was reporting: {printed}"
+        );
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn a_newline_in_a_path_does_not_forge_a_second_finding() {
+    let directory = scratch(&[(
+        "godlint.yaml",
+        "version: 1\nrules:\n  architecture/restricted-call:\n    severity: error\n",
+    )]);
+
+    hostile_name(&directory, "two\nlines.rs");
+
+    let printed = checked(directory.path(), &["--format", "terminal"]);
+
+    assert_eq!(
+        printed.lines().count(),
+        1,
+        "one finding must read as one line: {printed:?}"
+    );
+    assert!(printed.contains("two\\nlines.rs"), "{printed:?}");
 }

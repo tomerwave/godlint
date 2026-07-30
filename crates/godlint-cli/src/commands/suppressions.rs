@@ -2,7 +2,7 @@ use std::process::ExitCode;
 
 use godlint_core::suppression::{Suppression, collect};
 
-use crate::workspace::Workspace;
+use crate::{report::visible, workspace::Workspace};
 
 pub const USAGE: &str = "suppressions [paths...]";
 
@@ -18,7 +18,7 @@ pub fn run(arguments: &[String]) -> Option<ExitCode> {
     Some(match list(paths) {
         Ok(exit_code) => exit_code,
         Err(message) => {
-            eprintln!("{message}");
+            eprintln!("{}", visible(&message));
             ExitCode::from(2)
         }
     })
@@ -36,7 +36,7 @@ fn list(paths: &[String]) -> Result<ExitCode, String> {
     }
 
     for suppression in &suppressions {
-        println!("{}", describe(suppression));
+        println!("{}", visible(&describe(suppression)));
     }
 
     println!("\n{} suppressions.", suppressions.len());

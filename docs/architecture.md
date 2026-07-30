@@ -308,6 +308,27 @@ A failure specific to one file — unreadable bytes, invalid syntax — is recor
 that file and reported alongside the findings. It must not abort the run, because
 discarding every other finding turns one bad file into a silent pass.
 
+## Reporting untrusted text
+
+Every path, message, and argument Godlint prints comes from the repository it was pointed
+at, so none of it is trusted to be printable. A control character reaching a terminal is
+not cosmetic: an escape sequence repaints or hides the lines around it, and a newline in a
+filename turns one finding into what reads as two. Both let a file being reported on edit
+the report about it.
+
+`report::visible` is the one place that decides how a control character is rendered, and
+every diagnostic goes through it — the reporters, the scan issues, the configuration
+messages, the suppression audit, and the unknown-argument error. A rendered escape is
+readable rather than merely stripped, because a reviewer needs to see that a name contains
+something odd. The machine-readable formats escape the same characters as JSON `\u`
+sequences, which keeps a document parseable and a consumer that prints it raw safe.
+Discovery draws the same line by where a path came from. A path the user named on the
+command line is fatal: they asked for it, so a partial answer would be a wrong answer.
+Anything reached while walking below such a path becomes a recorded failure instead — an
+unreadable subdirectory costs its own contents and nothing else. Both shapes still end the
+run with the exit code that says something went wrong, so degrading is not the same as
+passing.
+
 ## Crate boundaries
 
 Start with only `godlint-cli` and `godlint-core`. Add fixture-test support,
