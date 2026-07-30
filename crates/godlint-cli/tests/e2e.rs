@@ -36,6 +36,8 @@ macro_rules! fixture_tests {
 fixture_tests! {
     accountable_suppression => "accountable-suppression",
     clean_repository => "clean",
+    cognitive_complexity => "cognitive-complexity",
+    cognitive_complexity_clean => "cognitive-complexity-clean",
     condition_complexity => "condition-complexity",
     condition_complexity_clean => "condition-complexity-clean",
     decision_complexity => "decision-complexity",

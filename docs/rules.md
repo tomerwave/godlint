@@ -1,6 +1,6 @@
 # Rule reference
 
-Twenty-three rules are implemented. Every one has an identifier of the form `family/name`, which is
+Twenty-four rules are implemented. Every one has an identifier of the form `family/name`, which is
 what a configuration entry and a suppression directive both name. [The rule roadmap](rule-roadmap.md)
 records the families still to come, and the reasoning behind each threshold `recommended@1` sets.
 
@@ -14,12 +14,25 @@ records the families still to come, and the reasoning behind each threshold `rec
 | `maintainability/parameter-count` | Declared parameters, excluding a method receiver |
 | `maintainability/decision-complexity` | Branch points in a function |
 | `maintainability/condition-complexity` | `&&`, `\|\|`, and ternary operators combined in a single condition |
+| `maintainability/cognitive-complexity` | How hard a function is to follow, weighting nested control flow |
 | `maintainability/return-count` | Exit paths from a function, explicit or implicit |
 | `maintainability/function-statements` | Statements in a function |
 | `maintainability/empty-function` | Function bodies that appear unintentionally empty |
 
 `decision-complexity` counts a `match` or `switch` once rather than once per arm, and a guard on an
 arm counts. `function-statements` counts through nested blocks but not into nested functions.
+
+`cognitive-complexity` measures how hard a function is to *read* rather than how many paths run
+through it, which is where it parts company with `decision-complexity`. Every branch costs one, plus the
+nesting depth it sits at, so four flat guard clauses cost 4 while four nested branches cost 10. Three
+structures are deliberately cheaper than a path count suggests: a `switch` or `match` costs one however
+many arms it has, an `else if` costs one because the reader already paid for the `if`, and a run of one
+logical operator costs one however long it is — `a && b && c && d` costs one, while `a && b || c && d`
+costs three, because switching operator is what makes a condition hard to hold.
+
+A closure's own complexity belongs to the closure, not to the function containing it, matching every
+other function metric here. That deviates from Sonar's specification, which folds a lambda's body into
+its enclosing method; Godlint reports per function, so a closure gets its own finding instead.
 
 `decision-complexity` deliberately does not count short-circuit boolean operators, so a five-part
 condition on one `if` scores the same as a one-part condition. `condition-complexity` is the

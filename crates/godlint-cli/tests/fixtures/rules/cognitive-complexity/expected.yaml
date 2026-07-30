@@ -1,0 +1,8 @@
+exit-code: 1
+
+stdout: |
+  example.js:1:1: error[maintainability/cognitive-complexity] Function has cognitive complexity 6 (max 4).
+  example.py:1:1: error[maintainability/cognitive-complexity] Function has cognitive complexity 6 (max 4).
+  example.rs:1:1: error[maintainability/cognitive-complexity] Function has cognitive complexity 6 (max 4).
+
+stderr: ""

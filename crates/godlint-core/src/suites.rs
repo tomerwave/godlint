@@ -1,13 +1,14 @@
 use std::num::NonZeroU32;
 
 use crate::config::{
-    AccountableSuppressionRule, ConditionComplexityRule, DecisionComplexityRule,
-    DependencyBoundaryRule, DirectEnvironmentReadRule, EmptyErrorHandlerRule, EmptyFunctionRule,
-    ExplicitTimerDelayRule, FilenameCaseRule, ForbiddenDependencyRule, FunctionNestingRule,
-    FunctionStatementsRule, LineLimitRule, NoCommentsRule, NoDynamicExecutionRule,
-    NoProductionLogRule, ParameterCountRule, RestrictedCallRule, RestrictedImportRule,
-    ReturnCountRule, Rules, Severity, TodoRequiresReferenceRule, UnusedSuppressionRule,
-    default_configuration_paths, default_markers, default_reference_prefixes,
+    AccountableSuppressionRule, CognitiveComplexityRule, ConditionComplexityRule,
+    DecisionComplexityRule, DependencyBoundaryRule, DirectEnvironmentReadRule,
+    EmptyErrorHandlerRule, EmptyFunctionRule, ExplicitTimerDelayRule, FilenameCaseRule,
+    ForbiddenDependencyRule, FunctionNestingRule, FunctionStatementsRule, LineLimitRule,
+    NoCommentsRule, NoDynamicExecutionRule, NoProductionLogRule, ParameterCountRule,
+    RestrictedCallRule, RestrictedImportRule, ReturnCountRule, Rules, Severity,
+    TodoRequiresReferenceRule, UnusedSuppressionRule, default_configuration_paths, default_markers,
+    default_reference_prefixes,
 };
 
 pub const RECOMMENDED: &str = "recommended@1";
@@ -40,6 +41,11 @@ fn recommended(rules: &mut Rules) {
 }
 
 fn maintainability(rules: &mut Rules) {
+    size(rules);
+    complexity(rules);
+}
+
+fn size(rules: &mut Rules) {
     let error = Severity::Error;
 
     rules.function_size.get_or_insert(LineLimitRule {
@@ -62,6 +68,11 @@ fn maintainability(rules: &mut Rules) {
         severity: error,
         max_parameters: 4,
     });
+}
+
+fn complexity(rules: &mut Rules) {
+    let error = Severity::Error;
+
     rules
         .decision_complexity
         .get_or_insert(DecisionComplexityRule {
@@ -73,6 +84,12 @@ fn maintainability(rules: &mut Rules) {
         .get_or_insert(ConditionComplexityRule {
             severity: error,
             max_operators: 3,
+        });
+    rules
+        .cognitive_complexity
+        .get_or_insert(CognitiveComplexityRule {
+            severity: error,
+            max_score: 15,
         });
     rules.return_count.get_or_insert(ReturnCountRule {
         severity: error,

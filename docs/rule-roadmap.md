@@ -61,6 +61,7 @@ The thresholds in `recommended@1` are measured against this repository rather th
 | `maintainability/parameter-count` | 4 | the strict number, adopted |
 | `maintainability/decision-complexity` | 5 | the strict number, adopted |
 | `maintainability/condition-complexity` | 3 | measured against this repository: a single-line scan of Rust conditions found 98 with zero operators, 14 with one, 3 with two, none above |
+| `maintainability/cognitive-complexity` | 15 | Sonar's published default, adopted deliberately as a regression ceiling. Measured against this repository first: across 1387 functions p50 is 0, p95 is 2, p99 is 4 and the highest is 6, so 15 has wide headroom and will not fire here today |
 | `maintainability/return-count` | 6 | see below; 3 is a Python number |
 | `maintainability/function-statements` | 14 | tighter than the strict profile's 20, measured |
 
@@ -89,6 +90,7 @@ two tables of the same numbers is how the two disagreed before.
 | `maintainability/function-nesting` | 2 | Existing Godlint rule; lower is intentionally stricter. `recommended@1` adopted it |
 | `maintainability/parameter-count` | 4 | Common design-lint threshold; tune per repository. `recommended@1` adopted it |
 | `maintainability/decision-complexity` | 5 | Measured against this repository under Godlint's own metric, and adopted by `recommended@1`. The former 10 came from an ESLint `complexity: 10` setting, which does not transfer: ESLint counts every `case`, Godlint counts a multiway branch once |
+| `maintainability/cognitive-complexity` | 15 | [Sonar's `S3776` default](https://www.sonarsource.com/docs/CognitiveComplexity.pdf), which its Python implementation hardcodes as `DEFAULT_THRESHOLD = 15`. Unlike the other numbers here this one is adopted rather than derived, because the metric grows faster than a branch count and this repository's own maximum is 6 — the threshold is a ceiling against regression rather than a description of current practice |
 | `maintainability/condition-complexity` | 3 | Measured against this repository: `&&`/`\|\|`/ternary operators per `if`/`while` condition, and adopted by `recommended@1`. Sonar's `S1067` defaults to 3 for the same metric; Ruff's `max-bool-expr` defaults to 5, but only counts `if` statements and not ternaries or `while` |
 | `maintainability/return-count` | 3 | Pylint's `too-many-return-statements` design metric. Counting `?` and implicit tail expressions raises Rust counts, so this one does not transfer at all — see the note under Policy suites |
 | `maintainability/function-statements` | 20 | Derived from the `maintainability/function-size` profile: a function sitting at its effective-line ceiling should not be almost entirely statements, so each profile allows about two thirds of its line budget as statements |

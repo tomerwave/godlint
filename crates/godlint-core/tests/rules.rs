@@ -6,6 +6,9 @@ mod support;
 #[path = "rules/accountable_suppression.rs"]
 mod accountable_suppression;
 
+#[path = "rules/cognitive_complexity.rs"]
+mod cognitive_complexity;
+
 #[path = "rules/condition_complexity.rs"]
 mod condition_complexity;
 

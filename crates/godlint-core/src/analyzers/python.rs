@@ -3,7 +3,9 @@ use tree_sitter::Node;
 use crate::{
     analyzers::{
         Analyzer, AnalyzerError, SourceFacts,
-        vocabulary::{Callee, Condition, ErrorHandler, Vocabulary, is_leading_block_statement},
+        vocabulary::{
+            Callee, Cognition, Condition, ErrorHandler, Vocabulary, is_leading_block_statement,
+        },
     },
     facts::CommentKind,
     source::SourceFile,
@@ -30,6 +32,7 @@ const VOCABULARY: Vocabulary = Vocabulary {
     callee,
     error_handler,
     condition,
+    cognition,
     is_access,
     import,
     comment_kind,
@@ -105,6 +108,42 @@ fn condition(node: Node<'_>) -> Option<Condition<'_>> {
         node: condition,
         operator_count: count_condition_operators(condition),
     })
+}
+
+fn cognition(node: Node<'_>) -> Option<Cognition> {
+    match node.kind() {
+        "if_statement"
+        | "for_statement"
+        | "while_statement"
+        | "match_statement"
+        | "conditional_expression"
+        | "except_clause" => Some(Cognition::Structural),
+        "elif_clause" | "else_clause" => Some(Cognition::Hybrid),
+        "boolean_operator" if opens_operator_sequence(node) => Some(Cognition::Fundamental),
+        _ => None,
+    }
+}
+
+fn logical_operator(node: Node<'_>) -> Option<&'static str> {
+    if node.kind() != "boolean_operator" {
+        return None;
+    }
+
+    match node.child_by_field_name("operator")?.kind() {
+        "and" => Some("and"),
+        "or" => Some("or"),
+        _ => None,
+    }
+}
+
+fn opens_operator_sequence(node: Node<'_>) -> bool {
+    let Some(operator) = logical_operator(node) else {
+        return false;
+    };
+
+    node.parent()
+        .and_then(logical_operator)
+        .is_none_or(|enclosing| enclosing != operator)
 }
 
 fn count_condition_operators(node: Node<'_>) -> u32 {

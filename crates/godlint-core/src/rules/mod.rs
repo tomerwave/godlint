@@ -10,6 +10,7 @@ use crate::{
 };
 
 pub mod accountable_suppression;
+pub mod cognitive_complexity;
 pub mod condition_complexity;
 pub mod decision_complexity;
 pub mod dependency_boundary;
@@ -57,6 +58,7 @@ pub enum Metric {
     ReturnPaths,
     StatementCount,
     ConditionOperators,
+    CognitiveScore,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -107,6 +109,10 @@ impl Metric {
                     "Condition combines {actual} operators; the limit is {max}."
                 )
             }
+            Self::CognitiveScore => write!(
+                formatter,
+                "Function has cognitive complexity {actual} (max {max})."
+            ),
         }
     }
 }
@@ -381,6 +387,7 @@ const EVALUATORS: &[Evaluator] = &[
     parameter_count::evaluate,
     decision_complexity::evaluate,
     condition_complexity::evaluate,
+    cognitive_complexity::evaluate,
     return_count::evaluate,
     function_statements::evaluate,
     no_comments::evaluate,
