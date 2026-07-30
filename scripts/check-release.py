@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 """Check that a release tag, the workspace version and the changelog name one version.
 
-Publishing cannot be undone: a version may be yanked but never replaced. So the three places
-a version is written must agree before anything is built, and the changelog section for that
-version becomes the release notes rather than being written twice.
+Publishing cannot be undone: a version may be yanked but never replaced. So the places a version
+is written must agree before anything is built, and the changelog section for that version becomes
+the release notes rather than being written twice.
+
+One crate in the workspace depends on another, and crates.io requires that dependency to carry a
+version rather than only a path. Cargo cannot inherit the workspace version into a dependency
+requirement, so that number is written by hand and was missed once: the tag, the manifest and the
+changelog all agreed on 0.2.0 while godlint-cli still asked for godlint-core 0.1.9, and the
+workspace did not build. This checks it too, because a release that cannot build is worse than one
+that was never tagged.
 """
 
 from __future__ import annotations
@@ -15,6 +22,7 @@ from pathlib import Path
 
 CHANGELOG = Path("CHANGELOG.md")
 MANIFEST = Path("Cargo.toml")
+CRATES = Path("crates")
 
 
 def workspace_version() -> str:
@@ -24,6 +32,21 @@ def workspace_version() -> str:
         raise SystemExit(f"{MANIFEST}: no workspace version found")
 
     return match.group(1)
+
+
+def internal_requirements(version: str) -> list[str]:
+    wrong = []
+
+    for manifest in sorted(CRATES.glob("*/Cargo.toml")):
+        for name, asked in re.findall(
+            r'^(\S+) = \{[^}]*path = "[^"]+"[^}]*version = "([^"]+)"', 
+            manifest.read_text(encoding="utf-8"),
+            re.MULTILINE,
+        ):
+            if asked != version:
+                wrong.append(f"{manifest} asks for {name} {asked}, not {version}")
+
+    return wrong
 
 
 def notes(version: str) -> str:
@@ -63,6 +86,16 @@ def main() -> int:
         raise SystemExit(
             f"tag {arguments.tag} does not match the workspace version {declared}. "
             "The tag decides the release, so the manifest must already say the same."
+        )
+
+    for problem in internal_requirements(declared):
+        print(problem, file=sys.stderr)
+
+    if internal_requirements(declared):
+        raise SystemExit(
+            "a crate in this workspace asks for another at the wrong version, so the release "
+            "would not build. Cargo cannot inherit the workspace version here, so it is written "
+            "by hand."
         )
 
     body = notes(version)
