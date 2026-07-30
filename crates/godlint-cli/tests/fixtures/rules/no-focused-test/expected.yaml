@@ -1,0 +1,7 @@
+exit-code: 1
+
+stdout: |
+  example.js:1:1: error[testing/no-focused-test] This test is focused, so the rest of the suite does not run; remove the focus before merging, because a green run then proves almost nothing.
+  example.ts:1:1: error[testing/no-focused-test] This test is focused, so the rest of the suite does not run; remove the focus before merging, because a green run then proves almost nothing.
+
+stderr: ""

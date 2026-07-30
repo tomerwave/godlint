@@ -48,6 +48,8 @@ pub enum Violation {
     UnverifiedHash {
         callee: String,
     },
+    FocusedTest,
+    SkippedTest,
     RestrictedImport {
         module: String,
     },
@@ -104,6 +106,24 @@ const UNVERIFIED_HASH: &str = concat!(
     "or confirm it is not a broken one."
 );
 
+const EMPTY_ERROR_HANDLER: &str = "Error handler has an empty body; handle or re-raise the error.";
+
+const MISSING_REFERENCE: &str = "comment requires an issue reference.";
+
+const RESTRICTED_CALL: &str = "is restricted by project policy.";
+
+const CROSSED_BOUNDARY: &str = "the dependency runs against the declared layer order.";
+
+const FOCUSED_TEST: &str = concat!(
+    "This test is focused, so the rest of the suite does not run; remove the focus before ",
+    "merging, because a green run then proves almost nothing."
+);
+
+const SKIPPED_TEST: &str = concat!(
+    "This test does not run, so it can rot without anything noticing; delete it, fix it, or ",
+    "suppress it with an owner and an expiry."
+);
+
 const COMMENT_NOT_PERMITTED: &str = "Comment is not permitted; express the intent in the code.";
 
 fn unverified_hash(formatter: &mut fmt::Formatter<'_>, callee: &str) -> fmt::Result {
@@ -142,21 +162,12 @@ impl fmt::Display for Violation {
                 max,
             } => metric.describe(formatter, *actual, *max),
             Self::EmptyBody => write!(formatter, "Function has an empty body."),
-            Self::EmptyErrorHandler => {
-                write!(
-                    formatter,
-                    "Error handler has an empty body; handle or re-raise the error."
-                )
-            }
-            Self::MissingReference { marker } => {
-                write!(formatter, "{marker} comment requires an issue reference.")
-            }
+            Self::EmptyErrorHandler => formatter.write_str(EMPTY_ERROR_HANDLER),
+            Self::MissingReference { marker } => write!(formatter, "{marker} {MISSING_REFERENCE}"),
             Self::CommentNotPermitted => formatter.write_str(COMMENT_NOT_PERMITTED),
             Self::UnaccountableSuppression { defect } => defect.fmt(formatter),
             Self::UnusedSuppression => formatter.write_str(UNUSED_SUPPRESSION),
-            Self::RestrictedCall { callee } => {
-                write!(formatter, "{callee} is restricted by project policy.")
-            }
+            Self::RestrictedCall { callee } => write!(formatter, "{callee} {RESTRICTED_CALL}"),
             Self::DynamicExecution { callee } => write!(formatter, "{callee} {DYNAMIC_EXECUTION}"),
             Self::DirectEnvironmentRead { target } => {
                 write!(formatter, "{target} {ENVIRONMENT_READ}")
@@ -168,10 +179,12 @@ impl fmt::Display for Violation {
             Self::ForbiddenDependency { package } => {
                 write!(formatter, "{package} {FORBIDDEN_DEPENDENCY}")
             }
-            Self::CrossedBoundary { from, to } => write!(
-                formatter,
-                "{from} must not depend on {to}; the dependency runs against the declared layer order."
-            ),
+            Self::CrossedBoundary { from, to } => {
+                write!(
+                    formatter,
+                    "{from} must not depend on {to}; {CROSSED_BOUNDARY}"
+                )
+            }
             Self::BrokeIndependence { set, from, to } => write!(
                 formatter,
                 "{from} must not depend on {to}; {set} declares them independent of each other."
@@ -180,6 +193,8 @@ impl fmt::Display for Violation {
             Self::ProductionLog { callee } => write!(formatter, "{callee} {PRODUCTION_LOG}"),
             Self::WeakHash { weak, strong } => weak_hash(formatter, weak, strong),
             Self::UnverifiedHash { callee } => unverified_hash(formatter, callee),
+            Self::FocusedTest => write!(formatter, "{FOCUSED_TEST}"),
+            Self::SkippedTest => write!(formatter, "{SKIPPED_TEST}"),
             Self::InsecureRandom { callee, secure } => insecure_random(formatter, callee, secure),
         }
     }

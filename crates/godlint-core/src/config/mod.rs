@@ -79,6 +79,10 @@ pub struct Rules {
     pub explicit_timer_delay: Option<ExplicitTimerDelayRule>,
     #[serde(rename = "reliability/empty-error-handler")]
     pub empty_error_handler: Option<EmptyErrorHandlerRule>,
+    #[serde(rename = "testing/no-focused-test")]
+    pub no_focused_test: Option<NoFocusedTestRule>,
+    #[serde(rename = "testing/no-skipped-test")]
+    pub no_skipped_test: Option<NoSkippedTestRule>,
     #[serde(rename = "security/no-weak-hash")]
     pub no_weak_hash: Option<NoWeakHashRule>,
     #[serde(rename = "security/no-insecure-random")]
@@ -244,6 +248,18 @@ pub struct DirectEnvironmentReadRule {
     pub severity: Severity,
     #[serde(default = "default_configuration_paths", rename = "allow-in")]
     pub allow_in: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct NoFocusedTestRule {
+    pub severity: Severity,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct NoSkippedTestRule {
+    pub severity: Severity,
 }
 
 #[derive(Debug, Deserialize)]

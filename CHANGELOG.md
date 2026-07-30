@@ -11,6 +11,13 @@ speaks about.
 
 ### Added
 
+- `testing/no-focused-test` — reports a test or suite marked to run on its own, `it.only` and
+  `describe.only` and the other runners' `.only`. A focused test that passes proves almost nothing,
+  because nothing else ran.
+- `testing/no-skipped-test` — reports a test that does not run: `.skip` or `.todo` in JavaScript and
+  TypeScript, `#[ignore]` beside `#[test]` in Rust in either order, and a `pytest.mark.skip` or
+  `unittest.skip` decorator in Python. A skipped test rots without anything noticing, so the rule asks
+  for it to be deleted, fixed, or suppressed with an owner and an expiry.
 - Test facts. A rule can ask whether a declaration is a test, what its name is, which marker made it
   one, and whether that marker carried focus or skipping. What counts as a test is a framework
   question rather than a language one, so each language module answers it: Rust reads the attributes

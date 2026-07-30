@@ -60,8 +60,14 @@ mod no_comments;
 #[path = "rules/no_insecure_random.rs"]
 mod no_insecure_random;
 
+#[path = "rules/no_focused_test.rs"]
+mod no_focused_test;
+
 #[path = "rules/no_production_log.rs"]
 mod no_production_log;
+
+#[path = "rules/no_skipped_test.rs"]
+mod no_skipped_test;
 
 #[path = "rules/no_weak_hash.rs"]
 mod no_weak_hash;

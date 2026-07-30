@@ -10,11 +10,12 @@ use crate::{
         forbidden_dependency::ForbiddenDependency, function_nesting::FunctionNesting,
         function_size::FunctionSize, function_statements::FunctionStatements,
         module_independence::ModuleIndependence, no_comments::NoComments,
-        no_dynamic_execution::NoDynamicExecution, no_insecure_random::NoInsecureRandom,
-        no_production_log::NoProductionLog, no_weak_hash::NoWeakHash,
-        parameter_count::ParameterCount, restricted_call::RestrictedCall,
-        restricted_import::RestrictedImport, return_count::ReturnCount,
-        todo_requires_reference::TodoRequiresReference, unused_suppression::UnusedSuppression,
+        no_dynamic_execution::NoDynamicExecution, no_focused_test::NoFocusedTest,
+        no_insecure_random::NoInsecureRandom, no_production_log::NoProductionLog,
+        no_skipped_test::NoSkippedTest, no_weak_hash::NoWeakHash, parameter_count::ParameterCount,
+        restricted_call::RestrictedCall, restricted_import::RestrictedImport,
+        return_count::ReturnCount, todo_requires_reference::TodoRequiresReference,
+        unused_suppression::UnusedSuppression,
     },
 };
 
@@ -101,6 +102,8 @@ severity!(
     empty_error_handler
 );
 severity!(no_weak_hash_severity, NoWeakHash, no_weak_hash);
+severity!(no_focused_test_severity, NoFocusedTest, no_focused_test);
+severity!(no_skipped_test_severity, NoSkippedTest, no_skipped_test);
 severity!(
     no_insecure_random_severity,
     NoInsecureRandom,
@@ -227,6 +230,16 @@ const REGISTRATIONS: &[Registration] = &[
     Registration {
         id: EmptyErrorHandler::ID,
         severity: empty_error_handler_severity,
+        suppressible: true,
+    },
+    Registration {
+        id: NoFocusedTest::ID,
+        severity: no_focused_test_severity,
+        suppressible: true,
+    },
+    Registration {
+        id: NoSkippedTest::ID,
+        severity: no_skipped_test_severity,
         suppressible: true,
     },
     Registration {

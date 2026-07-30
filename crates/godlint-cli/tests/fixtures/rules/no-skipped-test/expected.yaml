@@ -1,0 +1,8 @@
+exit-code: 1
+
+stdout: |
+  example.js:1:1: error[testing/no-skipped-test] This test does not run, so it can rot without anything noticing; delete it, fix it, or suppress it with an owner and an expiry.
+  example.py:5:1: error[testing/no-skipped-test] This test does not run, so it can rot without anything noticing; delete it, fix it, or suppress it with an owner and an expiry.
+  example.rs:3:1: error[testing/no-skipped-test] This test does not run, so it can rot without anything noticing; delete it, fix it, or suppress it with an owner and an expiry.
+
+stderr: ""

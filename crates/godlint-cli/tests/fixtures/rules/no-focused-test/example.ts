@@ -1,0 +1,3 @@
+describe.only("payments", () => {
+  check();
+});
