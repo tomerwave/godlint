@@ -1,0 +1,5 @@
+version: 1
+
+rules:
+  testing/no-sleep-in-test:
+    severity: error

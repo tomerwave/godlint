@@ -7,9 +7,10 @@ use crate::config::{
     ForbiddenDependencyRule, FunctionNestingRule, FunctionStatementsRule, LineLimitRule,
     ModuleIndependenceRule, NoCommentsRule, NoDynamicExecutionRule, NoEmptyTestRule,
     NoFocusedTestRule, NoInsecureRandomRule, NoProductionLogRule, NoSkippedTestRule,
-    NoWeakHashRule, ParameterCountRule, RestrictedCallRule, RestrictedImportRule, ReturnCountRule,
-    Rules, Severity, TodoRequiresReferenceRule, UnusedSuppressionRule, default_configuration_paths,
-    default_markers, default_reference_prefixes,
+    NoSleepInTestRule, NoWeakHashRule, ParameterCountRule, RestrictedCallRule,
+    RestrictedImportRule, ReturnCountRule, Rules, Severity, TodoRequiresReferenceRule,
+    UnusedSuppressionRule, default_configuration_paths, default_markers,
+    default_reference_prefixes,
 };
 
 pub const RECOMMENDED: &str = "recommended@1";
@@ -225,6 +226,9 @@ fn testing(rules: &mut Rules) {
     rules
         .no_skipped_test
         .get_or_insert(NoSkippedTestRule { severity: error });
+    rules
+        .no_sleep_in_test
+        .get_or_insert(NoSleepInTestRule { severity: error });
 }
 
 fn logging(rules: &mut Rules) {

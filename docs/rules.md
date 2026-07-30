@@ -96,6 +96,7 @@ Rust is out of scope. It has no `catch`, and a discarded `Result` is `reliabilit
 | `testing/no-focused-test` | A test or suite marked to run on its own: `it.only`, `describe.only` and the other runners' `.only` |
 | `testing/no-empty-test` | A test whose body does nothing, so it cannot fail |
 | `testing/no-skipped-test` | A test that does not run: `.skip` or `.todo` in JavaScript and TypeScript, `#[ignore]` beside `#[test]` in Rust, and a `pytest.mark.skip` or `unittest.skip` decorator in Python |
+| `testing/no-sleep-in-test` | A test that waits on the clock: `time.sleep` or `asyncio.sleep` in Python, `thread::sleep` or `tokio::time::sleep` in Rust, and `page.waitForTimeout` or `browser.pause` in JavaScript and TypeScript |
 
 `no-empty-test` reads the test's own body rather than any function inside it, so a test that registers
 an empty callback is not empty itself. A test with no body to read at all, such as `it.todo('later')`,
@@ -110,6 +111,14 @@ Two adjacent rules fire on the same empty test on purpose, and it is worth knowi
 `recommended@1`: `maintainability/empty-function` reports the same body, so an empty test yields two
 findings, at the same position in Rust. They are different policies — one says a function has no body,
 the other says a test cannot fail — and neither suppresses the other.
+
+`no-sleep-in-test` reports a sleep only where the call falls inside a test's range, so a helper in
+the same file may still sleep. It matches the callee's written spelling per language, which leaves two
+gaps. A sleep reached through an alias — `from time import sleep` and then a bare `sleep(2)` — is not
+reported, because that takes import resolution. JavaScript has no blocking sleep, so the smell there
+is a duration passed to a runner's own wait: the two unambiguous spellings are covered, and
+`cy.wait(500)` is not, because Godlint cannot yet tell a number argument from a string one and
+`cy.wait('@alias')` is the fix rather than the defect.
 
 What counts as a test is decided by syntax alone — a runner call, a `#[test]` attribute, a `test_`
 prefix or a `pytest.mark` decorator. Neither rule knows about test directories, because an analyzer

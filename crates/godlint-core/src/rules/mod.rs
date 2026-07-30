@@ -36,6 +36,7 @@ pub mod no_focused_test;
 pub mod no_insecure_random;
 pub mod no_production_log;
 pub mod no_skipped_test;
+pub mod no_sleep_in_test;
 pub mod no_weak_hash;
 pub mod parameter_count;
 mod reference;
@@ -43,9 +44,9 @@ mod scoped;
 mod violation;
 
 pub use reference::{
-    AccessRule, CallRule, ConditionRule, ErrorHandlerRule, ImportRule, TestRule,
-    evaluate_access_rule, evaluate_call_rule, evaluate_condition_rule, evaluate_error_handler_rule,
-    evaluate_import_rule, evaluate_test_rule,
+    AccessRule, CallInTestRule, CallRule, ConditionRule, ErrorHandlerRule, ImportRule, TestRule,
+    evaluate_access_rule, evaluate_call_in_test_rule, evaluate_call_rule, evaluate_condition_rule,
+    evaluate_error_handler_rule, evaluate_import_rule, evaluate_test_rule,
 };
 mod registry;
 pub mod restricted_call;
@@ -410,6 +411,7 @@ const EVALUATORS: &[Evaluator] = &[
     no_insecure_random::evaluate,
     no_production_log::evaluate,
     no_skipped_test::evaluate,
+    no_sleep_in_test::evaluate,
     no_weak_hash::evaluate,
     restricted_import::evaluate,
     dependency_boundary::evaluate,

@@ -72,6 +72,9 @@ mod no_production_log;
 #[path = "rules/no_skipped_test.rs"]
 mod no_skipped_test;
 
+#[path = "rules/no_sleep_in_test.rs"]
+mod no_sleep_in_test;
+
 #[path = "rules/no_weak_hash.rs"]
 mod no_weak_hash;
 

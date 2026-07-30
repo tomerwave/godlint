@@ -4,6 +4,10 @@ use crate::{
     source::SourceRange,
 };
 
+pub(super) fn in_test(facts: &SourceFacts, range: SourceRange) -> bool {
+    facts.tests().iter().any(|test| test.contains(range))
+}
+
 pub(super) fn test_body<'facts>(
     facts: &'facts SourceFacts,
     test: &TestFact,

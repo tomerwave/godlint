@@ -15,6 +15,16 @@ speaks about.
   test's own body rather than any function inside it, so a test that registers an empty callback is not
   itself empty, and a test with no body to read at all such as `it.todo('later')` is left to
   `no-skipped-test`.
+- `testing/no-sleep-in-test` — reports a test that waits on the clock instead of on the condition,
+  which is the usual reason a suite passes locally and fails in CI. Python `time.sleep` and
+  `asyncio.sleep`, Rust `thread::sleep` and `tokio::time::sleep`, and the JavaScript runners' own
+  waits, `page.waitForTimeout` and `browser.pause`. The call must fall inside a test, so a helper in
+  the same file may still sleep. A sleep reached through an alias is not reported, because that takes
+  import resolution.
+- Rules can now ask about a call that falls inside a test. `CallInTestRule` reads the call facts of a
+  file, keeps only those a test's range encloses, and hands the rule the whole file's facts beside the
+  call, so a rule can also ask what else the file does. That is the shape shared by `no-sleep-in-test`,
+  `no-randomness-without-seed` and `no-network-in-unit-test`.
 - `testing/no-focused-test` — reports a test or suite marked to run on its own, `it.only` and
   `describe.only` and the other runners' `.only`. A focused test that passes proves almost nothing,
   because nothing else ran.
