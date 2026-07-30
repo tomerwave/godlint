@@ -35,7 +35,16 @@ model that rules consume without a universal AST. `FunctionFact`, `CommentFact`,
 `AccessFact`, `ErrorHandlerFact`, and `ImportFact` exist today. `CallFact` records a direct callee path, a
 source range, argument count, and whether the call site was a macro invocation; `AccessFact` does the same
 for direct member access. Neither resolves aliases, types, or dynamically computed
-properties. The argument count excludes comments: a grammar reports them as named nodes
+properties.
+
+A callee and an access target are resolved when the fact is built rather than read back out
+of the range, because the path a rule matches is not always the text a file spells. The
+range still locates the finding, so a report points at what the author wrote. Which
+spellings denote the same path is a per-language judgement and belongs to the language
+module: `process?.env` and `process.env` are one read, so JavaScript and TypeScript
+normalize optional member access before answering, while Rust and Python have no such form
+and answer with the plain spelling. Deciding this in the shared extractor would have put
+one language's punctuation in code that must not know any. The argument count excludes comments: a grammar reports them as named nodes
 inside the argument list, so counting named children alone would read
 `setTimeout(work /*, 100 */)` as a call that passes two arguments.
 

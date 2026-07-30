@@ -1,6 +1,6 @@
 use tree_sitter::Node;
 
-use super::vocabulary::{Callee, Cognition, Condition, ErrorHandler, Vocabulary};
+use super::vocabulary::{Callee, Cognition, Condition, ErrorHandler, Vocabulary, plain_path};
 use crate::facts::CommentKind;
 
 pub(super) const VOCABULARY: Vocabulary = Vocabulary {
@@ -18,6 +18,7 @@ pub(super) const VOCABULARY: Vocabulary = Vocabulary {
     condition,
     cognition,
     is_access,
+    direct_path,
     import,
     comment_kind,
     has_implicit_tail_return,
@@ -160,6 +161,10 @@ fn count_condition_operators(node: Node<'_>) -> u32 {
         .sum::<u32>();
 
     u32::from(is_logical_operator || is_ternary) + children
+}
+
+fn direct_path(text: &str) -> Option<String> {
+    plain_path(&text.replace("?.", "."))
 }
 
 fn is_access(kind: &str) -> bool {

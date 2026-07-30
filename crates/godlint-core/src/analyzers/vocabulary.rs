@@ -43,9 +43,19 @@ pub(crate) struct Vocabulary {
     pub condition: fn(Node<'_>) -> Option<Condition<'_>>,
     pub cognition: fn(Node<'_>) -> Option<Cognition>,
     pub is_access: fn(&str) -> bool,
+    pub direct_path: fn(&str) -> Option<String>,
     pub import: fn(Node<'_>) -> Option<Node<'_>>,
     pub comment_kind: fn(Node<'_>, &str) -> Option<CommentKind>,
     pub has_implicit_tail_return: fn(Node<'_>) -> bool,
+}
+
+pub(crate) fn plain_path(text: &str) -> Option<String> {
+    let is_path = !text.is_empty()
+        && text
+            .chars()
+            .all(|character| character.is_alphanumeric() || "_.:".contains(character));
+
+    is_path.then(|| text.to_owned())
 }
 
 pub(crate) fn is_leading_block_statement(node: Node<'_>, block_kinds: &[&str]) -> bool {

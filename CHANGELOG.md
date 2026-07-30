@@ -69,6 +69,12 @@ speaks about.
 
 ### Fixed
 
+- `security/direct-environment-read` missed `process?.env.PORT` while reporting
+  `process.env?.PORT`. Optional member access denotes the same read, so which spelling an author
+  chose decided whether the policy applied. A callee and an access target are now resolved when the
+  fact is built rather than read back out of the source range, and the language module decides which
+  spellings name one path. Optional calls resolve the same way, so `outer?.parse(input)` and
+  `outer.parse?.(input)` both reach `architecture/restricted-call` as `outer.parse`.
 - A filename could rewrite the report about it. Godlint printed repository paths, messages, and
   arguments unescaped, so an escape sequence in a name repainted the surrounding output and a newline
   turned one finding into what read as two. Every diagnostic now goes through one escaping boundary:
