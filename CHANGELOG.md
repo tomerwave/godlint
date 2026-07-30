@@ -105,6 +105,13 @@ speaks about.
 
 ### Fixed
 
+- A file the grammar could only partly parse contributed nothing at all. One construct it did not
+  recognise discarded the whole file, and the loss left no trace in a findings count — only a scan issue
+  on stderr. Godlint now judges every node whose subtree parsed and skips the rest, so a function whose
+  body failed to parse is still never reported. Measured on Zod, where four files use TypeScript 4.7
+  variance annotations that `tree-sitter-typescript` does not implement: 905 functions and 1726 findings
+  were being thrown away by 21 error nodes inside interface declarations.
+
 - A source file was read whole with no size bound, so one very large file in a scanned tree could
   exhaust memory before anything inspected it. Files are now read through a bounded reader with a
   four-mebibyte ceiling, and a file above it is reported as a scan issue naming the limit instead of

@@ -75,7 +75,10 @@ fn scan_file(root: &Path, path: &Path, report: &mut ScanReport) -> Result<(), Sc
         .to_path_buf();
 
     match read_facts(relative_path.clone(), path) {
-        Ok(facts) => report.facts.push(facts),
+        Ok(facts) => {
+            report.issues.extend(unparsed_issue(&relative_path, &facts));
+            report.facts.push(facts);
+        }
         Err(message) => report.issues.push(ScanIssue {
             path: relative_path,
             message,
@@ -83,6 +86,24 @@ fn scan_file(root: &Path, path: &Path, report: &mut ScanReport) -> Result<(), Sc
     }
 
     Ok(())
+}
+
+fn unparsed_issue(relative_path: &Path, facts: &SourceFacts) -> Option<ScanIssue> {
+    let first = facts.unparsed().first()?;
+    let line = facts.source().location(*first).start.line;
+    let rest = facts.unparsed().len() - 1;
+    let also = match rest {
+        0 => String::new(),
+        1 => ", and 1 more place".to_owned(),
+        more => format!(", and {more} more places"),
+    };
+
+    Some(ScanIssue {
+        path: relative_path.to_path_buf(),
+        message: format!(
+            "syntax not recognised at line {line}{also}; everything that did parse was still checked"
+        ),
+    })
 }
 
 fn read_facts(relative_path: PathBuf, path: &Path) -> Result<SourceFacts, String> {

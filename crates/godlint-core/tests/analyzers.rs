@@ -2,11 +2,7 @@
 
 use std::path::PathBuf;
 
-use godlint_core::{
-    analyzers::{AnalyzerError, analyze},
-    facts::CommentKind,
-    source::SourceFile,
-};
+use godlint_core::{analyzers::analyze, facts::CommentKind, source::SourceFile};
 
 #[path = "analyzers/arguments.rs"]
 mod arguments;
@@ -168,10 +164,36 @@ fn a() {
 }
 
 #[test]
-fn rejects_malformed_source() {
-    let result = analyze(&source("example.rs", "fn example( {"));
+fn records_where_it_stopped_understanding_malformed_source() {
+    let facts = analyze(&source("example.rs", "fn example( {"))
+        .unwrap_or_else(|error| panic!("still analyses what parsed: {error}"));
 
-    assert!(matches!(result, Err(AnalyzerError::InvalidSyntax { .. })));
+    assert_eq!(
+        facts.unparsed().len(),
+        1,
+        "a file the grammar only partly understands is scanned, not refused"
+    );
+    assert!(
+        facts.functions().is_empty(),
+        "no fact may come from a subtree that did not parse, or the finding would be a guess"
+    );
+}
+
+#[test]
+fn judges_the_part_that_parsed_and_leaves_the_rest_alone() {
+    let facts = analyze(&source(
+        "example.ts",
+        "function clean() {}\ninterface A<in T> { v: T }\nfunction torn( {",
+    ))
+    .unwrap_or_else(|error| panic!("analyses: {error}"));
+    let names: Vec<Option<&str>> = facts.functions().iter().map(|f| f.name()).collect();
+
+    assert_eq!(
+        names,
+        vec![Some("clean")],
+        "the function outside the unparsed syntax is judged and the torn one is not"
+    );
+    assert_eq!(facts.unparsed().len(), 2);
 }
 
 #[test]
