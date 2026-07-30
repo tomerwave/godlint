@@ -240,6 +240,7 @@ fn testing(rules: &mut Rules) {
         .get_or_insert(NoNetworkInUnitTestRule {
             severity: error,
             unit_paths: Vec::new(),
+            allow_in: Vec::new(),
         });
 }
 

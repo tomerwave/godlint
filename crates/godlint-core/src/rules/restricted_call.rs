@@ -4,7 +4,7 @@ use crate::{
     facts::CallFact,
     rules::{
         CallRule, Finding, Rule, Violation,
-        catalogue::{Catalogue, Dialect, is_allowed, spelled},
+        catalogue::{Catalogue, Dialect, matches, spelled},
         evaluate_call_rule, when_configured,
     },
 };
@@ -54,5 +54,5 @@ fn is_restricted(call: &CallFact, restrictions: &[RestrictedCallConfiguration]) 
     };
 
     restricted
-        && !configured.is_some_and(|restriction| is_allowed(call.source(), &restriction.allow_in))
+        && !configured.is_some_and(|restriction| matches(call.source(), &restriction.allow_in))
 }

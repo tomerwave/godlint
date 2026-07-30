@@ -155,7 +155,6 @@ Property-based suites are the false positive to configure around. Their own gene
 catalogue, so most are already silent; `allow-in` covers a suite that draws from the standard library
 on purpose and reports its own seed.
 
-<<<<<<< HEAD
 The catalogue matches the written spelling, so `from random import sample` then `sample(pool, 3)` is not
 reported — the same alias limit the call rules document.
 
@@ -167,17 +166,13 @@ renamed to in rand 0.9.
 
 numpy is covered on both sides. It used to know `np.random.seed` without knowing `np.random.rand`, which
 meant a numpy seed could exempt a file for a generator the rule never reported on.
-=======
-Three limits are worth knowing before adopting it at error. The catalogue matches the written spelling,
-so `from random import sample` then `sample(pool, 3)` is not reported — the same alias limit the call
-rules document. The catalogue knows numpy's *seed* (`np.random.seed`) but not numpy's *generators*, so
-`np.random.rand(3)` is silent; that asymmetry is an omission rather than a decision. And in Rust the
-message asks for something that is not available: both Rust entries, `rand::random` and
-`rand::thread_rng`, are unseedable by construction, so no Rust seeding call can exempt a file and the fix
-is to replace the generator with a seeded `StdRng` rather than to seed the one you have.
-`no-network-in-unit-test` is the first rule that cannot act on syntax alone. Whether a given test is
-a unit test is a fact about the repository, not about the file, so the rule reports nothing until
-`unit-paths` names the directories that hold them:
+
+`no-network-in-unit-test` is silent until configured, which puts it in an established category rather
+than a new one: `architecture/restricted-call`, `restricted-import`, `dependency-boundary`,
+`module-independence`, `security/forbidden-dependency` and `filename-case` all ship in `recommended@1`
+at error with an empty list and say nothing until a repository fills it in. What is new here is only
+*which* fact is missing — whether a given test is a unit test is a property of the repository rather
+than of the file, so the rule reports nothing until `unit-paths` names the directories that hold them:
 
 ```yaml
 rules:
@@ -186,6 +181,10 @@ rules:
     unit-paths:
       - tests/unit/**
 ```
+
+`allow-in` carves an exemption out of the declared paths, which is what a mocked client needs: a test
+that assigns `global.fetch` and then calls it is following this rule's own advice, and a callee match
+cannot tell that from a real request.
 
 `recommended@1` enables it at error like every other rule, and with no `unit-paths` it stays silent
 rather than guessing. Guessing was the alternative and it is worse in both directions: a repository
@@ -199,11 +198,20 @@ parse. The rule is dogfooded through the adopted suite, and the fixture under
 `crates/godlint-cli/tests/fixtures/rules/no-network-in-unit-test/` is the worked example instead. That
 interaction is filed separately; it will hold for every future rule that needs configuration to say
 anything.
->>>>>>> ad216d2 (Refuse a unit test that reaches the network)
+
+`no-network-in-unit-test` matches the client's written spelling, so it inherits the same two blind spots
+the call rules document above, and one more of its own. An alias escapes it: `from requests import get`
+then `get(url)` is not reported. A seam escapes it: `requests.Session().get(...)`,
+`httpx.Client().get(...)` and `reqwest::Client::new().get(...)` are indirect calls, so no callee fact
+names them. And a client reached from a fixture rather than from the test — `beforeEach(async () => {
+await fetch(url) })`, or a `pytest.fixture` — falls outside every test's range and is silent, which is a
+common shape of exactly this smell. All three want import resolution or a fixture fact; none is a
+configuration matter.
 
 What counts as a test is decided by syntax alone — a runner call, a `#[test]` attribute, a `test_`
-prefix or a `pytest.mark` decorator. Neither rule knows about test directories, because an analyzer
-sees no configuration; a repository that keeps tests somewhere unusual is not covered by that alone.
+prefix or a `pytest.mark` decorator. None of the test rules knows about test directories on its own,
+because an analyzer sees no configuration; a repository that keeps tests somewhere unusual is covered
+only where a rule takes paths from configuration, as `no-network-in-unit-test` does.
 
 ## Logging
 

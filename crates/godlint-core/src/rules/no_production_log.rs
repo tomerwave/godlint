@@ -4,7 +4,7 @@ use crate::{
     facts::CallFact,
     rules::{
         CallRule, Finding, Rule, Violation,
-        catalogue::{Catalogue, Dialect, is_allowed, spelled},
+        catalogue::{Catalogue, Dialect, matches, spelled},
         evaluate_call_rule, when_configured,
     },
 };
@@ -36,7 +36,7 @@ impl CallRule for NoProductionLog {
         let name = spelled(call);
         let source = call.source();
 
-        (LOGGERS.speaks(source.language(), &name) && !is_allowed(source, &configuration.allow_in))
+        (LOGGERS.speaks(source.language(), &name) && !matches(source, &configuration.allow_in))
             .then(|| Violation::ProductionLog {
                 callee: name.clone(),
             })

@@ -97,6 +97,65 @@ fn stays_silent_until_the_repository_declares_its_unit_paths() {
 }
 
 #[test]
+fn covers_each_client_verb_its_library_offers() {
+    let cases = [
+        ("tests/unit/a.py", "def test_a():\n    httpx.put(url)\n"),
+        ("tests/unit/a.py", "def test_a():\n    httpx.delete(url)\n"),
+        ("tests/unit/a.py", "def test_a():\n    httpx.head(url)\n"),
+        (
+            "tests/unit/a.js",
+            "it('a', () => {\n  http.get(url);\n});\n",
+        ),
+        (
+            "tests/unit/a.rs",
+            "#[test]\nfn a() {\n    ureq::post(url);\n}\n",
+        ),
+    ];
+
+    for (path, source) in cases {
+        assert_eq!(
+            scoped(path, source).len(),
+            1,
+            "a catalogue that covers one verb of a library and not its sibling is a silent gap: \
+             {path} {source}"
+        );
+    }
+}
+
+#[test]
+fn permits_a_client_inside_an_exempted_path() {
+    let configuration = concat!(
+        "version: 1\n",
+        "rules:\n",
+        "  testing/no-network-in-unit-test:\n",
+        "    severity: error\n",
+        "    unit-paths:\n",
+        "      - tests/unit/**\n",
+        "    allow-in:\n",
+        "      - tests/unit/contract/**\n"
+    );
+
+    assert!(
+        violations(
+            "tests/unit/contract/test_rates.py",
+            "def test_rates():\n    requests.get(url)\n",
+            configuration,
+        )
+        .is_empty(),
+        "a mocked client follows this rule's own advice, and a callee match cannot tell them apart"
+    );
+    assert_eq!(
+        violations(
+            "tests/unit/test_rates.py",
+            "def test_rates():\n    requests.get(url)\n",
+            configuration,
+        )
+        .len(),
+        1
+    );
+}
+
+#[test]
 fn keeps_a_client_call_outside_the_declared_unit_paths() {
     assert!(
         scoped(

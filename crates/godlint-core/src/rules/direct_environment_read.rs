@@ -4,7 +4,7 @@ use crate::{
     facts::{AccessFact, CallFact},
     rules::{
         AccessRule, CallRule, Finding, Rule, Violation,
-        catalogue::{Catalogue, Dialect, is_allowed},
+        catalogue::{Catalogue, Dialect, matches},
         evaluate_access_rule, evaluate_call_rule, when_configured,
     },
 };
@@ -33,14 +33,14 @@ impl Rule for DirectEnvironmentRead {
 
 impl AccessRule for DirectEnvironmentRead {
     fn check(access: &AccessFact, configuration: &Self::Configuration) -> Option<Violation> {
-        (is_environment_access(access) && !is_allowed(access.source(), &configuration.allow_in))
+        (is_environment_access(access) && !matches(access.source(), &configuration.allow_in))
             .then(|| direct_read_violation(access.target()))
     }
 }
 
 impl CallRule for DirectEnvironmentRead {
     fn check(call: &CallFact, configuration: &Self::Configuration) -> Option<Violation> {
-        (is_environment_call(call) && !is_allowed(call.source(), &configuration.allow_in))
+        (is_environment_call(call) && !matches(call.source(), &configuration.allow_in))
             .then(|| direct_read_violation(call.callee()))
     }
 }

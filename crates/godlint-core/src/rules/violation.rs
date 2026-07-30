@@ -230,14 +230,10 @@ impl fmt::Display for Violation {
             Self::SkippedTest => write!(formatter, "{SKIPPED_TEST}"),
             Self::EmptyTest => formatter.write_str(EMPTY_TEST),
             Self::SleepInTest { callee } => write!(formatter, "{callee} {SLEEP_IN_TEST}"),
-<<<<<<< HEAD
             Self::UnseededRandom { callee, remedy } => unseeded(formatter, callee, remedy),
-=======
-            Self::UnseededRandom { callee } => write!(formatter, "{callee} {UNSEEDED_RANDOM}"),
             Self::NetworkInUnitTest { callee } => {
                 write!(formatter, "{callee} {NETWORK_IN_UNIT_TEST}")
             }
->>>>>>> ad216d2 (Refuse a unit test that reaches the network)
             Self::InsecureRandom { callee, secure } => insecure_random(formatter, callee, secure),
         }
     }

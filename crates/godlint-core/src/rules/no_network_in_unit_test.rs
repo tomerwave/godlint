@@ -19,6 +19,10 @@ const CLIENTS: Catalogue = Catalogue(&[
     ("requests.request", Dialect::Python),
     ("httpx.get", Dialect::Python),
     ("httpx.post", Dialect::Python),
+    ("httpx.put", Dialect::Python),
+    ("httpx.patch", Dialect::Python),
+    ("httpx.delete", Dialect::Python),
+    ("httpx.head", Dialect::Python),
     ("httpx.request", Dialect::Python),
     ("urllib.request.urlopen", Dialect::Python),
     ("socket.create_connection", Dialect::Python),
@@ -29,12 +33,14 @@ const CLIENTS: Catalogue = Catalogue(&[
     ("axios.patch", Dialect::JavaScript),
     ("axios.delete", Dialect::JavaScript),
     ("axios.request", Dialect::JavaScript),
+    ("http.get", Dialect::JavaScript),
     ("http.request", Dialect::JavaScript),
     ("https.request", Dialect::JavaScript),
     ("https.get", Dialect::JavaScript),
     ("reqwest::get", Dialect::Rust),
     ("reqwest::blocking::get", Dialect::Rust),
     ("ureq::get", Dialect::Rust),
+    ("ureq::post", Dialect::Rust),
     ("TcpStream::connect", Dialect::Rust),
 ]);
 
@@ -59,8 +65,10 @@ impl CallInTestRule for NoNetworkInUnitTest {
         let name = spelled(call);
         let source = call.source();
 
-        (matches(source, &configuration.unit_paths) && CLIENTS.speaks(source.language(), &name))
-            .then_some(Violation::NetworkInUnitTest { callee: name })
+        (matches(source, &configuration.unit_paths)
+            && !matches(source, &configuration.allow_in)
+            && CLIENTS.speaks(source.language(), &name))
+        .then_some(Violation::NetworkInUnitTest { callee: name })
     }
 }
 

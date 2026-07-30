@@ -288,6 +288,8 @@ pub struct NoNetworkInUnitTestRule {
     pub severity: Severity,
     #[serde(default, rename = "unit-paths")]
     pub unit_paths: Vec<String>,
+    #[serde(default, rename = "allow-in")]
+    pub allow_in: Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]

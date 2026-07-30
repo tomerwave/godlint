@@ -134,3 +134,8 @@ Rules that name callees or modules — `architecture/restricted-call`,
 match the name exactly as it is spelled in the source. Read
 [what the call and import rules cannot see yet](rules.md#what-the-call-and-import-rules-cannot-see-yet)
 before relying on one; an alias escapes them, and a shadowing local binding is reported.
+
+`testing/no-network-in-unit-test` is off until configured for a different reason: it takes paths rather
+than names. `unit-paths` declares which directories hold unit tests, and the rule reports nothing until
+it is set, because whether a test is a unit test is a property of the repository. `allow-in` then carves
+exemptions back out of those paths.
