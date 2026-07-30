@@ -89,6 +89,17 @@ A body that evaluates anything else is left alone, including a lone string liter
 Rust is out of scope. It has no `catch`, and a discarded `Result` is `reliability/ignored-error` on
 [the roadmap](rule-roadmap.md) rather than this rule.
 
+## Testing
+
+| Rule | What it reports |
+| --- | --- |
+| `testing/no-focused-test` | A test or suite marked to run on its own: `it.only`, `describe.only` and the other runners' `.only` |
+| `testing/no-skipped-test` | A test that does not run: `.skip` or `.todo` in JavaScript and TypeScript, `#[ignore]` beside `#[test]` in Rust, and a `pytest.mark.skip` or `unittest.skip` decorator in Python |
+
+What counts as a test is decided by syntax alone — a runner call, a `#[test]` attribute, a `test_`
+prefix or a `pytest.mark` decorator. Neither rule knows about test directories, because an analyzer
+sees no configuration; a repository that keeps tests somewhere unusual is not covered by that alone.
+
 ## Logging
 
 | Rule | What it reports |

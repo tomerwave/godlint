@@ -1,0 +1,5 @@
+version: 1
+
+rules:
+  testing/no-focused-test:
+    severity: error

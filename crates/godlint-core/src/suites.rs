@@ -5,10 +5,10 @@ use crate::config::{
     DecisionComplexityRule, DependencyBoundaryRule, DirectEnvironmentReadRule,
     EmptyErrorHandlerRule, EmptyFunctionRule, ExplicitTimerDelayRule, FilenameCaseRule,
     ForbiddenDependencyRule, FunctionNestingRule, FunctionStatementsRule, LineLimitRule,
-    ModuleIndependenceRule, NoCommentsRule, NoDynamicExecutionRule, NoInsecureRandomRule,
-    NoProductionLogRule, NoWeakHashRule, ParameterCountRule, RestrictedCallRule,
-    RestrictedImportRule, ReturnCountRule, Rules, Severity, TodoRequiresReferenceRule,
-    UnusedSuppressionRule, default_configuration_paths, default_markers,
+    ModuleIndependenceRule, NoCommentsRule, NoDynamicExecutionRule, NoFocusedTestRule,
+    NoInsecureRandomRule, NoProductionLogRule, NoSkippedTestRule, NoWeakHashRule,
+    ParameterCountRule, RestrictedCallRule, RestrictedImportRule, ReturnCountRule, Rules, Severity,
+    TodoRequiresReferenceRule, UnusedSuppressionRule, default_configuration_paths, default_markers,
     default_reference_prefixes,
 };
 
@@ -39,6 +39,7 @@ fn recommended(rules: &mut Rules) {
     security(rules);
     reliability(rules);
     logging(rules);
+    testing(rules);
 }
 
 fn maintainability(rules: &mut Rules) {
@@ -210,6 +211,17 @@ fn reliability(rules: &mut Rules) {
         .get_or_insert(EmptyErrorHandlerRule {
             severity: Severity::Error,
         });
+}
+
+fn testing(rules: &mut Rules) {
+    let error = Severity::Error;
+
+    rules
+        .no_focused_test
+        .get_or_insert(NoFocusedTestRule { severity: error });
+    rules
+        .no_skipped_test
+        .get_or_insert(NoSkippedTestRule { severity: error });
 }
 
 fn logging(rules: &mut Rules) {
