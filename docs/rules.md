@@ -209,12 +209,22 @@ await fetch(url) })`, or a `pytest.fixture` — falls outside every test's range
 common shape of exactly this smell. All three want import resolution or a fixture fact; none is a
 configuration matter.
 
-`assertion-required` reports below the severity it is configured at. Whether a test asserts through a
-helper is not decidable without resolution, so the rule reports at warning even inside `recommended@1`,
-and `fail-on: error` means it informs rather than fails a build. The cap is not new machinery:
-`security/no-weak-hash` already reports an algorithm it cannot read one tier down the same way. The
-consequence is worth stating plainly — a user who wants this as a hard gate cannot have one, and that is
-the price of a rule that cannot see whether a helper asserts.
+`assertion-required` reports at warning whatever severity it is configured at. Whether a test asserts
+through a helper is not decidable without resolution, and with `fail-on` at its default of `error` that
+means the rule informs rather than fails a build.
+
+The cap reuses `Violation::cap()`, but it is worth being precise about how this use differs from
+`security/no-weak-hash`'s, because the two are not the same shape. `no-weak-hash` emits two violations
+and caps only one: an algorithm it cannot read is capped, and an algorithm named outright keeps its
+configured severity, so the rule stays sharp on what it can prove. `assertion-required` has one
+violation and caps it, so the cap is rule-wide. That is the blunter instrument, and it is the honest one
+here — there is no subcase where the rule *can* prove a test asserts nothing, because the assertion may
+always be inside a helper it cannot follow.
+
+A hard gate is still reachable, and the documentation would be misleading not to say so: `fail-on:
+warning` makes any warning fail the run. The cost is that it is not rule-scoped — it promotes every
+warning in the repository, including `no-weak-hash`'s unreadable algorithm. There is no per-rule route
+to a gate.
 
 Three things that look assertion-free are not, and are silent:
 
@@ -225,7 +235,8 @@ Three things that look assertion-free are not, and are silent:
 | An empty test | That is `no-empty-test`'s finding, and two findings for one defect is noise |
 
 What remains is the helper case, and `extra-assertions` is the answer to it — a repository that asserts
-through `verify_refund` names it rather than turning the rule off:
+through `verify_refund` names it rather than turning the rule off. Names match the spelling as written,
+so `helpers.verifyOrder` and a bare `verifyOrder` are different entries:
 
 ```yaml
 rules:
