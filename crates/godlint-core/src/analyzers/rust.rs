@@ -3,7 +3,7 @@ use tree_sitter::Node;
 use crate::{
     analyzers::{
         Analyzer, AnalyzerError, SourceFacts,
-        vocabulary::{Callee, Cognition, Condition, ErrorHandler, Vocabulary},
+        vocabulary::{Callee, Cognition, Condition, ErrorHandler, Vocabulary, plain_path},
     },
     facts::CommentKind,
     source::SourceFile,
@@ -32,6 +32,7 @@ const VOCABULARY: Vocabulary = Vocabulary {
     condition,
     cognition,
     is_access,
+    direct_path,
     import,
     comment_kind,
     has_implicit_tail_return,
@@ -164,6 +165,10 @@ fn spelled_path(argument: Node<'_>) -> Option<Node<'_>> {
         "use_list" => None,
         _ => Some(argument),
     }
+}
+
+fn direct_path(text: &str) -> Option<String> {
+    plain_path(text)
 }
 
 fn is_access(_kind: &str) -> bool {

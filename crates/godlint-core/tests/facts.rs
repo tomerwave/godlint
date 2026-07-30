@@ -4,9 +4,9 @@ use std::path::PathBuf;
 
 use godlint_core::{
     facts::{
-        AccessFact, BlockDepth, CallFact, CognitiveScore, CommentFact, CommentKind, DecisionPoints,
-        ErrorHandlerFact, FunctionFact, FunctionFactDetails, FunctionFactError, ParameterCount,
-        ReturnPaths, StatementCount,
+        AccessFact, BlockDepth, CallFact, CallTarget, CognitiveScore, CommentFact, CommentKind,
+        DecisionPoints, ErrorHandlerFact, FunctionFact, FunctionFactDetails, FunctionFactError,
+        ParameterCount, ReturnPaths, StatementCount,
     },
     source::{SourceFile, SourceRange},
 };
@@ -88,13 +88,21 @@ fn records_a_comment_with_its_kind() {
 
 #[test]
 fn records_a_call() {
-    let fact = CallFact::new(source(), range(17, 22), false, 2);
+    let fact = CallFact::new(
+        source(),
+        range(17, 22),
+        CallTarget {
+            path: "inner".to_owned(),
+            is_macro: false,
+        },
+        2,
+    );
 
     assert_eq!(fact.range(), range(17, 22));
     assert_eq!(
         fact.callee(),
         "inner",
-        "a callee is read from the range rather than stored beside it"
+        "the range locates the callee and the analyzer resolves what it names"
     );
     assert!(!fact.is_macro());
     assert_eq!(fact.argument_count(), 2);
@@ -102,13 +110,13 @@ fn records_a_call() {
 
 #[test]
 fn records_an_access() {
-    let fact = AccessFact::new(source(), range(3, 8));
+    let fact = AccessFact::new(source(), range(3, 8), "outer".to_owned());
 
     assert_eq!(fact.range(), range(3, 8));
     assert_eq!(
         fact.target(),
         "outer",
-        "a target is read from the range rather than stored beside it"
+        "the range locates the access and the analyzer resolves what it names"
     );
 }
 
