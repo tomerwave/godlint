@@ -1,14 +1,14 @@
 #![allow(clippy::expect_used, clippy::unwrap_used)]
 
 use std::{
-    fs,
-    path::PathBuf,
+    path::{Path, PathBuf},
     process::Command,
-    sync::atomic::{AtomicU64, Ordering},
-    time::{SystemTime, UNIX_EPOCH},
 };
 
-static NEXT_CONFIG_ID: AtomicU64 = AtomicU64::new(0);
+#[path = "support/temporary.rs"]
+mod temporary;
+
+use temporary::TemporaryDirectory;
 
 fn godlint() -> Command {
     Command::new(env!("CARGO_BIN_EXE_godlint"))
@@ -18,18 +18,6 @@ fn run(command: &mut Command) -> std::process::Output {
     command
         .output()
         .unwrap_or_else(|error| panic!("runs godlint: {error}"))
-}
-
-fn config_file(contents: &str) -> PathBuf {
-    let timestamp = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map_or(0, |duration| duration.as_nanos());
-    let id = NEXT_CONFIG_ID.fetch_add(1, Ordering::Relaxed);
-    let path = std::env::temp_dir().join(format!("godlint-cli-{timestamp}-{id}.yaml"));
-
-    fs::write(&path, contents).unwrap_or_else(|error| panic!("writes config: {error}"));
-
-    path
 }
 
 #[test]
@@ -57,7 +45,9 @@ fn rejects_unknown_arguments() {
 
 #[test]
 fn validates_a_function_size_configuration() {
-    let path = config_file(
+    let repository = Repository::new();
+    let path = repository.write(
+        "godlint.yaml",
         "version: 1\nrules:\n  maintainability/function-size:\n    severity: error\n    max-lines: 30\n    skip-blank-lines: true\n    skip-comments: true\n",
     );
     let output = run(godlint().args([
@@ -67,8 +57,6 @@ fn validates_a_function_size_configuration() {
         &path.display().to_string(),
     ]));
 
-    fs::remove_file(path).unwrap_or_else(|error| panic!("removes config: {error}"));
-
     assert!(output.status.success());
     assert!(String::from_utf8_lossy(&output.stdout).contains("Configuration is valid:"));
     assert!(output.stderr.is_empty());
@@ -76,15 +64,14 @@ fn validates_a_function_size_configuration() {
 
 #[test]
 fn reports_an_invalid_configuration() {
-    let path = config_file("version: 2\n");
+    let repository = Repository::new();
+    let path = repository.write("godlint.yaml", "version: 2\n");
     let output = run(godlint().args([
         "config",
         "validate",
         "--config",
         &path.display().to_string(),
     ]));
-
-    fs::remove_file(path).unwrap_or_else(|error| panic!("removes config: {error}"));
 
     assert_eq!(output.status.code(), Some(2));
     assert!(
@@ -370,39 +357,129 @@ fn skips_a_nested_repository_that_has_its_own_configuration() {
 }
 
 struct Repository {
-    path: PathBuf,
+    directory: TemporaryDirectory,
 }
 
 impl Repository {
     fn new() -> Self {
-        let timestamp = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map_or(0, |duration| duration.as_nanos());
-        let id = NEXT_CONFIG_ID.fetch_add(1, Ordering::Relaxed);
-        let path = std::env::temp_dir().join(format!("godlint-repo-{timestamp}-{id}"));
-
-        fs::create_dir_all(&path).unwrap_or_else(|error| panic!("creates repository: {error}"));
-
-        Self { path }
-    }
-
-    fn path(&self) -> &PathBuf {
-        &self.path
-    }
-
-    fn write(&self, relative: &str, contents: &str) {
-        let path = self.path.join(relative);
-
-        if let Some(parent) = path.parent() {
-            fs::create_dir_all(parent).unwrap_or_else(|error| panic!("creates parent: {error}"));
+        Self {
+            directory: TemporaryDirectory::new("repo"),
         }
+    }
 
-        fs::write(path, contents).unwrap_or_else(|error| panic!("writes {relative}: {error}"));
+    fn path(&self) -> &Path {
+        self.directory.path()
+    }
+
+    fn write(&self, relative: &str, contents: &str) -> PathBuf {
+        self.directory.write(relative, contents)
     }
 }
 
-impl Drop for Repository {
-    fn drop(&mut self) {
-        let _ = fs::remove_dir_all(&self.path);
-    }
+const EMPTY_FUNCTION: &str =
+    "version: 1\nrules:\n  maintainability/empty-function:\n    severity: error\n";
+
+fn stderr_of(output: &std::process::Output) -> String {
+    String::from_utf8_lossy(&output.stderr).into_owned()
+}
+
+#[cfg(unix)]
+fn link(original: &std::path::Path, link: &std::path::Path) {
+    std::os::unix::fs::symlink(original, link)
+        .unwrap_or_else(|error| panic!("links {}: {error}", link.display()));
+}
+
+#[test]
+fn refuses_a_scan_path_outside_the_repository() {
+    let outer = Repository::new();
+
+    outer.write("repo/godlint.yaml", EMPTY_FUNCTION);
+    outer.write("repo/src/a.rs", "fn reported() {}\n");
+    outer.write("outside/b.rs", "fn other() {}\n");
+
+    let output = run(godlint()
+        .args(["check", ".", "../outside"])
+        .current_dir(outer.path().join("repo")));
+
+    assert_eq!(output.status.code(), Some(2));
+    assert!(
+        stderr_of(&output).contains("is outside"),
+        "unexpected stderr: {}",
+        stderr_of(&output)
+    );
+}
+
+#[cfg(unix)]
+#[test]
+fn refuses_a_scan_path_that_goes_through_a_symbolic_link() {
+    let repository = Repository::new();
+
+    repository.write("godlint.yaml", EMPTY_FUNCTION);
+    repository.write("src/a.rs", "fn reported() {}\n");
+    link(
+        &repository.path().join("src"),
+        &repository.path().join("linked"),
+    );
+
+    let output = run(godlint()
+        .args(["check", "linked"])
+        .current_dir(repository.path()));
+
+    assert_eq!(output.status.code(), Some(2));
+    assert!(
+        stderr_of(&output).contains("contains a symbolic link"),
+        "unexpected stderr: {}",
+        stderr_of(&output)
+    );
+}
+
+#[cfg(unix)]
+#[test]
+fn refuses_a_repository_root_that_is_a_symbolic_link() {
+    let outer = Repository::new();
+
+    outer.write("repo/godlint.yaml", EMPTY_FUNCTION);
+    outer.write("repo/src/a.rs", "fn reported() {}\n");
+    link(&outer.path().join("repo"), &outer.path().join("mirror"));
+
+    let output = run(godlint()
+        .args(["check", "mirror"])
+        .current_dir(outer.path()));
+
+    assert_eq!(output.status.code(), Some(2));
+    assert!(
+        stderr_of(&output).contains("is a symbolic link"),
+        "unexpected stderr: {}",
+        stderr_of(&output)
+    );
+}
+
+#[test]
+fn a_scan_issue_outranks_a_finding_without_hiding_it() {
+    let repository = Repository::new();
+
+    repository.write("godlint.yaml", EMPTY_FUNCTION);
+    repository.write("src/a.rs", "fn reported() {}\n");
+    repository.write("src/bad.rs", "fn broken( {\n");
+
+    let output = run(godlint()
+        .arg("check")
+        .arg(".")
+        .current_dir(repository.path()));
+    let stdout = String::from_utf8_lossy(&output.stdout);
+
+    assert_eq!(
+        output.status.code(),
+        Some(2),
+        "a file the run could not read outranks a finding, because the run is incomplete"
+    );
+    assert!(
+        stdout.contains("src/a.rs:1:1: error[maintainability/empty-function]"),
+        "the finding it did produce must still be reported: {stdout}"
+    );
+    assert!(
+        stderr_of(&output).contains("src/bad.rs: invalid syntax"),
+        "unexpected stderr: {}",
+        stderr_of(&output)
+    );
 }
