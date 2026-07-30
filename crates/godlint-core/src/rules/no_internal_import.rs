@@ -32,6 +32,7 @@ impl ImportRule for NoInternalImport {
         }
 
         reached_past(module, import.source().language()).map(|marker| Violation::InternalImport {
+            certain: !BUILT.contains(&marker.as_str()),
             module: module.to_owned(),
             marker,
         })
@@ -64,23 +65,27 @@ fn reached_past(module: &str, language: Language) -> Option<String> {
 
     let reached: Vec<&str> = module
         .split(separator)
-        .skip(1)
+        .skip(own_segments(module))
         .filter(|segment| is_marker(segment, language))
         .collect();
 
     reached
         .iter()
-        .find(|segment| is_certain(segment))
+        .find(|segment| !BUILT.contains(*segment))
         .or(reached.first())
         .map(|segment| (*segment).to_owned())
+}
+
+fn own_segments(module: &str) -> usize {
+    if module.starts_with('@') { 2 } else { 1 }
 }
 
 fn is_marker(segment: &str, language: Language) -> bool {
     HIDDEN.contains(&segment)
         || BUILT.contains(&segment)
-        || (language == Language::Python && segment.starts_with('_'))
+        || (language == Language::Python && is_author_private(segment))
 }
 
-pub(crate) fn is_certain(marker: &str) -> bool {
-    !BUILT.contains(&marker)
+fn is_author_private(segment: &str) -> bool {
+    segment.starts_with('_') && !(segment.starts_with("__") && segment.ends_with("__"))
 }

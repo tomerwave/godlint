@@ -315,6 +315,12 @@ is silent while `some-lib/src/deep` is not, and `from __future__ import annotati
 reach into. An alias in a bundler or `tsconfig` escapes the rule entirely, the same limitation
 `architecture/restricted-import` documents.
 
+Two segment shapes are exempt for reasons that are not conventions at all. A scoped package's name spans
+*two* segments, so `@scope/internal` may be the whole published package and is silent, while
+`@scope/pkg/src/deep` is not. And a Python `__dunder__` is a language protocol rather than an author's
+decision: `import package.__main__` is how you run a module, so it is silent, while
+`package._private.helpers` is not.
+
 Two tiers, because two of these conventions are not the same claim. `internal`, `private`, `impl` and a
 Python `_` prefix say *the author did not mean this for you*, and report at error. `dist`, `src` and
 `build` merely name build output, which some packages publish as their documented entry, so they report

@@ -2,7 +2,6 @@ use std::fmt;
 
 use crate::{
     config::Severity,
-    rules::no_internal_import,
     rules::{Metric, SuppressionDefect},
 };
 
@@ -63,6 +62,7 @@ pub enum Violation {
     InternalImport {
         module: String,
         marker: String,
+        certain: bool,
     },
     SleepInTest {
         callee: String,
@@ -247,9 +247,7 @@ fn insecure_random(formatter: &mut fmt::Formatter<'_>, callee: &str, secure: &st
 impl Violation {
     pub(crate) fn cap(&self) -> Severity {
         match self {
-            Self::InternalImport { marker, .. } if !no_internal_import::is_certain(marker) => {
-                Severity::Warning
-            }
+            Self::InternalImport { certain: false, .. } => Severity::Warning,
             Self::MissingAssertion | Self::UnverifiedHash { .. } => Severity::Warning,
             _ => Severity::Error,
         }
@@ -296,7 +294,9 @@ impl fmt::Display for Violation {
             Self::TestHelperInProduction { module, segment } => {
                 test_helper(formatter, module, segment)
             }
-            Self::InternalImport { module, marker } => internal_import(formatter, module, marker),
+            Self::InternalImport { module, marker, .. } => {
+                internal_import(formatter, module, marker)
+            }
             Self::SleepInTest { callee } => write!(formatter, "{callee} {SLEEP_IN_TEST}"),
             Self::UnseededRandom { callee, remedy } => unseeded(formatter, callee, remedy),
             Self::NetworkInUnitTest { callee } => {

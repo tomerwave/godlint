@@ -111,6 +111,48 @@ fn keeps_a_marker_that_is_the_first_segment() {
 }
 
 #[test]
+fn keeps_a_scoped_packages_own_name() {
+    assert!(
+        reported("src/app.ts", "import x from \"@scope/internal\";").is_empty(),
+        "a scoped package name spans two segments, so its second one is still the package"
+    );
+    for marker in ["src", "dist", "impl", "private"] {
+        let source = format!("import x from \"@scope/{marker}\";");
+
+        assert!(reported("src/app.ts", &source).is_empty(), "{source}");
+    }
+    assert_eq!(
+        reported("src/app.ts", "import x from \"@scope/pkg/src/deep\";").len(),
+        1,
+        "reaching past a scoped package is still reaching past it"
+    );
+}
+
+#[test]
+fn keeps_a_python_language_protocol_module() {
+    assert!(
+        reported("src/app.py", "import package.__main__").is_empty(),
+        "__main__ is the interpreter's entry-point protocol, not an author's private module"
+    );
+    assert!(reported("src/app.py", "from package.__init__ import x").is_empty());
+    assert_eq!(
+        reported("src/app.py", "from package._private.helpers import munge").len(),
+        1,
+        "a single leading underscore is still the author saying keep out"
+    );
+    assert_eq!(
+        reported("src/app.py", "from package.__private import x").len(),
+        1,
+        "a leading double underscore without a trailing one is name mangling, not a protocol"
+    );
+    assert_eq!(
+        reported("src/app.py", "from package._helpers__ import x").len(),
+        1,
+        "and a trailing double underscore alone is not one either"
+    );
+}
+
+#[test]
 fn keeps_a_relative_import_into_your_own_private_module() {
     assert!(
         reported("src/app.ts", "import { h } from \"./internal/helper\";").is_empty(),

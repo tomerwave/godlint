@@ -70,7 +70,10 @@ speaks about.
   for you and report at error, while `dist`, `src` and `build` merely name build output that some
   packages publish as their documented entry, so they report at warning; a path naming both is certain.
   Rust is out of scope — module privacy there is enforced by the compiler, so a module you can import is
-  one its author made public. `allow` exempts a module the project must reach into.
+  one its author made public. Two segment shapes are exempt for reasons that are not conventions: a scoped
+  package's name spans two segments, so `@scope/internal` may be the whole package, and a Python
+  `__dunder__` is a language protocol rather than an author's decision, so `import package.__main__` is
+  silent. `allow` exempts a module the project must reach into.
 - `security/no-shell-command` — reports a command run through a shell, where any interpolated value
   becomes executable. The three languages put the defect in three different places, so the rule reads
   three signals. Python's callee is innocent and the argument is the finding, so the check is callee-blind — any call
