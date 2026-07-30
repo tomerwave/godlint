@@ -61,6 +61,15 @@ speaks about.
   TypeScript, `#[ignore]` beside `#[test]` in Rust in either order, and a `pytest.mark.skip` or
   `unittest.skip` decorator in Python. A skipped test rots without anything noticing, so the rule asks
   for it to be deleted, fixed, or suppressed with an owner and an expiry.
+- `testing/assertion-required` — reports a test that asserts nothing. Such a test verifies only that the
+  code does not raise, so it passes when the behaviour is wrong, which is the failure a test exists to
+  prevent. It reports at **warning** whatever severity is configured, including inside `recommended@1`,
+  because whether a test asserts through a helper is not decidable without resolution; that cap is the
+  mechanism `security/no-weak-hash` already uses for an algorithm it cannot read. Three shapes that look
+  assertion-free are silent: `pytest.raises` and `#[should_panic]`, because asserting that something
+  raises is asserting; a `describe` or other suite, because it asserts through the tests inside it; and an
+  empty test, which is `no-empty-test`'s finding. For the helper case, `extra-assertions` names the
+  functions a repository asserts through, so it configures the rule rather than turning it off.
 - Assertion facts. A rule can ask which calls in a file are assertions, what each is called, and how
   many operands it took. Which calls count is a framework question rather than a language one, so each
   language module answers it, and each answers a different shape: Python has assertion syntax, so

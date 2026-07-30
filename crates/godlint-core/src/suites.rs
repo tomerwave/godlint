@@ -1,11 +1,11 @@
 use std::num::NonZeroU32;
 
 use crate::config::{
-    AccountableSuppressionRule, CognitiveComplexityRule, ConditionComplexityRule,
-    DecisionComplexityRule, DependencyBoundaryRule, DirectEnvironmentReadRule,
-    EmptyErrorHandlerRule, EmptyFunctionRule, ExplicitTimerDelayRule, FilenameCaseRule,
-    ForbiddenDependencyRule, FunctionNestingRule, FunctionStatementsRule, LineLimitRule,
-    ModuleIndependenceRule, NoCommentsRule, NoDynamicExecutionRule, NoEmptyTestRule,
+    AccountableSuppressionRule, AssertionRequiredRule, CognitiveComplexityRule,
+    ConditionComplexityRule, DecisionComplexityRule, DependencyBoundaryRule,
+    DirectEnvironmentReadRule, EmptyErrorHandlerRule, EmptyFunctionRule, ExplicitTimerDelayRule,
+    FilenameCaseRule, ForbiddenDependencyRule, FunctionNestingRule, FunctionStatementsRule,
+    LineLimitRule, ModuleIndependenceRule, NoCommentsRule, NoDynamicExecutionRule, NoEmptyTestRule,
     NoFocusedTestRule, NoInsecureRandomRule, NoNetworkInUnitTestRule, NoProductionLogRule,
     NoRandomnessWithoutSeedRule, NoSkippedTestRule, NoSleepInTestRule, NoWeakHashRule,
     ParameterCountRule, RestrictedCallRule, RestrictedImportRule, ReturnCountRule, Rules, Severity,
@@ -223,6 +223,12 @@ fn testing(rules: &mut Rules) {
     rules
         .no_empty_test
         .get_or_insert(NoEmptyTestRule { severity: error });
+    rules
+        .assertion_required
+        .get_or_insert(AssertionRequiredRule {
+            severity: error,
+            extra_assertions: Vec::new(),
+        });
     rules
         .no_skipped_test
         .get_or_insert(NoSkippedTestRule { severity: error });

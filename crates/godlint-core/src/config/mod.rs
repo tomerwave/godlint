@@ -79,6 +79,8 @@ pub struct Rules {
     pub explicit_timer_delay: Option<ExplicitTimerDelayRule>,
     #[serde(rename = "reliability/empty-error-handler")]
     pub empty_error_handler: Option<EmptyErrorHandlerRule>,
+    #[serde(rename = "testing/assertion-required")]
+    pub assertion_required: Option<AssertionRequiredRule>,
     #[serde(rename = "testing/no-empty-test")]
     pub no_empty_test: Option<NoEmptyTestRule>,
     #[serde(rename = "testing/no-focused-test")]
@@ -256,6 +258,14 @@ pub struct DirectEnvironmentReadRule {
     pub severity: Severity,
     #[serde(default = "default_configuration_paths", rename = "allow-in")]
     pub allow_in: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct AssertionRequiredRule {
+    pub severity: Severity,
+    #[serde(default, rename = "extra-assertions")]
+    pub extra_assertions: Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]

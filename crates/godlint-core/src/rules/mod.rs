@@ -10,6 +10,7 @@ use crate::{
 };
 
 pub mod accountable_suppression;
+pub mod assertion_required;
 mod catalogue;
 pub mod cognitive_complexity;
 pub mod condition_complexity;
@@ -408,6 +409,7 @@ const EVALUATORS: &[Evaluator] = &[
     no_dynamic_execution::evaluate,
     direct_environment_read::evaluate,
     explicit_timer_delay::evaluate,
+    assertion_required::evaluate,
     no_empty_test::evaluate,
     no_focused_test::evaluate,
     no_insecure_random::evaluate,

@@ -51,6 +51,7 @@ pub enum Violation {
     FocusedTest,
     SkippedTest,
     EmptyTest,
+    MissingAssertion,
     SleepInTest {
         callee: String,
     },
@@ -150,6 +151,11 @@ const NETWORK_IN_UNIT_TEST: &str = concat!(
     "and unable to run offline; inject the client and fake it."
 );
 
+const MISSING_ASSERTION: &str = concat!(
+    "This test asserts nothing, so it passes unless the code raises; assert what the code should ",
+    "do, or name the helper that asserts for it in extra-assertions."
+);
+
 const COMMENT_NOT_PERMITTED: &str = "Comment is not permitted; express the intent in the code.";
 
 fn unverified_hash(formatter: &mut fmt::Formatter<'_>, callee: &str) -> fmt::Result {
@@ -170,6 +176,25 @@ fn unseeded(formatter: &mut fmt::Formatter<'_>, callee: &str, remedy: &str) -> f
     )
 }
 
+fn crossed_boundary(formatter: &mut fmt::Formatter<'_>, from: &str, to: &str) -> fmt::Result {
+    write!(
+        formatter,
+        "{from} must not depend on {to}; {CROSSED_BOUNDARY}"
+    )
+}
+
+fn broke_independence(
+    formatter: &mut fmt::Formatter<'_>,
+    set: &str,
+    from: &str,
+    to: &str,
+) -> fmt::Result {
+    write!(
+        formatter,
+        "{from} must not depend on {to}; {set} declares them independent of each other."
+    )
+}
+
 fn insecure_random(formatter: &mut fmt::Formatter<'_>, callee: &str, secure: &str) -> fmt::Result {
     write!(
         formatter,
@@ -180,7 +205,7 @@ fn insecure_random(formatter: &mut fmt::Formatter<'_>, callee: &str, secure: &st
 impl Violation {
     pub(crate) fn cap(&self) -> Severity {
         match self {
-            Self::UnverifiedHash { .. } => Severity::Warning,
+            Self::MissingAssertion | Self::UnverifiedHash { .. } => Severity::Warning,
             _ => Severity::Error,
         }
     }
@@ -212,16 +237,10 @@ impl fmt::Display for Violation {
             Self::ForbiddenDependency { package } => {
                 write!(formatter, "{package} {FORBIDDEN_DEPENDENCY}")
             }
-            Self::CrossedBoundary { from, to } => {
-                write!(
-                    formatter,
-                    "{from} must not depend on {to}; {CROSSED_BOUNDARY}"
-                )
+            Self::CrossedBoundary { from, to } => crossed_boundary(formatter, from, to),
+            Self::BrokeIndependence { set, from, to } => {
+                broke_independence(formatter, set, from, to)
             }
-            Self::BrokeIndependence { set, from, to } => write!(
-                formatter,
-                "{from} must not depend on {to}; {set} declares them independent of each other."
-            ),
             Self::RestrictedImport { module } => write!(formatter, "{module} {RESTRICTED_IMPORT}"),
             Self::ProductionLog { callee } => write!(formatter, "{callee} {PRODUCTION_LOG}"),
             Self::WeakHash { weak, strong } => weak_hash(formatter, weak, strong),
@@ -229,6 +248,7 @@ impl fmt::Display for Violation {
             Self::FocusedTest => write!(formatter, "{FOCUSED_TEST}"),
             Self::SkippedTest => write!(formatter, "{SKIPPED_TEST}"),
             Self::EmptyTest => formatter.write_str(EMPTY_TEST),
+            Self::MissingAssertion => formatter.write_str(MISSING_ASSERTION),
             Self::SleepInTest { callee } => write!(formatter, "{callee} {SLEEP_IN_TEST}"),
             Self::UnseededRandom { callee, remedy } => unseeded(formatter, callee, remedy),
             Self::NetworkInUnitTest { callee } => {

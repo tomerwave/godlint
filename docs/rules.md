@@ -99,6 +99,7 @@ Rust is out of scope. It has no `catch`, and a discarded `Result` is `reliabilit
 | `testing/no-sleep-in-test` | A test that waits on the clock: `time.sleep` or `asyncio.sleep` in Python, `thread::sleep` or `tokio::time::sleep` in Rust, and `page.waitForTimeout` or `browser.pause` in JavaScript and TypeScript |
 | `testing/no-randomness-without-seed` | A test drawing from a general-purpose generator in a file that never seeds one, so a failure cannot be reproduced |
 | `testing/no-network-in-unit-test` | A test in a declared unit path calling an HTTP or socket client, so it is slow, dependent on a service being up, and unable to run offline |
+| `testing/assertion-required` | A test that asserts nothing, so it passes unless the code raises. Reported at warning, whatever severity is configured |
 
 `no-empty-test` reads the test's own body rather than any function inside it, so a test that registers
 an empty callback is not empty itself. A test with no body to read at all, such as `it.todo('later')`,
@@ -207,6 +208,32 @@ names them. And a client reached from a fixture rather than from the test — `b
 await fetch(url) })`, or a `pytest.fixture` — falls outside every test's range and is silent, which is a
 common shape of exactly this smell. All three want import resolution or a fixture fact; none is a
 configuration matter.
+
+`assertion-required` reports below the severity it is configured at. Whether a test asserts through a
+helper is not decidable without resolution, so the rule reports at warning even inside `recommended@1`,
+and `fail-on: error` means it informs rather than fails a build. The cap is not new machinery:
+`security/no-weak-hash` already reports an algorithm it cannot read one tier down the same way. The
+consequence is worth stating plainly — a user who wants this as a hard gate cannot have one, and that is
+the price of a rule that cannot see whether a helper asserts.
+
+Three things that look assertion-free are not, and are silent:
+
+| Shape | Why |
+| --- | --- |
+| `pytest.raises`, `#[should_panic]` | Asserting that something raises is asserting |
+| A `describe` or other suite | It asserts through the tests inside it, so reporting it would double every finding |
+| An empty test | That is `no-empty-test`'s finding, and two findings for one defect is noise |
+
+What remains is the helper case, and `extra-assertions` is the answer to it — a repository that asserts
+through `verify_refund` names it rather than turning the rule off:
+
+```yaml
+rules:
+  testing/assertion-required:
+    severity: error
+    extra-assertions:
+      - verify_refund
+```
 
 What counts as a test is decided by syntax alone — a runner call, a `#[test]` attribute, a `test_`
 prefix or a `pytest.mark` decorator. None of the test rules knows about test directories on its own,
