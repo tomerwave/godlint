@@ -32,10 +32,35 @@ pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Vec<Finding> {
     })
 }
 
+const ECMASCRIPT_GLOBALS: [&str; 4] = ["globalThis", "window", "self", "global"];
+const PYTHON_GLOBALS: [&str; 1] = ["builtins"];
+
 fn is_dynamic_execution(call: &CallFact) -> bool {
-    match call.source().language() {
-        Language::JavaScript | Language::TypeScript => matches!(call.callee(), "eval" | "Function"),
-        Language::Python => matches!(call.callee(), "eval" | "exec"),
+    let language = call.source().language();
+    let callee = unqualified(call.callee(), globals(language));
+
+    match language {
+        Language::JavaScript | Language::TypeScript => matches!(callee, "eval" | "Function"),
+        Language::Python => matches!(callee, "eval" | "exec"),
         Language::Rust => false,
     }
+}
+
+fn globals(language: Language) -> &'static [&'static str] {
+    match language {
+        Language::JavaScript | Language::TypeScript => &ECMASCRIPT_GLOBALS,
+        Language::Python => &PYTHON_GLOBALS,
+        Language::Rust => &[],
+    }
+}
+
+fn unqualified<'callee>(callee: &'callee str, globals: &[&str]) -> &'callee str {
+    globals
+        .iter()
+        .find_map(|global| {
+            callee
+                .strip_prefix(global)
+                .and_then(|rest| rest.strip_prefix('.'))
+        })
+        .unwrap_or(callee)
 }

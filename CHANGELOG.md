@@ -69,6 +69,13 @@ speaks about.
 
 ### Fixed
 
+- `security/no-dynamic-execution` missed a built-in reached through the global object, so
+  `globalThis.eval(code)` was silent while `eval(code)` reported. The rule now strips a known global
+  prefix before matching: `globalThis`, `window`, `self`, and `global` in JavaScript and TypeScript,
+  and `builtins` in Python. Python's `self` is deliberately not on that list, because there it names
+  the instance a method was called on rather than the global scope. A finding still reports the
+  spelling the file used. An alias such as `const e = globalThis.eval` still escapes, which needs
+  value tracking rather than a longer list.
 - `security/direct-environment-read` missed `process?.env.PORT` while reporting
   `process.env?.PORT`. Optional member access denotes the same read, so which spelling an author
   chose decided whether the policy applied. A callee and an access target are now resolved when the
