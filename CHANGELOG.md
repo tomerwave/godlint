@@ -11,6 +11,16 @@ speaks about.
 
 ### Added
 
+- `maintainability/cognitive-complexity` — measures how hard a function is to follow rather than how
+  many paths run through it, weighting nested control flow: every branch costs one plus the nesting depth
+  it sits at, so four flat guard clauses cost 4 while four nested branches cost 10. `decision-complexity`
+  scores those two the same, which is the gap this closes. Three discounts come from the metric's
+  specification and are each fixtured: a `switch` costs one however many arms it has, an `else if` costs
+  one because the reader already paid for the `if`, and a run of one logical operator costs one however
+  long it is. A closure's complexity belongs to the closure rather than its host, which deviates from
+  Sonar's specification and matches every other function metric here. `recommended@1` adopts 15, Sonar's
+  published default; across this repository's 1387 functions the highest score is 6, so the threshold is a
+  ceiling against regression rather than a description of current practice.
 - `maintainability/condition-complexity` — reports a single `if` or `while` condition that combines
   more `&&`, `||`, or ternary operators than the configured limit (3 in `recommended@1`, measured
   against this repository). `decision-complexity` deliberately does not count these operators, so a

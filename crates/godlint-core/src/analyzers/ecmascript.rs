@@ -1,6 +1,6 @@
 use tree_sitter::Node;
 
-use super::vocabulary::{Callee, Condition, ErrorHandler, Vocabulary};
+use super::vocabulary::{Callee, Cognition, Condition, ErrorHandler, Vocabulary};
 use crate::facts::CommentKind;
 
 pub(super) const VOCABULARY: Vocabulary = Vocabulary {
@@ -16,6 +16,7 @@ pub(super) const VOCABULARY: Vocabulary = Vocabulary {
     callee,
     error_handler,
     condition,
+    cognition,
     is_access,
     import,
     comment_kind,
@@ -94,6 +95,54 @@ fn condition(node: Node<'_>) -> Option<Condition<'_>> {
         node: condition,
         operator_count: count_condition_operators(condition),
     })
+}
+
+fn cognition(node: Node<'_>) -> Option<Cognition> {
+    match node.kind() {
+        "if_statement" if is_else_if(node) => Some(Cognition::Hybrid),
+        "if_statement" | "switch_statement" | "for_statement" | "for_in_statement"
+        | "while_statement" | "do_statement" | "ternary_expression" | "catch_clause" => {
+            Some(Cognition::Structural)
+        }
+        "else_clause" if holds_an_if(node) => None,
+        "else_clause" => Some(Cognition::Hybrid),
+        "binary_expression" if opens_operator_sequence(node) => Some(Cognition::Fundamental),
+        _ => None,
+    }
+}
+
+fn is_else_if(node: Node<'_>) -> bool {
+    node.parent()
+        .is_some_and(|parent| parent.kind() == "else_clause")
+}
+
+fn holds_an_if(node: Node<'_>) -> bool {
+    let mut cursor = node.walk();
+
+    node.named_children(&mut cursor)
+        .any(|child| child.kind() == "if_statement")
+}
+
+fn logical_operator(node: Node<'_>) -> Option<&'static str> {
+    if node.kind() != "binary_expression" {
+        return None;
+    }
+
+    match node.child_by_field_name("operator")?.kind() {
+        "&&" => Some("&&"),
+        "||" => Some("||"),
+        _ => None,
+    }
+}
+
+fn opens_operator_sequence(node: Node<'_>) -> bool {
+    let Some(operator) = logical_operator(node) else {
+        return false;
+    };
+
+    node.parent()
+        .and_then(logical_operator)
+        .is_none_or(|enclosing| enclosing != operator)
 }
 
 fn count_condition_operators(node: Node<'_>) -> u32 {

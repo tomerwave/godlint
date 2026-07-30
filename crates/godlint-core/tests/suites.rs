@@ -134,6 +134,14 @@ fn configured_count_limits(config: &Config) -> Vec<(&'static str, u32)> {
                 .limit(),
         ),
         (
+            "maintainability/cognitive-complexity",
+            rules
+                .cognitive_complexity
+                .as_ref()
+                .expect("cognitive")
+                .limit(),
+        ),
+        (
             "maintainability/return-count",
             rules.return_count.as_ref().expect("returns").limit(),
         ),

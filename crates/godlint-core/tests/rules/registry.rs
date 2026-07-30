@@ -23,6 +23,7 @@ fn limits(rule_id: &str) -> String {
         "maintainability/parameter-count" => "max-parameters",
         "maintainability/decision-complexity" => "max-complexity",
         "maintainability/condition-complexity" => "max-operators",
+        "maintainability/cognitive-complexity" => "max-score",
         "maintainability/return-count" => "max-returns",
         "maintainability/function-statements" => "max-statements",
         _ => return String::new(),

@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use godlint_core::{
     facts::{
-        AccessFact, BlockDepth, CallFact, CommentFact, CommentKind, DecisionPoints,
+        AccessFact, BlockDepth, CallFact, CognitiveScore, CommentFact, CommentKind, DecisionPoints,
         ErrorHandlerFact, FunctionFact, FunctionFactDetails, FunctionFactError, ParameterCount,
         ReturnPaths, StatementCount,
     },
@@ -31,6 +31,7 @@ fn details() -> FunctionFactDetails {
         body_range: range(11, 28),
         parameter_count: ParameterCount::new(1),
         decision_points: DecisionPoints::new(2),
+        cognitive_score: CognitiveScore::new(3),
         return_paths: ReturnPaths::new(3),
         statement_count: StatementCount::new(4),
         block_depth: BlockDepth::new(5),
@@ -50,6 +51,7 @@ fn records_every_metric_separately() {
     assert_eq!(fact.body_range(), range(11, 28));
     assert_eq!(fact.parameter_count(), ParameterCount::new(1));
     assert_eq!(fact.decision_points(), DecisionPoints::new(2));
+    assert_eq!(fact.cognitive_score(), CognitiveScore::new(3));
     assert_eq!(fact.return_paths(), ReturnPaths::new(3));
     assert_eq!(fact.statement_count(), StatementCount::new(4));
     assert_eq!(fact.block_depth(), BlockDepth::new(5));

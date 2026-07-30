@@ -31,6 +31,7 @@ macro_rules! function_metrics {
 function_metrics! {
     ParameterCount,
     DecisionPoints,
+    CognitiveScore,
     ReturnPaths,
     StatementCount,
     BlockDepth,
@@ -94,6 +95,7 @@ pub struct FunctionFact {
     body_range: SourceRange,
     parameter_count: ParameterCount,
     decision_points: DecisionPoints,
+    cognitive_score: CognitiveScore,
     return_paths: ReturnPaths,
     statement_count: StatementCount,
     block_depth: BlockDepth,
@@ -107,6 +109,7 @@ pub struct FunctionFactDetails {
     pub body_range: SourceRange,
     pub parameter_count: ParameterCount,
     pub decision_points: DecisionPoints,
+    pub cognitive_score: CognitiveScore,
     pub return_paths: ReturnPaths,
     pub statement_count: StatementCount,
     pub block_depth: BlockDepth,
@@ -284,6 +287,7 @@ impl FunctionFact {
             body_range: details.body_range,
             parameter_count: details.parameter_count,
             decision_points: details.decision_points,
+            cognitive_score: details.cognitive_score,
             return_paths: details.return_paths,
             statement_count: details.statement_count,
             block_depth: details.block_depth,
@@ -314,6 +318,10 @@ impl FunctionFact {
 
     pub fn decision_points(&self) -> DecisionPoints {
         self.decision_points
+    }
+
+    pub fn cognitive_score(&self) -> CognitiveScore {
+        self.cognitive_score
     }
 
     pub fn return_paths(&self) -> ReturnPaths {

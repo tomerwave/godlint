@@ -1,8 +1,10 @@
 use tree_sitter::Node;
 
 use crate::{
-    analyzers::vocabulary::Vocabulary,
-    facts::{BlockDepth, DecisionPoints, ParameterCount, ReturnPaths, StatementCount},
+    analyzers::vocabulary::{Cognition, Vocabulary},
+    facts::{
+        BlockDepth, CognitiveScore, DecisionPoints, ParameterCount, ReturnPaths, StatementCount,
+    },
 };
 
 pub(super) fn is_function(node: Node<'_>, vocabulary: &Vocabulary) -> bool {
@@ -48,6 +50,52 @@ pub(super) fn decision_points(function: Node<'_>, vocabulary: &Vocabulary) -> De
     DecisionPoints::new(count_own_nodes(function, vocabulary, |node| {
         node.is_named() && is_decision(node)
     }))
+}
+
+pub(super) fn cognitive_score(function: Node<'_>, vocabulary: &Vocabulary) -> CognitiveScore {
+    let mut cursor = function.walk();
+
+    CognitiveScore::new(
+        function
+            .children(&mut cursor)
+            .map(|child| cognition_of(child, 0, vocabulary))
+            .sum(),
+    )
+}
+
+fn cognition_of(node: Node<'_>, nesting: u32, vocabulary: &Vocabulary) -> u32 {
+    if is_function(node, vocabulary) {
+        return 0;
+    }
+
+    let class = (vocabulary.cognition)(node);
+    let own = match class {
+        Some(Cognition::Structural) => 1 + nesting,
+        Some(Cognition::Hybrid | Cognition::Fundamental) => 1,
+        None => 0,
+    };
+    let inner = match class {
+        Some(Cognition::Structural | Cognition::Hybrid) => nesting + 1,
+        Some(Cognition::Fundamental) | None => nesting,
+    };
+    let mut alternatives = node.walk();
+    let alternatives: Vec<Node<'_>> = node
+        .children_by_field_name("alternative", &mut alternatives)
+        .collect();
+    let mut cursor = node.walk();
+
+    own + node
+        .children(&mut cursor)
+        .map(|child| {
+            let at = if alternatives.contains(&child) {
+                nesting
+            } else {
+                inner
+            };
+
+            cognition_of(child, at, vocabulary)
+        })
+        .sum::<u32>()
 }
 
 pub(super) fn return_paths(function: Node<'_>, vocabulary: &Vocabulary) -> ReturnPaths {

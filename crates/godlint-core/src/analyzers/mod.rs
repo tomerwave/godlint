@@ -395,6 +395,7 @@ fn function_fact(
             body_range,
             parameter_count: metrics::parameter_count(node, text, vocabulary),
             decision_points: metrics::decision_points(node, vocabulary),
+            cognitive_score: metrics::cognitive_score(node, vocabulary),
             return_paths: metrics::return_paths(node, vocabulary),
             statement_count: metrics::statement_count(node, vocabulary),
             block_depth: metrics::block_depth(node, vocabulary),
