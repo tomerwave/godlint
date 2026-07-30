@@ -1,0 +1,7 @@
+version: 1
+
+rules:
+  testing/no-network-in-unit-test:
+    severity: error
+    unit-paths:
+      - unit/**

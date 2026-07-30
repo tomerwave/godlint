@@ -69,6 +69,10 @@ pub(super) fn spelled(call: &CallFact) -> String {
 }
 
 pub(super) fn is_allowed(source: &SourceFile, paths: &[String]) -> bool {
+    matches(source, paths)
+}
+
+pub(super) fn matches(source: &SourceFile, paths: &[String]) -> bool {
     glob::matches_any(paths.iter().map(String::as_str), source.path_text())
 }
 

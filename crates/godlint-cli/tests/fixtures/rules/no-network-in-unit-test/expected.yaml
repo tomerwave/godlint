@@ -1,0 +1,7 @@
+exit-code: 1
+
+stdout: |
+  unit/rates.rs:3:20: error[testing/no-network-in-unit-test] reqwest::blocking::get reaches the network from a unit test, which makes it slow, dependent on a service being up, and unable to run offline; inject the client and fake it.
+  unit/rates.spec.js:2:26: error[testing/no-network-in-unit-test] fetch reaches the network from a unit test, which makes it slow, dependent on a service being up, and unable to run offline; inject the client and fake it.
+  unit/test_rates.py:2:16: error[testing/no-network-in-unit-test] requests.get reaches the network from a unit test, which makes it slow, dependent on a service being up, and unable to run offline; inject the client and fake it.
+stderr: ""
