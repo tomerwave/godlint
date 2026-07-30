@@ -69,6 +69,12 @@ speaks about.
 
 ### Fixed
 
+- `security/direct-environment-read` missed `process?.env.PORT` while reporting
+  `process.env?.PORT`. Optional member access denotes the same read, so which spelling an author
+  chose decided whether the policy applied. A callee and an access target are now resolved when the
+  fact is built rather than read back out of the source range, and the language module decides which
+  spellings name one path. Optional calls resolve the same way, so `outer?.parse(input)` and
+  `outer.parse?.(input)` both reach `architecture/restricted-call` as `outer.parse`.
 - The README described Godlint in the future tense - what it *would* provide, what the first release
   *would* focus on, GitHub Actions integration as an unreached phase - while it was shipping on four
   channels. It now says what the tool does today, and the one claim that was genuinely unshipped,
