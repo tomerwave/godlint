@@ -101,6 +101,16 @@ Rust is out of scope. It has no `catch`, and a discarded `Result` is `reliabilit
 an empty callback is not empty itself. A test with no body to read at all, such as `it.todo('later')`,
 is not reported here — that it does not run is `no-skipped-test`'s finding.
 
+It also reports an empty *suite* — `describe('x', () => {})` — because a suite is a test declaration by
+the same syntax, and an empty one is dead weight for the same reason. The message says "test" in both
+cases, which reads oddly for a suite; naming them apart needs the fact to distinguish a suite from a
+test, which it does not yet.
+
+Two adjacent rules fire on the same empty test on purpose, and it is worth knowing before adopting
+`recommended@1`: `maintainability/empty-function` reports the same body, so an empty test yields two
+findings, at the same position in Rust. They are different policies — one says a function has no body,
+the other says a test cannot fail — and neither suppresses the other.
+
 What counts as a test is decided by syntax alone — a runner call, a `#[test]` attribute, a `test_`
 prefix or a `pytest.mark` decorator. Neither rule knows about test directories, because an analyzer
 sees no configuration; a repository that keeps tests somewhere unusual is not covered by that alone.
