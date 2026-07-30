@@ -119,3 +119,4 @@ logging through the logging rule, which keeps the binding.
 A finding below the configured `fail-on` severity is reported without failing the command, which is
 how a rule can be adopted as a warning before it is adopted as a gate. See
 [configuration](configuration.md).
+\n## ci/anonymous-definition\nWorkflows must have a top-level name.
