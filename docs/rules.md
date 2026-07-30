@@ -154,6 +154,14 @@ Property-based suites are the false positive to configure around. Their own gene
 catalogue, so most are already silent; `allow-in` covers a suite that draws from the standard library
 on purpose and reports its own seed.
 
+Three limits are worth knowing before adopting it at error. The catalogue matches the written spelling,
+so `from random import sample` then `sample(pool, 3)` is not reported — the same alias limit the call
+rules document. The catalogue knows numpy's *seed* (`np.random.seed`) but not numpy's *generators*, so
+`np.random.rand(3)` is silent; that asymmetry is an omission rather than a decision. And in Rust the
+message asks for something that is not available: both Rust entries, `rand::random` and
+`rand::thread_rng`, are unseedable by construction, so no Rust seeding call can exempt a file and the fix
+is to replace the generator with a seeded `StdRng` rather than to seed the one you have.
+
 What counts as a test is decided by syntax alone — a runner call, a `#[test]` attribute, a `test_`
 prefix or a `pytest.mark` decorator. Neither rule knows about test directories, because an analyzer
 sees no configuration; a repository that keeps tests somewhere unusual is not covered by that alone.
