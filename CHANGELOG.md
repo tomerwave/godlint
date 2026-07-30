@@ -69,6 +69,11 @@ speaks about.
 
 ### Fixed
 
+- A source file was read whole with no size bound, so one very large file in a scanned tree could
+  exhaust memory before anything inspected it. Files are now read through a bounded reader with a
+  four-mebibyte ceiling, and a file above it is reported as a scan issue naming the limit instead of
+  being loaded. The bound is on the read rather than on a size checked beforehand, so the allocation
+  is limited by construction.
 - The README described Godlint in the future tense - what it *would* provide, what the first release
   *would* focus on, GitHub Actions integration as an unreached phase - while it was shipping on four
   channels. It now says what the tool does today, and the one claim that was genuinely unshipped,

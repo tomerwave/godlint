@@ -1,6 +1,7 @@
 use std::{
     error::Error,
     fmt, fs,
+    io::Read,
     path::{Path, PathBuf},
 };
 
@@ -9,6 +10,8 @@ use crate::{
     discovery::{DiscoveryError, Scope, discover},
     source::SourceFile,
 };
+
+pub const MAX_SOURCE_BYTES: u64 = 4 * 1024 * 1024;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ScanIssue {
@@ -67,11 +70,28 @@ fn scan_file(root: &Path, path: &Path, report: &mut ScanReport) -> Result<(), Sc
 }
 
 fn read_facts(relative_path: PathBuf, path: &Path) -> Result<SourceFacts, String> {
-    let contents = fs::read_to_string(path).map_err(|error| format!("unable to read: {error}"))?;
+    let contents = read_bounded(path)?;
     let source = SourceFile::new(relative_path, contents)
         .map_err(|error| format!("invalid source: {error}"))?;
 
     analyze(&source).map_err(|error| error.to_string())
+}
+
+fn read_bounded(path: &Path) -> Result<String, String> {
+    let file = fs::File::open(path).map_err(|error| format!("unable to read: {error}"))?;
+    let mut bytes = Vec::new();
+
+    file.take(MAX_SOURCE_BYTES + 1)
+        .read_to_end(&mut bytes)
+        .map_err(|error| format!("unable to read: {error}"))?;
+
+    if bytes.len() as u64 > MAX_SOURCE_BYTES {
+        return Err(format!(
+            "file is larger than the {MAX_SOURCE_BYTES} byte scan limit"
+        ));
+    }
+
+    String::from_utf8(bytes).map_err(|_| "unable to read: not valid UTF-8".to_owned())
 }
 
 impl fmt::Display for ScanError {
