@@ -29,6 +29,7 @@ pub mod forbidden_dependency;
 pub mod function_nesting;
 pub mod function_size;
 pub mod function_statements;
+pub mod hardcoded_container_credentials;
 pub mod languages;
 mod line_count;
 mod metric;
@@ -50,6 +51,7 @@ pub mod no_skipped_test;
 pub mod no_sleep_in_test;
 pub mod no_test_helper_in_production;
 pub mod no_weak_hash;
+pub mod no_workflow_comments;
 pub mod overprovisioned_secrets;
 pub mod parameter_count;
 pub mod pin_third_party_actions;
@@ -370,6 +372,8 @@ type WorkflowEvaluator = fn(&[WorkflowFacts], &Config) -> Vec<Finding>;
 const WORKFLOW_EVALUATORS: &[WorkflowEvaluator] = &[
     bot_conditions::evaluate,
     overprovisioned_secrets::evaluate,
+    hardcoded_container_credentials::evaluate,
+    no_workflow_comments::evaluate,
     pin_third_party_actions::evaluate,
     explicit_workflow_permissions::evaluate,
     secrets_inherit::evaluate,

@@ -239,6 +239,18 @@ pub struct ExplicitWorkflowPermissionsRule {
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
+pub struct NoWorkflowCommentsRule {
+    pub severity: Severity,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct HardcodedContainerCredentialsRule {
+    pub severity: Severity,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct PinThirdPartyActionsRule {
     pub severity: Severity,
     #[serde(default = "default_trusted_owners", rename = "trusted-owners")]

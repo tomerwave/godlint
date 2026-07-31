@@ -500,6 +500,9 @@ to a run step, which is what `ci/no-pull-request-target-checkout` would need.
 | --- | --- | --- | --- | --- |
 | `ci/pin-third-party-actions` | Shipped | Action fact | High | `trusted-owners`, defaulting to the two GitHub-owned accounts |
 | `ci/explicit-workflow-permissions` | Shipped | Workflow and job facts | High | `require-per-job`, off by default |
+| `ci/no-comments` | Shipped | Workflow comment facts | High | `severity` only |
+| `ci/hardcoded-container-credentials` | Shipped | Credential fact | High | `severity` only |
+| `ci/unnecessary-job-dependency` | Rejected: not decidable from workflow syntax | `announce` needs `[publish, npm, pypi]` while downloading artifacts from `binaries` | None | `needs:` means both output consumption and success gating; syntax cannot distinguish them |
 | `ci/no-inline-script` | Shipped | Step fact | High | `max-lines`, 8 in `recommended@1` |
 | `ci/no-monolithic-job` | Shipped | Job fact | High | `max-steps`, 7 in `recommended@1` |
 | `ci/require-concurrency-cancel` | Planned | Workflow fact | Medium | Which triggers must cancel in progress |
@@ -508,6 +511,11 @@ to a run step, which is what `ci/no-pull-request-target-checkout` would need.
 | `ci/secrets-inherit` | Shipped | Job fact | High | `allow-in` path globs |
 | `ci/overprovisioned-secrets` | Shipped | Step, setting and expression facts | High | Severity only |
 | `ci/unredacted-secrets` | Shipped | Step and expression facts | High | Severity only |
+
+`ci/unnecessary-job-dependency` is not decidable from workflow syntax. The `announce` job declares
+`needs: [publish, npm, pypi]` but downloads its artifacts from `binaries`; those three dependencies
+gate the GitHub release on successful registry publication. `needs:` carries two meanings—output
+consumption and success gating—and only the first leaves evidence in the depending job.
 
 ### Phase 6 — Semantic and external capabilities
 

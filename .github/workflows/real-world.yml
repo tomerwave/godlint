@@ -1,8 +1,6 @@
 name: Real-world corpus
 
 on:
-  # Cloning nine repositories, two of them three hundred megabytes, takes long enough that running
-  # it on every pull request would tax every change for the sake of the few that can break it.
   pull_request:
     paths:
       - 'crates/godlint-core/src/analyzers/**'
@@ -33,7 +31,5 @@ jobs:
 
       - run: cargo +1.97.1 build --release -p godlint-cli
 
-      # Release rather than debug: the corpus is a hundred thousand files, and a debug binary
-      # spends longer scanning it than the runner should spend on a scheduled job.
       - name: Require that Godlint can still read code that ships
         run: python3 scripts/check-real-world.py target/release/godlint

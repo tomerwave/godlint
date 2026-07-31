@@ -1,0 +1,15 @@
+name: Excluded
+
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: registry.example.test/build:latest
+      credentials:
+        username: excluded-user
+        password: excluded-password
+    steps:
+      - run: cargo build

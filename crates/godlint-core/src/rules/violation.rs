@@ -18,6 +18,7 @@ pub enum Violation {
         marker: String,
     },
     CommentNotPermitted,
+    WorkflowCommentNotPermitted,
     UnaccountableSuppression {
         defect: SuppressionDefect,
     },
@@ -57,6 +58,10 @@ pub enum Violation {
     },
     UndeclaredPermissions,
     InheritedPermissions {
+        job: String,
+    },
+    HardcodedContainerCredential {
+        key: String,
         job: String,
     },
     MutableActionReference {
@@ -206,6 +211,9 @@ const INTERNAL_IMPORT: &str = concat!(
 
 const COMMENT_NOT_PERMITTED: &str = "Comment is not permitted; express the intent in the code.";
 
+const WORKFLOW_COMMENT_NOT_PERMITTED: &str =
+    "Workflow comment is not permitted; name the step clearly or move the rationale into docs/.";
+
 fn unverified_hash(formatter: &mut fmt::Formatter<'_>, callee: &str) -> fmt::Result {
     write!(formatter, "{callee} {UNVERIFIED_HASH}")
 }
@@ -288,6 +296,7 @@ impl Violation {
 }
 
 impl fmt::Display for Violation {
+    #[rustfmt::skip]
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Limit {
@@ -299,6 +308,9 @@ impl fmt::Display for Violation {
             Self::EmptyErrorHandler => formatter.write_str(EMPTY_ERROR_HANDLER),
             Self::MissingReference { marker } => write!(formatter, "{marker} {MISSING_REFERENCE}"),
             Self::CommentNotPermitted => formatter.write_str(COMMENT_NOT_PERMITTED),
+            Self::WorkflowCommentNotPermitted => {
+                formatter.write_str(WORKFLOW_COMMENT_NOT_PERMITTED)
+            }
             Self::UnaccountableSuppression { defect } => defect.fmt(formatter),
             Self::UnusedSuppression => formatter.write_str(UNUSED_SUPPRESSION),
             Self::RestrictedCall { callee } => write!(formatter, "{callee} {RESTRICTED_CALL}"),
@@ -320,10 +332,8 @@ impl fmt::Display for Violation {
             Self::ShellCommand { shell } => write!(formatter, "{shell} {SHELL_COMMAND}"),
             Self::UndeclaredPermissions => formatter.write_str(UNDECLARED_PERMISSIONS),
             Self::InheritedPermissions { job } => inherited(formatter, job),
-            Self::MutableActionReference {
-                reference,
-                unversioned,
-            } => mutable_action(formatter, reference, *unversioned),
+            Self::HardcodedContainerCredential { key, job } => credential(formatter, key, job),
+            Self::MutableActionReference { reference, unversioned } => mutable_action(formatter, reference, *unversioned),
             Self::TemplateInjection { expression } => template_injection(formatter, expression),
             Self::AttackerInfluencedBotCondition { expression } => bot(formatter, expression),
             Self::InheritedSecrets { job } => inherited_secrets(formatter, job),
@@ -377,6 +387,13 @@ fn inherited(formatter: &mut fmt::Formatter<'_>, job: &str) -> fmt::Result {
         formatter,
         "{job} declares no permissions and the workflow declares none either, so it runs with \
          whatever the repository grants by default; declare what it needs."
+    )
+}
+
+fn credential(formatter: &mut fmt::Formatter<'_>, key: &str, job: &str) -> fmt::Result {
+    write!(
+        formatter,
+        "{job} has a literal container credential in {key}; interpolate a secret instead."
     )
 }
 

@@ -2,11 +2,6 @@ name: Mutation testing
 
 on:
   pull_request:
-    # Every path .cargo/mutants.toml examines, and nothing else. A path examined by the
-    # config and missing here is the failure #88 records: the analysers were mutated by the
-    # weekly sweep and by no pull request, so the layer that decides what is *seen* had no
-    # gate on the day it changed. check_mutation_scope in scripts/validate-pull-request.py
-    # keeps the two lists from drifting apart again.
     paths:
       - 'crates/godlint-core/src/analyzers/**'
       - 'crates/godlint-core/src/facts.rs'
@@ -38,10 +33,6 @@ jobs:
 
       - run: cargo +1.97.1 install cargo-mutants --locked
 
-      # Only the lines this pull request touched, so the check stays proportionate to it.
-      # The diff is not narrowed by path: examine_globs already decides which files carry
-      # mutants, and narrowing here as well is what let the two lists disagree. A diff
-      # touching no examined file reports that it changes no Rust source and passes.
       - name: Alter the changed lines and require a test to notice
         run: |
           git diff "origin/${{ github.base_ref }}...HEAD" > changed.diff

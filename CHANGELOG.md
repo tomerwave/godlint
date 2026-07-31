@@ -19,6 +19,10 @@ speaks about.
 - `ci/unredacted-secrets` — reports a `run:` script that combines a direct `secrets.*` expression
   with `$GITHUB_ENV` or `$GITHUB_OUTPUT`, where GitHub's masking no longer follows the value. It
   deliberately does not infer data flow through variables or earlier steps.
+- `ci/no-comments` — reports comments in workflow YAML except version labels trailing `uses:` values.
+  YAML has no doc-comment equivalent, so the rule has no option beyond `severity`.
+- `ci/hardcoded-container-credentials` — reports literal usernames and passwords in job container
+  and service credential blocks while leaving GitHub-expression interpolation alone.
 - `ci/template-injection` — reports attacker-influenced GitHub expressions interpolated directly
   into a workflow `run:` script, where the runner expands them before the shell sees the command.
   Expressions passed through `env:` or `with:` stay silent; binding the value to an environment

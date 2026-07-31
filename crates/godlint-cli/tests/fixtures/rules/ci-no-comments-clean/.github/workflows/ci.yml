@@ -1,0 +1,12 @@
+name: CI
+
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build
+        run: 'echo "# this is script data"'
+      - uses: vendor/action@0123456789012345678901234567890123456789 # v2

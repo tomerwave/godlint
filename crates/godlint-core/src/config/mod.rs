@@ -120,6 +120,10 @@ pub struct Rules {
     pub pin_third_party_actions: Option<PinThirdPartyActionsRule>,
     #[serde(rename = "ci/explicit-workflow-permissions")]
     pub explicit_workflow_permissions: Option<ExplicitWorkflowPermissionsRule>,
+    #[serde(rename = "ci/no-comments")]
+    pub no_workflow_comments: Option<NoWorkflowCommentsRule>,
+    #[serde(rename = "ci/hardcoded-container-credentials")]
+    pub hardcoded_container_credentials: Option<HardcodedContainerCredentialsRule>,
     #[serde(rename = "ci/template-injection")]
     pub template_injection: Option<TemplateInjectionRule>,
     #[serde(rename = "ci/bot-conditions")]
