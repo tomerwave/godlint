@@ -11,6 +11,20 @@ speaks about.
 
 ### Added
 
+- `ci/explicit-workflow-permissions` — reports a job that runs with whatever the repository grants by
+  default. What it reports follows the fix: a workflow declaring nothing anywhere is one finding at the
+  file, because one line at the top closes it, while a workflow whose *other* jobs are already narrowed
+  is reported per job that is still open, at that job's line. `require-per-job` additionally asks each
+  job to narrow a workflow-level block, and is off in `recommended@1` because inheriting one is a
+  choice a repository may have made deliberately. This replaces the check in
+  `scripts/validate-pull-request.py` that looked for the string `permissions:` in each workflow, and
+  counted a match inside a comment or a `run:` line.
+- A workflow whose YAML Godlint cannot read now reports `syntax not recognised at line N`, the same
+  issue a source file reports, instead of contributing nothing silently. This found two fixtures of
+  its own that were invalid YAML — a plain scalar may not contain `: ` — one of them the fixture
+  asserting that a `uses:` inside a string is ignored, which was resting partly on the file failing to
+  parse at all. `every_workflow_fixture_is_yaml_that_github_would_accept` in `e2e.rs` now refuses a
+  fixture the grammar cannot read.
 - `ci/pin-third-party-actions` — reports a workflow step using a third-party action at a ref that can
   move. A tag, a branch or a version string can be repointed by whoever owns the action, and what they
   point at next runs in your workflow with your token; only a full forty-character commit SHA counts as

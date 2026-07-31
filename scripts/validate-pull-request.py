@@ -365,15 +365,18 @@ def check_mutation_scope(report: Report) -> None:
 
 
 def check_workflows(report: Report) -> None:
+    """One toolchain across every workflow.
+
+    `permissions` used to be checked here by looking for the string, which counted a match
+    inside a comment or a `run:` line. `ci/explicit-workflow-permissions` replaced it: the
+    rule reads the YAML, knows a declaration from a comment about one, and runs against this
+    repository in CI like every other rule Godlint dogfoods.
+    """
+
     versions: set[str] = set()
 
     for workflow in sorted(WORKFLOWS.glob("*.yml")):
-        body = read(workflow)
-        report.check(
-            "permissions:" in body,
-            f"{workflow}: declares no `permissions`",
-        )
-        versions.update(re.findall(r"rustup toolchain install (\S+)", body))
+        versions.update(re.findall(r"rustup toolchain install (\S+)", read(workflow)))
 
     report.check(
         len(versions) <= 1,

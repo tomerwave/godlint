@@ -18,6 +18,7 @@ const USES: &str = "uses";
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct WorkflowFacts {
     file: TextFile,
+    unparsed: Vec<SourceRange>,
     actions: Vec<ActionFact>,
     jobs: Vec<JobFact>,
     declares_permissions: bool,
@@ -27,6 +28,10 @@ pub struct WorkflowFacts {
 impl WorkflowFacts {
     pub fn file(&self) -> &TextFile {
         &self.file
+    }
+
+    pub fn unparsed(&self) -> &[SourceRange] {
+        &self.unparsed
     }
 
     pub fn actions(&self) -> &[ActionFact] {
@@ -52,6 +57,7 @@ pub fn read(file: &TextFile) -> Result<WorkflowFacts, AnalyzerError> {
 
     Ok(WorkflowFacts {
         file: file.clone(),
+        unparsed: unparsed(tree.root_node(), file)?,
         actions: actions(tree.root_node(), file)?,
         jobs: jobs(workflow, file)?,
         declares_permissions: declared(workflow, PERMISSIONS, file),
@@ -74,6 +80,32 @@ fn parse(file: &TextFile) -> Result<tree_sitter::Tree, AnalyzerError> {
         .ok_or_else(|| AnalyzerError::MissingSyntaxTree {
             path: file.path().to_path_buf(),
         })
+}
+
+fn unparsed(root: Node<'_>, file: &TextFile) -> Result<Vec<SourceRange>, AnalyzerError> {
+    let mut torn = Vec::new();
+
+    collect_torn(root, &mut torn);
+
+    torn.into_iter().map(|node| range(node, file)).collect()
+}
+
+fn collect_torn<'tree>(node: Node<'tree>, torn: &mut Vec<Node<'tree>>) {
+    if node.is_error() || node.is_missing() {
+        torn.push(node);
+
+        return;
+    }
+
+    if !node.has_error() {
+        return;
+    }
+
+    let mut cursor = node.walk();
+
+    for child in node.children(&mut cursor) {
+        collect_torn(child, torn);
+    }
 }
 
 fn actions(root: Node<'_>, file: &TextFile) -> Result<Vec<ActionFact>, AnalyzerError> {

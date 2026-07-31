@@ -1,0 +1,16 @@
+name: Mixed
+
+on:
+  push:
+
+jobs:
+  narrowed:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - run: cargo build
+  open:
+    runs-on: ubuntu-latest
+    steps:
+      - run: cargo test

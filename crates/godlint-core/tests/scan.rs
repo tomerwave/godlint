@@ -134,3 +134,23 @@ fn an_excluded_workflow_is_not_read() {
         "a workflow is subject to the same exclusions as source"
     );
 }
+
+#[test]
+fn a_workflow_it_cannot_read_becomes_an_issue_rather_than_silence() {
+    let repository = Repository::new();
+
+    repository.write(
+        ".github/workflows/torn.yml",
+        "jobs:\n  build:\n    steps:\n      - run: echo \"a: b\"\n",
+    );
+
+    let report = repository.scan();
+
+    assert_eq!(report.workflows.len(), 1, "what parsed is still available");
+    assert_eq!(report.issues.len(), 1, "{:?}", report.issues);
+    assert!(
+        report.issues[0].message.contains("syntax not recognised"),
+        "a workflow that contributes nothing must leave a trace: {:?}",
+        report.issues[0]
+    );
+}

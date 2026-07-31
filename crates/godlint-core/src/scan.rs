@@ -8,7 +8,7 @@ use std::{
 use crate::{
     analyzers::{SourceFacts, analyze, workflow},
     discovery::{DiscoveryError, Scope, discover},
-    source::{SourceFile, TextFile, Workflow},
+    source::{SourceFile, SourceRange, TextFile, Workflow},
 };
 
 pub const MAX_SOURCE_BYTES: u64 = 4 * 1024 * 1024;
@@ -78,7 +78,12 @@ fn scan_file(root: &Path, path: &Path, report: &mut ScanReport) -> Result<(), Sc
 
     if Workflow::names(path) {
         match read_workflow(relative_path.clone(), path) {
-            Ok(facts) => report.workflows.push(facts),
+            Ok(facts) => {
+                report
+                    .issues
+                    .extend(torn_issue(&relative_path, facts.file(), facts.unparsed()));
+                report.workflows.push(facts);
+            }
             Err(message) => report.issues.push(ScanIssue {
                 path: relative_path,
                 message,
@@ -103,9 +108,17 @@ fn scan_file(root: &Path, path: &Path, report: &mut ScanReport) -> Result<(), Sc
 }
 
 fn unparsed_issue(relative_path: &Path, facts: &SourceFacts) -> Option<ScanIssue> {
-    let first = facts.unparsed().first()?;
-    let line = facts.source().location(*first).start.line;
-    let rest = facts.unparsed().len() - 1;
+    torn_issue(relative_path, facts.source().text_file(), facts.unparsed())
+}
+
+fn torn_issue(
+    relative_path: &Path,
+    file: &TextFile,
+    unparsed: &[SourceRange],
+) -> Option<ScanIssue> {
+    let first = unparsed.first()?;
+    let line = file.location(*first).start.line;
+    let rest = unparsed.len() - 1;
     let also = match rest {
         0 => String::new(),
         1 => ", and 1 more place".to_owned(),

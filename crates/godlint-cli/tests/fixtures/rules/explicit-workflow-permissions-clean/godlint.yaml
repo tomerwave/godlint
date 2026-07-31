@@ -1,0 +1,6 @@
+version: 1
+
+rules:
+  ci/explicit-workflow-permissions:
+    severity: error
+    require-per-job: true

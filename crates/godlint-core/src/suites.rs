@@ -4,15 +4,15 @@ use crate::config::{
     AccountableSuppressionRule, AssertionRequiredRule, CognitiveComplexityRule,
     ConditionComplexityRule, DecisionComplexityRule, DependencyBoundaryRule,
     DirectEnvironmentReadRule, EmptyErrorHandlerRule, EmptyFunctionRule, ExplicitTimerDelayRule,
-    FilenameCaseRule, ForbiddenDependencyRule, FunctionNestingRule, FunctionStatementsRule,
-    LineLimitRule, ModuleIndependenceRule, NoCommentsRule, NoDynamicExecutionRule, NoEmptyTestRule,
-    NoFocusedTestRule, NoInsecureRandomRule, NoInternalImportRule, NoNetworkInUnitTestRule,
-    NoProductionLogRule, NoRandomnessWithoutSeedRule, NoShellCommandRule, NoSkippedTestRule,
-    NoSleepInTestRule, NoTestHelperInProductionRule, NoWeakHashRule, ParameterCountRule,
-    PinThirdPartyActionsRule, RestrictedCallRule, RestrictedImportRule, ReturnCountRule, Rules,
-    Severity, TodoRequiresReferenceRule, UnusedSuppressionRule, default_configuration_paths,
-    default_markers, default_reference_prefixes, default_test_helpers, default_test_paths,
-    default_trusted_owners,
+    ExplicitWorkflowPermissionsRule, FilenameCaseRule, ForbiddenDependencyRule,
+    FunctionNestingRule, FunctionStatementsRule, LineLimitRule, ModuleIndependenceRule,
+    NoCommentsRule, NoDynamicExecutionRule, NoEmptyTestRule, NoFocusedTestRule,
+    NoInsecureRandomRule, NoInternalImportRule, NoNetworkInUnitTestRule, NoProductionLogRule,
+    NoRandomnessWithoutSeedRule, NoShellCommandRule, NoSkippedTestRule, NoSleepInTestRule,
+    NoTestHelperInProductionRule, NoWeakHashRule, ParameterCountRule, PinThirdPartyActionsRule,
+    RestrictedCallRule, RestrictedImportRule, ReturnCountRule, Rules, Severity,
+    TodoRequiresReferenceRule, UnusedSuppressionRule, default_configuration_paths, default_markers,
+    default_reference_prefixes, default_test_helpers, default_test_paths, default_trusted_owners,
 };
 
 pub const RECOMMENDED: &str = "recommended@1";
@@ -47,6 +47,12 @@ fn recommended(rules: &mut Rules) {
 }
 
 fn continuous_integration(rules: &mut Rules) {
+    rules
+        .explicit_workflow_permissions
+        .get_or_insert(ExplicitWorkflowPermissionsRule {
+            severity: Severity::Error,
+            require_per_job: false,
+        });
     rules
         .pin_third_party_actions
         .get_or_insert(PinThirdPartyActionsRule {

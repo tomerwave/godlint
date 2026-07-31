@@ -1,0 +1,8 @@
+version: 1
+
+exclude:
+  - .github/workflows/excluded.yml
+
+rules:
+  ci/explicit-workflow-permissions:
+    severity: error

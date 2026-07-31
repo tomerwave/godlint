@@ -497,7 +497,7 @@ to a run step, which is what `ci/no-pull-request-target-checkout` would need.
 | Rule | Status | Facts | Confidence | Configuration |
 | --- | --- | --- | --- | --- |
 | `ci/pin-third-party-actions` | Shipped | Action fact | High | `trusted-owners`, defaulting to the two GitHub-owned accounts |
-| `ci/explicit-workflow-permissions` | Planned | Workflow and job facts | High | Whether job-level narrowing is also required |
+| `ci/explicit-workflow-permissions` | Shipped | Workflow and job facts | High | `require-per-job`, off by default |
 | `ci/require-concurrency-cancel` | Planned | Workflow fact | Medium | Which triggers must cancel in progress |
 | `ci/template-injection` | Planned | Step and expression facts | High | Trusted expression contexts |
 | `ci/secrets-inherit` | Planned | Job fact | High | Which callees may inherit |

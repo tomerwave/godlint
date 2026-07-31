@@ -224,10 +224,14 @@ fn a_use_written_in_a_comment_or_a_string_is_not_a_use() {
         "  a:\n",
         "    steps:\n",
         "      # - uses: evil/action@v1\n",
-        "      - name: uses: evil/action@v2\n",
-        "        run: echo \"uses: evil/action@v3\"\n",
+        "      - name: 'uses: evil/action@v2'\n",
+        "        run: 'echo \"uses: evil/action@v3\"'\n",
     ));
 
+    assert!(
+        facts.unparsed().is_empty(),
+        "the fixture must be YAML GitHub would accept, or it proves nothing"
+    );
     assert!(
         facts.actions().is_empty(),
         "this is what reading the syntax buys over grepping the text: {:?}",
@@ -243,4 +247,25 @@ fn a_workflow_that_is_not_a_mapping_is_read_as_declaring_nothing() {
         assert!(facts.jobs().is_empty(), "{body:?}");
         assert!(!facts.declares_permissions(), "{body:?}");
     }
+}
+
+#[test]
+fn records_where_it_stopped_understanding_a_workflow() {
+    let file = TextFile::new(
+        PathBuf::from(".github/workflows/torn.yml"),
+        "jobs:\n  build:\n    steps:\n      - run: echo \"a: b\"\n".into(),
+    )
+    .unwrap_or_else(|error| panic!("creates workflow file: {error}"));
+    let facts = workflow::read(&file).unwrap_or_else(|error| panic!("still reads: {error}"));
+
+    assert!(
+        !facts.unparsed().is_empty(),
+        "a plain scalar containing a colon is not valid YAML, and a workflow Godlint cannot \
+         read must say so rather than report nothing"
+    );
+}
+
+#[test]
+fn a_workflow_it_understands_records_nothing_unparsed() {
+    assert!(workflow(WORKFLOW).unparsed().is_empty());
 }
