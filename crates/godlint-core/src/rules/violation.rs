@@ -55,6 +55,10 @@ pub enum Violation {
     ShellCommand {
         shell: String,
     },
+    TestHelperInProduction {
+        module: String,
+        segment: String,
+    },
     SleepInTest {
         callee: String,
     },
@@ -164,6 +168,11 @@ const SHELL_COMMAND: &str = concat!(
     "pass the program and its arguments as an array instead."
 );
 
+const TEST_HELPER: &str = concat!(
+    "which is test scaffolding, so production now depends on the test tree and ships it to users; ",
+    "keep the fake in the tests and take an interface here."
+);
+
 const COMMENT_NOT_PERMITTED: &str = "Comment is not permitted; express the intent in the code.";
 
 fn unverified_hash(formatter: &mut fmt::Formatter<'_>, callee: &str) -> fmt::Result {
@@ -203,6 +212,14 @@ fn broke_independence(
     )
 }
 
+fn environment(formatter: &mut fmt::Formatter<'_>, target: &str) -> fmt::Result {
+    write!(formatter, "{target} {ENVIRONMENT_READ}")
+}
+
+fn test_helper(formatter: &mut fmt::Formatter<'_>, module: &str, segment: &str) -> fmt::Result {
+    write!(formatter, "{module} names {segment}, {TEST_HELPER}")
+}
+
 fn insecure_random(formatter: &mut fmt::Formatter<'_>, callee: &str, secure: &str) -> fmt::Result {
     write!(
         formatter,
@@ -235,9 +252,7 @@ impl fmt::Display for Violation {
             Self::UnusedSuppression => formatter.write_str(UNUSED_SUPPRESSION),
             Self::RestrictedCall { callee } => write!(formatter, "{callee} {RESTRICTED_CALL}"),
             Self::DynamicExecution { callee } => write!(formatter, "{callee} {DYNAMIC_EXECUTION}"),
-            Self::DirectEnvironmentRead { target } => {
-                write!(formatter, "{target} {ENVIRONMENT_READ}")
-            }
+            Self::DirectEnvironmentRead { target } => environment(formatter, target),
             Self::TimerWithoutDelay { callee } => write!(formatter, "{callee} {TIMER_DELAY}"),
             Self::FilenameCase { name, case } => {
                 write!(formatter, "{name} is not {case}; rename the file to match.")
@@ -258,6 +273,9 @@ impl fmt::Display for Violation {
             Self::EmptyTest => formatter.write_str(EMPTY_TEST),
             Self::MissingAssertion => formatter.write_str(MISSING_ASSERTION),
             Self::ShellCommand { shell } => write!(formatter, "{shell} {SHELL_COMMAND}"),
+            Self::TestHelperInProduction { module, segment } => {
+                test_helper(formatter, module, segment)
+            }
             Self::SleepInTest { callee } => write!(formatter, "{callee} {SLEEP_IN_TEST}"),
             Self::UnseededRandom { callee, remedy } => unseeded(formatter, callee, remedy),
             Self::NetworkInUnitTest { callee } => {

@@ -87,6 +87,8 @@ pub struct Rules {
     pub no_focused_test: Option<NoFocusedTestRule>,
     #[serde(rename = "testing/no-skipped-test")]
     pub no_skipped_test: Option<NoSkippedTestRule>,
+    #[serde(rename = "testing/no-test-helper-in-production")]
+    pub no_test_helper_in_production: Option<NoTestHelperInProductionRule>,
     #[serde(rename = "security/no-shell-command")]
     pub no_shell_command: Option<NoShellCommandRule>,
     #[serde(rename = "testing/no-sleep-in-test")]
@@ -290,6 +292,16 @@ pub struct NoSkippedTestRule {
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
+pub struct NoTestHelperInProductionRule {
+    pub severity: Severity,
+    #[serde(default = "default_test_paths", rename = "test-paths")]
+    pub test_paths: Vec<String>,
+    #[serde(default = "default_test_helpers")]
+    pub helpers: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct NoShellCommandRule {
     pub severity: Severity,
     #[serde(default, rename = "allow-in")]
@@ -430,6 +442,31 @@ pub(crate) fn default_reference_prefixes() -> Vec<String> {
 
 pub(crate) fn default_markers() -> Vec<String> {
     vec!["TODO".into(), "FIXME".into(), "HACK".into(), "XXX".into()]
+}
+
+pub(crate) fn default_test_paths() -> Vec<String> {
+    vec![
+        "**/tests/**".into(),
+        "**/test/**".into(),
+        "**/__tests__/**".into(),
+        "**/*.test.*".into(),
+        "**/*.spec.*".into(),
+        "**/test_*.py".into(),
+        "**/*_test.py".into(),
+        "**/conftest.py".into(),
+    ]
+}
+
+pub(crate) fn default_test_helpers() -> Vec<String> {
+    vec![
+        "tests".into(),
+        "test".into(),
+        "__tests__".into(),
+        "__mocks__".into(),
+        "fixtures".into(),
+        "mocks".into(),
+        "conftest".into(),
+    ]
 }
 
 pub(crate) fn default_configuration_paths() -> Vec<String> {

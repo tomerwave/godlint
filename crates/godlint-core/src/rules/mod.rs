@@ -41,6 +41,7 @@ pub mod no_randomness_without_seed;
 pub mod no_shell_command;
 pub mod no_skipped_test;
 pub mod no_sleep_in_test;
+pub mod no_test_helper_in_production;
 pub mod no_weak_hash;
 pub mod parameter_count;
 mod reference;
@@ -419,6 +420,7 @@ const EVALUATORS: &[Evaluator] = &[
     no_randomness_without_seed::evaluate,
     no_shell_command::evaluate,
     no_skipped_test::evaluate,
+    no_test_helper_in_production::evaluate,
     no_sleep_in_test::evaluate,
     no_weak_hash::evaluate,
     restricted_import::evaluate,

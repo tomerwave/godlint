@@ -1,0 +1,7 @@
+exit-code: 1
+
+stdout: |
+  src/refund.py:1:6: error[testing/no-test-helper-in-production] ..tests.helpers names tests, which is test scaffolding, so production now depends on the test tree and ships it to users; keep the fake in the tests and take an interface here.
+  src/refund.rs:1:5: error[testing/no-test-helper-in-production] crate::tests::helpers::fake_gateway names tests, which is test scaffolding, so production now depends on the test tree and ships it to users; keep the fake in the tests and take an interface here.
+  src/refund.ts:1:30: error[testing/no-test-helper-in-production] ../../tests/helpers/gateway names tests, which is test scaffolding, so production now depends on the test tree and ships it to users; keep the fake in the tests and take an interface here.
+stderr: ""

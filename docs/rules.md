@@ -128,6 +128,7 @@ Rust is out of scope. It has no `catch`, and a discarded `Result` is `reliabilit
 | `testing/no-randomness-without-seed` | A test drawing from a general-purpose generator in a file that never seeds one, so a failure cannot be reproduced |
 | `testing/no-network-in-unit-test` | A test in a declared unit path calling an HTTP or socket client, so it is slow, dependent on a service being up, and unable to run offline |
 | `testing/assertion-required` | A test that asserts nothing, so it passes unless the code raises. Reported at warning, whatever severity is configured |
+| `testing/no-test-helper-in-production` | A production file importing its own test tree: a local import naming `tests`, `test`, `__tests__`, `__mocks__`, `fixtures`, `mocks` or `conftest`. `test-paths` says which files count as tests, `helpers` which segments name scaffolding |
 
 `no-empty-test` reads the test's own body rather than any function inside it, so a test that registers
 an empty callback is not empty itself. A test with no body to read at all, such as `it.todo('later')`,
@@ -273,6 +274,17 @@ rules:
     extra-assertions:
       - verify_refund
 ```
+
+`no-test-helper-in-production` reads the import path and the importing file's path, and one restriction
+does most of the work: only a **local** import counts — `./`, `../` or a bare `.` prefix, and Rust's
+`crate::` or `super::`. That is what keeps `some-lib/tests/util` and `from testing.helpers import fake`
+silent, because a third-party package's own test tree is its own business and cannot be shipped by you.
+Segments match whole and case-insensitively, so `Tests/` counts and `testing-utils/` does not.
+
+A file that is itself a test is exempt, since a test using its own helpers is the arrangement this rule
+is protecting. `test-paths` decides that, and its defaults are the conventions of all four languages —
+`**/tests/**`, `**/__tests__/**`, `**/*.test.*`, `**/*.spec.*`, `**/test_*.py`, `**/conftest.py` and the
+rest. Setting either list *replaces* the default rather than adding to it.
 
 What counts as a test is decided by syntax alone — a runner call, a `#[test]` attribute, a `test_`
 prefix or a `pytest.mark` decorator. None of the test rules knows about test directories on its own,

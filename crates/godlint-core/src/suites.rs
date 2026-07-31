@@ -8,9 +8,10 @@ use crate::config::{
     LineLimitRule, ModuleIndependenceRule, NoCommentsRule, NoDynamicExecutionRule, NoEmptyTestRule,
     NoFocusedTestRule, NoInsecureRandomRule, NoNetworkInUnitTestRule, NoProductionLogRule,
     NoRandomnessWithoutSeedRule, NoShellCommandRule, NoSkippedTestRule, NoSleepInTestRule,
-    NoWeakHashRule, ParameterCountRule, RestrictedCallRule, RestrictedImportRule, ReturnCountRule,
-    Rules, Severity, TodoRequiresReferenceRule, UnusedSuppressionRule, default_configuration_paths,
-    default_markers, default_reference_prefixes,
+    NoTestHelperInProductionRule, NoWeakHashRule, ParameterCountRule, RestrictedCallRule,
+    RestrictedImportRule, ReturnCountRule, Rules, Severity, TodoRequiresReferenceRule,
+    UnusedSuppressionRule, default_configuration_paths, default_markers,
+    default_reference_prefixes, default_test_helpers, default_test_paths,
 };
 
 pub const RECOMMENDED: &str = "recommended@1";
@@ -251,6 +252,13 @@ fn testing(rules: &mut Rules) {
             severity: error,
             unit_paths: Vec::new(),
             allow_in: Vec::new(),
+        });
+    rules
+        .no_test_helper_in_production
+        .get_or_insert(NoTestHelperInProductionRule {
+            severity: error,
+            test_paths: default_test_paths(),
+            helpers: default_test_helpers(),
         });
 }
 
