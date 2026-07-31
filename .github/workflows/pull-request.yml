@@ -39,17 +39,21 @@ jobs:
       # A branch name is the first thing a reader of the history sees, so it carries the kind
       # of change. GitHub's own branch-name rule is not available on this plan, so the check
       # lives here: it cannot refuse the push, but it does refuse the merge.
+      #
+      # release is not a Conventional Commits type. It is here because a version bump is not
+      # honestly any of them — chore/ says it is housekeeping when it is the one branch that
+      # publishes — and because naming it plainly is worth more in the history than conforming.
       - name: Require a conventional prefix
         env:
           BRANCH: ${{ github.head_ref }}
         run: |
-          if printf '%s' "$BRANCH" | grep -Eqx '(feat|fix|perf|docs|chore|refactor|style|build|revert|test|ci)/[a-z0-9][a-z0-9._/-]*'; then
+          if printf '%s' "$BRANCH" | grep -Eqx '(feat|fix|perf|docs|chore|refactor|style|build|revert|test|ci|release)/[a-z0-9][a-z0-9._/-]*'; then
             echo "$BRANCH"
             exit 0
           fi
 
           echo "Branch name '$BRANCH' does not carry a conventional prefix." >&2
-          echo "Use one of feat, fix, perf, docs, style, refactor, test, build, ci, chore or" >&2
-          echo "revert, then a slash and a lower-case description." >&2
+          echo "Use one of feat, fix, perf, docs, style, refactor, test, build, ci, chore," >&2
+          echo "revert or release, then a slash and a lower-case description." >&2
           echo "For example feat/import-fact. Further slashes are allowed." >&2
           exit 1
