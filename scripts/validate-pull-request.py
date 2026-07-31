@@ -35,6 +35,7 @@ CONFIG = Path("crates/godlint-core/src/config/mod.rs")
 DOGFOOD = Path("godlint.yaml")
 WORKFLOWS = Path(".github/workflows")
 MUTANTS = Path(".cargo/mutants.toml")
+MUTANTS_WORKFLOW = WORKFLOWS / "mutants.yml"
 
 ROADMAP = Path("docs/rule-roadmap.md")
 RULES = Path("docs/rules.md")
@@ -294,18 +295,71 @@ def check_mutation_config(report: Report) -> None:
         "whether a mutant was caught",
     )
 
-    exclusions = [
-        line.strip()
-        for line in body.splitlines()
-        if line.strip().startswith('"') and line.strip().endswith('",')
-    ]
-    commented = body.count("    #")
+    exclusions = block(body, "exclude_re")
+    entries = [line for line in exclusions if line.startswith('"')]
+    commented = [line for line in exclusions if line.startswith("#")]
 
     report.check(
-        commented >= len(exclusions),
-        f"{MUTANTS}: every exclusion needs a stated reason; found {len(exclusions)} "
-        f"exclusions and {commented} comment lines beside them",
+        len(commented) >= len(entries),
+        f"{MUTANTS}: every exclusion needs a stated reason; found {len(entries)} "
+        f"exclusions and {len(commented)} comment lines beside them",
     )
+
+
+def block(body: str, key: str) -> list[str]:
+    """The lines inside a TOML array, stripped, without its brackets."""
+
+    lines: list[str] = []
+    inside = False
+
+    for line in body.splitlines():
+        if line.startswith(f"{key} = ["):
+            inside = True
+        elif inside and line.startswith("]"):
+            break
+        elif inside:
+            lines.append(line.strip())
+
+    return lines
+
+
+def examined_paths() -> set[str]:
+    """The trigger path each examined glob needs, as a workflow would spell it."""
+
+    globs = (line.strip('",') for line in block(read(MUTANTS), "examine_globs"))
+
+    return {glob.replace("/*.rs", "/**") for glob in globs if glob}
+
+
+def triggered_paths() -> set[str]:
+    lines = block(read(MUTANTS_WORKFLOW).replace("    paths:", "paths = ["), "paths")
+
+    return {line.lstrip("- ").strip("'\"") for line in lines if line.startswith("- ")}
+
+
+def check_mutation_scope(report: Report) -> None:
+    """A file the mutation config examines must trigger the pull-request mutation job.
+
+    The two lists lived apart, and #88 is what that cost: the analysers were examined by
+    the weekly sweep and triggered no pull-request run, so the layer that decides what is
+    seen had no gate on the day it changed. A path in one list and not the other is now a
+    failed check rather than a silence.
+    """
+
+    triggered = triggered_paths()
+
+    report.check(
+        len(triggered) > 0,
+        f"{MUTANTS_WORKFLOW}: no pull_request `paths:` found, so the job either never "
+        "runs or runs on every change",
+    )
+
+    for path in sorted(examined_paths()):
+        report.check(
+            path in triggered,
+            f"{MUTANTS_WORKFLOW}: {MUTANTS} examines {path} and no pull_request path "
+            "triggers on it, so a change there is merged unmutated",
+        )
 
 
 def check_workflows(report: Report) -> None:
@@ -417,6 +471,7 @@ def main() -> int:
     check_fixtures(report)
     check_language_matrix(report)
     check_mutation_config(report)
+    check_mutation_scope(report)
     check_workflows(report)
     check_documentation_links(report)
 

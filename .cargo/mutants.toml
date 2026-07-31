@@ -1,7 +1,18 @@
+# Three layers, each of which can hide a finding rather than change one.
+#
 # The rules layer decides what is reported. `suppression.rs` decides what is silenced, so a
 # surviving mutant there hides findings rather than changing them, which is the failure a
 # reader cannot see. It earned its place: an off-by-one in the containment test shipped past
 # review, and a `<=` to `<` mutant is exactly the shape of it.
+#
+# The analysers decide what is *seen*, and that is the layer #81 was lost in: the rule above
+# it was mutation-clean for its whole life while the adapter resolved a Python `except`
+# body by position, so the two forms real code writes reported nothing. A rule that reports
+# the wrong thing fails a fixture loudly; an adapter that never emits the fact produces
+# silence, and silence is what a passing suite looks like.
+#
+# `.github/workflows/mutants.yml` triggers on exactly these paths, and
+# `check_mutation_scope` in `scripts/validate-pull-request.py` fails if the two disagree.
 examine_globs = [
     "crates/godlint-core/src/analyzers/*.rs",
     "crates/godlint-core/src/rules/*.rs",

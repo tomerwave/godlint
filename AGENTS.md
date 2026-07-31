@@ -62,8 +62,11 @@ copy of each procedure, not three.
 - Do not add dependencies, public APIs, configuration schema, or crate boundaries
   without updating the relevant documentation and tests.
 - A rule change is not covered because a fixture exists; it is covered when altering the
-  rule breaks a test. Run `cargo mutants --file 'crates/godlint-core/src/rules/*.rs'` and
-  leave no surviving mutant in a rule you touched.
+  rule breaks a test. Run `git diff origin/main...HEAD > changed.diff && cargo mutants
+  --in-diff changed.diff` and leave no surviving mutant in what you touched. `--file` does
+  not narrow a run: `examine_globs` in `.cargo/mutants.toml` decides, and it covers the
+  analysers as well as the rules, because an adapter that stops emitting a fact reports
+  nothing and a passing suite looks exactly like that.
 - Every line of a rule must be reached by a test. `cargo llvm-cov --workspace --json
   --output-path coverage.json && python3 scripts/check-rule-coverage.py coverage.json`.
 - Run `python3 scripts/validate-pull-request.py` before opening a pull request. It checks

@@ -93,18 +93,42 @@ missing case rather than the missing file. This is how the threshold boundaries 
 confirmed to be genuinely covered, and how an `allow-names` comparison was found to be
 loosenable from exact match to prefix match with the whole suite still green.
 
-Run it over the rules layer with:
+Run it with:
 
 ```bash
 cargo install cargo-mutants
-cargo mutants --file 'crates/godlint-core/src/rules/*.rs'
+cargo mutants
 ```
 
-A pull request that touches a rule runs this over the lines it changed, with
-`--in-diff`, so the check stays proportionate to the change and asks the question that
-matters for review: are the decisions this change introduced exercised by anything? A
-weekly run covers the whole rules layer, which is where coverage that has rotted rather
-than newly arrived is caught.
+`examine_globs` in `.cargo/mutants.toml` decides which files carry mutants, so `--file` is
+not how to narrow a run — the configuration wins, and a `--file` glob quietly does nothing.
+`-F <regex>`, matched against the names `--list` prints, does narrow one. To ask only about a
+change, ask about its diff:
+
+```bash
+git diff origin/main...HEAD > changed.diff
+cargo mutants --in-diff changed.diff
+```
+
+That is what a pull request runs, so the check stays proportionate to the change and asks
+the question that matters for review: are the decisions this change introduced exercised by
+anything? A weekly run covers every examined file, which is where coverage that has rotted
+rather than newly arrived is caught.
+
+Three layers are examined, and the third is the one worth arguing about. The rules layer
+decides what is reported and `suppression.rs` decides what is silenced. The analysers decide
+what is *seen*, and that is where a false negative hides best: a rule that reports the wrong
+thing fails a fixture loudly, while an adapter that never emits the fact produces silence,
+and silence is what a passing suite looks like. `reliability/empty-error-handler` was
+mutation-clean for its whole life while the adapter beneath it resolved a Python `except`
+body by position, so the two forms real code writes reported nothing.
+
+The pull-request job used to narrow the diff to `rules/` as well, which meant an analyser
+change was mutated by the weekly sweep and by nothing that could block a merge — the gate
+existed on the day it was needed and was pointed elsewhere. The job now diffs the whole tree
+and lets `examine_globs` decide, and `check_mutation_scope` in
+`scripts/validate-pull-request.py` fails if an examined path stops triggering the job. One
+list, checked, rather than two that agree by habit.
 
 `cargo-mutants` is a development tool rather than a dependency. Nothing in `Cargo.toml`
 requires it, and it does not appear in anything Godlint builds or ships.
