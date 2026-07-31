@@ -1,7 +1,9 @@
 exit-code: 1
 
 stdout: |
+  src/app/service.py:1:6: error[architecture/dependency-boundary] application must not depend on ui; the dependency runs against the declared layer order.
   src/app/service.rs:1:5: error[architecture/dependency-boundary] application must not depend on ui; the dependency runs against the declared layer order.
   src/domain/model.rs:1:5: error[architecture/dependency-boundary] domain must not depend on application; the dependency runs against the declared layer order.
+  src/domain/model.ts:1:24: error[architecture/dependency-boundary] domain must not depend on application; the dependency runs against the declared layer order.
 
 stderr: ""

@@ -2,13 +2,21 @@ use crate::{
     analyzers::SourceFacts,
     config::{Config, NoFocusedTestRule, Severity},
     facts::{TestFact, TestFocus},
-    rules::{Finding, Rule, TestRule, Violation, evaluate_test_rule, when_configured},
+    rules::{
+        Absence, Finding, Languages, Rule, TestRule, Violation, evaluate_test_rule, when_configured,
+    },
+    source::Dialect,
 };
 
 pub struct NoFocusedTest;
 
 impl Rule for NoFocusedTest {
     const ID: &'static str = "testing/no-focused-test";
+
+    const LANGUAGES: Languages = Languages::all_but(&[
+        (Dialect::Python, Absence::NoSuchConstruct),
+        (Dialect::Rust, Absence::NoSuchConstruct),
+    ]);
 
     type Configuration = NoFocusedTestRule;
 

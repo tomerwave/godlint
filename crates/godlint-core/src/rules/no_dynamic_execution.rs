@@ -3,11 +3,10 @@ use crate::{
     config::{Config, NoDynamicExecutionRule, Severity},
     facts::CallFact,
     rules::{
-        CallRule, Finding, Rule, Violation,
-        catalogue::{Catalogue, Dialect},
+        Absence, CallRule, Finding, Languages, Rule, Violation, catalogue::Catalogue,
         evaluate_call_rule, when_configured,
     },
-    source::Language,
+    source::{Dialect, Language},
 };
 
 const EXECUTORS: Catalogue = Catalogue(&[
@@ -21,6 +20,8 @@ pub struct NoDynamicExecution;
 
 impl Rule for NoDynamicExecution {
     const ID: &'static str = "security/no-dynamic-execution";
+
+    const LANGUAGES: Languages = Languages::all_but(&[(Dialect::Rust, Absence::NoSuchConstruct)]);
 
     type Configuration = NoDynamicExecutionRule;
 

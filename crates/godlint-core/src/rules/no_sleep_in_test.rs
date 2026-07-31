@@ -4,10 +4,10 @@ use crate::{
     facts::CallFact,
     rules::{
         CallInTestRule, Finding, Rule, Violation,
-        catalogue::{Catalogue, Dialect, spelled},
+        catalogue::{Catalogue, spelled},
         evaluate_call_in_test_rule, when_configured,
     },
-    source::SourceRange,
+    source::{Dialect, SourceRange},
 };
 
 const TIMERS: Catalogue = Catalogue(&[

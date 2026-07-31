@@ -1,8 +1,71 @@
 # Rule reference
 
-Twenty-five rules are implemented. Every one has an identifier of the form `family/name`, which is
+Thirty-seven rules are implemented. Every one has an identifier of the form `family/name`, which is
 what a configuration entry and a suppression directive both name. [The rule roadmap](rule-roadmap.md)
 records the families still to come, and the reasoning behind each threshold `recommended@1` sets.
+[Language support](#language-support) records which languages each rule covers.
+
+## Language support
+
+A rule sees a *dialect* rather than a language: TypeScript is read by the JavaScript analyzer, so no
+rule covers one of them without the other. Three dialects are analysed, and `✓` means the rule is
+enforced there.
+
+| Rule | JS/TS | Python | Rust |
+| --- | --- | --- | --- |
+| `architecture/dependency-boundary` | ✓ | ✓ | ✓ |
+| `architecture/filename-case` | ✓ | ✓ | ✓ |
+| `architecture/module-independence` | ✓ | ✓ | ✓ |
+| `architecture/no-internal-import` | ✓ | ✓ | — |
+| `architecture/restricted-call` | ✓ | ✓ | ✓ |
+| `architecture/restricted-import` | ✓ | ✓ | ✓ |
+| `logging/no-production-log` | ✓ | ✓ | ✓ |
+| `maintainability/cognitive-complexity` | ✓ | ✓ | ✓ |
+| `maintainability/condition-complexity` | ✓ | ✓ | ✓ |
+| `maintainability/decision-complexity` | ✓ | ✓ | ✓ |
+| `maintainability/empty-function` | ✓ | ✓ | ✓ |
+| `maintainability/file-size` | ✓ | ✓ | ✓ |
+| `maintainability/function-nesting` | ✓ | ✓ | ✓ |
+| `maintainability/function-size` | ✓ | ✓ | ✓ |
+| `maintainability/function-statements` | ✓ | ✓ | ✓ |
+| `maintainability/parameter-count` | ✓ | ✓ | ✓ |
+| `maintainability/return-count` | ✓ | ✓ | ✓ |
+| `policy/accountable-suppression` | ✓ | ✓ | ✓ |
+| `policy/todo-requires-reference` | ✓ | ✓ | ✓ |
+| `policy/unused-suppression` | ✓ | ✓ | ✓ |
+| `reliability/empty-error-handler` | ✓ | ✓ | — |
+| `reliability/explicit-timer-delay` | ✓ | — | — |
+| `security/direct-environment-read` | ✓ | ✓ | ✓ |
+| `security/forbidden-dependency` | ✓ | ✓ | ✓ |
+| `security/no-dynamic-execution` | ✓ | ✓ | — |
+| `security/no-insecure-random` | ✓ | ✓ | ✓ |
+| `security/no-shell-command` | ✓ | ✓ | ✓ |
+| `security/no-weak-hash` | ✓ | ✓ | ✓ |
+| `style/no-comments` | ✓ | ✓ | ✓ |
+| `testing/assertion-required` | ✓ | ✓ | ✓ |
+| `testing/no-empty-test` | ✓ | ✓ | ✓ |
+| `testing/no-focused-test` | ✓ | — | — |
+| `testing/no-network-in-unit-test` | ✓ | ✓ | ✓ |
+| `testing/no-randomness-without-seed` | ✓ | ✓ | ✓ |
+| `testing/no-skipped-test` | ✓ | ✓ | ✓ |
+| `testing/no-sleep-in-test` | ✓ | ✓ | ✓ |
+| `testing/no-test-helper-in-production` | ✓ | ✓ | ✓ |
+
+`—` means the dialect has no such construct: Rust has no `catch` block for `empty-error-handler` to
+find empty, no `.only` marker for `no-focused-test`, and no way to import another crate's internals for
+`no-internal-import` to report. There is nothing to report and nothing to implement, and a rule that
+claimed the dialect would only ever be silent.
+
+`·` would mean the construct exists and Godlint has not taught the dialect this rule yet, which is a
+gap to close rather than a fact about the language. No rule is in that state today, which is why the
+distinction is in the table rather than in a sentence: the two look identical to a reader deciding
+whether to file a bug.
+
+Neither mark is a claim a reader has to take on trust. Each rule declares `Rule::LANGUAGES`, this
+table is asserted against those declarations by `crates/godlint-core/tests/languages.rs`, and
+`scripts/validate-pull-request.py` requires a fixture that reports the rule in every dialect it
+claims. That check fails in both directions, as the coverage budget does: a claim no fixture backs
+fails, and so does a fixture reporting a rule in a dialect the rule says it does not cover.
 
 ## Maintainability
 
@@ -315,6 +378,11 @@ is silent while `some-lib/src/deep` is not, and `from __future__ import annotati
 reach into. An alias in a bundler or `tsconfig` escapes the rule entirely, the same limitation
 `architecture/restricted-import` documents.
 
+Rust is silent entirely, and that is a fact about the language rather than a gap. A `use` path either
+names your own crate — `crate::`, `self::`, `super::` — or names another crate's *public* surface,
+because `rustc` refuses the rest. There is no reaching past a boundary for the rule to report, which is
+why [the support matrix](#language-support) marks Rust as having no such construct.
+
 Two segment shapes are exempt for reasons that are not conventions at all. A scoped package's name spans
 *two* segments, so `@scope/internal` may be the whole published package and is silent, while
 `@scope/pkg/src/deep` is not. And a Python `__dunder__` is a language protocol rather than an author's
@@ -385,10 +453,11 @@ is off until a repository configures it.
 They read the callee and not the arguments, so a policy about a value passed *to* a call cannot be
 expressed. `crypto.createHash("md5")` and `crypto.createHash("sha256")` are the same callee, and
 Python's `hashlib.new("md5")` is the same as any other `hashlib.new`. That is why
-`security/no-weak-hash` covers Python and Rust, where the algorithm is part of the name, and covers
-JavaScript and TypeScript not at all: matching `crypto.createHash` would report every SHA-256 call as
-a weak hash, and a security rule that is wrong on the safe case is worse than one that stays quiet.
-A call-argument fact is what closes that.
+`security/no-weak-hash` names a callee only in Python and Rust, where the algorithm is part of the
+name, and never in JavaScript or TypeScript: matching `crypto.createHash` would report every SHA-256
+call as a weak hash, and a security rule that is wrong on the safe case is worse than one that stays
+quiet. Reading the literal argument is what closes that, and it is what gives the rule its JS/TS
+coverage.
 
 A literal argument is readable, and `security/no-weak-hash` uses that: `crypto.createHash("md5")` is
 reported and `crypto.createHash("sha256")` is not. A value that is not a literal is a different case,

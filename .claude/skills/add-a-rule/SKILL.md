@@ -10,6 +10,10 @@ Read `docs/skills/add-a-rule.md` in full and follow it. In short, one rule touch
 `tests/rules.rs`, and three documents (`docs/rule-roadmap.md`, `docs/rules.md`,
 `CHANGELOG.md`) that must all name the identifier — plus dogfooding it in `godlint.yaml`.
 
+Declare which dialects the rule covers with `Rule::LANGUAGES`, and add its row to the support
+matrix in `docs/rules.md`. Every `✓` needs a fixture that reports the rule in that dialect; a
+dialect the rule cannot cover needs a stated reason, `NoSuchConstruct` or `NotImplemented`.
+
 Before opening a pull request:
 
 ```bash

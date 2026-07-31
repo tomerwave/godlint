@@ -9,13 +9,19 @@ rules:
           - src/ui/**
         modules:
           - crate::ui
+          - ui
+          - "@app/ui"
       - name: application
         paths:
           - src/app/**
         modules:
           - crate::app
+          - app
+          - "@app/app"
       - name: domain
         paths:
           - src/domain/**
         modules:
           - crate::domain
+          - domain
+          - "@app/domain"

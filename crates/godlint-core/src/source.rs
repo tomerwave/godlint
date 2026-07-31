@@ -15,6 +15,13 @@ pub enum Language {
     TypeScript,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Dialect {
+    JavaScript,
+    Python,
+    Rust,
+}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SourceFile {
     path: Arc<Path>,
@@ -62,6 +69,26 @@ impl Language {
             Some("rs") => Some(Self::Rust),
             Some("cts" | "mts" | "ts" | "tsx") => Some(Self::TypeScript),
             _ => None,
+        }
+    }
+
+    pub fn dialect(self) -> Dialect {
+        match self {
+            Self::JavaScript | Self::TypeScript => Dialect::JavaScript,
+            Self::Python => Dialect::Python,
+            Self::Rust => Dialect::Rust,
+        }
+    }
+}
+
+impl Dialect {
+    pub const EVERY: [Self; 3] = [Self::JavaScript, Self::Python, Self::Rust];
+
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::JavaScript => "JS/TS",
+            Self::Python => "Python",
+            Self::Rust => "Rust",
         }
     }
 }

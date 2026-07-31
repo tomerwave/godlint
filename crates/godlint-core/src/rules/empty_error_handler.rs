@@ -3,14 +3,18 @@ use crate::{
     config::{Config, EmptyErrorHandlerRule, Severity},
     facts::ErrorHandlerFact,
     rules::{
-        ErrorHandlerRule, Finding, Rule, Violation, evaluate_error_handler_rule, when_configured,
+        Absence, ErrorHandlerRule, Finding, Languages, Rule, Violation,
+        evaluate_error_handler_rule, when_configured,
     },
+    source::Dialect,
 };
 
 pub struct EmptyErrorHandler;
 
 impl Rule for EmptyErrorHandler {
     const ID: &'static str = "reliability/empty-error-handler";
+
+    const LANGUAGES: Languages = Languages::all_but(&[(Dialect::Rust, Absence::NoSuchConstruct)]);
 
     type Configuration = EmptyErrorHandlerRule;
 

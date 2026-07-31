@@ -4,9 +4,10 @@ use crate::{
     facts::CallFact,
     rules::{
         CallInTestRule, Finding, Rule, Violation,
-        catalogue::{Catalogue, Dialect, matches, spelled},
+        catalogue::{Catalogue, matches, spelled},
         evaluate_call_in_test_rule, when_configured,
     },
+    source::Dialect,
 };
 
 const CLIENTS: Catalogue = Catalogue(&[

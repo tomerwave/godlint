@@ -11,8 +11,12 @@ rules:
               - src/billing/**
             modules:
               - crate::billing
+              - billing
+              - "@app/billing"
           - name: notifications
             paths:
               - src/notifications/**
             modules:
               - crate::notifications
+              - notifications
+              - "@app/notifications"

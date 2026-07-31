@@ -170,6 +170,113 @@ def check_rule_coverage(report: Report, identifier: str) -> None:
     )
 
 
+DIALECTS = {
+    "cjs": "JS/TS",
+    "js": "JS/TS",
+    "jsx": "JS/TS",
+    "mjs": "JS/TS",
+    "cts": "JS/TS",
+    "mts": "JS/TS",
+    "ts": "JS/TS",
+    "tsx": "JS/TS",
+    "py": "Python",
+    "pyi": "Python",
+    "rs": "Rust",
+}
+
+ANALYSED = "✓"
+
+# The columns the matrix must carry, in order, so that no other table in the document can
+# be read as the matrix.
+DIALECT_COLUMNS = ("JS/TS", "Python", "Rust")
+
+REPORTED = re.compile(r"^\s*(\S+?):\d+:\d+: \w+\[([a-z-]+/[a-z-]+)\]")
+
+
+def documented_languages() -> dict[str, dict[str, str]]:
+    """Read the support matrix in docs/rules.md, keyed by rule.
+
+    The matrix is asserted against `Rule::LANGUAGES` by
+    crates/godlint-core/tests/languages.rs, so reading the document here reads the
+    declarations without this script needing to parse Rust.
+    """
+
+    header = ("", "Rule", *DIALECT_COLUMNS, "")
+    rows: dict[str, dict[str, str]] = {}
+    found = False
+
+    for line in read(RULES).splitlines():
+        cells = tuple(cell.strip() for cell in line.split("|"))
+
+        if not found:
+            found = cells == header
+            continue
+
+        if not line.startswith("|"):
+            break
+
+        rule = cells[1].strip("`")
+        if "/" in rule and len(cells) == len(header):
+            rows[rule] = dict(zip(DIALECT_COLUMNS, cells[2:], strict=False))
+
+    return rows
+
+
+def reported_dialects() -> dict[str, set[str]]:
+    """Which dialect each rule is proven to report in, taken from the fixture corpus."""
+
+    evidence: dict[str, set[str]] = {}
+
+    for fixture in fixture_directories():
+        for line in read(fixture / "expected.yaml").splitlines():
+            match = REPORTED.match(line)
+            if match is None:
+                continue
+
+            path, identifier = match.groups()
+            dialect = DIALECTS.get(path.rsplit(".", 1)[-1])
+            if dialect is not None:
+                evidence.setdefault(identifier, set()).add(dialect)
+
+    return evidence
+
+
+def check_language_matrix(report: Report) -> None:
+    """A language a rule claims needs a fixture that reports it in that language.
+
+    This fails in both directions, as the coverage budget does. A ✓ with no fixture
+    behind it is a claim nothing has tested, and a fixture reporting a rule in a
+    language the matrix marks absent means the matrix is telling a reader the rule
+    does not apply to code it does in fact judge.
+    """
+
+    documented = documented_languages()
+    evidence = reported_dialects()
+
+    report.check(
+        len(documented) > 0,
+        f"{RULES}: no language support matrix found, so nothing records which "
+        "languages a rule covers",
+    )
+
+    for rule, marks in documented.items():
+        reported = evidence.get(rule, set())
+
+        for dialect, mark in marks.items():
+            if mark == ANALYSED:
+                report.check(
+                    dialect in reported,
+                    f"{FIXTURES_DIR}: no fixture reports {rule} in {dialect}, so "
+                    f"nothing proves the {ANALYSED} {RULES} claims for it",
+                )
+            else:
+                report.check(
+                    dialect not in reported,
+                    f"{RULES}: marks {rule} as {mark} for {dialect}, but a fixture "
+                    "reports it there",
+                )
+
+
 def check_fixtures(report: Report) -> None:
     for fixture in fixture_directories():
         report.check(
@@ -308,6 +415,7 @@ def main() -> int:
             check_rule(report, module, identifier)
 
     check_fixtures(report)
+    check_language_matrix(report)
     check_mutation_config(report)
     check_workflows(report)
     check_documentation_links(report)
