@@ -439,6 +439,9 @@ const REGISTRATIONS: &[Registration] = &[
         id: BotConditions::ID,
         languages: BotConditions::LANGUAGES,
         severity: bot_conditions_severity,
+        suppressible: true,
+    },
+    Registration {
         id: NoInlineScript::ID,
         languages: NoInlineScript::LANGUAGES,
         severity: no_inline_script_severity,

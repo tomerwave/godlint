@@ -7,3 +7,5 @@ rules:
   ci/no-monolithic-job:
     severity: error
     max-steps: 2
+    allow-in:
+      - .github/workflows/allowed.yml

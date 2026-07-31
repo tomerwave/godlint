@@ -225,10 +225,12 @@ The rule measures the YAML source rather than interpreting a shell, so a single 
 commands or pipelines stays silent; detecting that requires a separate command-chain or control-flow
 signal rather than pretending a line count can see shell structure.
 
-`no-monolithic-job` reports a job with more than `max-steps` steps. It counts the workflow units that
-can be reviewed and retried independently, not the commands hidden inside them. The two rules do not
-compensate for each other: splitting six commands across six `run:` lines in one step belongs to
-`no-inline-script`, while spelling those commands as six separate steps belongs to
+`no-monolithic-job` reports a job with more than `max-steps` steps. It counts declared steps, and a
+matrix job declares the steps of every platform it serves, even when platform conditions mean no
+target runs all of them. `allow-in` accepts path globs for that measurement artefact. The rule counts
+workflow units that can be reviewed and retried independently, not the commands hidden inside them.
+The two rules do not compensate for each other: splitting six commands across six `run:` lines in one
+step belongs to `no-inline-script`, while spelling those commands as six separate steps belongs to
 `no-monolithic-job`. Keeping the step count low never increases the inline-script budget.
 
 ### What `explicit-workflow-permissions` reports, and where

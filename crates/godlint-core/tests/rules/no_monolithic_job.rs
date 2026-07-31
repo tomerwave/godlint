@@ -7,17 +7,22 @@ use godlint_core::{
     source::TextFile,
 };
 
-fn workflow(body: &str) -> WorkflowFacts {
-    let file = TextFile::new(PathBuf::from(".github/workflows/ci.yml"), body.into())
+fn workflow_at(path: &str, body: &str) -> WorkflowFacts {
+    let file = TextFile::new(PathBuf::from(path), body.into())
         .unwrap_or_else(|error| panic!("creates workflow: {error}"));
 
     workflow::read(&file).unwrap_or_else(|error| panic!("reads workflow: {error}"))
+}
+
+fn workflow(body: &str) -> WorkflowFacts {
+    workflow_at(".github/workflows/ci.yml", body)
 }
 
 fn configuration(max_steps: u32) -> NoMonolithicJobRule {
     NoMonolithicJobRule {
         severity: Severity::Error,
         max_steps,
+        allow_in: Vec::new(),
     }
 }
 
@@ -95,11 +100,28 @@ fn the_message_names_the_job_metric() {
 }
 
 #[test]
+fn allow_in_globs_exempt_only_matching_workflow_paths() {
+    let body = "jobs:\n  build:\n    steps: [{run: one}, {run: two}]\n";
+    let allowed = workflow_at(".github/workflows/release.yml", body);
+    let checked = workflow_at(".github/workflows/ci.yml", body);
+    let configuration = NoMonolithicJobRule {
+        severity: Severity::Error,
+        max_steps: 1,
+        allow_in: vec!["**/release.yml".to_owned()],
+    };
+    let findings = evaluate_workflow_rule::<NoMonolithicJob>(&[allowed, checked], &configuration);
+
+    assert_eq!(findings.len(), 1);
+    assert_eq!(findings[0].path, PathBuf::from(".github/workflows/ci.yml"));
+}
+
+#[test]
 fn the_rule_is_silent_when_it_is_switched_off() {
     let facts = workflow("jobs:\n  build:\n    steps: [{run: one}, {run: two}]\n");
     let configuration = NoMonolithicJobRule {
         severity: Severity::Off,
         max_steps: 1,
+        allow_in: Vec::new(),
     };
 
     assert!(

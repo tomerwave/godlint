@@ -7,7 +7,13 @@ use crate::config::{
     ExplicitWorkflowPermissionsRule, FilenameCaseRule, ForbiddenDependencyRule,
     FunctionNestingRule, FunctionStatementsRule, LineLimitRule, ModuleIndependenceRule,
     NoCommentsRule, NoDynamicExecutionRule, NoEmptyTestRule, NoFocusedTestRule,
-    NoInsecureRandomRule, NoInternalImportRule, NoMonolithicJobRule, NoNetworkInUnitTestRule, NoProductionLogRule, NoRandomnessWithoutSeedRule, NoShellCommandRule, NoSkippedTestRule, NoSleepInTestRule, NoTestHelperInProductionRule, NoWeakHashRule, ParameterCountRule, PinThirdPartyActionsRule, RestrictedCallRule, RestrictedImportRule, ReturnCountRule, Rules, Severity, TemplateInjectionRule, TodoRequiresReferenceRule, UnusedSuppressionRule, default_bots, default_configuration_paths, default_markers, default_reference_prefixes, default_test_helpers, default_test_paths, default_trusted_owners,
+    NoInsecureRandomRule, NoInternalImportRule, NoMonolithicJobRule, NoNetworkInUnitTestRule,
+    NoProductionLogRule, NoRandomnessWithoutSeedRule, NoShellCommandRule, NoSkippedTestRule,
+    NoSleepInTestRule, NoTestHelperInProductionRule, NoWeakHashRule, ParameterCountRule,
+    PinThirdPartyActionsRule, RestrictedCallRule, RestrictedImportRule, ReturnCountRule, Rules,
+    Severity, TemplateInjectionRule, TodoRequiresReferenceRule, UnusedSuppressionRule,
+    default_bots, default_configuration_paths, default_markers, default_reference_prefixes,
+    default_test_helpers, default_test_paths, default_trusted_owners,
 };
 
 pub const RECOMMENDED: &str = "recommended@1";
@@ -55,6 +61,7 @@ fn continuous_integration(rules: &mut Rules) {
     rules.no_monolithic_job.get_or_insert(NoMonolithicJobRule {
         severity: Severity::Error,
         max_steps: JOB_STEPS,
+        allow_in: Vec::new(),
     });
     rules
         .template_injection

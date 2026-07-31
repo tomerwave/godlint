@@ -337,7 +337,22 @@ count_limit_rules! {
     FunctionStatementsRule { "max-statements" => max_statements },
     ConditionComplexityRule { "max-operators" => max_operators },
     CognitiveComplexityRule { "max-score" => max_score },
-    NoMonolithicJobRule { "max-steps" => max_steps },
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct NoMonolithicJobRule {
+    pub severity: Severity,
+    #[serde(rename = "max-steps")]
+    pub max_steps: u32,
+    #[serde(default, rename = "allow-in")]
+    pub allow_in: Vec<String>,
+}
+
+impl NoMonolithicJobRule {
+    pub fn limit(&self) -> u32 {
+        self.max_steps
+    }
 }
 
 #[derive(Debug, Deserialize)]
