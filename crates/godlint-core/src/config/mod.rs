@@ -85,6 +85,8 @@ pub struct Rules {
     pub no_focused_test: Option<NoFocusedTestRule>,
     #[serde(rename = "testing/no-skipped-test")]
     pub no_skipped_test: Option<NoSkippedTestRule>,
+    #[serde(rename = "testing/no-sleep-in-test")]
+    pub no_sleep_in_test: Option<NoSleepInTestRule>,
     #[serde(rename = "security/no-weak-hash")]
     pub no_weak_hash: Option<NoWeakHashRule>,
     #[serde(rename = "security/no-insecure-random")]
@@ -267,6 +269,12 @@ pub struct NoFocusedTestRule {
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct NoSkippedTestRule {
+    pub severity: Severity,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct NoSleepInTestRule {
     pub severity: Severity,
 }
 

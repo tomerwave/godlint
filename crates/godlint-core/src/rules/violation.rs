@@ -51,6 +51,9 @@ pub enum Violation {
     FocusedTest,
     SkippedTest,
     EmptyTest,
+    SleepInTest {
+        callee: String,
+    },
     RestrictedImport {
         module: String,
     },
@@ -128,6 +131,11 @@ const SKIPPED_TEST: &str = concat!(
     "suppress it with an owner and an expiry."
 );
 
+const SLEEP_IN_TEST: &str = concat!(
+    "makes this test wait on the clock, which is the usual cause of a flaky suite; wait for the ",
+    "condition instead."
+);
+
 const COMMENT_NOT_PERMITTED: &str = "Comment is not permitted; express the intent in the code.";
 
 fn unverified_hash(formatter: &mut fmt::Formatter<'_>, callee: &str) -> fmt::Result {
@@ -200,6 +208,7 @@ impl fmt::Display for Violation {
             Self::FocusedTest => write!(formatter, "{FOCUSED_TEST}"),
             Self::SkippedTest => write!(formatter, "{SKIPPED_TEST}"),
             Self::EmptyTest => formatter.write_str(EMPTY_TEST),
+            Self::SleepInTest { callee } => write!(formatter, "{callee} {SLEEP_IN_TEST}"),
             Self::InsecureRandom { callee, secure } => insecure_random(formatter, callee, secure),
         }
     }

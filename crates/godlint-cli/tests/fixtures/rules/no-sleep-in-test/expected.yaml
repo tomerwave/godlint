@@ -1,0 +1,9 @@
+exit-code: 1
+
+stdout: |
+  async.py:5:11: error[testing/no-sleep-in-test] asyncio.sleep makes this test wait on the clock, which is the usual cause of a flaky suite; wait for the condition instead.
+  example.js:3:9: error[testing/no-sleep-in-test] page.waitForTimeout makes this test wait on the clock, which is the usual cause of a flaky suite; wait for the condition instead.
+  example.py:6:5: error[testing/no-sleep-in-test] time.sleep makes this test wait on the clock, which is the usual cause of a flaky suite; wait for the condition instead.
+  example.rs:4:5: error[testing/no-sleep-in-test] std::thread::sleep makes this test wait on the clock, which is the usual cause of a flaky suite; wait for the condition instead.
+  promise.js:3:34: error[testing/no-sleep-in-test] setTimeout makes this test wait on the clock, which is the usual cause of a flaky suite; wait for the condition instead.
+stderr: ""

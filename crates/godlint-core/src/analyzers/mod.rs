@@ -4,9 +4,9 @@ use tree_sitter::{Language as TreeSitterLanguage, Node, Parser};
 
 use crate::{
     facts::{
-        AccessFact, CallArgument, CallFact, CallTarget, CommentFact, ConditionFact,
-        ErrorHandlerFact, FunctionFact, FunctionFactDetails, FunctionFactError, ImportFact,
-        TestFact, TestFactDetails, TestFocus,
+        AccessFact, CallArgument, CallFact, CallFactDetails, CallTarget, CommentFact,
+        ConditionFact, ErrorHandlerFact, FunctionFact, FunctionFactDetails, FunctionFactError,
+        ImportFact, TestFact, TestFactDetails, TestFocus,
     },
     source::{Language, SourceFile, SourceFileError, SourceRange},
 };
@@ -349,11 +349,14 @@ fn call_fact(
     Ok(Some(CallFact::new(
         source.clone(),
         range,
-        CallTarget {
-            path,
-            is_macro: callee.is_macro,
+        node_range(node, source)?,
+        CallFactDetails {
+            target: CallTarget {
+                path,
+                is_macro: callee.is_macro,
+            },
+            arguments: call_arguments(node, source, vocabulary),
         },
-        call_arguments(node, source, vocabulary),
     )))
 }
 

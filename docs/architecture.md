@@ -102,6 +102,12 @@ empty, whether it branches, and whether it sleeps or reaches the network — all
 about other facts falling inside the test's range, which `TestFact::contains` answers. Copying a
 body's statistics into the fact would duplicate what `FunctionFact` already measured.
 
+A call fact carries two ranges. `range` locates the callee, which is where a finding points, and `extent`
+spans the whole call expression. The second exists because some findings are a *shape* rather than a name:
+`testing/no-sleep-in-test` recognises JavaScript's commonest test sleep as a timer nested inside a
+`Promise`, and nesting is a question about extents. A callee range cannot answer it — the callee of
+`setTimeout` sits outside the callee of `Promise`, not inside it.
+
 `ErrorHandlerFact` records the handler's range and whether its body only stands in for one. The
 adapter finds that body by looking for it rather than by position: a Python `except_clause` puts the
 exception it caught before the block, so the first named child of `except ValueError as error:` is

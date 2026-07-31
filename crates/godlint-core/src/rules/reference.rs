@@ -1,12 +1,20 @@
 use crate::{
     analyzers::SourceFacts,
     facts::{AccessFact, CallFact, ConditionFact, ErrorHandlerFact, ImportFact, TestFact},
-    rules::{Finding, Ranged, Reporting, Rule, Violation, collect_ranged},
+    rules::{Finding, Ranged, Reporting, Rule, Violation, collect_ranged, enclosing::in_test},
     source::SourceRange,
 };
 
 pub trait CallRule: Rule {
     fn check(call: &CallFact, configuration: &Self::Configuration) -> Option<Violation>;
+}
+
+pub trait CallInTestRule: Rule {
+    fn check(
+        call: &CallFact,
+        facts: &SourceFacts,
+        configuration: &Self::Configuration,
+    ) -> Option<Violation>;
 }
 
 pub trait AccessRule: Rule {
@@ -53,6 +61,22 @@ pub fn evaluate_test_rule<R: TestRule>(
         Reporting::of::<R>(configuration),
         SourceFacts::tests,
         |test, _| R::check(test, configuration),
+    )
+}
+
+pub fn evaluate_call_in_test_rule<R: CallInTestRule>(
+    facts: &[SourceFacts],
+    configuration: &R::Configuration,
+) -> Vec<Finding> {
+    collect_ranged(
+        facts,
+        Reporting::of::<R>(configuration),
+        SourceFacts::calls,
+        |call, source| {
+            in_test(source, call.range())
+                .then(|| R::check(call, source, configuration))
+                .flatten()
+        },
     )
 }
 

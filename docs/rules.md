@@ -96,6 +96,7 @@ Rust is out of scope. It has no `catch`, and a discarded `Result` is `reliabilit
 | `testing/no-focused-test` | A test or suite marked to run on its own: `it.only`, `describe.only` and the other runners' `.only` |
 | `testing/no-empty-test` | A test whose body does nothing, so it cannot fail |
 | `testing/no-skipped-test` | A test that does not run: `.skip` or `.todo` in JavaScript and TypeScript, `#[ignore]` beside `#[test]` in Rust, and a `pytest.mark.skip` or `unittest.skip` decorator in Python |
+| `testing/no-sleep-in-test` | A test that waits on the clock: `time.sleep` or `asyncio.sleep` in Python, `thread::sleep` or `tokio::time::sleep` in Rust, and `page.waitForTimeout` or `browser.pause` in JavaScript and TypeScript |
 
 `no-empty-test` reads the test's own body rather than any function inside it, so a test that registers
 an empty callback is not empty itself. A test with no body to read at all, such as `it.todo('later')`,
@@ -110,6 +111,35 @@ Two adjacent rules fire on the same empty test on purpose, and it is worth knowi
 `recommended@1`: `maintainability/empty-function` reports the same body, so an empty test yields two
 findings, at the same position in Rust. They are different policies — one says a function has no body,
 the other says a test cannot fail — and neither suppresses the other.
+
+`no-sleep-in-test` reports a sleep only where the call falls inside a test's range — at any depth, so a
+loop body or a closure counts — which means a helper in the same file may still sleep, and so may a
+`pytest.fixture` or a `beforeEach`. A sleeping fixture is exactly as flaky as a sleeping test; it is
+outside every test's range, so this rule cannot see it, and closing that needs a fixture fact.
+
+It matches the callee's written spelling per language, which leaves three gaps and one false positive.
+
+A sleep reached through an alias — `from time import sleep` and then a bare `sleep(2)` — is not reported,
+because that takes import resolution.
+
+JavaScript's most common test sleep is a *shape* rather than a name — `await new Promise((r) =>
+setTimeout(r, 500))` — so it is matched as one: a `setTimeout` or `setInterval` inside a `Promise` whose
+only call it is. That last condition is what separates a sleep from a timeout guard, because
+`new Promise((resolve, reject) => { server.on('ready', resolve); setTimeout(() => reject(e), 5000) })`
+is waiting on the condition, which is the fix this rule asks for. A bare timer under fake timers is not
+reported either, for the same reason: the promise wrapper is what makes it a wait.
+
+No other linter appears to catch this. Cypress's `no-unnecessary-waiting`, Playwright's
+`no-wait-for-timeout` and `eslint-plugin-ui-testing`'s `no-hard-wait` all match a framework's own wait
+API by name; the promise idiom needs the shape.
+
+Also covered by name: `page.waitForTimeout` and `browser.pause`. `cy.wait(500)` is not, because Godlint
+cannot yet tell a number argument from a string one and `cy.wait('@alias')` is the fix rather than the
+defect.
+
+The false positive: a mocked sleep. `with patch("time.sleep"): time.sleep(999)` is instant and is still
+reported, because seeing the patch takes the same resolution the alias gap needs. Suppress it where it
+matters.
 
 What counts as a test is decided by syntax alone — a runner call, a `#[test]` attribute, a `test_`
 prefix or a `pytest.mark` decorator. Neither rule knows about test directories, because an analyzer
