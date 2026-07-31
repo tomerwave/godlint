@@ -4,9 +4,10 @@ use crate::{
     facts::{AccessFact, CallFact},
     rules::{
         AccessRule, CallRule, Finding, Rule, Violation,
-        catalogue::{Catalogue, Dialect, matches},
+        catalogue::{Catalogue, matches},
         evaluate_access_rule, evaluate_call_rule, when_configured,
     },
+    source::Dialect,
 };
 
 const READS: Catalogue = Catalogue(&[

@@ -27,6 +27,7 @@ pub mod forbidden_dependency;
 pub mod function_nesting;
 pub mod function_size;
 pub mod function_statements;
+pub mod languages;
 mod line_count;
 pub mod module_independence;
 mod module_path;
@@ -61,7 +62,10 @@ pub mod return_count;
 pub mod todo_requires_reference;
 pub mod unused_suppression;
 
-pub use registry::{configured_severity, is_known_rule, is_suppressible_rule, rule_ids};
+pub use languages::{Absence, Languages};
+pub use registry::{
+    configured_severity, is_known_rule, is_suppressible_rule, rule_ids, rule_languages,
+};
 pub use violation::Violation;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -152,6 +156,8 @@ impl Finding {
 
 pub trait Rule {
     const ID: &'static str;
+
+    const LANGUAGES: Languages = Languages::EVERY;
 
     type Configuration;
 

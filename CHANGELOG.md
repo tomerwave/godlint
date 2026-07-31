@@ -7,6 +7,26 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 change the `godlint-core` API; the command line and the configuration schema are what the version
 speaks about.
 
+## [Unreleased]
+
+### Added
+
+- A language support matrix in [the rule reference](docs/rules.md#language-support), recording for
+  every rule which of the three dialects it covers, and distinguishing a language that has no such
+  construct from one Godlint has not taught the rule yet. Each rule declares this as
+  `Rule::LANGUAGES`; the matrix is asserted against the declarations, and
+  `scripts/validate-pull-request.py` requires a fixture that reports the rule in each language it
+  claims. Writing it down found `architecture/no-internal-import` claiming Rust while exempting every
+  Rust path, which is now declared as the language having no such construct: `rustc` already refuses
+  an import that reaches past another crate's public surface.
+
+### Fixed
+
+- `architecture/dependency-boundary`, `architecture/module-independence`,
+  `policy/accountable-suppression`, `architecture/filename-case` and `security/forbidden-dependency`
+  now have fixtures in every language they cover; each was previously proven in one language only. No
+  rule behaviour changed — the gap was in what the corpus proved, and the new gate is what found it.
+
 ## [0.3.0] - 2026-07-31
 
 ### Added

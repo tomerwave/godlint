@@ -21,6 +21,8 @@ which.
 | 8 | `docs/rule-roadmap.md`, `docs/rules.md`, `CHANGELOG.md` | All three must mention the identifier |
 | 9 | `godlint.yaml` | The rule dogfooded — named directly, or covered by an adopted suite |
 | 10 | fixture set | At least one fixture where it **fires**, and at least one where it is **configured and stays silent** — proving both directions, not just the positive case |
+| 11 | `docs/rules.md` support matrix | A row marking each dialect the rule covers. A dialect it cannot cover needs `Rule::LANGUAGES` to say so and why, or the row and the declaration disagree and `tests/languages.rs` fails |
+| 12 | fixture set | A fixture that reports the rule in **every dialect the row claims** — a `✓` nothing fires in fails, and so does a fixture firing in a dialect the row marks absent |
 
 Existing fixture directories run 3–12 files each; look at a rule in the same family before
 guessing the shape.
@@ -70,6 +72,19 @@ rule.** If the rule reads a Python `except` clause, write one with no exception 
 named exception, one with `as` binding, one with a tuple of exceptions. If it reads a JS `catch`,
 write one with and without the bound parameter. The rule is only as good as the shapes it was
 checked against.
+
+## Deciding what to put in the support matrix
+
+The default is that a rule covers every dialect, so the honest question is where it does not, and
+that answer belongs in `Rule::LANGUAGES` rather than in a match arm inside the rule. Two reasons are
+distinguished because a reader needs them to be: `Absence::NoSuchConstruct` for a language that
+cannot express what the rule reports — Rust has no `catch` block to find empty — and
+`Absence::NotImplemented` for a construct that exists and has not been taught yet, which is a gap to
+close.
+
+Do not answer from the rule's source alone. `architecture/no-internal-import` reads as though it
+handles Rust, and returns early for every Rust path six lines in. Item 12 is what settles it: write
+the fixture, and either it reports or the claim was wrong.
 
 ## No comments in `src/`
 

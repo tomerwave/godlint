@@ -4,10 +4,10 @@ use crate::{
     facts::CallFact,
     rules::{
         CallRule, Finding, Rule, Violation,
-        catalogue::{Catalogue, Dialect, matches, spelled},
+        catalogue::{Catalogue, matches, spelled},
         evaluate_call_rule, when_configured,
     },
-    source::Language,
+    source::{Dialect, Language},
 };
 
 const FACTORIES: Catalogue = Catalogue(&[

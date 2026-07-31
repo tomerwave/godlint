@@ -2,8 +2,10 @@ use crate::{
     analyzers::SourceFacts,
     config::{Config, ExplicitTimerDelayRule, Severity},
     facts::CallFact,
-    rules::{CallRule, Finding, Rule, Violation, evaluate_call_rule, when_configured},
-    source::Language,
+    rules::{
+        Absence, CallRule, Finding, Languages, Rule, Violation, evaluate_call_rule, when_configured,
+    },
+    source::{Dialect, Language},
 };
 
 const TIMERS: [&str; 2] = ["setTimeout", "setInterval"];
@@ -14,6 +16,11 @@ pub struct ExplicitTimerDelay;
 
 impl Rule for ExplicitTimerDelay {
     const ID: &'static str = "reliability/explicit-timer-delay";
+
+    const LANGUAGES: Languages = Languages::all_but(&[
+        (Dialect::Python, Absence::NoSuchConstruct),
+        (Dialect::Rust, Absence::NoSuchConstruct),
+    ]);
 
     type Configuration = ExplicitTimerDelayRule;
 

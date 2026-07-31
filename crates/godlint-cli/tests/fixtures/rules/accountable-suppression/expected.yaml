@@ -1,6 +1,7 @@
 exit-code: 1
 
 stdout: |
+  example.py:2:7: error[policy/accountable-suppression] Suppression has no owner; name one with `owner=<name>`.
   example.rs:2:8: error[policy/accountable-suppression] Suppression has no justification; state the reason after `--`.
   example.rs:6:8: error[policy/accountable-suppression] Suppression names no rule; list the rule IDs it applies to.
   example.rs:10:8: error[policy/accountable-suppression] Suppression names unknown rule maintainability/no-such-rule.
@@ -15,6 +16,7 @@ stdout: |
   example.rs:38:1: error[maintainability/empty-function] Function has an empty body.
   example.rs:41:8: error[policy/accountable-suppression] Suppression sets expires more than once; only one value can be accountable.
   example.rs:41:8: error[policy/accountable-suppression] Suppression expired on 2020-01-01.
+  example.ts:2:6: error[policy/accountable-suppression] Suppression has no expiry; set one with `expires=YYYY-MM-DD`.
   mixed.rs:1:1: error[style/no-comments] Comment is not permitted; express the intent in the code.
 
 stderr: ""

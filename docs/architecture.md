@@ -74,9 +74,10 @@ are answered from that table. Splitting them across a list per language meant a 
 restriction had to be added twice, and forgetting the second made a built-in silently
 language-agnostic again. A macro carries its own `!`, so one dialect per
 language suffices and the name alone separates `dbg!` from a `fn dbg`.
-`rules::catalogue` owns that table shape, the dialect a language speaks, the macro-aware
-spelling of a callee, and the path allowance every one of these rules needs, so four rules
-answer those questions the same way rather than four similar ways.
+`rules::catalogue` owns that table shape, the macro-aware spelling of a callee, and the
+path allowance every one of these rules needs, so four rules answer those questions the same
+way rather than four similar ways. Which dialect a language speaks is `Language::dialect`,
+because `Rule::LANGUAGES` asks it too.
 `EnvironmentRead`, `Assertion`, `Mock`, and `DependencyEdge` are planned and are
 described in the [rule roadmap](rule-roadmap.md).
 
@@ -225,6 +226,29 @@ lambda itself. Structural predicates therefore apply only to named nodes.
 Tree-sitter and its official Rust, JavaScript, TypeScript/TSX, and Python grammars
 provide the syntax boundary. The adapters retain Tree-sitter nodes and byte spans; no
 parser type crosses into rules, findings, or reporters.
+
+### Which languages a rule covers
+
+A rule that cannot apply to a language used to say so in a match arm — `Language::Rust =>
+false` — which is invisible from outside it. `Rule::LANGUAGES` states it instead, and states
+*why*: `Absence::NoSuchConstruct` for a language that cannot express what the rule reports,
+`Absence::NotImplemented` for one Godlint has not taught yet. A reader deciding whether to
+file a bug needs to tell those apart, and the two are indistinguishable from silence.
+
+The unit is a `Dialect` rather than a `Language`, because TypeScript is read by the
+JavaScript analyzer: a rule that covered one and not the other could not be implemented, so
+letting a declaration claim it would be a promise the boundary cannot keep. `Dialect` lives
+with `Language` in `source` rather than in `rules::catalogue`, where it began, because two
+callers now ask the same question — a catalogue entry naming the dialect that speaks a
+built-in, and a rule naming the dialects it covers.
+
+The declaration alone would be a comment with a type. Two mechanisms hold it to account.
+`crates/godlint-core/tests/languages.rs` asserts the support matrix in `docs/rules.md`
+against the constants, so the table cannot drift. `scripts/validate-pull-request.py` then
+requires a fixture that *reports* the rule in every dialect it claims, and fails equally on
+a fixture reporting a rule in a dialect it says it does not cover. That second direction is
+what caught `architecture/no-internal-import` claiming Rust while returning early for every
+Rust path.
 
 ## Rules
 

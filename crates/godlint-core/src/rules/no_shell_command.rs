@@ -4,10 +4,10 @@ use crate::{
     facts::CallFact,
     rules::{
         Finding, Reporting, Rule, Violation,
-        catalogue::{Catalogue, Dialect, matches, spelled},
+        catalogue::{Catalogue, matches, spelled},
         collect_ranged, when_configured,
     },
-    source::Language,
+    source::{Dialect, Language},
 };
 
 const SHELLING: Catalogue = Catalogue(&[

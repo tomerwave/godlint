@@ -3,8 +3,11 @@ use crate::{
     config::{Config, NoInternalImportRule, Severity},
     facts::ImportFact,
     glob,
-    rules::{Finding, ImportRule, Rule, Violation, evaluate_import_rule, when_configured},
-    source::Language,
+    rules::{
+        Absence, Finding, ImportRule, Languages, Rule, Violation, evaluate_import_rule,
+        when_configured,
+    },
+    source::{Dialect, Language},
 };
 
 const HIDDEN: [&str; 4] = ["internal", "private", "impl", "_internal"];
@@ -15,6 +18,8 @@ pub struct NoInternalImport;
 
 impl Rule for NoInternalImport {
     const ID: &'static str = "architecture/no-internal-import";
+
+    const LANGUAGES: Languages = Languages::all_but(&[(Dialect::Rust, Absence::NoSuchConstruct)]);
 
     type Configuration = NoInternalImportRule;
 

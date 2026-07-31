@@ -1,15 +1,8 @@
 use crate::{
     facts::CallFact,
     glob,
-    source::{Language, SourceFile},
+    source::{Dialect, Language, SourceFile},
 };
-
-#[derive(Clone, Copy, Eq, PartialEq)]
-pub(super) enum Dialect {
-    JavaScript,
-    Python,
-    Rust,
-}
 
 pub(super) const GENERATORS: Catalogue = Catalogue(&[
     ("Math.random", Dialect::JavaScript),
@@ -50,7 +43,7 @@ impl Catalogue {
     }
 
     pub(super) fn speaks(&self, language: Language, name: &str) -> bool {
-        let spoken = dialect(language);
+        let spoken = language.dialect();
 
         self.0
             .iter()
@@ -70,12 +63,4 @@ pub(super) fn spelled(call: &CallFact) -> String {
 
 pub(super) fn matches(source: &SourceFile, paths: &[String]) -> bool {
     glob::matches_any(paths.iter().map(String::as_str), source.path_text())
-}
-
-fn dialect(language: Language) -> Dialect {
-    match language {
-        Language::JavaScript | Language::TypeScript => Dialect::JavaScript,
-        Language::Python => Dialect::Python,
-        Language::Rust => Dialect::Rust,
-    }
 }

@@ -4,10 +4,10 @@ use crate::{
     facts::CallFact,
     rules::{
         CallInTestRule, Finding, Rule, Violation,
-        catalogue::{Catalogue, Dialect, GENERATORS, matches, spelled},
+        catalogue::{Catalogue, GENERATORS, matches, spelled},
         evaluate_call_in_test_rule, when_configured,
     },
-    source::Language,
+    source::{Dialect, Language},
 };
 
 const SEEDS: Catalogue = Catalogue(&[

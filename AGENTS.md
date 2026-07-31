@@ -73,16 +73,18 @@ copy of each procedure, not three.
 
 ## Current implementation status
 
-The workspace, CLI, configuration validation and discovery, source discovery, and ten
-rules are implemented: `maintainability/file-size`, `function-size`, `function-nesting`,
-`parameter-count`, `decision-complexity`, `return-count`, `function-statements`,
-`empty-function`, `policy/todo-requires-reference`, and `style/no-comments`. CI dogfoods
-all ten against this repository through `godlint check .`. Phases 1 and 2 of the
-[rule roadmap](docs/rule-roadmap.md) are complete; call facts, imports, and the
-repository graph are not. Do not add semantic workers or new crate boundaries without a
-proven need.
+The workspace, CLI, configuration validation and discovery, source discovery, and
+thirty-seven rules are implemented across eight families; [the rule reference](docs/rules.md)
+lists every one, and its support matrix records which languages each covers. CI dogfoods all of
+them against this repository through `godlint check .`. Function, comment, call, access, import,
+condition, test and assertion facts exist; the repository dependency graph does not. Do not add
+semantic workers or new crate boundaries without a proven need.
 
 A function means the same thing in every language, and rules depend on that: Rust `fn`
 items and closures, Python `def` functions and lambdas, and JavaScript/TypeScript
 function declarations, function expressions, methods, and arrow functions. Do not add a
 function-shaped fact for one language without its equivalents in the other two.
+
+A rule that cannot apply to a language declares it in `Rule::LANGUAGES` with a reason, never
+in a match arm the caller cannot see. Every language a rule claims needs a fixture that reports
+it there; `scripts/validate-pull-request.py` fails in both directions.
