@@ -39,6 +39,8 @@ macro_rules! fixture_tests {
 
 fixture_tests! {
     accountable_suppression => "accountable-suppression",
+    bot_conditions => "bot-conditions",
+    bot_conditions_clean => "bot-conditions-clean",
     clean_repository => "clean",
     cognitive_complexity => "cognitive-complexity",
     cognitive_complexity_clean => "cognitive-complexity-clean",
@@ -116,6 +118,8 @@ fixture_tests! {
     severity_below_threshold => "severity-below-threshold",
     suppression_applies => "suppression-applies",
     todo_requires_reference => "todo-requires-reference",
+    template_injection => "template-injection",
+    template_injection_clean => "template-injection-clean",
     unused_suppression => "unused-suppression",
     unused_suppression_clean => "unused-suppression-clean",
 }

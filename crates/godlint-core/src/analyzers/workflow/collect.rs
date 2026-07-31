@@ -126,6 +126,7 @@ fn job_details(
         range,
         name: nodes.name.clone(),
         body,
+        condition: optional_range(value_of(nodes.body, IF, file), file)?,
         declares_permissions: declared(nodes.body, PERMISSIONS, file),
         needs: links.needs,
         secrets: links.secrets,

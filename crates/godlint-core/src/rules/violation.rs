@@ -63,6 +63,12 @@ pub enum Violation {
         reference: String,
         unversioned: bool,
     },
+    TemplateInjection {
+        expression: String,
+    },
+    AttackerInfluencedBotCondition {
+        expression: String,
+    },
     TestHelperInProduction {
         module: String,
         segment: String,
@@ -218,12 +224,7 @@ fn crossed_boundary(formatter: &mut fmt::Formatter<'_>, from: &str, to: &str) ->
     )
 }
 
-fn broke_independence(
-    formatter: &mut fmt::Formatter<'_>,
-    set: &str,
-    from: &str,
-    to: &str,
-) -> fmt::Result {
+fn independent(formatter: &mut fmt::Formatter<'_>, set: &str, from: &str, to: &str) -> fmt::Result {
     write!(
         formatter,
         "{from} must not depend on {to}; {set} declares them independent of each other."
@@ -234,11 +235,11 @@ fn environment(formatter: &mut fmt::Formatter<'_>, target: &str) -> fmt::Result 
     write!(formatter, "{target} {ENVIRONMENT_READ}")
 }
 
-fn test_helper(formatter: &mut fmt::Formatter<'_>, module: &str, segment: &str) -> fmt::Result {
+fn helper(formatter: &mut fmt::Formatter<'_>, module: &str, segment: &str) -> fmt::Result {
     write!(formatter, "{module} names {segment}, {TEST_HELPER}")
 }
 
-fn internal_import(formatter: &mut fmt::Formatter<'_>, module: &str, marker: &str) -> fmt::Result {
+fn internal(formatter: &mut fmt::Formatter<'_>, module: &str, marker: &str) -> fmt::Result {
     write!(
         formatter,
         "{module} names {marker}, which {INTERNAL_IMPORT}"
@@ -249,6 +250,23 @@ fn insecure_random(formatter: &mut fmt::Formatter<'_>, callee: &str, secure: &st
     write!(
         formatter,
         "{callee} is predictable; use {secure} for a value that must not be guessable."
+    )
+}
+
+fn template_injection(formatter: &mut fmt::Formatter<'_>, expression: &str) -> fmt::Result {
+    write!(
+        formatter,
+        "\"{expression}\" is attacker-influenced, and the runner expands it into the script \
+         before the shell runs; bind it to an env variable and reference the variable quoted."
+    )
+}
+
+fn bot_condition(formatter: &mut fmt::Formatter<'_>, expression: &str) -> fmt::Result {
+    write!(
+        formatter,
+        "\"{expression}\" checks an actor field that is attacker-influenced on the trigger, so \
+         passing it proves nothing; compare github.event.pull_request.user.login or verify the app \
+         instead."
     )
 }
 
@@ -283,9 +301,7 @@ impl fmt::Display for Violation {
             Self::FilenameCase { name, case } => filename_case(formatter, name, case),
             Self::ForbiddenDependency { package } => forbidden(formatter, package),
             Self::CrossedBoundary { from, to } => crossed_boundary(formatter, from, to),
-            Self::BrokeIndependence { set, from, to } => {
-                broke_independence(formatter, set, from, to)
-            }
+            Self::BrokeIndependence { set, from, to } => independent(formatter, set, from, to),
             Self::RestrictedImport { module } => write!(formatter, "{module} {RESTRICTED_IMPORT}"),
             Self::ProductionLog { callee } => write!(formatter, "{callee} {PRODUCTION_LOG}"),
             Self::WeakHash { weak, strong } => weak_hash(formatter, weak, strong),
@@ -301,12 +317,12 @@ impl fmt::Display for Violation {
                 reference,
                 unversioned,
             } => mutable_action(formatter, reference, *unversioned),
-            Self::TestHelperInProduction { module, segment } => {
-                test_helper(formatter, module, segment)
+            Self::TemplateInjection { expression } => template_injection(formatter, expression),
+            Self::AttackerInfluencedBotCondition { expression } => {
+                bot_condition(formatter, expression)
             }
-            Self::InternalImport { module, marker, .. } => {
-                internal_import(formatter, module, marker)
-            }
+            Self::TestHelperInProduction { module, segment } => helper(formatter, module, segment),
+            Self::InternalImport { module, marker, .. } => internal(formatter, module, marker),
             Self::SleepInTest { callee } => write!(formatter, "{callee} {SLEEP_IN_TEST}"),
             Self::UnseededRandom { callee, remedy } => unseeded(formatter, callee, remedy),
             Self::NetworkInUnitTest { callee } => network(formatter, callee),

@@ -1,0 +1,15 @@
+name: Clean
+
+on:
+  issues:
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          TITLE: ${{ github.event.issue.title }}
+        run: 'echo "$TITLE"'
+      - uses: vendor/action@0000000000000000000000000000000000000000
+        with:
+          title: ${{ github.event.issue.title }}

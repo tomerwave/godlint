@@ -11,6 +11,7 @@ use crate::{
 
 pub mod accountable_suppression;
 pub mod assertion_required;
+pub mod bot_conditions;
 mod catalogue;
 pub mod cognitive_complexity;
 pub mod condition_complexity;
@@ -52,6 +53,7 @@ mod reference;
 mod scoped;
 mod violation;
 
+pub(crate) use reference::when_configured;
 pub use reference::{
     AccessRule, ActionRule, CallInTestRule, CallRule, ConditionRule, ErrorHandlerRule, ImportRule,
     TestRule, WorkflowRule, evaluate_access_rule, evaluate_action_rule, evaluate_call_in_test_rule,
@@ -62,6 +64,7 @@ mod registry;
 pub mod restricted_call;
 pub mod restricted_import;
 pub mod return_count;
+pub mod template_injection;
 pub mod todo_requires_reference;
 pub mod unused_suppression;
 
@@ -414,8 +417,10 @@ type Evaluator = fn(&[SourceFacts], &Config) -> Vec<Finding>;
 type WorkflowEvaluator = fn(&[WorkflowFacts], &Config) -> Vec<Finding>;
 
 const WORKFLOW_EVALUATORS: &[WorkflowEvaluator] = &[
+    bot_conditions::evaluate,
     pin_third_party_actions::evaluate,
     explicit_workflow_permissions::evaluate,
+    template_injection::evaluate,
 ];
 
 const EVALUATORS: &[Evaluator] = &[
@@ -498,13 +503,6 @@ pub fn evaluate(
     });
 
     findings
-}
-
-pub(crate) fn when_configured<C>(
-    configuration: Option<&C>,
-    evaluate: impl FnOnce(&C) -> Vec<Finding>,
-) -> Vec<Finding> {
-    configuration.map_or_else(Vec::new, evaluate)
 }
 
 impl fmt::Display for SuppressionDefect {

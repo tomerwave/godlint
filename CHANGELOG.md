@@ -11,6 +11,16 @@ speaks about.
 
 ### Added
 
+- `ci/template-injection` — reports attacker-influenced GitHub expressions interpolated directly
+  into a workflow `run:` script, where the runner expands them before the shell sees the command.
+  Expressions passed through `env:` or `with:` stay silent; binding the value to an environment
+  variable and referencing it quoted is the documented fix. `allow-in` path globs scope exceptions.
+- `ci/bot-conditions` — reports step and job conditions that compare `github.actor` or
+  `github.triggering_actor` with a configured bot identity. Those fields are attacker-influenced on
+  several triggers, so the check proves nothing about who opened the pull request; compare its author
+  or verify the app instead. `bots` defaults to Dependabot, GitHub Actions, and Renovate identities.
+- Job workflow facts now expose a job-level `if:` range, so policy rules can apply the same condition
+  checks to privileged jobs and privileged steps.
 - Workflow rules can now ask about each step and its settings, expressions inside YAML values,
   comments, job dependencies and reusable-workflow secrets, and literal container or service
   credentials. Every site retains its source range, so a rule can relate an expression to a command or

@@ -136,6 +136,45 @@ fn accepts_the_explicit_timer_delay_rule() {
 }
 
 #[test]
+fn accepts_template_injection_path_exceptions() {
+    let config = load(concat!(
+        "version: 1\n",
+        "rules:\n",
+        "  ci/template-injection:\n",
+        "    severity: error\n",
+        "    allow-in:\n",
+        "      - '.github/workflows/generated.yml'\n",
+    ))
+    .unwrap_or_else(|error| panic!("loads: {error}"));
+
+    assert_eq!(
+        config
+            .rules
+            .template_injection
+            .as_ref()
+            .expect("template injection")
+            .allow_in,
+        vec![".github/workflows/generated.yml"]
+    );
+}
+
+#[test]
+fn bot_conditions_defaults_to_common_bot_identities() {
+    let config = load("version: 1\nrules:\n  ci/bot-conditions:\n    severity: error\n")
+        .unwrap_or_else(|error| panic!("loads: {error}"));
+
+    assert_eq!(
+        config
+            .rules
+            .bot_conditions
+            .as_ref()
+            .expect("bot conditions")
+            .bots,
+        vec!["dependabot[bot]", "github-actions[bot]", "renovate[bot]"]
+    );
+}
+
+#[test]
 fn accepts_the_empty_error_handler_rule() {
     let result =
         load("version: 1\nrules:\n  reliability/empty-error-handler:\n    severity: error\n");

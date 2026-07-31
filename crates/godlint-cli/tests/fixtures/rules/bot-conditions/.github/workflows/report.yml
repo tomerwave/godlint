@@ -1,0 +1,22 @@
+name: Report
+
+on:
+  pull_request:
+
+jobs:
+  braced-job:
+    if: ${{ github.actor == 'dependabot[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: deploy
+      - if: ${{ github.triggering_actor == 'renovate[bot]' }}
+        run: publish
+      - if: github.actor != 'renovate[bot]'
+        run: publish
+      - if: ${{ contains(github.actor, 'dependabot') }}
+        run: publish
+  unbraced-job:
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - run: deploy

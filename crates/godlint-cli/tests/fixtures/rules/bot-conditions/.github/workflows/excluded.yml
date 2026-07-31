@@ -1,0 +1,11 @@
+name: Excluded
+
+on:
+  pull_request:
+
+jobs:
+  privileged:
+    if: ${{ github.actor == 'dependabot[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: deploy

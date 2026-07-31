@@ -1,0 +1,9 @@
+exit-code: 1
+
+stdout: |
+  .github/workflows/report.yml:8:9: error[ci/bot-conditions] "github.actor == 'dependabot[bot]'" checks an actor field that is attacker-influenced on the trigger, so passing it proves nothing; compare github.event.pull_request.user.login or verify the app instead.
+  .github/workflows/report.yml:12:13: error[ci/bot-conditions] "github.triggering_actor == 'renovate[bot]'" checks an actor field that is attacker-influenced on the trigger, so passing it proves nothing; compare github.event.pull_request.user.login or verify the app instead.
+  .github/workflows/report.yml:14:13: error[ci/bot-conditions] "github.actor != 'renovate[bot]'" checks an actor field that is attacker-influenced on the trigger, so passing it proves nothing; compare github.event.pull_request.user.login or verify the app instead.
+  .github/workflows/report.yml:16:13: error[ci/bot-conditions] "contains(github.actor, 'dependabot')" checks an actor field that is attacker-influenced on the trigger, so passing it proves nothing; compare github.event.pull_request.user.login or verify the app instead.
+  .github/workflows/report.yml:19:9: error[ci/bot-conditions] "github.actor == 'dependabot[bot]'" checks an actor field that is attacker-influenced on the trigger, so passing it proves nothing; compare github.event.pull_request.user.login or verify the app instead.
+stderr: ""
