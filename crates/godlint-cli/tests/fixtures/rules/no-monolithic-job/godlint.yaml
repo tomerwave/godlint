@@ -1,0 +1,11 @@
+version: 1
+
+exclude:
+  - .github/workflows/excluded.yml
+
+rules:
+  ci/no-monolithic-job:
+    severity: error
+    max-steps: 2
+    allow-in:
+      - .github/workflows/allowed.yml

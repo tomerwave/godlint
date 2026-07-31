@@ -1,0 +1,15 @@
+name: Clean
+
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: ./scripts/build.sh
+      - run: |
+          cargo test
+          # A comment does not consume the budget.
+
+          cargo clippy

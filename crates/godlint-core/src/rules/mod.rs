@@ -31,14 +31,17 @@ pub mod function_size;
 pub mod function_statements;
 pub mod languages;
 mod line_count;
+mod metric;
 pub mod module_independence;
 mod module_path;
 pub mod no_comments;
 pub mod no_dynamic_execution;
 pub mod no_empty_test;
 pub mod no_focused_test;
+pub mod no_inline_script;
 pub mod no_insecure_random;
 pub mod no_internal_import;
+pub mod no_monolithic_job;
 pub mod no_network_in_unit_test;
 pub mod no_production_log;
 pub mod no_randomness_without_seed;
@@ -69,24 +72,12 @@ pub mod todo_requires_reference;
 pub mod unused_suppression;
 
 pub use languages::{Absence, Languages};
+pub use metric::Metric;
 pub use registry::{
     closest_rule_id, configured_severity, is_known_rule, is_suppressible_rule, rule_ids,
     rule_languages,
 };
 pub use violation::Violation;
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum Metric {
-    FunctionLines,
-    FileLines,
-    BlockDepth,
-    ParameterCount,
-    Complexity,
-    ReturnPaths,
-    StatementCount,
-    ConditionOperators,
-    CognitiveScore,
-}
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum SuppressionDefect {
@@ -101,47 +92,6 @@ pub enum SuppressionDefect {
     InvalidExpiry { value: String },
     Expired { expires: String },
     Unresolved,
-}
-
-impl Metric {
-    fn describe(self, formatter: &mut fmt::Formatter<'_>, actual: u32, max: u32) -> fmt::Result {
-        match self {
-            Self::FunctionLines => {
-                write!(
-                    formatter,
-                    "Function has {actual} effective lines (max {max})."
-                )
-            }
-            Self::FileLines => write!(formatter, "File has {actual} effective lines (max {max})."),
-            Self::BlockDepth => write!(
-                formatter,
-                "Function nests blocks {actual} levels deep (max {max})."
-            ),
-            Self::ParameterCount => {
-                write!(formatter, "Function has {actual} parameters (max {max}).")
-            }
-            Self::Complexity => write!(
-                formatter,
-                "Function has decision complexity {actual} (max {max})."
-            ),
-            Self::ReturnPaths => {
-                write!(formatter, "Function has {actual} return paths (max {max}).")
-            }
-            Self::StatementCount => {
-                write!(formatter, "Function has {actual} statements (max {max}).")
-            }
-            Self::ConditionOperators => {
-                write!(
-                    formatter,
-                    "Condition combines {actual} operators; the limit is {max}."
-                )
-            }
-            Self::CognitiveScore => write!(
-                formatter,
-                "Function has cognitive complexity {actual} (max {max})."
-            ),
-        }
-    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -421,6 +371,8 @@ const WORKFLOW_EVALUATORS: &[WorkflowEvaluator] = &[
     pin_third_party_actions::evaluate,
     explicit_workflow_permissions::evaluate,
     template_injection::evaluate,
+    no_inline_script::evaluate,
+    no_monolithic_job::evaluate,
 ];
 
 const EVALUATORS: &[Evaluator] = &[

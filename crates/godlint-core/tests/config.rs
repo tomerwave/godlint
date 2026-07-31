@@ -159,6 +159,28 @@ fn accepts_template_injection_path_exceptions() {
 }
 
 #[test]
+fn accepts_no_monolithic_job_path_exceptions() {
+    let config = load(concat!(
+        "version: 1\n",
+        "rules:\n",
+        "  ci/no-monolithic-job:\n",
+        "    severity: error\n",
+        "    max-steps: 7\n",
+        "    allow-in:\n",
+        "      - '.github/workflows/release.yml'\n",
+    ))
+    .unwrap_or_else(|error| panic!("loads: {error}"));
+    let rule = config
+        .rules
+        .no_monolithic_job
+        .as_ref()
+        .expect("no monolithic job");
+
+    assert_eq!(rule.limit(), 7);
+    assert_eq!(rule.allow_in, vec![".github/workflows/release.yml"]);
+}
+
+#[test]
 fn bot_conditions_defaults_to_common_bot_identities() {
     let config = load("version: 1\nrules:\n  ci/bot-conditions:\n    severity: error\n")
         .unwrap_or_else(|error| panic!("loads: {error}"));

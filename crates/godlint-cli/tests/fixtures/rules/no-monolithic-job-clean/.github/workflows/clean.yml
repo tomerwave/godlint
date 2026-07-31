@@ -1,0 +1,13 @@
+name: Clean
+
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: ./scripts/build.sh
+      - run: ./scripts/test.sh
+  reusable:
+    uses: owner/repository/.github/workflows/check.yml@main

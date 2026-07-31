@@ -341,6 +341,22 @@ count_limit_rules! {
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
+pub struct NoMonolithicJobRule {
+    pub severity: Severity,
+    #[serde(rename = "max-steps")]
+    pub max_steps: u32,
+    #[serde(default, rename = "allow-in")]
+    pub allow_in: Vec<String>,
+}
+
+impl NoMonolithicJobRule {
+    pub fn limit(&self) -> u32 {
+        self.max_steps
+    }
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct EmptyFunctionRule {
     pub severity: Severity,
     #[serde(default, rename = "allow-names")]

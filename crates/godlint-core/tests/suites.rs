@@ -76,7 +76,7 @@ fn documented_threshold(line: &str) -> Option<(String, u32)> {
 fn documented_rule(cell: &str) -> Option<&str> {
     cell.strip_prefix('`')
         .and_then(|rule| rule.strip_suffix('`'))
-        .filter(|rule| rule.starts_with("maintainability/"))
+        .filter(|rule| rule.starts_with("maintainability/") || rule.starts_with("ci/"))
 }
 
 fn configured_line_limits(config: &Config) -> Vec<(&'static str, u32)> {
@@ -145,10 +145,35 @@ fn configured_count_limits(config: &Config) -> Vec<(&'static str, u32)> {
     ]
 }
 
+fn configured_workflow_limits(config: &Config) -> Vec<(&'static str, u32)> {
+    let rules = &config.rules;
+
+    vec![
+        (
+            "ci/no-inline-script",
+            rules
+                .no_inline_script
+                .as_ref()
+                .expect("inline script")
+                .max_lines
+                .get(),
+        ),
+        (
+            "ci/no-monolithic-job",
+            rules
+                .no_monolithic_job
+                .as_ref()
+                .expect("monolithic job")
+                .limit(),
+        ),
+    ]
+}
+
 fn configured_limits(config: &Config) -> Vec<(String, u32)> {
     configured_line_limits(config)
         .into_iter()
         .chain(configured_count_limits(config))
+        .chain(configured_workflow_limits(config))
         .map(|(rule, limit)| (rule.to_owned(), limit))
         .collect()
 }

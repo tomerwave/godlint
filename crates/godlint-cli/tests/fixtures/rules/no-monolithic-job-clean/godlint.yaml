@@ -1,0 +1,6 @@
+version: 1
+
+rules:
+  ci/no-monolithic-job:
+    severity: error
+    max-steps: 2

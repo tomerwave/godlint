@@ -13,7 +13,8 @@ use crate::{
         function_statements::FunctionStatements, module_independence::ModuleIndependence,
         no_comments::NoComments, no_dynamic_execution::NoDynamicExecution,
         no_empty_test::NoEmptyTest, no_focused_test::NoFocusedTest,
-        no_insecure_random::NoInsecureRandom, no_internal_import::NoInternalImport,
+        no_inline_script::NoInlineScript, no_insecure_random::NoInsecureRandom,
+        no_internal_import::NoInternalImport, no_monolithic_job::NoMonolithicJob,
         no_network_in_unit_test::NoNetworkInUnitTest, no_production_log::NoProductionLog,
         no_randomness_without_seed::NoRandomnessWithoutSeed, no_shell_command::NoShellCommand,
         no_skipped_test::NoSkippedTest, no_sleep_in_test::NoSleepInTest,
@@ -186,6 +187,12 @@ severity!(
     template_injection
 );
 severity!(bot_conditions_severity, BotConditions, bot_conditions);
+severity!(no_inline_script_severity, NoInlineScript, no_inline_script);
+severity!(
+    no_monolithic_job_severity,
+    NoMonolithicJob,
+    no_monolithic_job
+);
 
 const REGISTRATIONS: &[Registration] = &[
     Registration {
@@ -432,6 +439,18 @@ const REGISTRATIONS: &[Registration] = &[
         id: BotConditions::ID,
         languages: BotConditions::LANGUAGES,
         severity: bot_conditions_severity,
+        suppressible: true,
+    },
+    Registration {
+        id: NoInlineScript::ID,
+        languages: NoInlineScript::LANGUAGES,
+        severity: no_inline_script_severity,
+        suppressible: true,
+    },
+    Registration {
+        id: NoMonolithicJob::ID,
+        languages: NoMonolithicJob::LANGUAGES,
+        severity: no_monolithic_job_severity,
         suppressible: true,
     },
 ];

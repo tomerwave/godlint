@@ -7,13 +7,13 @@ use crate::config::{
     ExplicitWorkflowPermissionsRule, FilenameCaseRule, ForbiddenDependencyRule,
     FunctionNestingRule, FunctionStatementsRule, LineLimitRule, ModuleIndependenceRule,
     NoCommentsRule, NoDynamicExecutionRule, NoEmptyTestRule, NoFocusedTestRule,
-    NoInsecureRandomRule, NoInternalImportRule, NoNetworkInUnitTestRule, NoProductionLogRule,
-    NoRandomnessWithoutSeedRule, NoShellCommandRule, NoSkippedTestRule, NoSleepInTestRule,
-    NoTestHelperInProductionRule, NoWeakHashRule, ParameterCountRule, PinThirdPartyActionsRule,
-    RestrictedCallRule, RestrictedImportRule, ReturnCountRule, Rules, Severity,
-    TemplateInjectionRule, TodoRequiresReferenceRule, UnusedSuppressionRule, default_bots,
-    default_configuration_paths, default_markers, default_reference_prefixes, default_test_helpers,
-    default_test_paths, default_trusted_owners,
+    NoInsecureRandomRule, NoInternalImportRule, NoMonolithicJobRule, NoNetworkInUnitTestRule,
+    NoProductionLogRule, NoRandomnessWithoutSeedRule, NoShellCommandRule, NoSkippedTestRule,
+    NoSleepInTestRule, NoTestHelperInProductionRule, NoWeakHashRule, ParameterCountRule,
+    PinThirdPartyActionsRule, RestrictedCallRule, RestrictedImportRule, ReturnCountRule, Rules,
+    Severity, TemplateInjectionRule, TodoRequiresReferenceRule, UnusedSuppressionRule,
+    default_bots, default_configuration_paths, default_markers, default_reference_prefixes,
+    default_test_helpers, default_test_paths, default_trusted_owners,
 };
 
 pub const RECOMMENDED: &str = "recommended@1";
@@ -25,6 +25,10 @@ const SUITES: &[(&str, Expand)] = &[(RECOMMENDED, recommended)];
 const FUNCTION_LINES: NonZeroU32 = NonZeroU32::new(50).expect("50 is not zero");
 
 const FILE_LINES: NonZeroU32 = NonZeroU32::new(500).expect("500 is not zero");
+
+const INLINE_SCRIPT_LINES: NonZeroU32 = NonZeroU32::new(8).expect("8 is not zero");
+
+const JOB_STEPS: u32 = 7;
 
 pub fn names() -> impl Iterator<Item = &'static str> {
     SUITES.iter().map(|(name, _)| *name)
@@ -48,6 +52,17 @@ fn recommended(rules: &mut Rules) {
 }
 
 fn continuous_integration(rules: &mut Rules) {
+    rules.no_inline_script.get_or_insert(LineLimitRule {
+        severity: Severity::Error,
+        max_lines: INLINE_SCRIPT_LINES,
+        skip_blank_lines: true,
+        skip_comments: true,
+    });
+    rules.no_monolithic_job.get_or_insert(NoMonolithicJobRule {
+        severity: Severity::Error,
+        max_steps: JOB_STEPS,
+        allow_in: Vec::new(),
+    });
     rules
         .template_injection
         .get_or_insert(TemplateInjectionRule {

@@ -1,0 +1,16 @@
+name: Inline
+
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build and test inline
+        run: |
+          cargo build
+
+          # This line is not logic.
+          cargo test
+          cargo clippy

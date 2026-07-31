@@ -1,0 +1,9 @@
+name: Allowed
+
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps: [{run: one}, {run: two}, {run: three}]

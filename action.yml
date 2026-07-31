@@ -34,6 +34,9 @@ outputs:
   findings:
     description: How many findings were reported.
     value: ${{ steps.check.outputs.findings }}
+  status:
+    description: The exit status returned by Godlint.
+    value: ${{ steps.check.outputs.status }}
 
 runs:
   using: composite
@@ -133,7 +136,7 @@ runs:
         output="$RUNNER_TEMP/godlint-annotations.txt"
 
         # shellcheck disable=SC2086
-        godlint check --format github $PATHS | tee "$output"
+        godlint check --format github $PATHS 2>&1 | tee "$output"
         status=${PIPESTATUS[0]}
 
         findings="$(grep -c '^::' "$output" || true)"
