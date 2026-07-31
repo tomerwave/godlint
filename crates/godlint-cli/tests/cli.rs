@@ -80,6 +80,73 @@ fn reports_an_invalid_configuration() {
 }
 
 #[test]
+fn ignores_a_rule_it_does_not_know_and_still_enforces_the_rest() {
+    let repository = Repository::new();
+
+    repository.write(
+        "godlint.yaml",
+        concat!(
+            "version: 1\n",
+            "rules:\n",
+            "  testing/from-a-later-release:\n",
+            "    severity: error\n",
+            "  maintainability/empty-function:\n",
+            "    severity: error\n",
+        ),
+    );
+    repository.write("source.rs", "fn idle() {}\n");
+
+    let output = run(godlint()
+        .arg("check")
+        .arg(".")
+        .current_dir(repository.path()));
+    let stderr = String::from_utf8_lossy(&output.stderr);
+
+    assert_eq!(
+        output.status.code(),
+        Some(1),
+        "the rules this release does know must still decide the exit code"
+    );
+    assert!(
+        String::from_utf8_lossy(&output.stdout).contains("maintainability/empty-function"),
+        "a key from a later release must cost only itself"
+    );
+    assert!(
+        stderr.contains("testing/from-a-later-release is not a rule godlint"),
+        "silently ignoring it would enforce less than the configuration says: {stderr}"
+    );
+    assert!(
+        stderr.contains("so it is ignored"),
+        "the notice must say what was done about it: {stderr}"
+    );
+}
+
+#[test]
+fn names_the_rule_a_misspelt_key_probably_meant() {
+    let repository = Repository::new();
+    let path = repository.write(
+        "godlint.yaml",
+        "version: 1\nrules:\n  maintainability/function-siz:\n    severity: error\n",
+    );
+    let output = run(godlint().args([
+        "config",
+        "validate",
+        "--config",
+        &path.display().to_string(),
+    ]));
+    let stderr = String::from_utf8_lossy(&output.stderr);
+
+    assert!(
+        output.status.success(),
+        "a typo no longer stops a run, so the notice is the only thing that can catch it"
+    );
+    assert!(
+        stderr.contains("Did you mean maintainability/function-size?"),
+        "a near miss is the case ignoring an unknown key makes dangerous: {stderr}"
+    );
+}
+
+#[test]
 fn reports_a_clean_repository() {
     let repository = Repository::new();
 

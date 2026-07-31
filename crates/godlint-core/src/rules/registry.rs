@@ -420,3 +420,33 @@ pub fn is_suppressible_rule(rule_id: &str) -> bool {
 pub fn rule_languages(rule_id: &str) -> Option<Languages> {
     registration(rule_id).map(|registration| registration.languages)
 }
+
+const NEAR: usize = 4;
+
+pub fn closest_rule_id(name: &str) -> Option<&'static str> {
+    rule_ids()
+        .map(|rule_id| (distance(name, rule_id), rule_id))
+        .filter(|(distance, _)| *distance < NEAR)
+        .min()
+        .map(|(_, rule_id)| rule_id)
+}
+
+fn distance(left: &str, right: &str) -> usize {
+    let target: Vec<char> = right.chars().collect();
+    let mut row: Vec<usize> = (0..=target.len()).collect();
+
+    for (index, character) in left.chars().enumerate() {
+        let mut diagonal = row[0];
+
+        row[0] = index + 1;
+
+        for column in 0..target.len() {
+            let replace = diagonal + usize::from(character != target[column]);
+
+            diagonal = row[column + 1];
+            row[column + 1] = replace.min(row[column] + 1).min(diagonal + 1);
+        }
+    }
+
+    row[target.len()]
+}

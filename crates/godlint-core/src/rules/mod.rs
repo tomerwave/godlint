@@ -64,7 +64,8 @@ pub mod unused_suppression;
 
 pub use languages::{Absence, Languages};
 pub use registry::{
-    configured_severity, is_known_rule, is_suppressible_rule, rule_ids, rule_languages,
+    closest_rule_id, configured_severity, is_known_rule, is_suppressible_rule, rule_ids,
+    rule_languages,
 };
 pub use violation::Violation;
 

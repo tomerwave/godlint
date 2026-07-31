@@ -2,7 +2,7 @@ use std::{path::Path, process::ExitCode};
 
 use godlint_core::config::Config;
 
-use crate::report::visible;
+use crate::report::{notices, visible};
 
 pub const USAGE: &str = "config validate [--config <path>]";
 
@@ -22,7 +22,11 @@ pub fn run(arguments: &[String]) -> Option<ExitCode> {
 
 fn validate(path: &Path) -> ExitCode {
     match Config::load(path) {
-        Ok(_) => {
+        Ok(config) => {
+            for notice in notices(path, &config) {
+                eprintln!("{notice}");
+            }
+
             println!(
                 "Configuration is valid: {}",
                 visible(&path.display().to_string())

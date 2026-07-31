@@ -15,8 +15,43 @@ godlint config validate
 godlint config validate --config path/to/godlint.yaml
 ```
 
-Unknown keys are rejected rather than ignored, so a misspelled rule name or threshold fails
-validation instead of silently doing nothing.
+Unknown keys are rejected rather than ignored, so a misspelled threshold fails validation instead of
+silently doing nothing. One key is treated differently, and [what a version may
+read](#what-a-version-may-read) says which and why.
+
+## What a version may read
+
+One configuration usually outlives one version of Godlint, and often has to be read by two at once: a
+pinned version in CI and a newer one on a developer's machine, or the reverse. So the strictness has a
+seam in exactly one place.
+
+**An unrecognised key under `rules:` is reported and ignored.** A rule name this version does not know
+can only mean a rule it cannot run, so refusing the file would stop the run over a rule that would have
+reported nothing anyway. `check` and `config validate` both name it on standard error:
+
+```text
+godlint.yaml: rules: testing/no-network-in-unit-test is not a rule godlint 0.3.0 knows, so it is ignored.
+```
+
+The cost is that a *misspelling* also becomes a rule that quietly does nothing, which is why the notice
+offers the nearest name it knows when there is one:
+
+```text
+godlint.yaml: rules: maintainability/function-siz is not a rule godlint 0.3.0 knows, so it is ignored. Did you mean maintainability/function-size?
+```
+
+**Everything else is still refused.** The line is what an unrecognised name can cost:
+
+| Unrecognised | Outcome | Why |
+| --- | --- | --- |
+| A key under `rules:` | Reported and ignored | It can only subtract the one rule it names |
+| An option inside a rule | Refused | The rule *does* exist, and its options decide how it behaves, so ignoring one would enforce a policy the file does not describe |
+| A top-level key | Refused | `exclude` and `fail-on` decide what is scanned and what fails; ignoring one could silently pass a run that should not have |
+| A suite name | Refused | A configuration that adopts only `recommended@2` would enforce **nothing** if the name were ignored, and the run would go green |
+| A `version:` value | Refused | It states which schema the file is written against, so an unknown value means nothing else in the file can be trusted |
+
+So a newer configuration degrades on an older Godlint rule by rule, and stops outright when the
+difference is one that could make the run mean something other than it says.
 
 ## Top-level keys
 
