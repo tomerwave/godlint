@@ -211,3 +211,10 @@ pub fn evaluate_condition_rule<R: ConditionRule>(
         |condition, _| R::check(condition, configuration),
     )
 }
+
+pub(crate) fn when_configured<C>(
+    configuration: Option<&C>,
+    evaluate: impl FnOnce(&C) -> Vec<Finding>,
+) -> Vec<Finding> {
+    configuration.map_or_else(Vec::new, evaluate)
+}

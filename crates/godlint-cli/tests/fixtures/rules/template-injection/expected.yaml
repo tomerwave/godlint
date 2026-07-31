@@ -1,0 +1,8 @@
+exit-code: 1
+
+stdout: |
+  .github/workflows/report.yml:10:21: error[ci/template-injection] "github.event.issue.title" is attacker-influenced, and the runner expands it into the script before the shell runs; bind it to an env variable and reference the variable quoted.
+  .github/workflows/report.yml:11:21: error[ci/template-injection] "github.event.review_comment.body" is attacker-influenced, and the runner expands it into the script before the shell runs; bind it to an env variable and reference the variable quoted.
+  .github/workflows/report.yml:13:17: error[ci/template-injection] "github.event.workflow_run.head_branch" is attacker-influenced, and the runner expands it into the script before the shell runs; bind it to an env variable and reference the variable quoted.
+  .github/workflows/report.yml:14:17: error[ci/template-injection] "github.event.workflow_run.head_commit.message" is attacker-influenced, and the runner expands it into the script before the shell runs; bind it to an env variable and reference the variable quoted.
+stderr: ""

@@ -1,6 +1,6 @@
 # Rule reference
 
-Thirty-nine rules are implemented. Every one has an identifier of the form `family/name`, which is
+Forty-one rules are implemented. Every one has an identifier of the form `family/name`, which is
 what a configuration entry and a suppression directive both name. [The rule roadmap](rule-roadmap.md)
 records the families still to come, and the reasoning behind each threshold `recommended@1` sets.
 [Language support](#language-support) records which languages each rule covers.
@@ -19,8 +19,10 @@ enforced there.
 | `architecture/no-internal-import` | ✓ | ✓ | — | — |
 | `architecture/restricted-call` | ✓ | ✓ | ✓ | — |
 | `architecture/restricted-import` | ✓ | ✓ | ✓ | — |
+| `ci/bot-conditions` | — | — | — | ✓ |
 | `ci/explicit-workflow-permissions` | — | — | — | ✓ |
 | `ci/pin-third-party-actions` | — | — | — | ✓ |
+| `ci/template-injection` | — | — | — | ✓ |
 | `logging/no-production-log` | ✓ | ✓ | ✓ | — |
 | `maintainability/cognitive-complexity` | ✓ | ✓ | ✓ | — |
 | `maintainability/condition-complexity` | ✓ | ✓ | ✓ | — |
@@ -173,8 +175,29 @@ have to decide what interpolation looks like inside an f-string.
 
 | Rule | What it reports |
 | --- | --- |
+| `ci/bot-conditions` | A step or job condition that compares an attacker-influenced actor field with a configured bot identity |
 | `ci/pin-third-party-actions` | A workflow step using a third-party action at a ref that can move |
 | `ci/explicit-workflow-permissions` | A job that runs with whatever the repository grants by default |
+| `ci/template-injection` | An attacker-influenced expression interpolated directly into a `run:` script |
+
+`ci/template-injection` reports expressions in a step's `run:` script when the expression reads a
+context GitHub documents as attacker-influenced. The runner expands the expression before the shell
+runs, so shell quoting around the expression does not turn it back into data. Bind the expression to
+an `env:` variable and reference that variable quoted in the script instead.
+
+Expressions in `env:` and `with:` values are deliberately silent. In particular, passing an
+attacker-influenced value through `env:` is GitHub's documented remedy; reporting it would tell the
+author to undo the fix. `allow-in` accepts path globs for workflows whose scripts are reviewed under a
+different policy.
+
+`ci/bot-conditions` reports braced and unbraced step-level and job-level `if:` expressions that
+compare `github.actor` or `github.triggering_actor` with an identity in `bots`, or pass one of those
+actor fields to `contains` with a configured identity or a non-empty substring of one. Those actor
+fields are attacker-influenced on several triggers, so matching a bot-looking name does not prove
+that the bot opened the pull request.
+The list defaults to `dependabot[bot]`, `github-actions[bot]`, and `renovate[bot]`; repositories can
+add their own identities. Compare `github.event.pull_request.user.login` instead, or verify the app
+that produced the change rather than trusting the actor name.
 
 A `uses:` reference names either a commit or something mutable. A tag, a branch and a version string can
 all be repointed by whoever owns the action, and whatever they point at next runs inside your workflow

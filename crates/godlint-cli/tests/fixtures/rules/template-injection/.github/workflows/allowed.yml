@@ -1,0 +1,10 @@
+name: Allowed
+
+on:
+  issues:
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - run: 'echo "${{ github.event.issue.title }}"'

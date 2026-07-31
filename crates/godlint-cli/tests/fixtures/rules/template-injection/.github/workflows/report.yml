@@ -1,0 +1,14 @@
+name: Report
+
+on:
+  issues:
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - run: 'echo "${{ github.event.issue.title }}"'
+      - run: 'echo "${{ github.event.review_comment.body }}"'
+      - run: |
+          echo "${{ github.event.workflow_run.head_branch }}"
+          echo "${{ github.event.workflow_run.head_commit.message }}"

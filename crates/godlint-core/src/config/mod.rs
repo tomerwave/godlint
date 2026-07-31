@@ -120,6 +120,10 @@ pub struct Rules {
     pub pin_third_party_actions: Option<PinThirdPartyActionsRule>,
     #[serde(rename = "ci/explicit-workflow-permissions")]
     pub explicit_workflow_permissions: Option<ExplicitWorkflowPermissionsRule>,
+    #[serde(rename = "ci/template-injection")]
+    pub template_injection: Option<TemplateInjectionRule>,
+    #[serde(rename = "ci/bot-conditions")]
+    pub bot_conditions: Option<BotConditionsRule>,
     #[serde(flatten)]
     unrecognised: BTreeMap<String, IgnoredAny>,
 }

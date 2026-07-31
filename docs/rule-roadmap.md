@@ -499,7 +499,8 @@ to a run step, which is what `ci/no-pull-request-target-checkout` would need.
 | `ci/pin-third-party-actions` | Shipped | Action fact | High | `trusted-owners`, defaulting to the two GitHub-owned accounts |
 | `ci/explicit-workflow-permissions` | Shipped | Workflow and job facts | High | `require-per-job`, off by default |
 | `ci/require-concurrency-cancel` | Planned | Workflow fact | Medium | Which triggers must cancel in progress |
-| `ci/template-injection` | Planned | Step and expression facts | High | Trusted expression contexts |
+| `ci/template-injection` | Shipped | Step and expression facts | High | `allow-in` path globs |
+| `ci/bot-conditions` | Shipped | Step, job and expression facts | High | `bots`, defaulting to three common identities |
 | `ci/secrets-inherit` | Planned | Job fact | High | Which callees may inherit |
 
 ### Phase 6 — Semantic and external capabilities

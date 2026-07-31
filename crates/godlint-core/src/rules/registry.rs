@@ -2,11 +2,11 @@ use crate::{
     config::{Config, Severity},
     rules::{
         Languages, Rule, accountable_suppression::AccountableSuppression,
-        assertion_required::AssertionRequired, cognitive_complexity::CognitiveComplexity,
-        condition_complexity::ConditionComplexity, decision_complexity::DecisionComplexity,
-        dependency_boundary::DependencyBoundary, direct_environment_read::DirectEnvironmentRead,
-        empty_error_handler::EmptyErrorHandler, empty_function::EmptyFunction,
-        explicit_timer_delay::ExplicitTimerDelay,
+        assertion_required::AssertionRequired, bot_conditions::BotConditions,
+        cognitive_complexity::CognitiveComplexity, condition_complexity::ConditionComplexity,
+        decision_complexity::DecisionComplexity, dependency_boundary::DependencyBoundary,
+        direct_environment_read::DirectEnvironmentRead, empty_error_handler::EmptyErrorHandler,
+        empty_function::EmptyFunction, explicit_timer_delay::ExplicitTimerDelay,
         explicit_workflow_permissions::ExplicitWorkflowPermissions, file_size::FileSize,
         filename_case::FilenameCase, forbidden_dependency::ForbiddenDependency,
         function_nesting::FunctionNesting, function_size::FunctionSize,
@@ -20,8 +20,8 @@ use crate::{
         no_test_helper_in_production::NoTestHelperInProduction, no_weak_hash::NoWeakHash,
         parameter_count::ParameterCount, pin_third_party_actions::PinThirdPartyActions,
         restricted_call::RestrictedCall, restricted_import::RestrictedImport,
-        return_count::ReturnCount, todo_requires_reference::TodoRequiresReference,
-        unused_suppression::UnusedSuppression,
+        return_count::ReturnCount, template_injection::TemplateInjection,
+        todo_requires_reference::TodoRequiresReference, unused_suppression::UnusedSuppression,
     },
 };
 
@@ -180,6 +180,12 @@ severity!(
     PinThirdPartyActions,
     pin_third_party_actions
 );
+severity!(
+    template_injection_severity,
+    TemplateInjection,
+    template_injection
+);
+severity!(bot_conditions_severity, BotConditions, bot_conditions);
 
 const REGISTRATIONS: &[Registration] = &[
     Registration {
@@ -414,6 +420,18 @@ const REGISTRATIONS: &[Registration] = &[
         id: PinThirdPartyActions::ID,
         languages: PinThirdPartyActions::LANGUAGES,
         severity: pin_third_party_actions_severity,
+        suppressible: true,
+    },
+    Registration {
+        id: TemplateInjection::ID,
+        languages: TemplateInjection::LANGUAGES,
+        severity: template_injection_severity,
+        suppressible: true,
+    },
+    Registration {
+        id: BotConditions::ID,
+        languages: BotConditions::LANGUAGES,
+        severity: bot_conditions_severity,
         suppressible: true,
     },
 ];

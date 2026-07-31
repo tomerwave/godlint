@@ -91,6 +91,27 @@ fn expression_context_paths_are_case_insensitive() {
 }
 
 #[test]
+fn reads_a_job_condition_as_its_scalar_range() {
+    let facts = workflow(concat!(
+        "jobs:\n",
+        "  guarded:\n",
+        "    if: ${{ GITHUB.ACTOR == 'dependabot[bot]' }}\n",
+        "    runs-on: ubuntu-latest\n",
+        "    steps: []\n",
+        "  unguarded:\n",
+        "    runs-on: ubuntu-latest\n",
+        "    steps: []\n",
+    ));
+    let condition = facts.jobs()[0].condition().unwrap();
+
+    assert_eq!(
+        &facts.file().text()[condition.start()..condition.end()],
+        "${{ GITHUB.ACTOR == 'dependabot[bot]' }}"
+    );
+    assert_eq!(facts.jobs()[1].condition(), None);
+}
+
+#[test]
 fn finds_both_expressions_on_one_run_line() {
     let facts = workflow(concat!(
         "jobs:\n  build:\n    steps:\n",

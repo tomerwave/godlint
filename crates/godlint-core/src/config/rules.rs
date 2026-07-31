@@ -247,6 +247,22 @@ pub struct PinThirdPartyActionsRule {
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
+pub struct TemplateInjectionRule {
+    pub severity: Severity,
+    #[serde(default, rename = "allow-in")]
+    pub allow_in: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct BotConditionsRule {
+    pub severity: Severity,
+    #[serde(default = "default_bots")]
+    pub bots: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct NoWeakHashRule {
     pub severity: Severity,
     #[serde(default, rename = "allow-in")]
@@ -384,6 +400,14 @@ pub(crate) fn default_test_helpers() -> Vec<String> {
 
 pub(crate) fn default_trusted_owners() -> Vec<String> {
     vec!["actions".into(), "github".into()]
+}
+
+pub(crate) fn default_bots() -> Vec<String> {
+    vec![
+        "dependabot[bot]".into(),
+        "github-actions[bot]".into(),
+        "renovate[bot]".into(),
+    ]
 }
 
 pub(crate) fn default_configuration_paths() -> Vec<String> {

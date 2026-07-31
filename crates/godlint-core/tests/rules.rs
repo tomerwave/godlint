@@ -3,6 +3,9 @@
 #[path = "rules/support.rs"]
 mod support;
 
+#[path = "rules/bot_conditions.rs"]
+mod bot_conditions;
+
 #[path = "rules/accountable_suppression.rs"]
 mod accountable_suppression;
 
@@ -122,6 +125,9 @@ mod restricted_call;
 
 #[path = "rules/todo_requires_reference.rs"]
 mod todo_requires_reference;
+
+#[path = "rules/template_injection.rs"]
+mod template_injection;
 
 #[path = "rules/unused_suppression.rs"]
 mod unused_suppression;

@@ -28,6 +28,7 @@ pub struct JobFact {
     range: SourceRange,
     name: String,
     body: SourceRange,
+    condition: Option<SourceRange>,
     declares_permissions: bool,
     needs: Vec<Setting>,
     secrets: Option<Secrets>,
@@ -67,6 +68,7 @@ pub(crate) struct JobFactDetails {
     pub range: SourceRange,
     pub name: String,
     pub body: SourceRange,
+    pub condition: Option<SourceRange>,
     pub declares_permissions: bool,
     pub needs: Vec<Setting>,
     pub secrets: Option<Secrets>,
@@ -163,6 +165,7 @@ impl JobFact {
             range,
             name,
             body: range,
+            condition: None,
             declares_permissions,
             needs: Vec::new(),
             secrets: None,
@@ -177,6 +180,7 @@ impl JobFact {
             range: details.range,
             name: details.name,
             body: details.body,
+            condition: details.condition,
             declares_permissions: details.declares_permissions,
             needs: details.needs,
             secrets: details.secrets,
@@ -203,6 +207,10 @@ impl JobFact {
 
     pub fn body(&self) -> SourceRange {
         self.body
+    }
+
+    pub fn condition(&self) -> Option<SourceRange> {
+        self.condition
     }
 
     pub fn needs(&self) -> &[Setting] {

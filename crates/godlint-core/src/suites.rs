@@ -1,7 +1,7 @@
 use std::num::NonZeroU32;
 
 use crate::config::{
-    AccountableSuppressionRule, AssertionRequiredRule, CognitiveComplexityRule,
+    AccountableSuppressionRule, AssertionRequiredRule, BotConditionsRule, CognitiveComplexityRule,
     ConditionComplexityRule, DecisionComplexityRule, DependencyBoundaryRule,
     DirectEnvironmentReadRule, EmptyErrorHandlerRule, EmptyFunctionRule, ExplicitTimerDelayRule,
     ExplicitWorkflowPermissionsRule, FilenameCaseRule, ForbiddenDependencyRule,
@@ -11,8 +11,9 @@ use crate::config::{
     NoRandomnessWithoutSeedRule, NoShellCommandRule, NoSkippedTestRule, NoSleepInTestRule,
     NoTestHelperInProductionRule, NoWeakHashRule, ParameterCountRule, PinThirdPartyActionsRule,
     RestrictedCallRule, RestrictedImportRule, ReturnCountRule, Rules, Severity,
-    TodoRequiresReferenceRule, UnusedSuppressionRule, default_configuration_paths, default_markers,
-    default_reference_prefixes, default_test_helpers, default_test_paths, default_trusted_owners,
+    TemplateInjectionRule, TodoRequiresReferenceRule, UnusedSuppressionRule, default_bots,
+    default_configuration_paths, default_markers, default_reference_prefixes, default_test_helpers,
+    default_test_paths, default_trusted_owners,
 };
 
 pub const RECOMMENDED: &str = "recommended@1";
@@ -47,6 +48,18 @@ fn recommended(rules: &mut Rules) {
 }
 
 fn continuous_integration(rules: &mut Rules) {
+    rules
+        .template_injection
+        .get_or_insert(TemplateInjectionRule {
+            severity: Severity::Error,
+            allow_in: Vec::new(),
+        });
+    rules
+        .bot_conditions
+        .get_or_insert_with(|| BotConditionsRule {
+            severity: Severity::Error,
+            bots: default_bots(),
+        });
     rules
         .explicit_workflow_permissions
         .get_or_insert(ExplicitWorkflowPermissionsRule {
