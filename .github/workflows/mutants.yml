@@ -9,6 +9,8 @@ on:
     # keeps the two lists from drifting apart again.
     paths:
       - 'crates/godlint-core/src/analyzers/**'
+      - 'crates/godlint-core/src/facts.rs'
+      - 'crates/godlint-core/src/facts/**'
       - 'crates/godlint-core/src/rules/**'
       - 'crates/godlint-core/src/suppression.rs'
       - '.cargo/mutants.toml'

@@ -7,7 +7,7 @@ use crate::{
         catalogue::{Catalogue, spelled},
         evaluate_call_in_test_rule, when_configured,
     },
-    source::{Dialect, SourceRange},
+    source::{Dialect, SourceRange, range_contains},
 };
 
 const TIMERS: Catalogue = Catalogue(&[
@@ -65,7 +65,7 @@ fn waits_on_a_promise(call: &CallFact, facts: &SourceFacts, name: &str) -> bool 
             .calls()
             .iter()
             .filter(|other| other.callee() == PROMISE)
-            .filter(|promise| wraps(promise.extent(), call.extent()))
+            .filter(|promise| range_contains(promise.extent(), call.extent()))
             .any(|promise| does_nothing_else(facts, promise.extent()))
 }
 
@@ -73,11 +73,7 @@ fn does_nothing_else(facts: &SourceFacts, promise: SourceRange) -> bool {
     facts
         .calls()
         .iter()
-        .filter(|call| call.extent() != promise && wraps(promise, call.extent()))
+        .filter(|call| call.extent() != promise && range_contains(promise, call.extent()))
         .count()
         == 1
-}
-
-fn wraps(outer: SourceRange, inner: SourceRange) -> bool {
-    outer.start() <= inner.start() && inner.end() <= outer.end()
 }
