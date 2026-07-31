@@ -4,6 +4,9 @@ use std::path::PathBuf;
 
 use godlint_core::{analyzers::analyze, facts::CommentKind, source::SourceFile};
 
+#[path = "analyzers/errors.rs"]
+mod errors;
+
 #[path = "analyzers/arguments.rs"]
 mod arguments;
 
