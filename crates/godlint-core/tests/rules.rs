@@ -81,6 +81,9 @@ mod no_randomness_without_seed;
 #[path = "rules/no_shell_command.rs"]
 mod no_shell_command;
 
+#[path = "rules/no_test_helper_in_production.rs"]
+mod no_test_helper_in_production;
+
 #[path = "rules/no_skipped_test.rs"]
 mod no_skipped_test;
 

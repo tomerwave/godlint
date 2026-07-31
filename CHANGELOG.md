@@ -76,6 +76,15 @@ speaks about.
   command with nothing interpolated is reported too: it is not injectable today, but the argument-array
   form is no harder to write, and reporting only interpolated strings would mean deciding what
   interpolation looks like inside an f-string. `allow-in` exempts a release script.
+- `testing/no-test-helper-in-production` — reports a production file importing its own test tree. That
+  ships test scaffolding to users and inverts the dependency, so production depends on the tests, and it
+  breaks any build that excludes them. Only a **local** import counts — `./`, `../`, a bare `.`, or Rust's
+  `crate::`/`super::` — which is what keeps `some-lib/tests/util` silent, since a third-party package's
+  test tree is its own business and cannot be shipped by you. Segments match whole and
+  case-insensitively, so `Tests/` counts and `testing-utils/` does not. A file that is itself a test is
+  exempt, because a test using its own helpers is the arrangement being protected; `test-paths` decides
+  that and defaults to the conventions of all four languages, and `helpers` names the scaffolding
+  segments. Setting either replaces the default rather than adding to it.
 - `testing/assertion-required` — reports a test that asserts nothing. Such a test verifies only that the
   code does not raise, so it passes when the behaviour is wrong, which is the failure a test exists to
   prevent. It reports at **warning** whatever severity is configured, including inside `recommended@1`,
