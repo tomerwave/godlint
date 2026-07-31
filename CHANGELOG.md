@@ -72,7 +72,9 @@ speaks about.
   the attribute's, so it falls inside the test that owns it. The names are explicit sets rather than an
   `assert` prefix, because a prefix
   claims a domain helper called `assert_invariant`. `expect(value).toBe(1)` is one assertion, not two —
-  the matcher is a second call on the same chain. An assertion also carries its own text, so
+  the matcher is a second call on the same chain — but its *range* spans the whole chain, because the
+  matcher is what the assertion checks and without it `expect(v).toBe(1)` and `expect(v).toBeGreaterThan(0)`
+  are indistinguishable. An assertion also carries its own text, so
   `no-duplicate-assertion` can compare two of them. Whether an operand was the *message* is not
   recorded: that needs a per-name arity table for three ecosystems, and a wrong one would demand a
   message from Jest's `expect`, which has none. Three boundaries are deliberate: a path-qualified macro

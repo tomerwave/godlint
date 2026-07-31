@@ -4,12 +4,9 @@ use tree_sitter::{Language as TreeSitterLanguage, Node, Parser};
 
 use crate::{
     facts::{
-        AccessFact, CallArgument, CallFact, CallFactDetails, CallTarget, CommentFact,
-        ConditionFact, ErrorHandlerFact, FunctionFact, FunctionFactDetails, FunctionFactError,
-        ImportFact, TestFact, TestFactDetails, TestFocus,
-        AccessFact, AssertionFact, AssertionFactDetails, CallArgument, CallFact, CallTarget,
-        CommentFact, ConditionFact, ErrorHandlerFact, FunctionFact, FunctionFactDetails,
-        FunctionFactError, ImportFact, TestFact, TestFactDetails, TestFocus,
+        AccessFact, AssertionFact, AssertionFactDetails, CallArgument, CallFact, CallFactDetails,
+        CallTarget, CommentFact, ConditionFact, ErrorHandlerFact, FunctionFact,
+        FunctionFactDetails, FunctionFactError, ImportFact, TestFact, TestFactDetails, TestFocus,
     },
     source::{Language, SourceFile, SourceFileError, SourceRange},
 };

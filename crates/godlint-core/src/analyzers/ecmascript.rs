@@ -247,11 +247,31 @@ fn assertion<'tree>(node: Node<'tree>, source: &str) -> Option<Assertion<'tree>>
     let text = source.get(callee.byte_range())?.replace("?.", ".");
 
     names_an_assertion(&text).then(|| Assertion {
-        node,
+        node: chained(node),
         is_macro: false,
         operands: argument_operands(node),
         name: text,
     })
+}
+
+fn chained(node: Node<'_>) -> Node<'_> {
+    let mut outermost = node;
+
+    while let Some(parent) = outermost.parent() {
+        let carried = match parent.kind() {
+            "member_expression" => parent.child_by_field_name("object"),
+            "call_expression" => parent.child_by_field_name("function"),
+            _ => None,
+        };
+
+        if carried != Some(outermost) {
+            break;
+        }
+
+        outermost = parent;
+    }
+
+    outermost
 }
 
 const ASSERTING: [&str; 3] = ["expect", "expectTypeOf", "assertType"];

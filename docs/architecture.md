@@ -116,6 +116,13 @@ assertion is `expect`, a type assertion such as `expectTypeOf` or `assertType`, 
 so the fact reads the callee. Type assertions are in that list because a typed suite may have no other
 kind: measured against zod, they account for most of what its tests assert.
 
+A JavaScript assertion's range spans the whole chain — `expect(total).toBe(100)`, not just
+`expect(total)` — while its operand count still belongs to the `expect` call. The two differ because the
+matcher is what the assertion actually checks: without the wider range, `expect(total).toBe(100)` and
+`expect(total).toBeGreaterThan(50)` have identical text, and `no-duplicate-assertion` reports the second
+as a repeat of the first. The climb stops as soon as the assertion is no longer in the callee or object
+position, so an assertion passed as an argument does not swallow the call it is passed to.
+
 Two choices in that matching are deliberate. The names are explicit sets rather than an `assert`
 prefix, because a prefix silently claims a domain helper called `assert_invariant`, and #90 rejected
 that before the code was written; a test asserts exactly that. And `expect(value).toBe(1)` produces one

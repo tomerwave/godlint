@@ -303,6 +303,41 @@ fn reads_a_type_level_assertion() {
 }
 
 #[test]
+fn a_javascript_assertions_text_spans_the_whole_chain() {
+    let facts = analyze(&source(
+        "a.spec.ts",
+        "it('a', () => {\n  expect(total).toBe(100);\n});\n",
+    ))
+    .unwrap_or_else(|error| panic!("analyzes: {error}"));
+
+    assert_eq!(
+        facts.assertions()[0].text(),
+        "expect(total).toBe(100)",
+        "the matcher is what the assertion checks, so two matchers on one value are two assertions"
+    );
+    assert_eq!(
+        facts.assertions()[0].operands(),
+        1,
+        "and the operand count still belongs to expect, not to the matcher"
+    );
+}
+
+#[test]
+fn a_chain_stops_where_the_assertion_stops() {
+    let facts = analyze(&source(
+        "a.spec.ts",
+        "it('a', () => {\n  record(expect(total).toBe(100));\n});\n",
+    ))
+    .unwrap_or_else(|error| panic!("analyzes: {error}"));
+
+    assert_eq!(
+        facts.assertions()[0].text(),
+        "expect(total).toBe(100)",
+        "an assertion passed as an argument does not swallow the call it is passed to"
+    );
+}
+
+#[test]
 fn treats_an_optional_call_as_the_same_assertion() {
     assert_eq!(
         names(
