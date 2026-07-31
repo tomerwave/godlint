@@ -1,6 +1,6 @@
 # Rule reference
 
-Thirty-seven rules are implemented. Every one has an identifier of the form `family/name`, which is
+Thirty-eight rules are implemented. Every one has an identifier of the form `family/name`, which is
 what a configuration entry and a suppression directive both name. [The rule roadmap](rule-roadmap.md)
 records the families still to come, and the reasoning behind each threshold `recommended@1` sets.
 [Language support](#language-support) records which languages each rule covers.
@@ -11,45 +11,53 @@ A rule sees a *dialect* rather than a language: TypeScript is read by the JavaSc
 rule covers one of them without the other. Three dialects are analysed, and `✓` means the rule is
 enforced there.
 
-| Rule | JS/TS | Python | Rust |
-| --- | --- | --- | --- |
-| `architecture/dependency-boundary` | ✓ | ✓ | ✓ |
-| `architecture/filename-case` | ✓ | ✓ | ✓ |
-| `architecture/module-independence` | ✓ | ✓ | ✓ |
-| `architecture/no-internal-import` | ✓ | ✓ | — |
-| `architecture/restricted-call` | ✓ | ✓ | ✓ |
-| `architecture/restricted-import` | ✓ | ✓ | ✓ |
-| `logging/no-production-log` | ✓ | ✓ | ✓ |
-| `maintainability/cognitive-complexity` | ✓ | ✓ | ✓ |
-| `maintainability/condition-complexity` | ✓ | ✓ | ✓ |
-| `maintainability/decision-complexity` | ✓ | ✓ | ✓ |
-| `maintainability/empty-function` | ✓ | ✓ | ✓ |
-| `maintainability/file-size` | ✓ | ✓ | ✓ |
-| `maintainability/function-nesting` | ✓ | ✓ | ✓ |
-| `maintainability/function-size` | ✓ | ✓ | ✓ |
-| `maintainability/function-statements` | ✓ | ✓ | ✓ |
-| `maintainability/parameter-count` | ✓ | ✓ | ✓ |
-| `maintainability/return-count` | ✓ | ✓ | ✓ |
-| `policy/accountable-suppression` | ✓ | ✓ | ✓ |
-| `policy/todo-requires-reference` | ✓ | ✓ | ✓ |
-| `policy/unused-suppression` | ✓ | ✓ | ✓ |
-| `reliability/empty-error-handler` | ✓ | ✓ | — |
-| `reliability/explicit-timer-delay` | ✓ | — | — |
-| `security/direct-environment-read` | ✓ | ✓ | ✓ |
-| `security/forbidden-dependency` | ✓ | ✓ | ✓ |
-| `security/no-dynamic-execution` | ✓ | ✓ | — |
-| `security/no-insecure-random` | ✓ | ✓ | ✓ |
-| `security/no-shell-command` | ✓ | ✓ | ✓ |
-| `security/no-weak-hash` | ✓ | ✓ | ✓ |
-| `style/no-comments` | ✓ | ✓ | ✓ |
-| `testing/assertion-required` | ✓ | ✓ | ✓ |
-| `testing/no-empty-test` | ✓ | ✓ | ✓ |
-| `testing/no-focused-test` | ✓ | — | — |
-| `testing/no-network-in-unit-test` | ✓ | ✓ | ✓ |
-| `testing/no-randomness-without-seed` | ✓ | ✓ | ✓ |
-| `testing/no-skipped-test` | ✓ | ✓ | ✓ |
-| `testing/no-sleep-in-test` | ✓ | ✓ | ✓ |
-| `testing/no-test-helper-in-production` | ✓ | ✓ | ✓ |
+| Rule | JS/TS | Python | Rust | Workflow |
+| --- | --- | --- | --- | --- |
+| `architecture/dependency-boundary` | ✓ | ✓ | ✓ | — |
+| `architecture/filename-case` | ✓ | ✓ | ✓ | — |
+| `architecture/module-independence` | ✓ | ✓ | ✓ | — |
+| `architecture/no-internal-import` | ✓ | ✓ | — | — |
+| `architecture/restricted-call` | ✓ | ✓ | ✓ | — |
+| `architecture/restricted-import` | ✓ | ✓ | ✓ | — |
+| `ci/pin-third-party-actions` | — | — | — | ✓ |
+| `logging/no-production-log` | ✓ | ✓ | ✓ | — |
+| `maintainability/cognitive-complexity` | ✓ | ✓ | ✓ | — |
+| `maintainability/condition-complexity` | ✓ | ✓ | ✓ | — |
+| `maintainability/decision-complexity` | ✓ | ✓ | ✓ | — |
+| `maintainability/empty-function` | ✓ | ✓ | ✓ | — |
+| `maintainability/file-size` | ✓ | ✓ | ✓ | — |
+| `maintainability/function-nesting` | ✓ | ✓ | ✓ | — |
+| `maintainability/function-size` | ✓ | ✓ | ✓ | — |
+| `maintainability/function-statements` | ✓ | ✓ | ✓ | — |
+| `maintainability/parameter-count` | ✓ | ✓ | ✓ | — |
+| `maintainability/return-count` | ✓ | ✓ | ✓ | — |
+| `policy/accountable-suppression` | ✓ | ✓ | ✓ | — |
+| `policy/todo-requires-reference` | ✓ | ✓ | ✓ | — |
+| `policy/unused-suppression` | ✓ | ✓ | ✓ | — |
+| `reliability/empty-error-handler` | ✓ | ✓ | — | — |
+| `reliability/explicit-timer-delay` | ✓ | — | — | — |
+| `security/direct-environment-read` | ✓ | ✓ | ✓ | — |
+| `security/forbidden-dependency` | ✓ | ✓ | ✓ | — |
+| `security/no-dynamic-execution` | ✓ | ✓ | — | — |
+| `security/no-insecure-random` | ✓ | ✓ | ✓ | — |
+| `security/no-shell-command` | ✓ | ✓ | ✓ | — |
+| `security/no-weak-hash` | ✓ | ✓ | ✓ | — |
+| `style/no-comments` | ✓ | ✓ | ✓ | — |
+| `testing/assertion-required` | ✓ | ✓ | ✓ | — |
+| `testing/no-empty-test` | ✓ | ✓ | ✓ | — |
+| `testing/no-focused-test` | ✓ | — | — | — |
+| `testing/no-network-in-unit-test` | ✓ | ✓ | ✓ | — |
+| `testing/no-randomness-without-seed` | ✓ | ✓ | ✓ | — |
+| `testing/no-skipped-test` | ✓ | ✓ | ✓ | — |
+| `testing/no-sleep-in-test` | ✓ | ✓ | ✓ | — |
+| `testing/no-test-helper-in-production` | ✓ | ✓ | ✓ | — |
+
+The `Workflow` column is GitHub Actions YAML rather than a programming language, and it is in the same
+table because it answers the same question: *does this rule read that?* No rule reads both. A workflow
+has no functions and no imports, and source has no jobs and no `uses:` references, so every source rule
+is absent from the `Workflow` column and every `ci/` rule is absent from the other three.
+`a_rule_reads_workflows_or_source_and_never_both` in `crates/godlint-core/tests/languages.rs` holds the
+two apart.
 
 `—` means the dialect has no such construct: Rust has no `catch` block for `empty-error-handler` to
 find empty, no `.only` marker for `no-focused-test`, and no way to import another crate's internals for
@@ -159,6 +167,32 @@ program Godlint cannot read is left alone.
 A literal command with nothing interpolated is reported too. It is not injectable today, but the
 argument-array form is no harder to write, and a rule that reports only interpolated strings would
 have to decide what interpolation looks like inside an f-string.
+
+## Continuous integration
+
+| Rule | What it reports |
+| --- | --- |
+| `ci/pin-third-party-actions` | A workflow step using a third-party action at a ref that can move |
+
+A `uses:` reference names either a commit or something mutable. A tag, a branch and a version string can
+all be repointed by whoever owns the action, and whatever they point at next runs inside your workflow
+with your token — so this is the one supply-chain hole in CI with a one-line fix. Only a full
+forty-character commit SHA counts as pinned; a short SHA does not, because it is neither what GitHub
+resolves nor collision-resistant.
+
+Three references are nobody else's code and are silent: a local `./path` action, a `docker://` image,
+and anything whose owner is listed in `trusted-owners`. That list defaults to `actions` and `github`,
+the two accounts GitHub itself publishes from, because a repository that pins those as well is making a
+policy decision rather than closing a hole — set `trusted-owners: []` to require every action to be
+pinned, including GitHub's own.
+
+A reference with no version at all reports a different message, because it is a different mistake: it
+runs whatever the action's default branch holds today.
+
+Godlint reads `.github/workflows/*.yml` with a YAML grammar rather than by matching text, so a `uses:`
+inside a comment, inside a string, or in a step *named* `uses:` is not a use. A workflow removed by an
+`exclude` glob is not read at all, which is the only way to silence this rule today: an inline
+suppression cannot reach it, because comment facts come from source files and not from YAML.
 
 ## Reliability
 

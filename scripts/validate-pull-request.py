@@ -183,13 +183,15 @@ DIALECTS = {
     "py": "Python",
     "pyi": "Python",
     "rs": "Rust",
+    "yml": "Workflow",
+    "yaml": "Workflow",
 }
 
 ANALYSED = "✓"
 
 # The columns the matrix must carry, in order, so that no other table in the document can
 # be read as the matrix.
-DIALECT_COLUMNS = ("JS/TS", "Python", "Rust")
+DIALECT_COLUMNS = ("JS/TS", "Python", "Rust", "Workflow")
 
 REPORTED = re.compile(r"^\s*(\S+?):\d+:\d+: \w+\[([a-z-]+/[a-z-]+)\]")
 

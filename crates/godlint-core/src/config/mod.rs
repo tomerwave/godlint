@@ -114,6 +114,8 @@ pub struct Rules {
     pub forbidden_dependency: Option<ForbiddenDependencyRule>,
     #[serde(rename = "architecture/filename-case")]
     pub filename_case: Option<FilenameCaseRule>,
+    #[serde(rename = "ci/pin-third-party-actions")]
+    pub pin_third_party_actions: Option<PinThirdPartyActionsRule>,
     #[serde(flatten)]
     unrecognised: BTreeMap<String, IgnoredAny>,
 }
@@ -351,6 +353,14 @@ pub struct NoRandomnessWithoutSeedRule {
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
+pub struct PinThirdPartyActionsRule {
+    pub severity: Severity,
+    #[serde(default = "default_trusted_owners", rename = "trusted-owners")]
+    pub trusted_owners: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct NoWeakHashRule {
     pub severity: Severity,
     #[serde(default, rename = "allow-in")]
@@ -484,6 +494,10 @@ pub(crate) fn default_test_helpers() -> Vec<String> {
         "mocks".into(),
         "conftest".into(),
     ]
+}
+
+pub(crate) fn default_trusted_owners() -> Vec<String> {
+    vec!["actions".into(), "github".into()]
 }
 
 pub(crate) fn default_configuration_paths() -> Vec<String> {

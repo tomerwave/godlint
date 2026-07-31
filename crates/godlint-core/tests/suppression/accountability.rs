@@ -49,7 +49,7 @@ fn a_next_line_directive_reaches_past_the_end_of_its_own_comment() {
         "/*\ngodlint-ignore-next-line maintainability/empty-function -- reason\n*/\nfn a() {}\n",
     );
     let body = "version: 1\nrules:\n  maintainability/empty-function:\n    severity: error\n";
-    let findings = evaluate(std::slice::from_ref(&source), &config(body), today());
+    let findings = evaluate(std::slice::from_ref(&source), &[], &config(body), today());
 
     assert!(
         findings.is_empty(),
@@ -85,7 +85,7 @@ fn suppresses_only_the_rule_the_directive_names() {
         "src/example.rs",
         "// godlint-ignore-next-line maintainability/empty-function -- named\nfn a() { if true {} }\n",
     );
-    let findings = evaluate(std::slice::from_ref(&source), &config(body), today());
+    let findings = evaluate(std::slice::from_ref(&source), &[], &config(body), today());
 
     assert_eq!(findings.len(), 1);
     assert_eq!(findings[0].rule_id, "maintainability/function-nesting");
@@ -98,7 +98,7 @@ fn a_directive_for_a_rule_that_is_off_suppresses_nothing_visible() {
         "src/example.rs",
         "// godlint-ignore-next-line maintainability/empty-function -- named\nfn a() {}\n",
     );
-    let findings = evaluate(std::slice::from_ref(&source), &config(body), today());
+    let findings = evaluate(std::slice::from_ref(&source), &[], &config(body), today());
 
     assert!(findings.is_empty());
 }
@@ -113,7 +113,7 @@ fn a_suppression_does_not_reach_another_file() {
         ),
         facts("src/b.rs", "fn b() {}\n"),
     ];
-    let findings = evaluate(&sources, &config(body), today());
+    let findings = evaluate(&sources, &[], &config(body), today());
 
     assert_eq!(findings.len(), 1);
     assert_eq!(findings[0].path, PathBuf::from("src/b.rs"));
@@ -126,7 +126,7 @@ fn the_accountability_rule_reports_even_when_every_other_rule_is_silent() {
         "src/example.rs",
         "// godlint-ignore-next-line maintainability/empty-function\nfn a() {}\n",
     );
-    let findings = evaluate(std::slice::from_ref(&source), &config(body), today());
+    let findings = evaluate(std::slice::from_ref(&source), &[], &config(body), today());
 
     assert_eq!(findings.len(), 1);
     assert_eq!(findings[0].rule_id, "policy/accountable-suppression");
@@ -155,7 +155,7 @@ fn a_multiline_docstring_directive_reaches_past_the_closing_delimiter() {
     );
     let body = "version: 1\nrules:\n  maintainability/empty-function:\n    severity: error\n  \
                 style/no-comments:\n    severity: error\n    allow-doc-comments: false\n";
-    let findings = evaluate(std::slice::from_ref(&source), &config(body), today());
+    let findings = evaluate(std::slice::from_ref(&source), &[], &config(body), today());
 
     assert!(
         findings.is_empty(),

@@ -31,7 +31,7 @@ pub(super) fn config(body: &str) -> Config {
 pub(super) fn surviving(path: &str, source: &str, body: &str) -> Vec<(usize, usize)> {
     let facts = facts(path, source);
 
-    evaluate(std::slice::from_ref(&facts), &config(body), today())
+    evaluate(std::slice::from_ref(&facts), &[], &config(body), today())
         .iter()
         .map(|finding| (finding.line, finding.column))
         .collect()

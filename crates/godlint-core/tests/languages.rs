@@ -137,7 +137,35 @@ fn a_declaration_names_only_the_dialects_a_rule_cannot_cover() {
     assert!(
         Dialect::EVERY
             .iter()
-            .all(|dialect| Languages::EVERY.analyses(*dialect)),
-        "the default declaration must claim every dialect"
+            .filter(|dialect| **dialect != Dialect::Workflow)
+            .all(|dialect| Languages::EVERY_LANGUAGE.analyses(*dialect)),
+        "the default declaration must claim every language"
     );
+    assert!(
+        !Languages::EVERY_LANGUAGE.analyses(Dialect::Workflow),
+        "a workflow is not a language, so claiming every language must not claim it"
+    );
+}
+
+#[test]
+fn a_rule_reads_workflows_or_source_and_never_both() {
+    for rule in rule_ids() {
+        let languages = rule_languages(rule).expect("registered rule");
+        let reads_workflows = languages.analyses(Dialect::Workflow);
+        let reads_source = Dialect::EVERY
+            .iter()
+            .filter(|dialect| **dialect != Dialect::Workflow)
+            .any(|dialect| languages.analyses(*dialect));
+
+        assert_ne!(
+            reads_workflows, reads_source,
+            "{rule} must read one subject or the other; a workflow has no functions and \
+             source has no jobs"
+        );
+        assert_eq!(
+            reads_workflows,
+            rule.starts_with("ci/"),
+            "{rule} and the ci/ family must agree about whether it reads workflows"
+        );
+    }
 }

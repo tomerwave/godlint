@@ -104,6 +104,8 @@ fixture_tests! {
     no_weak_hash_clean => "no-weak-hash-clean",
     explicit_timer_delay_clean => "explicit-timer-delay-clean",
     empty_error_handler_clean => "empty-error-handler-clean",
+    pin_third_party_actions => "pin-third-party-actions",
+    pin_third_party_actions_clean => "pin-third-party-actions-clean",
     rust_try_operator => "rust-try-operator",
     severity_below_threshold => "severity-below-threshold",
     suppression_applies => "suppression-applies",

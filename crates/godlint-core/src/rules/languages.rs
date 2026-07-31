@@ -10,7 +10,13 @@ pub enum Absence {
 pub struct Languages(&'static [(Dialect, Absence)]);
 
 impl Languages {
-    pub const EVERY: Self = Self(&[]);
+    pub const EVERY_LANGUAGE: Self = Self(&[(Dialect::Workflow, Absence::NoSuchConstruct)]);
+
+    pub const WORKFLOWS: Self = Self(&[
+        (Dialect::JavaScript, Absence::NoSuchConstruct),
+        (Dialect::Python, Absence::NoSuchConstruct),
+        (Dialect::Rust, Absence::NoSuchConstruct),
+    ]);
 
     pub const fn all_but(absent: &'static [(Dialect, Absence)]) -> Self {
         Self(absent)

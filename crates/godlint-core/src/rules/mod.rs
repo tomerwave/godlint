@@ -1,11 +1,11 @@
 use std::{fmt, path::PathBuf};
 
 use crate::{
-    analyzers::SourceFacts,
+    analyzers::{SourceFacts, workflow::WorkflowFacts},
     config::{Config, Severity},
     date::Date,
     facts::{CommentFact, FunctionFact},
-    source::{SourceFile, SourceRange},
+    source::{SourceFile, SourceRange, TextFile},
     suppression::{self, Suppression},
 };
 
@@ -46,14 +46,16 @@ pub mod no_sleep_in_test;
 pub mod no_test_helper_in_production;
 pub mod no_weak_hash;
 pub mod parameter_count;
+pub mod pin_third_party_actions;
 mod reference;
 mod scoped;
 mod violation;
 
 pub use reference::{
-    AccessRule, CallInTestRule, CallRule, ConditionRule, ErrorHandlerRule, ImportRule, TestRule,
-    evaluate_access_rule, evaluate_call_in_test_rule, evaluate_call_rule, evaluate_condition_rule,
-    evaluate_error_handler_rule, evaluate_import_rule, evaluate_test_rule,
+    AccessRule, ActionRule, CallInTestRule, CallRule, ConditionRule, ErrorHandlerRule, ImportRule,
+    TestRule, evaluate_access_rule, evaluate_action_rule, evaluate_call_in_test_rule,
+    evaluate_call_rule, evaluate_condition_rule, evaluate_error_handler_rule, evaluate_import_rule,
+    evaluate_test_rule,
 };
 mod registry;
 pub mod restricted_call;
@@ -158,7 +160,7 @@ impl Finding {
 pub trait Rule {
     const ID: &'static str;
 
-    const LANGUAGES: Languages = Languages::EVERY;
+    const LANGUAGES: Languages = Languages::EVERY_LANGUAGE;
 
     type Configuration;
 
@@ -222,7 +224,13 @@ pub fn evaluate_suppression_rule<R: SuppressionRule>(
         suppressions.iter().flat_map(move |suppression| {
             R::check(suppression, configuration, today)
                 .into_iter()
-                .map(move |violation| (suppression.source(), suppression.range(), violation))
+                .map(move |violation| {
+                    (
+                        suppression.source().text_file(),
+                        suppression.range(),
+                        violation,
+                    )
+                })
         }),
     )
 }
@@ -259,7 +267,7 @@ pub fn evaluate_function_limit_rule<R: FunctionLimitRule>(
 
 pub(crate) fn report<'a>(
     reporting: Reporting,
-    reported: impl IntoIterator<Item = (&'a SourceFile, SourceRange, Violation)>,
+    reported: impl IntoIterator<Item = (&'a TextFile, SourceRange, Violation)>,
 ) -> Vec<Finding> {
     if reporting.severity == Severity::Off {
         return Vec::new();
@@ -267,7 +275,7 @@ pub(crate) fn report<'a>(
 
     reported
         .into_iter()
-        .map(|(source, range, violation)| finding(source, range, reporting, violation))
+        .map(|(file, range, violation)| finding(file, range, reporting, violation))
         .collect()
 }
 
@@ -288,7 +296,7 @@ where
             items(source).iter().flat_map(move |item| {
                 check(item, source)
                     .into_iter()
-                    .map(move |(range, violation)| (source.source(), range, violation))
+                    .map(move |(range, violation)| (source.source().text_file(), range, violation))
             })
         }),
     )
@@ -338,7 +346,8 @@ fn evaluate_files(
         facts.iter().filter_map(move |source_facts| {
             let source = source_facts.source();
 
-            check(source_facts).map(|violation| (source, source.full_range(), violation))
+            check(source_facts)
+                .map(|violation| (source.text_file(), source.full_range(), violation))
         }),
     )
 }
@@ -380,16 +389,16 @@ impl Reporting {
 }
 
 fn finding(
-    source: &SourceFile,
+    file: &TextFile,
     range: SourceRange,
     reporting: Reporting,
     violation: Violation,
 ) -> Finding {
-    let location = source.location(range);
+    let location = file.location(range);
     let severity = reporting.severity.min(violation.cap());
 
     Finding {
-        path: source.path().to_path_buf(),
+        path: file.path().to_path_buf(),
         range,
         line: location.start.line,
         column: location.start.column,
@@ -400,6 +409,10 @@ fn finding(
 }
 
 type Evaluator = fn(&[SourceFacts], &Config) -> Vec<Finding>;
+
+type WorkflowEvaluator = fn(&[WorkflowFacts], &Config) -> Vec<Finding>;
+
+const WORKFLOW_EVALUATORS: &[WorkflowEvaluator] = &[pin_third_party_actions::evaluate];
 
 const EVALUATORS: &[Evaluator] = &[
     function_size::evaluate,
@@ -439,12 +452,21 @@ const EVALUATORS: &[Evaluator] = &[
     filename_case::evaluate,
 ];
 
-pub fn evaluate(facts: &[SourceFacts], config: &Config, today: Date) -> Vec<Finding> {
+pub fn evaluate(
+    facts: &[SourceFacts],
+    workflows: &[WorkflowFacts],
+    config: &Config,
+    today: Date,
+) -> Vec<Finding> {
     let suppressions = suppression::collect(facts);
     let mut findings = Vec::new();
 
     for evaluate_rule in EVALUATORS {
         findings.extend(evaluate_rule(facts, config));
+    }
+
+    for evaluate_rule in WORKFLOW_EVALUATORS {
+        findings.extend(evaluate_rule(workflows, config));
     }
 
     let raw_findings = findings;
