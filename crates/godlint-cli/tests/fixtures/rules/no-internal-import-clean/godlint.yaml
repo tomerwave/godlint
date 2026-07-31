@@ -1,0 +1,7 @@
+version: 1
+
+rules:
+  architecture/no-internal-import:
+    severity: error
+    allow:
+      - vendor-lib/**

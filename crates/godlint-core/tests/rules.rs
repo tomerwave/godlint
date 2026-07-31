@@ -78,6 +78,9 @@ mod no_network_in_unit_test;
 #[path = "rules/no_randomness_without_seed.rs"]
 mod no_randomness_without_seed;
 
+#[path = "rules/no_internal_import.rs"]
+mod no_internal_import;
+
 #[path = "rules/no_shell_command.rs"]
 mod no_shell_command;
 

@@ -61,6 +61,19 @@ speaks about.
   TypeScript, `#[ignore]` beside `#[test]` in Rust in either order, and a `pytest.mark.skip` or
   `unittest.skip` decorator in Python. A skipped test rots without anything noticing, so the rule asks
   for it to be deleted, fixed, or suppressed with an owner and an expiry.
+- `architecture/no-internal-import` — reports an import that reaches past a package's public surface,
+  coupling you to something nobody promised to keep. It reads the import path and nothing else, so a
+  marker counts only after the first segment: `some-lib/src/deep` is reported and `src/utils`, a path
+  alias to your own code, is not; `package._private.helpers` is reported and `from __future__ import
+  annotations` is not. A relative import is always silent, because your own internals are yours to reach
+  into. Two tiers: `internal`, `private`, `impl` and a Python `_` prefix say the author did not mean this
+  for you and report at error, while `dist`, `src` and `build` merely name build output that some
+  packages publish as their documented entry, so they report at warning; a path naming both is certain.
+  Rust is out of scope — module privacy there is enforced by the compiler, so a module you can import is
+  one its author made public. Two segment shapes are exempt for reasons that are not conventions: a scoped
+  package's name spans two segments, so `@scope/internal` may be the whole package, and a Python
+  `__dunder__` is a language protocol rather than an author's decision, so `import package.__main__` is
+  silent. `allow` exempts a module the project must reach into.
 - `security/no-shell-command` — reports a command run through a shell, where any interpolated value
   becomes executable. The three languages put the defect in three different places, so the rule reads
   three signals. Python's callee is innocent and the argument is the finding, so the check is callee-blind — any call

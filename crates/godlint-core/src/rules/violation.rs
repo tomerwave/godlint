@@ -59,6 +59,11 @@ pub enum Violation {
         module: String,
         segment: String,
     },
+    InternalImport {
+        module: String,
+        marker: String,
+        certain: bool,
+    },
     SleepInTest {
         callee: String,
     },
@@ -173,6 +178,11 @@ const TEST_HELPER: &str = concat!(
     "keep the fake in the tests and take an interface here."
 );
 
+const INTERNAL_IMPORT: &str = concat!(
+    "reaches past the package's public surface, so nothing promises it will keep working; import ",
+    "from the entry point instead."
+);
+
 const COMMENT_NOT_PERMITTED: &str = "Comment is not permitted; express the intent in the code.";
 
 fn unverified_hash(formatter: &mut fmt::Formatter<'_>, callee: &str) -> fmt::Result {
@@ -220,6 +230,13 @@ fn test_helper(formatter: &mut fmt::Formatter<'_>, module: &str, segment: &str) 
     write!(formatter, "{module} names {segment}, {TEST_HELPER}")
 }
 
+fn internal_import(formatter: &mut fmt::Formatter<'_>, module: &str, marker: &str) -> fmt::Result {
+    write!(
+        formatter,
+        "{module} names {marker}, which {INTERNAL_IMPORT}"
+    )
+}
+
 fn insecure_random(formatter: &mut fmt::Formatter<'_>, callee: &str, secure: &str) -> fmt::Result {
     write!(
         formatter,
@@ -230,6 +247,7 @@ fn insecure_random(formatter: &mut fmt::Formatter<'_>, callee: &str, secure: &st
 impl Violation {
     pub(crate) fn cap(&self) -> Severity {
         match self {
+            Self::InternalImport { certain: false, .. } => Severity::Warning,
             Self::MissingAssertion | Self::UnverifiedHash { .. } => Severity::Warning,
             _ => Severity::Error,
         }
@@ -275,6 +293,9 @@ impl fmt::Display for Violation {
             Self::ShellCommand { shell } => write!(formatter, "{shell} {SHELL_COMMAND}"),
             Self::TestHelperInProduction { module, segment } => {
                 test_helper(formatter, module, segment)
+            }
+            Self::InternalImport { module, marker, .. } => {
+                internal_import(formatter, module, marker)
             }
             Self::SleepInTest { callee } => write!(formatter, "{callee} {SLEEP_IN_TEST}"),
             Self::UnseededRandom { callee, remedy } => unseeded(formatter, callee, remedy),

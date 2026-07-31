@@ -89,6 +89,8 @@ pub struct Rules {
     pub no_skipped_test: Option<NoSkippedTestRule>,
     #[serde(rename = "testing/no-test-helper-in-production")]
     pub no_test_helper_in_production: Option<NoTestHelperInProductionRule>,
+    #[serde(rename = "architecture/no-internal-import")]
+    pub no_internal_import: Option<NoInternalImportRule>,
     #[serde(rename = "security/no-shell-command")]
     pub no_shell_command: Option<NoShellCommandRule>,
     #[serde(rename = "testing/no-sleep-in-test")]
@@ -298,6 +300,14 @@ pub struct NoTestHelperInProductionRule {
     pub test_paths: Vec<String>,
     #[serde(default = "default_test_helpers")]
     pub helpers: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct NoInternalImportRule {
+    pub severity: Severity,
+    #[serde(default)]
+    pub allow: Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]

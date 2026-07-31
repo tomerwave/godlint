@@ -1,0 +1,8 @@
+exit-code: 1
+
+stdout: |
+  example.py:1:6: error[architecture/no-internal-import] package._private.helpers names _private, which reaches past the package's public surface, so nothing promises it will keep working; import from the entry point instead.
+  example.py:2:6: error[architecture/no-internal-import] package.impl.engine names impl, which reaches past the package's public surface, so nothing promises it will keep working; import from the entry point instead.
+  example.ts:1:24: error[architecture/no-internal-import] some-lib/dist/internal/parser names internal, which reaches past the package's public surface, so nothing promises it will keep working; import from the entry point instead.
+  example.ts:2:23: warning[architecture/no-internal-import] @scope/pkg/src/deep names src, which reaches past the package's public surface, so nothing promises it will keep working; import from the entry point instead.
+stderr: ""
