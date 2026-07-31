@@ -6,9 +6,9 @@ use std::{
 };
 
 use crate::{
-    analyzers::{SourceFacts, analyze},
+    analyzers::{SourceFacts, analyze, workflow},
     discovery::{DiscoveryError, Scope, discover},
-    source::SourceFile,
+    source::{SourceFile, TextFile, Workflow},
 };
 
 pub const MAX_SOURCE_BYTES: u64 = 4 * 1024 * 1024;
@@ -23,6 +23,7 @@ pub struct ScanIssue {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ScanReport {
     pub facts: Vec<SourceFacts>,
+    pub workflows: Vec<workflow::WorkflowFacts>,
     pub issues: Vec<ScanIssue>,
 }
 
@@ -38,6 +39,7 @@ pub fn scan(root: &Path, paths: &[PathBuf], excludes: &[String]) -> Result<ScanR
         discover(paths, &scope).map_err(|source| ScanError::DiscoversFiles { source })?;
     let mut report = ScanReport {
         facts: Vec::new(),
+        workflows: Vec::new(),
         issues: discovery_issues(root, discovered.failures),
     };
 
@@ -73,6 +75,18 @@ fn scan_file(root: &Path, path: &Path, report: &mut ScanReport) -> Result<(), Sc
             path: path.to_path_buf(),
         })?
         .to_path_buf();
+
+    if Workflow::names(path) {
+        match read_workflow(relative_path.clone(), path) {
+            Ok(facts) => report.workflows.push(facts),
+            Err(message) => report.issues.push(ScanIssue {
+                path: relative_path,
+                message,
+            }),
+        }
+
+        return Ok(());
+    }
 
     match read_facts(relative_path.clone(), path) {
         Ok(facts) => {
@@ -112,6 +126,14 @@ fn read_facts(relative_path: PathBuf, path: &Path) -> Result<SourceFacts, String
         .map_err(|error| format!("invalid source: {error}"))?;
 
     analyze(&source).map_err(|error| error.to_string())
+}
+
+fn read_workflow(relative_path: PathBuf, path: &Path) -> Result<workflow::WorkflowFacts, String> {
+    let contents = read_bounded(path)?;
+    let file = TextFile::new(relative_path, contents)
+        .map_err(|error| format!("invalid workflow: {error}"))?;
+
+    workflow::read(&file).map_err(|error| error.to_string())
 }
 
 fn read_bounded(path: &Path) -> Result<String, String> {

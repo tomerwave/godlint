@@ -15,6 +15,8 @@ pub enum Language {
     TypeScript,
 }
 
+pub struct Workflow;
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Dialect {
     JavaScript,
@@ -23,12 +25,17 @@ pub enum Dialect {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct SourceFile {
+pub struct TextFile {
     path: Arc<Path>,
     path_text: Arc<str>,
-    language: Language,
-    source: Arc<str>,
+    text: Arc<str>,
     line_starts: Arc<[usize]>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SourceFile {
+    text: TextFile,
+    language: Language,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -81,6 +88,29 @@ impl Language {
     }
 }
 
+impl Workflow {
+    const DIRECTORY: &'static str = ".github/workflows";
+    const EXTENSIONS: [&'static str; 2] = ["yaml", "yml"];
+
+    pub fn names(path: &Path) -> bool {
+        let text = paths::slashed(&path.to_string_lossy()).into_owned();
+        let extension = path
+            .extension()
+            .and_then(|extension| extension.to_str())
+            .unwrap_or_default();
+
+        Self::EXTENSIONS.contains(&extension) && names_a_workflow_directory(&text)
+    }
+}
+
+fn names_a_workflow_directory(text: &str) -> bool {
+    let Some(directory) = text.rsplit_once('/').map(|(directory, _)| directory) else {
+        return false;
+    };
+
+    directory == Workflow::DIRECTORY || directory.ends_with(&format!("/{}", Workflow::DIRECTORY))
+}
+
 impl Dialect {
     pub const EVERY: [Self; 3] = [Self::JavaScript, Self::Python, Self::Rust];
 
@@ -93,30 +123,20 @@ impl Dialect {
     }
 }
 
-impl SourceFile {
-    pub fn new(path: PathBuf, source: String) -> Result<Self, SourceFileError> {
+impl TextFile {
+    pub fn new(path: PathBuf, text: String) -> Result<Self, SourceFileError> {
         validate_path(&path)?;
 
-        let language = Language::from_path(&path)
-            .ok_or_else(|| SourceFileError::UnsupportedLanguage { path: path.clone() })?;
-        let source = source
+        let text = text
             .strip_prefix(BYTE_ORDER_MARK)
-            .map_or(source.as_str(), |stripped| stripped);
+            .map_or(text.as_str(), |stripped| stripped);
 
         Ok(Self {
             path_text: Arc::from(paths::slashed(&path.to_string_lossy()).into_owned()),
             path: Arc::from(path),
-            language,
-            line_starts: line_starts(source),
-            source: Arc::from(source),
+            line_starts: line_starts(text),
+            text: Arc::from(text),
         })
-    }
-
-    pub fn is_interface_stub(&self) -> bool {
-        self.path
-            .extension()
-            .and_then(|extension| extension.to_str())
-            .is_some_and(|extension| extension == "pyi")
     }
 
     pub fn path(&self) -> &Path {
@@ -127,18 +147,14 @@ impl SourceFile {
         self.path_text.as_ref()
     }
 
-    pub fn language(&self) -> Language {
-        self.language
-    }
-
-    pub fn source(&self) -> &str {
-        &self.source
+    pub fn text(&self) -> &str {
+        &self.text
     }
 
     pub fn full_range(&self) -> SourceRange {
         SourceRange {
             start: 0,
-            end: self.source.len(),
+            end: self.text.len(),
         }
     }
 
@@ -165,7 +181,7 @@ impl SourceFile {
     }
 
     fn validate_offset(&self, offset: usize) -> Result<(), SourceFileError> {
-        if offset > self.source.len() {
+        if offset > self.text.len() {
             return Err(SourceFileError::InvalidRange {
                 range: SourceRange {
                     start: offset,
@@ -174,7 +190,7 @@ impl SourceFile {
             });
         }
 
-        if !self.source.is_char_boundary(offset) {
+        if !self.text.is_char_boundary(offset) {
             return Err(SourceFileError::InvalidUtf8Boundary { offset });
         }
 
@@ -184,12 +200,68 @@ impl SourceFile {
     fn position(&self, offset: usize) -> SourcePosition {
         let line_index = self.line_starts.partition_point(|start| *start <= offset) - 1;
         let line_start = self.line_starts.get(line_index).copied().unwrap_or(0);
-        let column = self.source[line_start..offset].chars().count() + 1;
+        let column = self.text[line_start..offset].chars().count() + 1;
 
         SourcePosition {
             line: line_index + 1,
             column,
         }
+    }
+}
+
+impl SourceFile {
+    pub fn new(path: PathBuf, source: String) -> Result<Self, SourceFileError> {
+        let language = Language::from_path(&path)
+            .ok_or_else(|| SourceFileError::UnsupportedLanguage { path: path.clone() })?;
+
+        Ok(Self {
+            text: TextFile::new(path, source)?,
+            language,
+        })
+    }
+
+    pub fn is_interface_stub(&self) -> bool {
+        self.text
+            .path()
+            .extension()
+            .and_then(|extension| extension.to_str())
+            .is_some_and(|extension| extension == "pyi")
+    }
+
+    pub fn text_file(&self) -> &TextFile {
+        &self.text
+    }
+
+    pub fn path(&self) -> &Path {
+        self.text.path()
+    }
+
+    pub fn path_text(&self) -> &str {
+        self.text.path_text()
+    }
+
+    pub fn language(&self) -> Language {
+        self.language
+    }
+
+    pub fn source(&self) -> &str {
+        self.text.text()
+    }
+
+    pub fn full_range(&self) -> SourceRange {
+        self.text.full_range()
+    }
+
+    pub fn range(&self, start: usize, end: usize) -> Result<SourceRange, SourceFileError> {
+        self.text.range(start, end)
+    }
+
+    pub fn line(&self, offset: usize) -> usize {
+        self.text.line(offset)
+    }
+
+    pub fn location(&self, range: SourceRange) -> SourceLocation {
+        self.text.location(range)
     }
 }
 

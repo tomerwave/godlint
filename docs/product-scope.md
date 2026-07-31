@@ -97,8 +97,8 @@ Godlint currently provides:
 
 - One CLI and one versioned configuration file.
 - Composable policy suites and per-rule overrides.
-- Rust, Python, JavaScript, and TypeScript analysis.
-- Twenty-five deterministic maintainability, policy, and style rules.
+- Rust, Python, JavaScript, and TypeScript analysis, and GitHub Actions workflow analysis.
+- Thirty-seven deterministic maintainability, policy, security, testing, and style rules.
 - Terminal, GitHub annotation, JSON, and SARIF output.
 - Scoped inline suppressions with owner and expiry metadata.
 - Local execution and CI integration without a hosted service.

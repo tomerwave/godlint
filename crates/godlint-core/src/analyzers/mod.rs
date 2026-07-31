@@ -20,6 +20,7 @@ mod python;
 mod rust;
 mod typescript;
 mod vocabulary;
+pub mod workflow;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SourceFacts {
