@@ -68,7 +68,10 @@ speaks about.
   `from` import without listing either — and `shell=False` is read rather than merely looked for. JavaScript's callee is the
   finding — `exec` shells out, `execFile` does not — but the common spelling destructures it, so a bare
   `exec` counts only where the file imports `child_process` by `import` or `require`; without that
-  import the same name is a regular expression's `exec`, so `pattern.exec(reference)` is silent. Rust's
+  import the same name is a regular expression's `exec`, so `pattern.exec(reference)` is silent. Python's
+  bare names are read the same way, so `from os import system` then `system(cmd)` is reported, gated on the
+  file importing `os`, `commands` or `subprocess` — and in both languages a name the file **declares
+  itself** is never the module's, so a local `def system(x)` or `function exec(p)` is silent. Rust's
   program is the finding, so `Command::new("sh")` is reported and `Command::new("git")` is not. A literal
   command with nothing interpolated is reported too: it is not injectable today, but the argument-array
   form is no harder to write, and reporting only interpolated strings would mean deciding what

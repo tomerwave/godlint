@@ -82,7 +82,14 @@ either `import` or `require`. A member call is read the same way with one differ
 `child_process` or `childProcess` names the module itself and needs no corroboration, while a short alias
 (`cp`) is only the module in a file that imports it. Both halves are load-bearing — without the import a
 bare `exec` is a regular expression's, and accepting *any* receiver in a file that imports the module
-reports every regular expression in it. The cost is that an unusual alias is missed. In Rust the program is the finding, so
+reports every regular expression in it. The cost is that an unusual alias is missed.
+
+Python's bare names are read the same way, which closes the `from`-import forms: `from os import system`
+then `system(cmd)` is reported, and so are `popen`, `getoutput` and `getstatusoutput`, each gated on the
+file importing `os`, `commands` or `subprocess`. That gate matters more in Python than in JavaScript
+because `import os` is everywhere, so one more condition applies in both languages: a name the **file
+declares itself** is never the module's. A file with its own `def system(x)` or `function exec(p)` is
+silent, which is where a reported false positive came from. In Rust the program is the finding, so
 `Command::new("sh")` is reported and `Command::new("git")` is not, by basename, so `/bin/sh` counts; a
 program Godlint cannot read is left alone.
 

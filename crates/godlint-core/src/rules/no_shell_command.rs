@@ -20,6 +20,10 @@ const SHELLING: Catalogue = Catalogue(&[
 const IMPORTED: Catalogue = Catalogue(&[
     ("exec", Dialect::JavaScript),
     ("execSync", Dialect::JavaScript),
+    ("system", Dialect::Python),
+    ("popen", Dialect::Python),
+    ("getoutput", Dialect::Python),
+    ("getstatusoutput", Dialect::Python),
 ]);
 
 const SHELLS: [&str; 8] = [
@@ -33,7 +37,13 @@ const SHELLS: [&str; 8] = [
     "pwsh",
 ];
 
-const PROCESS_MODULES: [&str; 2] = ["child_process", "node:child_process"];
+const PROCESS_MODULES: [&str; 5] = [
+    "child_process",
+    "node:child_process",
+    "os",
+    "commands",
+    "subprocess",
+];
 
 const MODULE_RECEIVERS: [&str; 2] = ["child_process", "childProcess"];
 
@@ -119,20 +129,30 @@ fn shells_through_the_module(facts: &SourceFacts, language: Language, name: &str
         return true;
     }
 
-    (receiver.is_empty() || ALIAS_RECEIVERS.contains(&receiver)) && imports_a_process_module(facts)
+    (receiver.is_empty() || ALIAS_RECEIVERS.contains(&receiver))
+        && !declares_its_own(facts, member)
+        && imports_a_process_module(facts)
+}
+
+fn declares_its_own(facts: &SourceFacts, name: &str) -> bool {
+    facts
+        .functions()
+        .iter()
+        .any(|function| function.name() == Some(name))
+}
+
+fn is_process_module(module: &str) -> bool {
+    PROCESS_MODULES.contains(&module)
 }
 
 fn imports_a_process_module(facts: &SourceFacts) -> bool {
     facts
         .imports()
         .iter()
-        .any(|import| PROCESS_MODULES.contains(&import.module()))
+        .any(|import| is_process_module(import.module()))
         || facts.calls().iter().any(is_process_require)
 }
 
 fn is_process_require(call: &CallFact) -> bool {
-    call.callee() == "require"
-        && call
-            .positional_literal(0)
-            .is_some_and(|module| PROCESS_MODULES.contains(&module))
+    call.callee() == "require" && call.positional_literal(0).is_some_and(is_process_module)
 }

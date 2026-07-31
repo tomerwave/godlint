@@ -180,6 +180,61 @@ fn reads_a_truthy_shell_keyword_and_names_what_was_written() {
 }
 
 #[test]
+fn reads_a_python_shell_reached_through_a_from_import() {
+    let cases = [
+        (
+            "from os import system\n\n\ndef d(b):\n    system(b)\n",
+            "system",
+        ),
+        (
+            "from os import popen\n\n\ndef d(b):\n    popen(b)\n",
+            "popen",
+        ),
+        (
+            "from subprocess import getoutput\n\n\ndef d(b):\n    getoutput(b)\n",
+            "getoutput",
+        ),
+    ];
+
+    for (source, name) in cases {
+        assert_eq!(
+            reported("src/deploy.py", source).len(),
+            1,
+            "the bare name is a shell where the module it comes from is imported: {name}"
+        );
+    }
+}
+
+#[test]
+fn keeps_a_name_the_file_defines_itself() {
+    assert!(
+        reported(
+            "src/deploy.py",
+            "import os\n\n\ndef system(x):\n    return x\n\n\ndef d(b):\n    return system(b)\n"
+        )
+        .is_empty(),
+        "importing os says nothing about a function this file declares itself"
+    );
+    assert!(
+        reported(
+            "src/deploy.js",
+            "const { execFile } = require(\"child_process\");\nfunction exec(p) {\n  return p;\n}\nexec(p);\n"
+        )
+        .is_empty(),
+        "and the same holds for JavaScript, where this was a reported false positive"
+    );
+}
+
+#[test]
+fn keeps_a_python_name_without_the_import_that_makes_it_a_shell() {
+    assert!(
+        reported("src/deploy.py", "def d(b):\n    system(b)\n").is_empty(),
+        "without the import the name says nothing about a shell"
+    );
+    assert!(reported("src/deploy.py", "def d(b):\n    system_of_record(b)\n").is_empty());
+}
+
+#[test]
 fn keeps_a_regular_expression_exec() {
     assert!(
         reported("src/parse.js", "const m = pattern.exec(reference);").is_empty(),
