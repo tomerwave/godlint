@@ -11,6 +11,37 @@ pub(super) enum Dialect {
     Rust,
 }
 
+pub(super) const GENERATORS: Catalogue = Catalogue(&[
+    ("Math.random", Dialect::JavaScript),
+    ("crypto.pseudoRandomBytes", Dialect::JavaScript),
+    ("random.random", Dialect::Python),
+    ("random.randint", Dialect::Python),
+    ("random.randrange", Dialect::Python),
+    ("random.choice", Dialect::Python),
+    ("random.choices", Dialect::Python),
+    ("random.sample", Dialect::Python),
+    ("random.shuffle", Dialect::Python),
+    ("random.uniform", Dialect::Python),
+    ("np.random.rand", Dialect::Python),
+    ("np.random.randn", Dialect::Python),
+    ("np.random.random", Dialect::Python),
+    ("np.random.randint", Dialect::Python),
+    ("np.random.choice", Dialect::Python),
+    ("np.random.shuffle", Dialect::Python),
+    ("np.random.permutation", Dialect::Python),
+    ("numpy.random.rand", Dialect::Python),
+    ("numpy.random.randn", Dialect::Python),
+    ("numpy.random.random", Dialect::Python),
+    ("numpy.random.randint", Dialect::Python),
+    ("numpy.random.choice", Dialect::Python),
+    ("numpy.random.shuffle", Dialect::Python),
+    ("numpy.random.permutation", Dialect::Python),
+    ("rand::random", Dialect::Rust),
+    ("rand::thread_rng", Dialect::Rust),
+    ("rand::rng", Dialect::Rust),
+    ("rand::random_range", Dialect::Rust),
+]);
+
 pub(super) struct Catalogue(pub(super) &'static [(&'static str, Dialect)]);
 
 impl Catalogue {

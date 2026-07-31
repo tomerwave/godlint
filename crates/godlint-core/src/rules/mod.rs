@@ -35,6 +35,7 @@ pub mod no_empty_test;
 pub mod no_focused_test;
 pub mod no_insecure_random;
 pub mod no_production_log;
+pub mod no_randomness_without_seed;
 pub mod no_skipped_test;
 pub mod no_sleep_in_test;
 pub mod no_weak_hash;
@@ -410,6 +411,7 @@ const EVALUATORS: &[Evaluator] = &[
     no_focused_test::evaluate,
     no_insecure_random::evaluate,
     no_production_log::evaluate,
+    no_randomness_without_seed::evaluate,
     no_skipped_test::evaluate,
     no_sleep_in_test::evaluate,
     no_weak_hash::evaluate,

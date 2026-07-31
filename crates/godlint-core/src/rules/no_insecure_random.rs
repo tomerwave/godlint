@@ -4,26 +4,11 @@ use crate::{
     facts::CallFact,
     rules::{
         CallRule, Finding, Rule, Violation,
-        catalogue::{Catalogue, Dialect, is_allowed, spelled},
+        catalogue::{GENERATORS, is_allowed, spelled},
         evaluate_call_rule, when_configured,
     },
     source::Language,
 };
-
-const GENERATORS: Catalogue = Catalogue(&[
-    ("Math.random", Dialect::JavaScript),
-    ("crypto.pseudoRandomBytes", Dialect::JavaScript),
-    ("random.random", Dialect::Python),
-    ("random.randint", Dialect::Python),
-    ("random.randrange", Dialect::Python),
-    ("random.choice", Dialect::Python),
-    ("random.choices", Dialect::Python),
-    ("random.sample", Dialect::Python),
-    ("random.shuffle", Dialect::Python),
-    ("random.uniform", Dialect::Python),
-    ("rand::random", Dialect::Rust),
-    ("rand::thread_rng", Dialect::Rust),
-]);
 
 pub struct NoInsecureRandom;
 
