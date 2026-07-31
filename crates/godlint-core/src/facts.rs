@@ -57,6 +57,7 @@ pub struct CommentFact {
 pub struct CallFact {
     source: SourceFile,
     range: SourceRange,
+    extent: SourceRange,
     target: CallTarget,
     arguments: Vec<CallArgument>,
 }
@@ -120,6 +121,12 @@ impl TestFact {
 pub struct CallArgument {
     pub name: Option<String>,
     pub literal: Option<String>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CallFactDetails {
+    pub target: CallTarget,
+    pub arguments: Vec<CallArgument>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -223,14 +230,15 @@ impl CallFact {
     pub fn new(
         source: SourceFile,
         range: SourceRange,
-        target: CallTarget,
-        arguments: Vec<CallArgument>,
+        extent: SourceRange,
+        details: CallFactDetails,
     ) -> Self {
         Self {
             source,
             range,
-            target,
-            arguments,
+            extent,
+            target: details.target,
+            arguments: details.arguments,
         }
     }
 
@@ -240,6 +248,10 @@ impl CallFact {
 
     pub fn range(&self) -> SourceRange {
         self.range
+    }
+
+    pub fn extent(&self) -> SourceRange {
+        self.extent
     }
 
     pub fn callee(&self) -> &str {

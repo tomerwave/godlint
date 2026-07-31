@@ -4,9 +4,9 @@ use std::path::PathBuf;
 
 use godlint_core::{
     facts::{
-        AccessFact, BlockDepth, CallArgument, CallFact, CallTarget, CognitiveScore, CommentFact,
-        CommentKind, DecisionPoints, ErrorHandlerFact, FunctionFact, FunctionFactDetails,
-        FunctionFactError, ParameterCount, ReturnPaths, StatementCount,
+        AccessFact, BlockDepth, CallArgument, CallFact, CallFactDetails, CallTarget,
+        CognitiveScore, CommentFact, CommentKind, DecisionPoints, ErrorHandlerFact, FunctionFact,
+        FunctionFactDetails, FunctionFactError, ParameterCount, ReturnPaths, StatementCount,
     },
     source::{SourceFile, SourceRange},
 };
@@ -91,23 +91,31 @@ fn records_a_call() {
     let fact = CallFact::new(
         source(),
         range(17, 22),
-        CallTarget {
-            path: "inner".to_owned(),
-            is_macro: false,
+        range(17, 24),
+        CallFactDetails {
+            target: CallTarget {
+                path: "inner".to_owned(),
+                is_macro: false,
+            },
+            arguments: vec![
+                CallArgument {
+                    name: None,
+                    literal: Some("1".to_owned()),
+                },
+                CallArgument {
+                    name: Some("flag".to_owned()),
+                    literal: Some("true".to_owned()),
+                },
+            ],
         },
-        vec![
-            CallArgument {
-                name: None,
-                literal: Some("1".to_owned()),
-            },
-            CallArgument {
-                name: Some("flag".to_owned()),
-                literal: Some("true".to_owned()),
-            },
-        ],
     );
 
     assert_eq!(fact.range(), range(17, 22));
+    assert_eq!(
+        fact.extent(),
+        range(17, 24),
+        "the extent spans the whole call, which is what a shape match compares"
+    );
     assert_eq!(
         fact.callee(),
         "inner",

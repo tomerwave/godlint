@@ -122,12 +122,20 @@ It matches the callee's written spelling per language, which leaves three gaps a
 A sleep reached through an alias — `from time import sleep` and then a bare `sleep(2)` — is not reported,
 because that takes import resolution.
 
-JavaScript's most common test sleep is not covered: `await new Promise((r) => setTimeout(r, 500))`. That
-is a *shape* rather than a name, so no callee match reaches it, and `reliability/explicit-timer-delay`
-does not either — it fires on a `setTimeout` with fewer than two arguments, which is the opposite case.
-What is covered is a duration passed to a runner's own wait, `page.waitForTimeout` and `browser.pause`.
-`cy.wait(500)` is not, because Godlint cannot yet tell a number argument from a string one and
-`cy.wait('@alias')` is the fix rather than the defect.
+JavaScript's most common test sleep is a *shape* rather than a name — `await new Promise((r) =>
+setTimeout(r, 500))` — so it is matched as one: a `setTimeout` or `setInterval` inside a `Promise` whose
+only call it is. That last condition is what separates a sleep from a timeout guard, because
+`new Promise((resolve, reject) => { server.on('ready', resolve); setTimeout(() => reject(e), 5000) })`
+is waiting on the condition, which is the fix this rule asks for. A bare timer under fake timers is not
+reported either, for the same reason: the promise wrapper is what makes it a wait.
+
+No other linter appears to catch this. Cypress's `no-unnecessary-waiting`, Playwright's
+`no-wait-for-timeout` and `eslint-plugin-ui-testing`'s `no-hard-wait` all match a framework's own wait
+API by name; the promise idiom needs the shape.
+
+Also covered by name: `page.waitForTimeout` and `browser.pause`. `cy.wait(500)` is not, because Godlint
+cannot yet tell a number argument from a string one and `cy.wait('@alias')` is the fix rather than the
+defect.
 
 The false positive: a mocked sleep. `with patch("time.sleep"): time.sleep(999)` is instant and is still
 reported, because seeing the patch takes the same resolution the alias gap needs. Suppress it where it

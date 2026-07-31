@@ -116,6 +116,61 @@ fn keeps_a_sleep_reached_through_an_alias() {
 }
 
 #[test]
+fn reads_a_timer_wrapped_in_a_promise() {
+    assert_eq!(
+        violations(
+            "tests/worker.spec.js",
+            "it('drains', async () => {\n  await new Promise((r) => setTimeout(r, 500));\n});\n"
+        )
+        .len(),
+        1,
+        "this is JavaScript's commonest test sleep, and no name match reaches it"
+    );
+    assert_eq!(
+        violations(
+            "tests/worker.spec.ts",
+            "it('drains', async () => {\n  await new Promise((r) => setInterval(r, 500));\n});\n"
+        )
+        .len(),
+        1
+    );
+}
+
+#[test]
+fn keeps_a_timer_that_is_not_the_promise() {
+    assert!(
+        violations(
+            "tests/worker.spec.js",
+            "it('debounce', () => {\n  jest.useFakeTimers();\n  setTimeout(fn, 100);\n});\n"
+        )
+        .is_empty(),
+        "a bare timer under fake timers waits on nothing; the promise wrapper is what makes a sleep"
+    );
+    assert!(
+        violations(
+            "tests/worker.spec.js",
+            concat!(
+                "it('guards', async () => {\n",
+                "  await new Promise((resolve, reject) => {\n",
+                "    server.on('ready', resolve);\n",
+                "    setTimeout(() => reject(new Error('timeout')), 5000);\n",
+                "  });\n});\n"
+            )
+        )
+        .is_empty(),
+        "a timer guarding an event wait is the fix this rule asks for, not the defect"
+    );
+    assert!(
+        violations(
+            "tests/worker.spec.js",
+            "const sleep = (ms) => new Promise((r) => setTimeout(r, ms));\n"
+        )
+        .is_empty(),
+        "a sleep helper outside a test is still outside a test"
+    );
+}
+
+#[test]
 fn keeps_a_sleep_outside_a_test() {
     assert!(
         violations(

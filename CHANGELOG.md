@@ -18,11 +18,14 @@ speaks about.
 - `testing/no-sleep-in-test` — reports a test that waits on the clock instead of on the condition,
   which is the usual reason a suite passes locally and fails in CI. Python `time.sleep` and
   `asyncio.sleep`, Rust `thread::sleep` and `tokio::time::sleep`, and the JavaScript runners' own
-  waits, `page.waitForTimeout` and `browser.pause`. The call must fall inside a test, so a helper in
+  waits, `page.waitForTimeout` and `browser.pause`, plus JavaScript's commonest test sleep, which is a
+  *shape* rather than a name: a `setTimeout` or `setInterval` inside a `Promise` whose only call it is.
+  That condition separates a sleep from a timeout guard, where the promise also waits on an event — and no
+  other linter appears to catch the idiom, since Cypress, Playwright and `no-hard-wait` all match a
+  framework's wait API by name. The call must fall inside a test, so a helper in
   the same file may still sleep — and so may a `pytest.fixture` or a `beforeEach`, which is the more
   tempting hiding place and needs a fixture fact to see. A sleep reached through an alias is not reported,
-  because that takes import resolution; JavaScript's commonest test sleep, `await new Promise((r) =>
-  setTimeout(r, 500))`, is a shape rather than a name and is not covered either; and a mocked sleep under
+  because that takes import resolution; and a mocked sleep under
   `patch("time.sleep")` is reported although it is instant, for the same reason the alias escapes.
 - Rules can now ask about a call that falls inside a test. `CallInTestRule` reads the call facts of a
   file, keeps only those a test's range encloses, and hands the rule the whole file's facts beside the
