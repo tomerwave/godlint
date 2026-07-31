@@ -8,7 +8,7 @@ use crate::{
     source::{SourceRange, range_contains},
 };
 
-const ATTACKER_CONTEXTS: [&str; 22] = [
+const ATTACKER_CONTEXTS: [&str; 20] = [
     "github.event.issue.title",
     "github.event.issue.body",
     "github.event.pull_request.title",
@@ -29,9 +29,9 @@ const ATTACKER_CONTEXTS: [&str; 22] = [
     "github.event.workflow_run.head_branch",
     "github.event.workflow_run.head_commit.message",
     "github.head_ref",
-    "github.event.inputs.",
-    "inputs.",
 ];
+
+const TRIGGER_INPUT_CONTEXTS: [&str; 2] = ["github.event.inputs.", "inputs."];
 
 pub struct TemplateInjection;
 
@@ -62,18 +62,21 @@ impl WorkflowRule for TemplateInjection {
         workflow
             .expressions()
             .iter()
-            .filter(|expression| attacker_influenced(expression.context()))
+            .filter_map(|expression| {
+                influence(expression.context()).map(|influence| (expression, influence))
+            })
             .filter(|expression| {
                 workflow.steps().iter().any(|step| {
                     step.run()
-                        .is_some_and(|script| range_contains(script, expression.range()))
+                        .is_some_and(|script| range_contains(script, expression.0.range()))
                 })
             })
-            .map(|expression| {
+            .map(|(expression, influence)| {
                 (
                     expression.range(),
                     Violation::TemplateInjection {
                         expression: expression.body().to_owned(),
+                        certain: matches!(influence, Influence::Attacker),
                     },
                 )
             })
@@ -87,8 +90,24 @@ pub fn evaluate(workflows: &[WorkflowFacts], config: &Config) -> Vec<Finding> {
     })
 }
 
-fn attacker_influenced(context: &str) -> bool {
-    ATTACKER_CONTEXTS.iter().any(|candidate| {
+#[derive(Clone, Copy)]
+enum Influence {
+    Attacker,
+    TriggerInput,
+}
+
+fn influence(context: &str) -> Option<Influence> {
+    if matches_context(&ATTACKER_CONTEXTS, context) {
+        Some(Influence::Attacker)
+    } else if matches_context(&TRIGGER_INPUT_CONTEXTS, context) {
+        Some(Influence::TriggerInput)
+    } else {
+        None
+    }
+}
+
+fn matches_context(contexts: &[&str], context: &str) -> bool {
+    contexts.iter().any(|candidate| {
         context == *candidate || candidate.ends_with('.') && context.starts_with(candidate)
     })
 }

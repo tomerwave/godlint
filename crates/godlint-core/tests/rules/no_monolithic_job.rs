@@ -38,6 +38,14 @@ fn violations(body: &str, max_steps: u32) -> Vec<Violation> {
     .collect()
 }
 
+fn workflow_with_steps(count: u32) -> String {
+    let steps = (1..=count)
+        .map(|step| format!("      - run: step-{step}\n"))
+        .collect::<String>();
+
+    format!("jobs:\n  build:\n    steps:\n{steps}")
+}
+
 #[test]
 fn block_and_flow_step_sequences_are_measured() {
     let cases = [
@@ -60,19 +68,13 @@ fn block_and_flow_step_sequences_are_measured() {
 
 #[test]
 fn a_job_at_the_limit_is_silent_and_one_over_is_reported() {
-    let at_limit = concat!(
-        "jobs:\n  build:\n    steps:\n",
-        "      - run: one\n      - run: two\n",
-    );
-    let over_limit = concat!(
-        "jobs:\n  build:\n    steps:\n",
-        "      - run: one\n      - run: two\n      - run: three\n",
-    );
+    let at_limit = workflow_with_steps(20);
+    let over_limit = workflow_with_steps(21);
 
-    assert!(violations(at_limit, 2).is_empty());
+    assert!(violations(&at_limit, 20).is_empty());
     assert_eq!(
-        violations(over_limit, 2),
-        vec![Violation::limit(Metric::JobSteps, 3, 2)]
+        violations(&over_limit, 20),
+        vec![Violation::limit(Metric::JobSteps, 21, 20)]
     );
 }
 

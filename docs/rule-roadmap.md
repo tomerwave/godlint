@@ -55,7 +55,8 @@ for generated code, a tighter one, or `severity: off` to decline one rule withou
 the suite. That is what the confidence ladder needs: a rule can be adopted as a warning
 first. Rules must never silently exclude production, test, or worker code.
 
-The thresholds in `recommended@1` are measured against this repository rather than borrowed:
+The thresholds in `recommended@1` are measured rather than borrowed. Most use this repository;
+the CI workflow thresholds also use a corpus of 94 real-world workflows where noted:
 
 | Rule | `recommended@1` | Why not the roadmap's strict number |
 | --- | ---: | --- |
@@ -68,8 +69,8 @@ The thresholds in `recommended@1` are measured against this repository rather th
 | `maintainability/cognitive-complexity` | 15 | Sonar's published default, adopted deliberately as a regression ceiling. Measured against this repository first: across 1387 functions p50 is 0, p95 is 2, p99 is 4 and the highest is 6, so 15 has wide headroom and will not fire here today |
 | `maintainability/return-count` | 6 | see below; 3 is a Python number |
 | `maintainability/function-statements` | 14 | tighter than the strict profile's 20, measured |
-| `ci/no-inline-script` | 8 | measured across 52 real `run:` scripts: p50 1, p90 5, p95 8, p99 and max 40; the distribution was 38×1, 1×2, 5×3, 3×5, 1×6, 2×8, 1×9 and 1×40 effective lines |
-| `ci/no-monolithic-job` | 7 | measured across 21 real jobs: p50 3, p90 and p95 7, p99 and max 11; the distribution was 2×1, 1×2, 8×3, 3×4, 2×5, 2×6, 2×7 and 1×11 steps |
+| `ci/no-inline-script` | 8 | deliberately kept after measuring 981 `run:` scripts in 94 corpus workflows: p50 1, p90 12, p95 20, p99 70 and max 91; 8 is p85 and 15% exceed it. The low-cost remedy and the testability and reviewability cost of YAML scripts hold at ten lines as well as ninety |
+| `ci/no-monolithic-job` | 20 | corpus p90, measured across 231 jobs in 94 workflows: p50 6, p90 20, p95 28 and max 41. The former repository-derived limit of 7 was its own p95 but sat barely above the corpus median and reported 36% of real jobs; 20 distinguishes jobs doing several jobs' work from ordinary ten-step jobs |
 
 `return-count` is the one place the strict profile is wrong rather than ambitious. At 3 it
 reported 21 functions here, and every one was Rust idiom: 14 dominated by `?` propagation, 6
@@ -504,7 +505,7 @@ to a run step, which is what `ci/no-pull-request-target-checkout` would need.
 | `ci/hardcoded-container-credentials` | Shipped | Credential fact | High | `severity` only |
 | `ci/unnecessary-job-dependency` | Rejected: not decidable from workflow syntax | `announce` needs `[publish, npm, pypi]` while downloading artifacts from `binaries` | None | `needs:` means both output consumption and success gating; syntax cannot distinguish them |
 | `ci/no-inline-script` | Shipped | Step fact | High | `max-lines`, 8 in `recommended@1` |
-| `ci/no-monolithic-job` | Shipped | Job fact | High | `max-steps`, 7 in `recommended@1` |
+| `ci/no-monolithic-job` | Shipped | Job fact | High | `max-steps`, 20 in `recommended@1` |
 | `ci/require-concurrency-cancel` | Planned | Workflow fact | Medium | Which triggers must cancel in progress |
 | `ci/template-injection` | Shipped | Step and expression facts | High | `allow-in` path globs |
 | `ci/bot-conditions` | Shipped | Step, job and expression facts | High | `bots`, defaulting to three common identities |

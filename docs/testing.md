@@ -56,10 +56,13 @@ gating on them would fail on every rule this repository ships and would be switc
 week. A file Godlint cannot read is a defect whatever the rules say, and it is the failure that
 hides: the file contributes nothing and the loss leaves no trace in a findings count.
 
-Each repository carries a budget rather than a list of paths, because one of them is at four
-hundred and enumerating those would bury the reason under the data. The budget fails in both
-directions, exactly as the rule-coverage one does: above it is a regression, and below it means a
-grammar learned the syntax and the number is now reserving silence for the next failure.
+Each repository carries separate source and workflow budgets rather than lists of paths, because one
+source budget is at four hundred and enumerating those would bury the reason under the data. The
+budgets fail in both directions, exactly as the rule-coverage one does: above one is a regression, and
+below it means a grammar learned the syntax and the number is now reserving silence for the next
+failure. The 94 workflows at these pins all read cleanly. Every repository therefore has a workflow
+budget of zero, so a regression in the three-day-old `tree-sitter-yaml` reader cannot be hidden by a
+source grammar learning syntax in the same corpus run.
 
 Writing it down found three grammar gaps that no fixture would have, because a fixture is written
 by someone who already knows the syntax:

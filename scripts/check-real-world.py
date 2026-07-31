@@ -6,9 +6,9 @@ on them would fail on every rule this repository ships and would be switched off
 A file Godlint cannot read is a defect whatever the rules say: it contributes nothing, and the
 loss leaves no trace in a findings count.
 
-Each repository carries a budget rather than a list of paths, because one of them is at four
-hundred and enumerating those would bury the reason under the data. The budget fails in both
-directions, like the rule-coverage one: over it is a regression, and under it means a grammar
+Each repository carries source and workflow budgets rather than lists of paths, because one source
+budget is at four hundred and enumerating those would bury the reason under the data. A budget fails
+in both directions, like the rule-coverage one: over it is a regression, and under it means a grammar
 learned the syntax and the budget is now reserving silence for the next failure.
 
 Repositories are pinned to a commit so a budget describes a fixed tree. Bumping a pin and
@@ -114,23 +114,46 @@ def scan(binary: Path, tree: Path) -> dict:
 
 def compared(repository: dict, report: dict) -> list[str]:
     name = repository["name"]
-    budget = repository["unreadable-budget"]
     issues = report["issues"]
+    workflow_issues = [issue for issue in issues if is_workflow(issue["path"])]
+    source_issues = [issue for issue in issues if not is_workflow(issue["path"])]
+    source_budget = repository["unreadable-budget"]
+    workflow_budget = repository["workflow-unreadable-budget"]
 
-    print(f"{name}: {len(report['findings'])} findings, {len(issues)} unreadable, budget {budget}")
+    print(
+        f"{name}: {len(report['findings'])} findings, "
+        f"{len(source_issues)} unreadable sources (budget {source_budget}), "
+        f"{len(workflow_issues)} unreadable workflows (budget {workflow_budget})"
+    )
 
     for cause, count in causes(issues).most_common(3):
         print(f"    {count:>4}  {cause}")
 
+    return compare_budget(name, "source files", source_issues, source_budget) + compare_budget(
+        name, "workflow files", workflow_issues, workflow_budget
+    )
+
+
+def is_workflow(path: str) -> bool:
+    parts = path.replace("\\", "/").split("/")
+
+    return (
+        len(parts) >= 3
+        and parts[-3:-1] == [".github", "workflows"]
+        and parts[-1].endswith((".yaml", ".yml"))
+    )
+
+
+def compare_budget(name: str, kind: str, issues: list[dict], budget: int) -> list[str]:
     if len(issues) > budget:
         return [
-            f"{name}: {len(issues)} unreadable files against a budget of {budget}. "
-            f"{worst(issues)}",
+            f"{name}: {len(issues)} unreadable {kind} against a budget of {budget}. "
+            f"{worst(issues)}"
         ]
 
     if len(issues) < budget:
         return [
-            f"{name}: only {len(issues)} unreadable files against a budget of {budget}; "
+            f"{name}: only {len(issues)} unreadable {kind} against a budget of {budget}; "
             f"lower the budget so it keeps its grip",
         ]
 

@@ -34,6 +34,19 @@ fn violations(body: &str) -> Vec<Violation> {
         .collect()
 }
 
+fn severities(body: &str, severity: Severity) -> Vec<Severity> {
+    let facts = workflow(body);
+    let configuration = TemplateInjectionRule {
+        severity,
+        allow_in: Vec::new(),
+    };
+
+    evaluate_workflow_rule::<TemplateInjection>(std::slice::from_ref(&facts), &configuration)
+        .into_iter()
+        .map(|finding| finding.severity)
+        .collect()
+}
+
 fn run(script: &str) -> String {
     format!("jobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n      - run: {script}\n")
 }
@@ -44,6 +57,7 @@ fn a_plain_run_scalar_is_reported() {
         violations(&run("echo ${{ github.event.issue.title }}")),
         vec![Violation::TemplateInjection {
             expression: "github.event.issue.title".to_owned(),
+            certain: true,
         }]
     );
 }
@@ -54,6 +68,7 @@ fn a_double_quoted_run_scalar_is_reported() {
         violations(&run("\"echo ${{ github.event.pull_request.body }}\"")),
         vec![Violation::TemplateInjection {
             expression: "github.event.pull_request.body".to_owned(),
+            certain: true,
         }]
     );
 }
@@ -64,6 +79,7 @@ fn a_single_quoted_run_scalar_is_reported() {
         violations(&run("'echo ${{ github.event.comment.body }}'")),
         vec![Violation::TemplateInjection {
             expression: "github.event.comment.body".to_owned(),
+            certain: true,
         }]
     );
 }
@@ -74,6 +90,7 @@ fn a_literal_block_run_scalar_is_reported() {
         violations(&run("|\n          echo ${{ github.event.review.body }}")),
         vec![Violation::TemplateInjection {
             expression: "github.event.review.body".to_owned(),
+            certain: true,
         }]
     );
 }
@@ -86,12 +103,13 @@ fn a_folded_block_run_scalar_is_reported() {
         )),
         vec![Violation::TemplateInjection {
             expression: "github.event.discussion.title".to_owned(),
+            certain: true,
         }]
     );
 }
 
 #[test]
-fn every_documented_attacker_influenced_context_is_reported() {
+fn every_documented_influenced_context_is_reported() {
     let contexts = [
         "github.event.issue.title",
         "github.event.issue.body",
@@ -127,11 +145,46 @@ fn every_documented_attacker_influenced_context_is_reported() {
 }
 
 #[test]
+fn event_contexts_keep_the_configured_severity() {
+    assert_eq!(
+        severities(
+            &run("echo ${{ github.event.pull_request.title }}"),
+            Severity::Error
+        ),
+        vec![Severity::Error]
+    );
+}
+
+#[test]
+fn trigger_inputs_are_capped_at_warning() {
+    assert_eq!(
+        severities(
+            &run("echo ${{ github.event.inputs.release_kind }}"),
+            Severity::Error
+        ),
+        vec![Severity::Warning]
+    );
+    assert_eq!(
+        severities(&run("echo ${{ inputs.version }}"), Severity::Error),
+        vec![Severity::Warning]
+    );
+}
+
+#[test]
+fn a_trigger_input_cap_never_raises_the_configured_severity() {
+    assert_eq!(
+        severities(&run("echo ${{ inputs.version }}"), Severity::Info),
+        vec![Severity::Info]
+    );
+}
+
+#[test]
 fn pull_request_review_comment_input_is_reported() {
     assert_eq!(
         violations(&run("echo ${{ github.event.review_comment.body }}")),
         vec![Violation::TemplateInjection {
             expression: "github.event.review_comment.body".to_owned(),
+            certain: true,
         }]
     );
 }
@@ -155,6 +208,7 @@ fn matching_uses_the_normalized_context_but_the_message_preserves_the_body() {
         reported,
         vec![Violation::TemplateInjection {
             expression: "GITHUB.EVENT.ISSUE.TITLE".to_owned(),
+            certain: true,
         }]
     );
     assert!(
@@ -213,6 +267,24 @@ fn the_message_names_the_expression_timing_and_quoted_environment_fix() {
         message.contains("runner expands it into the script before the shell runs"),
         "{message}"
     );
+    assert!(message.contains("env variable"), "{message}");
+    assert!(message.contains("quoted"), "{message}");
+}
+
+#[test]
+fn the_trigger_input_message_explains_the_uncertainty_and_fix() {
+    let message = violations(&run("echo ${{ inputs.version }}"))[0].to_string();
+
+    assert!(
+        message.contains("whoever triggered the workflow"),
+        "{message}"
+    );
+    assert!(
+        message.contains("workflow_dispatch requires write access"),
+        "{message}"
+    );
+    assert!(message.contains("calling workflow"), "{message}");
+    assert!(message.contains("value it does not control"), "{message}");
     assert!(message.contains("env variable"), "{message}");
     assert!(message.contains("quoted"), "{message}");
 }

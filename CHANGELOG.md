@@ -49,14 +49,16 @@ speaks about.
 - `ci/no-comments` — reports comments in workflow YAML except version labels trailing `uses:` values.
   YAML has no doc-comment equivalent, so the rule has no option beyond `severity`.
 - `ci/no-inline-script` — reports a workflow `run:` script above its configured effective-line
-  limit. `recommended@1` adopts 8 after measuring 52 scripts: p50 was 1, p95 was 8 and the maximum
-  was 40. Blank and shell-comment-only lines do not consume the default budget. The measurement is
-  source-based, so compressed one-line command chains remain a documented boundary rather than a
-  shell parser hidden inside a line rule.
+  limit. `recommended@1` deliberately keeps 8 after measuring 981 scripts in 94 corpus workflows:
+  it is p85 and 15% exceed it. Blank and shell-comment-only lines do not consume the default budget.
+  The measurement is source-based, so compressed one-line command chains remain a documented
+  boundary rather than a shell parser hidden inside a line rule.
 - `ci/no-monolithic-job` — reports a workflow job above its configured step limit.
-  `recommended@1` adopts 7 after measuring 21 jobs: p50 was 3, p95 was 7 and the maximum was 11.
-  It counts independently reviewable and retryable steps; command aggregation inside a step remains
-  `no-inline-script`'s concern.
+  `recommended@1` adopts the corpus p90 of 20 after measuring 231 jobs in 94 workflows; the former
+  repository-derived limit of 7 reported 36% of corpus jobs. It counts independently reviewable and
+  retryable steps; command aggregation inside a step remains `no-inline-script`'s concern. Raising
+  the limit makes this repository's `release.yml` exemption unnecessary, which confirms that the
+  number was wrong rather than the workflow.
 - `ci/overprovisioned-secrets` — reports a step input or environment variable set to the whole
   `${{ secrets }}` context, including `toJSON(secrets)`, while named secret members stay silent.
 - `ci/pin-third-party-actions` — reports a workflow step using a third-party action at a ref that can
