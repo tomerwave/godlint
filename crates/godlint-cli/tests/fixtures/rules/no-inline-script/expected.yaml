@@ -1,0 +1,6 @@
+exit-code: 1
+
+stdout: |
+  .github/workflows/inline.yml:12:11: error[ci/no-inline-script] Script has 3 effective lines (max 2).
+
+stderr: ""

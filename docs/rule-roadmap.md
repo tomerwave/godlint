@@ -68,6 +68,8 @@ The thresholds in `recommended@1` are measured against this repository rather th
 | `maintainability/cognitive-complexity` | 15 | Sonar's published default, adopted deliberately as a regression ceiling. Measured against this repository first: across 1387 functions p50 is 0, p95 is 2, p99 is 4 and the highest is 6, so 15 has wide headroom and will not fire here today |
 | `maintainability/return-count` | 6 | see below; 3 is a Python number |
 | `maintainability/function-statements` | 14 | tighter than the strict profile's 20, measured |
+| `ci/no-inline-script` | 8 | measured across 52 real `run:` scripts: p50 1, p90 5, p95 8, p99 and max 40; the distribution was 38×1, 1×2, 5×3, 3×5, 1×6, 2×8, 1×9 and 1×40 effective lines |
+| `ci/no-monolithic-job` | 7 | measured across 21 real jobs: p50 3, p90 and p95 7, p99 and max 11; the distribution was 2×1, 1×2, 8×3, 3×4, 2×5, 2×6, 2×7 and 1×11 steps |
 
 `return-count` is the one place the strict profile is wrong rather than ambitious. At 3 it
 reported 21 functions here, and every one was Rust idiom: 14 dominated by `?` propagation, 6
@@ -498,6 +500,8 @@ to a run step, which is what `ci/no-pull-request-target-checkout` would need.
 | --- | --- | --- | --- | --- |
 | `ci/pin-third-party-actions` | Shipped | Action fact | High | `trusted-owners`, defaulting to the two GitHub-owned accounts |
 | `ci/explicit-workflow-permissions` | Shipped | Workflow and job facts | High | `require-per-job`, off by default |
+| `ci/no-inline-script` | Shipped | Step fact | High | `max-lines`, 8 in `recommended@1` |
+| `ci/no-monolithic-job` | Shipped | Job fact | High | `max-steps`, 7 in `recommended@1` |
 | `ci/require-concurrency-cancel` | Planned | Workflow fact | Medium | Which triggers must cancel in progress |
 | `ci/template-injection` | Shipped | Step and expression facts | High | `allow-in` path globs |
 | `ci/bot-conditions` | Shipped | Step, job and expression facts | High | `bots`, defaulting to three common identities |

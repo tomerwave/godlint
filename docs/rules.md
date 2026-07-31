@@ -21,6 +21,8 @@ enforced there.
 | `architecture/restricted-import` | ✓ | ✓ | ✓ | — |
 | `ci/bot-conditions` | — | — | — | ✓ |
 | `ci/explicit-workflow-permissions` | — | — | — | ✓ |
+| `ci/no-inline-script` | — | — | — | ✓ |
+| `ci/no-monolithic-job` | — | — | — | ✓ |
 | `ci/pin-third-party-actions` | — | — | — | ✓ |
 | `ci/template-injection` | — | — | — | ✓ |
 | `logging/no-production-log` | ✓ | ✓ | ✓ | — |
@@ -179,6 +181,8 @@ have to decide what interpolation looks like inside an f-string.
 | `ci/pin-third-party-actions` | A workflow step using a third-party action at a ref that can move |
 | `ci/explicit-workflow-permissions` | A job that runs with whatever the repository grants by default |
 | `ci/template-injection` | An attacker-influenced expression interpolated directly into a `run:` script |
+| `ci/no-inline-script` | A `run:` script exceeding its effective-line limit |
+| `ci/no-monolithic-job` | A job exceeding its step limit |
 
 `ci/template-injection` reports expressions in a step's `run:` script when the expression reads a
 context GitHub documents as attacker-influenced. The runner expands the expression before the shell
@@ -213,6 +217,19 @@ pinned, including GitHub's own.
 
 A reference with no version at all reports a different message, because it is a different mistake: it
 runs whatever the action's default branch holds today.
+
+`no-inline-script` reports the script range of a `run:` step with more than `max-lines` effective
+source lines. Blank lines and lines whose first non-whitespace character is `#` are skipped by
+default, using the same configurable effective-line treatment as the maintainability size rules.
+The rule measures the YAML source rather than interpreting a shell, so a single line that chains
+commands or pipelines stays silent; detecting that requires a separate command-chain or control-flow
+signal rather than pretending a line count can see shell structure.
+
+`no-monolithic-job` reports a job with more than `max-steps` steps. It counts the workflow units that
+can be reviewed and retried independently, not the commands hidden inside them. The two rules do not
+compensate for each other: splitting six commands across six `run:` lines in one step belongs to
+`no-inline-script`, while spelling those commands as six separate steps belongs to
+`no-monolithic-job`. Keeping the step count low never increases the inline-script budget.
 
 ### What `explicit-workflow-permissions` reports, and where
 

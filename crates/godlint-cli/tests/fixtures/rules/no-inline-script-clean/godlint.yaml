@@ -1,0 +1,6 @@
+version: 1
+
+rules:
+  ci/no-inline-script:
+    severity: error
+    max-lines: 2

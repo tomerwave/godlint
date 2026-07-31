@@ -1,5 +1,8 @@
 use crate::{
-    analyzers::SourceFacts, config::LineLimitRule, facts::CommentFact, source::SourceRange,
+    analyzers::SourceFacts,
+    config::LineLimitRule,
+    facts::CommentFact,
+    source::{SourceRange, TextFile},
 };
 
 #[derive(Clone, Copy)]
@@ -23,39 +26,51 @@ pub(crate) fn effective_line_count(
     skipped: Skipped,
 ) -> u32 {
     let comments = facts.comments();
-    let text = &facts.source().source()[range.start()..range.end()];
     let mut cursor = comments.partition_point(|comment| comment.range().end() <= range.start());
-    let mut offset = range.start();
-    let mut counted = 0_u32;
 
-    for line in text.split_inclusive('\n') {
-        let start = offset;
-
-        offset += line.len();
-
+    count_lines(facts.source().source(), range, skipped, |line, start| {
         while cursor < comments.len() && comments[cursor].range().end() <= start {
             cursor += 1;
         }
 
-        if line_is_counted(
-            line.trim_end_matches(['\n', '\r']),
-            start,
-            &comments[cursor..],
-            skipped,
-        ) {
+        line_is_commentary(line, start, &comments[cursor..])
+    })
+}
+
+pub(crate) fn effective_script_line_count(
+    file: &TextFile,
+    range: SourceRange,
+    skipped: Skipped,
+) -> u32 {
+    count_lines(file.text(), range, skipped, |line, _| {
+        line.trim_start().starts_with('#')
+    })
+}
+
+fn count_lines(
+    source: &str,
+    range: SourceRange,
+    skipped: Skipped,
+    mut is_commentary: impl FnMut(&str, usize) -> bool,
+) -> u32 {
+    let text = &source[range.start()..range.end()];
+    let mut offset = range.start();
+    let mut counted = 0_u32;
+
+    for raw_line in text.split_inclusive('\n') {
+        let start = offset;
+        let line = raw_line.trim_end_matches(['\n', '\r']);
+
+        offset += raw_line.len();
+
+        if !(skipped.blank_lines && line.trim().is_empty())
+            && !(skipped.comments && is_commentary(line, start))
+        {
             counted += 1;
         }
     }
 
     counted
-}
-
-fn line_is_counted(line: &str, start: usize, comments: &[CommentFact], skipped: Skipped) -> bool {
-    if skipped.blank_lines && line.trim().is_empty() {
-        return false;
-    }
-
-    !(skipped.comments && line_is_commentary(line, start, comments))
 }
 
 fn line_is_commentary(line: &str, start: usize, comments: &[CommentFact]) -> bool {

@@ -21,6 +21,16 @@ speaks about.
   or verify the app instead. `bots` defaults to Dependabot, GitHub Actions, and Renovate identities.
 - Job workflow facts now expose a job-level `if:` range, so policy rules can apply the same condition
   checks to privileged jobs and privileged steps.
+- `ci/no-inline-script` — reports a workflow `run:` script above its configured effective-line
+  limit. `recommended@1` adopts 8 after measuring 52 scripts: p50 was 1, p95 was 8 and the maximum
+  was 40. Blank and shell-comment-only lines do not consume the default budget. The measurement is
+  source-based, so compressed one-line command chains remain a documented boundary rather than a
+  shell parser hidden inside a line rule.
+- `ci/no-monolithic-job` — reports a workflow job above its configured step limit.
+  `recommended@1` adopts 7 after measuring 21 jobs: p50 was 3, p95 was 7 and the maximum was 11.
+  It counts independently reviewable and retryable steps; command aggregation inside a step remains
+  `no-inline-script`'s concern.
+
 - Workflow rules can now ask about each step and its settings, expressions inside YAML values,
   comments, job dependencies and reusable-workflow secrets, and literal container or service
   credentials. Every site retains its source range, so a rule can relate an expression to a command or

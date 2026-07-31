@@ -337,6 +337,7 @@ count_limit_rules! {
     FunctionStatementsRule { "max-statements" => max_statements },
     ConditionComplexityRule { "max-operators" => max_operators },
     CognitiveComplexityRule { "max-score" => max_score },
+    NoMonolithicJobRule { "max-steps" => max_steps },
 }
 
 #[derive(Debug, Deserialize)]

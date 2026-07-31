@@ -26,6 +26,8 @@ fn limits(rule_id: &str) -> String {
         "maintainability/cognitive-complexity" => "max-score",
         "maintainability/return-count" => "max-returns",
         "maintainability/function-statements" => "max-statements",
+        "ci/no-inline-script" => "max-lines",
+        "ci/no-monolithic-job" => "max-steps",
         _ => return String::new(),
     };
 
