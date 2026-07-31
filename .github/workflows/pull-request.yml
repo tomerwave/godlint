@@ -26,6 +26,9 @@ jobs:
       - name: Test the branch-name check
         run: scripts/test-check-branch-name.sh
 
+      - name: Test the released-agreement explanation
+        run: scripts/test-explain-released-agreement.sh
+
       - name: Check what this change touched
         if: github.event_name == 'pull_request'
         run: |
