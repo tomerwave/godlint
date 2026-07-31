@@ -1,0 +1,9 @@
+exit-code: 1
+
+stdout: |
+  .github/workflows/containers.yml:12:19: error[ci/hardcoded-container-credentials] build has a literal container credential in username; interpolate a secret instead.
+  .github/workflows/containers.yml:13:19: error[ci/hardcoded-container-credentials] build has a literal container credential in password; interpolate a secret instead.
+  .github/workflows/containers.yml:18:21: error[ci/hardcoded-container-credentials] build has a literal container credential in username; interpolate a secret instead.
+  .github/workflows/containers.yml:24:21: error[ci/hardcoded-container-credentials] build has a literal container credential in password; interpolate a secret instead.
+
+stderr: ""

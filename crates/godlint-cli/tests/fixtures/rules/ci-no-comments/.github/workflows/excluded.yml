@@ -1,0 +1,11 @@
+# This comment is outside the configured path scope.
+name: Excluded
+
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: cargo build

@@ -5,16 +5,17 @@ use crate::config::{
     ConditionComplexityRule, DecisionComplexityRule, DependencyBoundaryRule,
     DirectEnvironmentReadRule, EmptyErrorHandlerRule, EmptyFunctionRule, ExplicitTimerDelayRule,
     ExplicitWorkflowPermissionsRule, FilenameCaseRule, ForbiddenDependencyRule,
-    FunctionNestingRule, FunctionStatementsRule, LineLimitRule, ModuleIndependenceRule,
-    NoCommentsRule, NoDynamicExecutionRule, NoEmptyTestRule, NoFocusedTestRule,
-    NoInsecureRandomRule, NoInternalImportRule, NoMonolithicJobRule, NoNetworkInUnitTestRule,
-    NoProductionLogRule, NoRandomnessWithoutSeedRule, NoShellCommandRule, NoSkippedTestRule,
-    NoSleepInTestRule, NoTestHelperInProductionRule, NoWeakHashRule, OverprovisionedSecretsRule,
-    ParameterCountRule, PinThirdPartyActionsRule, RestrictedCallRule, RestrictedImportRule,
-    ReturnCountRule, Rules, SecretsInheritRule, Severity, TemplateInjectionRule,
-    TodoRequiresReferenceRule, UnredactedSecretsRule, UnusedSuppressionRule, default_bots,
-    default_configuration_paths, default_markers, default_reference_prefixes, default_test_helpers,
-    default_test_paths, default_trusted_owners,
+    FunctionNestingRule, FunctionStatementsRule, HardcodedContainerCredentialsRule, LineLimitRule,
+    ModuleIndependenceRule, NoCommentsRule, NoDynamicExecutionRule, NoEmptyTestRule,
+    NoFocusedTestRule, NoInsecureRandomRule, NoInternalImportRule, NoMonolithicJobRule,
+    NoNetworkInUnitTestRule, NoProductionLogRule, NoRandomnessWithoutSeedRule, NoShellCommandRule,
+    NoSkippedTestRule, NoSleepInTestRule, NoTestHelperInProductionRule, NoWeakHashRule,
+    NoWorkflowCommentsRule, OverprovisionedSecretsRule, ParameterCountRule,
+    PinThirdPartyActionsRule, RestrictedCallRule, RestrictedImportRule, ReturnCountRule, Rules,
+    SecretsInheritRule, Severity, TemplateInjectionRule, TodoRequiresReferenceRule,
+    UnredactedSecretsRule, UnusedSuppressionRule, default_bots, default_configuration_paths,
+    default_markers, default_reference_prefixes, default_test_helpers, default_test_paths,
+    default_trusted_owners,
 };
 
 pub const RECOMMENDED: &str = "recommended@1";
@@ -55,6 +56,7 @@ fn recommended(rules: &mut Rules) {
 fn continuous_integration(rules: &mut Rules) {
     workflow_shape(rules);
     workflow_secrets(rules);
+    workflow_hygiene(rules);
 }
 
 fn workflow_shape(rules: &mut Rules) {
@@ -111,6 +113,20 @@ fn workflow_secrets(rules: &mut Rules) {
             trusted_owners: default_trusted_owners(),
         });
 }
+
+fn workflow_hygiene(rules: &mut Rules) {
+    rules
+        .no_workflow_comments
+        .get_or_insert(NoWorkflowCommentsRule {
+            severity: Severity::Error,
+        });
+    rules
+        .hardcoded_container_credentials
+        .get_or_insert(HardcodedContainerCredentialsRule {
+            severity: Severity::Error,
+        });
+}
+
 fn maintainability(rules: &mut Rules) {
     size(rules);
     complexity(rules);

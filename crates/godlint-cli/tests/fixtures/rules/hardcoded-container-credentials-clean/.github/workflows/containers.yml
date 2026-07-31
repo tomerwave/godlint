@@ -1,0 +1,22 @@
+name: Containers
+
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: registry.example.test/build:latest
+      credentials:
+        username: ${{ secrets.CONTAINER_USERNAME }}
+        password: ${{ secrets.CONTAINER_PASSWORD }}
+    services:
+      database:
+        image: registry.example.test/database:latest
+        credentials:
+          username: ${{ secrets.DATABASE_USERNAME }}
+          password: ${{ secrets.DATABASE_PASSWORD }}
+    steps:
+      - name: Build
+        run: cargo build

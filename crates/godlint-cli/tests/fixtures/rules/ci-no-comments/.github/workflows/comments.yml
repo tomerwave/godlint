@@ -1,0 +1,13 @@
+name: Comments
+
+# This workflow builds the project.
+on:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # Install the pinned action.
+      - uses: vendor/action@0123456789012345678901234567890123456789 # v2
+      - run: cargo build # Compile before running tests.

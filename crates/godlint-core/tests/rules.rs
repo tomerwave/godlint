@@ -118,8 +118,13 @@ mod secrets_inherit;
 #[path = "rules/overprovisioned_secrets.rs"]
 mod overprovisioned_secrets;
 
+#[path = "rules/hardcoded_container_credentials.rs"]
+mod hardcoded_container_credentials;
 #[path = "rules/unredacted_secrets.rs"]
 mod unredacted_secrets;
+
+#[path = "rules/no_workflow_comments.rs"]
+mod no_workflow_comments;
 
 #[path = "rules/pin_third_party_actions.rs"]
 mod pin_third_party_actions;

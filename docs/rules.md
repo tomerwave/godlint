@@ -1,6 +1,6 @@
 # Rule reference
 
-Forty-four rules are implemented. Every one has an identifier of the form `family/name`, which is
+Forty-eight rules are implemented. Every one has an identifier of the form `family/name`, which is
 what a configuration entry and a suppression directive both name. [The rule roadmap](rule-roadmap.md)
 records the families still to come, and the reasoning behind each threshold `recommended@1` sets.
 [Language support](#language-support) records which languages each rule covers.
@@ -21,6 +21,8 @@ enforced there.
 | `architecture/restricted-import` | ✓ | ✓ | ✓ | — |
 | `ci/bot-conditions` | — | — | — | ✓ |
 | `ci/explicit-workflow-permissions` | — | — | — | ✓ |
+| `ci/hardcoded-container-credentials` | — | — | — | ✓ |
+| `ci/no-comments` | — | — | — | ✓ |
 | `ci/no-inline-script` | — | — | — | ✓ |
 | `ci/no-monolithic-job` | — | — | — | ✓ |
 | `ci/overprovisioned-secrets` | — | — | — | ✓ |
@@ -184,6 +186,8 @@ have to decide what interpolation looks like inside an f-string.
 | `ci/pin-third-party-actions` | A workflow step using a third-party action at a ref that can move |
 | `ci/explicit-workflow-permissions` | A job that runs with whatever the repository grants by default |
 | `ci/overprovisioned-secrets` | A step input or environment variable receiving the whole `secrets` context |
+| `ci/hardcoded-container-credentials` | A literal username or password in a job container or service |
+| `ci/no-comments` | A comment in a workflow |
 | `ci/template-injection` | An attacker-influenced expression interpolated directly into a `run:` script |
 | `ci/no-inline-script` | A `run:` script exceeding its effective-line limit |
 | `ci/no-monolithic-job` | A job exceeding its step limit |
@@ -205,6 +209,24 @@ context. A reference to one member, including `${{ secrets.NPM_TOKEN }}` and
 `secrets.*` expression and a reference to `$GITHUB_ENV` or `$GITHUB_OUTPUT`. Merely using a secret is
 silent, as is writing a non-secret value to either file. The rule cannot see a secret laundered
 through a variable in an earlier step; that would require data flow the workflow facts do not have.
+
+`ci/no-comments` reports workflow comments except a comment trailing a `uses:` value on the same line.
+That label makes a pinned SHA reviewable and lets `ci/stale-action-refs` check that the version named
+beside it remains truthful, reconciling that rule with `ci/pin-third-party-actions`. The exemption is
+unconditional because repositories that pin by SHA need the label, while an unpinned reference has no
+pin label to preserve. A comment above `uses:` or trailing any other key remains commentary and is
+reported. YAML has no doc-comment construct, so `allow-doc-comments` has no workflow equivalent and
+this rule has no option beyond `severity`. Workflow suppressions are not available: excluding a path
+is the only way to remove a workflow from the rule's scope.
+
+Godlint reads workflows, not composite actions: `Workflow::names` recognizes YAML files directly in
+`.github/workflows/`, so nothing in the `ci/` family sees a root `action.yml`.
+
+`ci/hardcoded-container-credentials` reports each literal `username` and `password` under a job's
+`container.credentials` or any `services.*.credentials` block. A value containing a GitHub expression
+is treated as interpolated and stays silent. The workflow reader deliberately exposes only those two
+credential keys; arbitrary container settings are not credentials, and this rule does not guess at
+secret-looking values elsewhere.
 
 `ci/template-injection` reports expressions in a step's `run:` script when the expression reads a
 context GitHub documents as attacker-influenced. The runner expands the expression before the shell

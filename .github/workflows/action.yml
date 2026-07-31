@@ -1,8 +1,6 @@
 name: Action
 
 on:
-  # labeled and unlabeled as well as the defaults, so applying a drift label re-evaluates the check.
-  # Without them the label would appear to do nothing until the next push.
   pull_request:
     types: [opened, synchronize, reopened, labeled, unlabeled]
   push:
@@ -13,9 +11,6 @@ permissions:
   contents: read
 
 jobs:
-  # This compares the released binary against the code in the pull request. It fails when they
-  # disagree, and says which of the two reasons it is, because red that needs a conversation to
-  # interpret is worse than no check. It is not a required check, so it never blocks a merge.
   repository:
     name: The released Godlint agrees with this tree
     runs-on: ${{ matrix.runner }}
@@ -28,11 +23,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # The action under test is this checkout, so a change to it is exercised by its own pull
-      # request rather than only after release.
-      # The repository itself, not a fixture: the action is held to the same tree the rest of CI is,
-      # so a released binary that disagrees with this code is a failure here rather than a surprise
-      # for whoever installs it.
       - uses: ./
         id: godlint
         continue-on-error: true
@@ -54,18 +44,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # continue-on-error, because the point is that it fails: the step must report a failure and
-      # the annotations must still be emitted.
       - uses: ./
         id: godlint
         continue-on-error: true
         with:
           working-directory: .github/fixtures/action-dirty
 
-      # The annotations file rather than an output or the summary: a composite action withholds its
-      # outputs when it fails, and GITHUB_STEP_SUMMARY is a separate file per step, so neither is
-      # readable from here. Failing is the thing being asserted, so the assertion cannot depend on
-      # the action having succeeded.
       - name: A tree with findings fails and annotates both rules
         shell: bash
         env:

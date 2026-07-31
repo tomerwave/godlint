@@ -1,0 +1,10 @@
+exit-code: 1
+
+stdout: |
+  .github/workflows/comments.yml:3:1: error[ci/no-comments] Workflow comment is not permitted; name the step clearly or move the rationale into docs/.
+  .github/workflows/comments.yml:11:7: error[ci/no-comments] Workflow comment is not permitted; name the step clearly or move the rationale into docs/.
+  .github/workflows/comments.yml:13:26: error[ci/no-comments] Workflow comment is not permitted; name the step clearly or move the rationale into docs/.
+  .github/workflows/directives.yml:1:1: error[ci/no-comments] Workflow comment is not permitted; name the step clearly or move the rationale into docs/.
+  .github/workflows/directives.yml:2:1: error[ci/no-comments] Workflow comment is not permitted; name the step clearly or move the rationale into docs/.
+
+stderr: ""
