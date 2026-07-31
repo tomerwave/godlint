@@ -11,6 +11,10 @@ speaks about.
 
 ### Added
 
+- `testing/no-empty-test` — reports a test whose body does nothing, so it cannot fail. It reads the
+  test's own body rather than any function inside it, so a test that registers an empty callback is not
+  itself empty, and a test with no body to read at all such as `it.todo('later')` is left to
+  `no-skipped-test`.
 - `testing/no-focused-test` — reports a test or suite marked to run on its own, `it.only` and
   `describe.only` and the other runners' `.only`. A focused test that passes proves almost nothing,
   because nothing else ran.
@@ -26,9 +30,11 @@ speaks about.
   runner call and its member, so `it.only` and `describe.skip` carry focus in the name. The fact stops
   at syntax: a rule that wants to treat a path as a test directory combines the fact with a glob,
   because an analyzer sees no configuration. This unblocks `testing/no-focused-test`,
-  `no-skipped-test`, `no-empty-test`, `no-conditional-test-logic`, `no-sleep-in-test`,
-  `no-randomness-without-seed` and `no-network-in-unit-test`, each of which asks about other facts
-  falling inside a test's range.
+  `no-skipped-test`, `no-empty-test`, `no-sleep-in-test`, `no-randomness-without-seed` and
+  `no-network-in-unit-test`, each of which asks about other facts falling inside a test's range.
+  `no-conditional-test-logic` needs more than this fact and is not among them: the problem is an
+  assertion reachable on only one path, and knowing what an assertion is takes a fact that does not
+  exist yet.
 
 ## [0.2.0] - 2026-07-30
 

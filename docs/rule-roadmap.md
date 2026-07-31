@@ -291,6 +291,7 @@ semantic capability exists.
 | `security/direct-environment-read` | Shipped | High | Direct platform API match | Require a single configuration boundary |
 | `security/no-insecure-random` | Shipped | High | Direct callee match against a per-language catalogue | Require a cryptographically secure generator for a value that must not be guessable |
 | `testing/no-focused-test` | Shipped | High | Test fact focus | Refuse a focused test, because the rest of the suite does not run |
+| `testing/no-empty-test` | Shipped | High | Test fact and the body it encloses | Refuse a test that cannot fail |
 | `testing/no-skipped-test` | Shipped | High | Test fact focus | Refuse a test that does not run without an owner and an expiry |
 | `security/no-weak-hash` | Shipped | High | Direct callee match, plus a literal algorithm argument to a hash factory | Require a collision-resistant hash where collision resistance matters |
 | `reliability/explicit-timer-delay` | Shipped | High | Direct JavaScript/TypeScript timer calls with fewer than two arguments | Require an intentional delay value |

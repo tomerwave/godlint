@@ -1,0 +1,8 @@
+exit-code: 1
+
+stdout: |
+  example.js:1:1: error[testing/no-empty-test] This test has an empty body, so it cannot fail; write the assertion or delete the test.
+  example.py:1:1: error[testing/no-empty-test] This test has an empty body, so it cannot fail; write the assertion or delete the test.
+  example.rs:2:1: error[testing/no-empty-test] This test has an empty body, so it cannot fail; write the assertion or delete the test.
+
+stderr: ""

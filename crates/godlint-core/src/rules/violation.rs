@@ -50,6 +50,7 @@ pub enum Violation {
     },
     FocusedTest,
     SkippedTest,
+    EmptyTest,
     RestrictedImport {
         module: String,
     },
@@ -113,6 +114,9 @@ const MISSING_REFERENCE: &str = "comment requires an issue reference.";
 const RESTRICTED_CALL: &str = "is restricted by project policy.";
 
 const CROSSED_BOUNDARY: &str = "the dependency runs against the declared layer order.";
+
+const EMPTY_TEST: &str = "This test has an empty body, so it cannot fail; write the assertion or \
+                          delete the test.";
 
 const FOCUSED_TEST: &str = concat!(
     "This test is focused, so the rest of the suite does not run; remove the focus before ",
@@ -195,6 +199,7 @@ impl fmt::Display for Violation {
             Self::UnverifiedHash { callee } => unverified_hash(formatter, callee),
             Self::FocusedTest => write!(formatter, "{FOCUSED_TEST}"),
             Self::SkippedTest => write!(formatter, "{SKIPPED_TEST}"),
+            Self::EmptyTest => formatter.write_str(EMPTY_TEST),
             Self::InsecureRandom { callee, secure } => insecure_random(formatter, callee, secure),
         }
     }
