@@ -186,6 +186,10 @@ DIALECTS = {
 
 ANALYSED = "✓"
 
+# The columns the matrix must carry, in order, so that no other table in the document can
+# be read as the matrix.
+DIALECT_COLUMNS = ("JS/TS", "Python", "Rust")
+
 REPORTED = re.compile(r"^\s*(\S+?):\d+:\d+: \w+\[([a-z-]+/[a-z-]+)\]")
 
 
@@ -197,24 +201,23 @@ def documented_languages() -> dict[str, dict[str, str]]:
     declarations without this script needing to parse Rust.
     """
 
-    header = re.compile(r"^\| Rule \|(.+)\|\s*$")
+    header = ("", "Rule", *DIALECT_COLUMNS, "")
     rows: dict[str, dict[str, str]] = {}
-    columns: list[str] = []
+    found = False
 
     for line in read(RULES).splitlines():
-        if not columns:
-            match = header.match(line)
-            if match:
-                columns = [cell.strip() for cell in match.group(1).split("|")]
+        cells = tuple(cell.strip() for cell in line.split("|"))
+
+        if not found:
+            found = cells == header
             continue
 
         if not line.startswith("|"):
             break
 
-        cells = [cell.strip() for cell in line.split("|")[1:-1]]
-        rule = cells[0].strip("`")
-        if "/" in rule:
-            rows[rule] = dict(zip(columns, cells[1:], strict=True))
+        rule = cells[1].strip("`")
+        if "/" in rule and len(cells) == len(header):
+            rows[rule] = dict(zip(DIALECT_COLUMNS, cells[2:], strict=False))
 
     return rows
 
