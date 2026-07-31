@@ -128,6 +128,7 @@ Rust is out of scope. It has no `catch`, and a discarded `Result` is `reliabilit
 | `testing/no-randomness-without-seed` | A test drawing from a general-purpose generator in a file that never seeds one, so a failure cannot be reproduced |
 | `testing/no-network-in-unit-test` | A test in a declared unit path calling an HTTP or socket client, so it is slow, dependent on a service being up, and unable to run offline |
 | `testing/assertion-required` | A test that asserts nothing, so it passes unless the code raises. Reported at warning, whatever severity is configured |
+| `testing/no-duplicate-assertion` | The same assertion twice in one test, so the second cannot fail where the first passed. Reported at warning, whatever severity is configured |
 | `testing/no-test-helper-in-production` | A production file importing its own test tree: a local import naming `tests`, `test`, `__tests__`, `__mocks__`, `fixtures`, `mocks` or `conftest`. `test-paths` says which files count as tests, `helpers` which segments name scaffolding |
 
 `no-empty-test` reads the test's own body rather than any function inside it, so a test that registers
@@ -274,6 +275,28 @@ rules:
     extra-assertions:
       - verify_refund
 ```
+
+`no-duplicate-assertion` compares assertions by the text they were written with, collapsed so spacing
+is not what makes two of them different, and only within one test — the same assertion in two tests is
+two tests, not a repeat, and a suite that encloses both is skipped for the same reason. Three copies is
+two repeats.
+
+A repeat is only reported when **nothing happened between** the two — no call falls between the first
+assertion's end and the second's start. That single condition is what makes the rule usable: measured
+against requests, flask, express and zod it took the finding count from 474 to 15, and everything it
+dropped was a test asserting the same predicate after re-running an action. A fluent chain that asserts
+twice, such as supertest's `.expect(302).expect('Location', '/x')`, is one span rather than a repeat.
+
+It reports at warning, and the measured precision is why. Of those 15 findings, 4 are genuine copy-paste
+defects — zod has the same invalid MAC address twice in a list meant to hold distinct ones, and the same
+wrong type twice in a list of wrong types — and 11 are cases where **the repetition is the test**: zod's
+`regex lastIndex reset` asserts the same thing five times precisely because a `/g` regex carries mutable
+state, and flask reuses a client across two `with` blocks. Telling those apart means knowing whether
+re-running an assertion can change its result, which is a question about purity and well outside
+anything the current facts can answer.
+
+The other half of #115 — an assertion comparing a value to itself, `assertEqual(x, x)` — is not here. That
+needs the assertion's *arguments*, and the fact records their count rather than their text.
 
 `no-test-helper-in-production` reads the import path and the importing file's path, and one restriction
 does most of the work: only a **local** import counts — `./`, `../` or a bare `.` prefix, and Rust's

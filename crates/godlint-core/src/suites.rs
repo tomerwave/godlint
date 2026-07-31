@@ -5,12 +5,13 @@ use crate::config::{
     ConditionComplexityRule, DecisionComplexityRule, DependencyBoundaryRule,
     DirectEnvironmentReadRule, EmptyErrorHandlerRule, EmptyFunctionRule, ExplicitTimerDelayRule,
     FilenameCaseRule, ForbiddenDependencyRule, FunctionNestingRule, FunctionStatementsRule,
-    LineLimitRule, ModuleIndependenceRule, NoCommentsRule, NoDynamicExecutionRule, NoEmptyTestRule,
-    NoFocusedTestRule, NoInsecureRandomRule, NoInternalImportRule, NoNetworkInUnitTestRule,
-    NoProductionLogRule, NoRandomnessWithoutSeedRule, NoShellCommandRule, NoSkippedTestRule,
-    NoSleepInTestRule, NoTestHelperInProductionRule, NoWeakHashRule, ParameterCountRule,
-    RestrictedCallRule, RestrictedImportRule, ReturnCountRule, Rules, Severity,
-    TodoRequiresReferenceRule, UnusedSuppressionRule, default_configuration_paths, default_markers,
+    LineLimitRule, ModuleIndependenceRule, NoCommentsRule, NoDuplicateAssertionRule,
+    NoDynamicExecutionRule, NoEmptyTestRule, NoFocusedTestRule, NoInsecureRandomRule,
+    NoInternalImportRule, NoNetworkInUnitTestRule, NoProductionLogRule,
+    NoRandomnessWithoutSeedRule, NoShellCommandRule, NoSkippedTestRule, NoSleepInTestRule,
+    NoTestHelperInProductionRule, NoWeakHashRule, ParameterCountRule, RestrictedCallRule,
+    RestrictedImportRule, ReturnCountRule, Rules, Severity, TodoRequiresReferenceRule,
+    UnusedSuppressionRule, default_configuration_paths, default_markers,
     default_reference_prefixes, default_test_helpers, default_test_paths,
 };
 
@@ -234,6 +235,9 @@ fn testing(rules: &mut Rules) {
     rules
         .no_empty_test
         .get_or_insert(NoEmptyTestRule { severity: error });
+    rules
+        .no_duplicate_assertion
+        .get_or_insert(NoDuplicateAssertionRule { severity: error });
     rules
         .assertion_required
         .get_or_insert(AssertionRequiredRule {

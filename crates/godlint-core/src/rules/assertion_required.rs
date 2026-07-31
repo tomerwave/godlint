@@ -3,8 +3,11 @@ use crate::{
     config::{AssertionRequiredRule, Config, Severity},
     facts::TestFact,
     rules::{
-        Finding, Reporting, Rule, Violation, catalogue::spelled, collect_ranged,
-        enclosing::test_body, when_configured,
+        Finding, Reporting, Rule, Violation,
+        catalogue::spelled,
+        collect_ranged,
+        enclosing::{encloses_a_test, test_body},
+        when_configured,
     },
 };
 
@@ -40,13 +43,6 @@ fn check(
 
     (!body.body_is_empty() && !encloses_a_test(facts, test) && !asserts(facts, test, configuration))
         .then_some(Violation::MissingAssertion)
-}
-
-fn encloses_a_test(facts: &SourceFacts, test: &TestFact) -> bool {
-    facts
-        .tests()
-        .iter()
-        .any(|other| other.range() != test.range() && test.contains(other.range()))
 }
 
 fn asserts(facts: &SourceFacts, test: &TestFact, configuration: &AssertionRequiredRule) -> bool {

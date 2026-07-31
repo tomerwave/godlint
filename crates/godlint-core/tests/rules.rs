@@ -63,6 +63,9 @@ mod no_insecure_random;
 #[path = "rules/assertion_required.rs"]
 mod assertion_required;
 
+#[path = "rules/no_duplicate_assertion.rs"]
+mod no_duplicate_assertion;
+
 #[path = "rules/no_empty_test.rs"]
 mod no_empty_test;
 

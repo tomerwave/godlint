@@ -31,6 +31,7 @@ mod line_count;
 pub mod module_independence;
 mod module_path;
 pub mod no_comments;
+pub mod no_duplicate_assertion;
 pub mod no_dynamic_execution;
 pub mod no_empty_test;
 pub mod no_focused_test;
@@ -409,6 +410,7 @@ const EVALUATORS: &[Evaluator] = &[
     function_statements::evaluate,
     no_comments::evaluate,
     restricted_call::evaluate,
+    no_duplicate_assertion::evaluate,
     no_dynamic_execution::evaluate,
     direct_environment_read::evaluate,
     explicit_timer_delay::evaluate,

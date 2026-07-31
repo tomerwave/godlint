@@ -10,13 +10,14 @@ use crate::{
         forbidden_dependency::ForbiddenDependency, function_nesting::FunctionNesting,
         function_size::FunctionSize, function_statements::FunctionStatements,
         module_independence::ModuleIndependence, no_comments::NoComments,
-        no_dynamic_execution::NoDynamicExecution, no_empty_test::NoEmptyTest,
-        no_focused_test::NoFocusedTest, no_insecure_random::NoInsecureRandom,
-        no_internal_import::NoInternalImport, no_network_in_unit_test::NoNetworkInUnitTest,
-        no_production_log::NoProductionLog, no_randomness_without_seed::NoRandomnessWithoutSeed,
-        no_shell_command::NoShellCommand, no_skipped_test::NoSkippedTest,
-        no_sleep_in_test::NoSleepInTest, no_test_helper_in_production::NoTestHelperInProduction,
-        no_weak_hash::NoWeakHash, parameter_count::ParameterCount, restricted_call::RestrictedCall,
+        no_duplicate_assertion::NoDuplicateAssertion, no_dynamic_execution::NoDynamicExecution,
+        no_empty_test::NoEmptyTest, no_focused_test::NoFocusedTest,
+        no_insecure_random::NoInsecureRandom, no_internal_import::NoInternalImport,
+        no_network_in_unit_test::NoNetworkInUnitTest, no_production_log::NoProductionLog,
+        no_randomness_without_seed::NoRandomnessWithoutSeed, no_shell_command::NoShellCommand,
+        no_skipped_test::NoSkippedTest, no_sleep_in_test::NoSleepInTest,
+        no_test_helper_in_production::NoTestHelperInProduction, no_weak_hash::NoWeakHash,
+        parameter_count::ParameterCount, restricted_call::RestrictedCall,
         restricted_import::RestrictedImport, return_count::ReturnCount,
         todo_requires_reference::TodoRequiresReference, unused_suppression::UnusedSuppression,
     },
@@ -110,6 +111,11 @@ severity!(
     assertion_required_severity,
     AssertionRequired,
     assertion_required
+);
+severity!(
+    no_duplicate_assertion_severity,
+    NoDuplicateAssertion,
+    no_duplicate_assertion
 );
 severity!(no_empty_test_severity, NoEmptyTest, no_empty_test);
 severity!(no_skipped_test_severity, NoSkippedTest, no_skipped_test);
@@ -266,6 +272,11 @@ const REGISTRATIONS: &[Registration] = &[
     Registration {
         id: AssertionRequired::ID,
         severity: assertion_required_severity,
+        suppressible: true,
+    },
+    Registration {
+        id: NoDuplicateAssertion::ID,
+        severity: no_duplicate_assertion_severity,
         suppressible: true,
     },
     Registration {

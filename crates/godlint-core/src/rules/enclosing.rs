@@ -4,6 +4,13 @@ use crate::{
     source::SourceRange,
 };
 
+pub(super) fn encloses_a_test(facts: &SourceFacts, test: &TestFact) -> bool {
+    facts
+        .tests()
+        .iter()
+        .any(|other| other.range() != test.range() && test.contains(other.range()))
+}
+
 pub(super) fn in_test(facts: &SourceFacts, range: SourceRange) -> bool {
     facts.tests().iter().any(|test| test.contains(range))
 }

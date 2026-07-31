@@ -81,6 +81,8 @@ pub struct Rules {
     pub empty_error_handler: Option<EmptyErrorHandlerRule>,
     #[serde(rename = "testing/assertion-required")]
     pub assertion_required: Option<AssertionRequiredRule>,
+    #[serde(rename = "testing/no-duplicate-assertion")]
+    pub no_duplicate_assertion: Option<NoDuplicateAssertionRule>,
     #[serde(rename = "testing/no-empty-test")]
     pub no_empty_test: Option<NoEmptyTestRule>,
     #[serde(rename = "testing/no-focused-test")]
@@ -272,6 +274,12 @@ pub struct AssertionRequiredRule {
     pub severity: Severity,
     #[serde(default, rename = "extra-assertions")]
     pub extra_assertions: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct NoDuplicateAssertionRule {
+    pub severity: Severity,
 }
 
 #[derive(Debug, Deserialize)]

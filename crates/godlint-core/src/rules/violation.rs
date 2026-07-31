@@ -52,6 +52,9 @@ pub enum Violation {
     SkippedTest,
     EmptyTest,
     MissingAssertion,
+    DuplicateAssertion {
+        assertion: String,
+    },
     ShellCommand {
         shell: String,
     },
@@ -183,6 +186,11 @@ const INTERNAL_IMPORT: &str = concat!(
     "from the entry point instead."
 );
 
+const DUPLICATE_ASSERTION: &str = concat!(
+    "already ran in this test, so the second one cannot fail where the first passed; delete it, or ",
+    "assert the thing that changed."
+);
+
 const COMMENT_NOT_PERMITTED: &str = "Comment is not permitted; express the intent in the code.";
 
 fn unverified_hash(formatter: &mut fmt::Formatter<'_>, callee: &str) -> fmt::Result {
@@ -222,6 +230,14 @@ fn broke_independence(
     )
 }
 
+fn forbidden(formatter: &mut fmt::Formatter<'_>, package: &str) -> fmt::Result {
+    write!(formatter, "{package} {FORBIDDEN_DEPENDENCY}")
+}
+
+fn duplicate(formatter: &mut fmt::Formatter<'_>, assertion: &str) -> fmt::Result {
+    write!(formatter, "{assertion} {DUPLICATE_ASSERTION}")
+}
+
 fn environment(formatter: &mut fmt::Formatter<'_>, target: &str) -> fmt::Result {
     write!(formatter, "{target} {ENVIRONMENT_READ}")
 }
@@ -248,7 +264,9 @@ impl Violation {
     pub(crate) fn cap(&self) -> Severity {
         match self {
             Self::InternalImport { certain: false, .. } => Severity::Warning,
-            Self::MissingAssertion | Self::UnverifiedHash { .. } => Severity::Warning,
+            Self::DuplicateAssertion { .. }
+            | Self::MissingAssertion
+            | Self::UnverifiedHash { .. } => Severity::Warning,
             _ => Severity::Error,
         }
     }
@@ -275,9 +293,7 @@ impl fmt::Display for Violation {
             Self::FilenameCase { name, case } => {
                 write!(formatter, "{name} is not {case}; rename the file to match.")
             }
-            Self::ForbiddenDependency { package } => {
-                write!(formatter, "{package} {FORBIDDEN_DEPENDENCY}")
-            }
+            Self::ForbiddenDependency { package } => forbidden(formatter, package),
             Self::CrossedBoundary { from, to } => crossed_boundary(formatter, from, to),
             Self::BrokeIndependence { set, from, to } => {
                 broke_independence(formatter, set, from, to)
@@ -290,6 +306,7 @@ impl fmt::Display for Violation {
             Self::SkippedTest => write!(formatter, "{SKIPPED_TEST}"),
             Self::EmptyTest => formatter.write_str(EMPTY_TEST),
             Self::MissingAssertion => formatter.write_str(MISSING_ASSERTION),
+            Self::DuplicateAssertion { assertion } => duplicate(formatter, assertion),
             Self::ShellCommand { shell } => write!(formatter, "{shell} {SHELL_COMMAND}"),
             Self::TestHelperInProduction { module, segment } => {
                 test_helper(formatter, module, segment)

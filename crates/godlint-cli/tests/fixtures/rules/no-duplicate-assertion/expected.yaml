@@ -1,0 +1,7 @@
+exit-code: 0
+
+stdout: |
+  example.js:4:3: warning[testing/no-duplicate-assertion] expect(total).toBe(100) already ran in this test, so the second one cannot fail where the first passed; delete it, or assert the thing that changed.
+  example.py:4:5: warning[testing/no-duplicate-assertion] assert total == 100 already ran in this test, so the second one cannot fail where the first passed; delete it, or assert the thing that changed.
+  example.rs:5:5: warning[testing/no-duplicate-assertion] assert_eq!(total, 100) already ran in this test, so the second one cannot fail where the first passed; delete it, or assert the thing that changed.
+stderr: ""

@@ -298,6 +298,7 @@ semantic capability exists.
 | `testing/no-randomness-without-seed` | Shipped | High | Generator catalogue scoped to calls inside a test, exempting a file that seeds | Refuse a test whose failure cannot be reproduced |
 | `testing/no-network-in-unit-test` | Shipped | High | Client catalogue scoped to calls inside a test, in a declared unit path | Refuse a unit test that reaches the network |
 | `testing/assertion-required` | Shipped | Medium | Assertion facts counted per test, capped at warning | Ask a test to state what it checks |
+| `testing/no-duplicate-assertion` | Shipped | Low — measured 4 true of 15 on four real repositories | Assertion text compared within one test with no call between, capped at warning | Refuse dead weight that looks like coverage |
 | `testing/no-test-helper-in-production` | Shipped | High | Local import naming a test-tree segment, from a file that is not a test | Keep test scaffolding out of what ships |
 | `security/no-weak-hash` | Shipped | High | Direct callee match, plus a literal algorithm argument to a hash factory | Require a collision-resistant hash where collision resistance matters |
 | `reliability/explicit-timer-delay` | Shipped | High | Direct JavaScript/TypeScript timer calls with fewer than two arguments | Require an intentional delay value |

@@ -89,6 +89,16 @@ speaks about.
   command with nothing interpolated is reported too: it is not injectable today, but the argument-array
   form is no harder to write, and reporting only interpolated strings would mean deciding what
   interpolation looks like inside an f-string. `allow-in` exempts a release script.
+- `testing/no-duplicate-assertion` — reports the same assertion twice in one test, where the second
+  cannot fail if the first passed. Assertions are compared by the text they were written with, collapsed
+  so spacing is not what makes two of them different, and only within a single test: the same assertion in
+  two tests is two tests, and a suite enclosing both is skipped. A repeat is reported only when nothing
+  happened between the two, which took the count from 474 findings to 15 across requests, flask, express
+  and zod. It reports at warning because the measured precision is low: of those 15, four are genuine
+  copy-paste defects and eleven are tests where the repetition *is* the test, such as asserting five times
+  against a `/g` regex whose `lastIndex` mutates. Telling those apart is a question about purity. The
+  self-comparison half of the proposal, `assertEqual(x, x)`, is not included: that needs the assertion's
+  arguments, and the fact records their count rather than their text.
 - `testing/no-test-helper-in-production` — reports a production file importing its own test tree. That
   ships test scaffolding to users and inverts the dependency, so production depends on the tests, and it
   breaks any build that excludes them. Only a **local** import counts — `./`, `../`, a bare `.`, or Rust's
