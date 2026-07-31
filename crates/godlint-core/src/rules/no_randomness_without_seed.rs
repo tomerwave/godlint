@@ -7,6 +7,7 @@ use crate::{
         catalogue::{Catalogue, Dialect, GENERATORS, is_allowed, spelled},
         evaluate_call_in_test_rule, when_configured,
     },
+    source::Language,
 };
 
 const SEEDS: Catalogue = Catalogue(&[
@@ -19,6 +20,13 @@ const SEEDS: Catalogue = Catalogue(&[
     ("seedrandom", Dialect::JavaScript),
     ("Math.seedrandom", Dialect::JavaScript),
     ("faker.seed", Dialect::JavaScript),
+    ("StdRng::seed_from_u64", Dialect::Rust),
+    ("SmallRng::seed_from_u64", Dialect::Rust),
+    ("ChaCha8Rng::seed_from_u64", Dialect::Rust),
+    ("ChaCha20Rng::seed_from_u64", Dialect::Rust),
+    ("SeedableRng::seed_from_u64", Dialect::Rust),
+    ("StdRng::from_seed", Dialect::Rust),
+    ("SeedableRng::from_seed", Dialect::Rust),
 ]);
 
 pub struct NoRandomnessWithoutSeed;
@@ -45,7 +53,10 @@ impl CallInTestRule for NoRandomnessWithoutSeed {
         (GENERATORS.speaks(source.language(), &name)
             && !is_allowed(source, &configuration.allow_in)
             && !seeds_its_generator(facts))
-        .then_some(Violation::UnseededRandom { callee: name })
+        .then(|| Violation::UnseededRandom {
+            callee: name,
+            remedy: remedy(source.language()).to_owned(),
+        })
     }
 }
 
@@ -62,4 +73,11 @@ fn seeds_its_generator(facts: &SourceFacts) -> bool {
         .calls()
         .iter()
         .any(|call| SEEDS.speaks(language, &spelled(call)))
+}
+
+fn remedy(language: Language) -> &'static str {
+    match language {
+        Language::Rust => "replace it with a seeded StdRng",
+        Language::Python | Language::JavaScript | Language::TypeScript => "seed the generator",
+    }
 }

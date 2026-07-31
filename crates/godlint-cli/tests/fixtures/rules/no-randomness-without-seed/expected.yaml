@@ -3,5 +3,6 @@ exit-code: 1
 stdout: |
   example.js:2:27: error[testing/no-randomness-without-seed] Math.random is unseeded, so a failure here cannot be reproduced; seed the generator, or use a fixed fixture.
   example.py:5:13: error[testing/no-randomness-without-seed] random.sample is unseeded, so a failure here cannot be reproduced; seed the generator, or use a fixed fixture.
-  example.rs:3:23: error[testing/no-randomness-without-seed] rand::random is unseeded, so a failure here cannot be reproduced; seed the generator, or use a fixed fixture.
+  example.rs:3:23: error[testing/no-randomness-without-seed] rand::random is unseeded, so a failure here cannot be reproduced; replace it with a seeded StdRng, or use a fixed fixture.
+  numpy.py:5:14: error[testing/no-randomness-without-seed] np.random.rand is unseeded, so a failure here cannot be reproduced; seed the generator, or use a fixed fixture.
 stderr: ""

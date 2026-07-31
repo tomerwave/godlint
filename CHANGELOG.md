@@ -34,7 +34,10 @@ speaks about.
   attacker and unreproducible to a reader. Seeding is read per file rather than per call, since
   `random.seed(1)` and `random.sample(...)` are separate calls: any seeding call exempts the file. That
   under-reports rather than over-reports, and `allow-in` covers a property-based suite that draws from
-  the standard library on purpose.
+  the standard library on purpose. Rust gets its own remedy, because `rand::random` and `rand::thread_rng`
+  cannot be seeded: there the message asks for a seeded `StdRng`, and a file that builds one is exempt.
+  `rand::rng` is covered, being what `thread_rng` became in rand 0.9, and numpy is covered on both sides —
+  it previously knew `np.random.seed` without knowing `np.random.rand`.
 - Rules can now ask about a call that falls inside a test. `CallInTestRule` reads the call facts of a
   file, keeps only those a test's range encloses, and hands the rule the whole file's facts beside the
   call, so a rule can also ask what else the file does. That is the shape shared by `no-sleep-in-test`,

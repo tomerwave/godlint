@@ -56,6 +56,7 @@ pub enum Violation {
     },
     UnseededRandom {
         callee: String,
+        remedy: String,
     },
     RestrictedImport {
         module: String,
@@ -139,10 +140,7 @@ const SLEEP_IN_TEST: &str = concat!(
     "condition instead."
 );
 
-const UNSEEDED_RANDOM: &str = concat!(
-    "is unseeded, so a failure here cannot be reproduced; seed the generator, or use a fixed ",
-    "fixture."
-);
+const UNSEEDED_RANDOM: &str = "is unseeded, so a failure here cannot be reproduced;";
 
 const COMMENT_NOT_PERMITTED: &str = "Comment is not permitted; express the intent in the code.";
 
@@ -154,6 +152,13 @@ fn weak_hash(formatter: &mut fmt::Formatter<'_>, weak: &str, strong: &str) -> fm
     write!(
         formatter,
         "{weak} is not collision resistant; use {strong} where collision resistance matters."
+    )
+}
+
+fn unseeded(formatter: &mut fmt::Formatter<'_>, callee: &str, remedy: &str) -> fmt::Result {
+    write!(
+        formatter,
+        "{callee} {UNSEEDED_RANDOM} {remedy}, or use a fixed fixture."
     )
 }
 
@@ -217,7 +222,7 @@ impl fmt::Display for Violation {
             Self::SkippedTest => write!(formatter, "{SKIPPED_TEST}"),
             Self::EmptyTest => formatter.write_str(EMPTY_TEST),
             Self::SleepInTest { callee } => write!(formatter, "{callee} {SLEEP_IN_TEST}"),
-            Self::UnseededRandom { callee } => write!(formatter, "{callee} {UNSEEDED_RANDOM}"),
+            Self::UnseededRandom { callee, remedy } => unseeded(formatter, callee, remedy),
             Self::InsecureRandom { callee, secure } => insecure_random(formatter, callee, secure),
         }
     }

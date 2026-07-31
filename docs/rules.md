@@ -154,13 +154,17 @@ Property-based suites are the false positive to configure around. Their own gene
 catalogue, so most are already silent; `allow-in` covers a suite that draws from the standard library
 on purpose and reports its own seed.
 
-Three limits are worth knowing before adopting it at error. The catalogue matches the written spelling,
-so `from random import sample` then `sample(pool, 3)` is not reported — the same alias limit the call
-rules document. The catalogue knows numpy's *seed* (`np.random.seed`) but not numpy's *generators*, so
-`np.random.rand(3)` is silent; that asymmetry is an omission rather than a decision. And in Rust the
-message asks for something that is not available: both Rust entries, `rand::random` and
-`rand::thread_rng`, are unseedable by construction, so no Rust seeding call can exempt a file and the fix
-is to replace the generator with a seeded `StdRng` rather than to seed the one you have.
+The catalogue matches the written spelling, so `from random import sample` then `sample(pool, 3)` is not
+reported — the same alias limit the call rules document.
+
+Rust gets its own remedy, because `rand::random` and `rand::thread_rng` cannot be seeded at all: there the
+message asks you to replace the generator with a seeded `StdRng` rather than to seed the one you have. A
+file that does exactly that is exempt, so `StdRng::seed_from_u64`, `SmallRng::seed_from_u64` and
+`SeedableRng::from_seed` all count as seeding. `rand::rng` is covered too, which is what `thread_rng` was
+renamed to in rand 0.9.
+
+numpy is covered on both sides. It used to know `np.random.seed` without knowing `np.random.rand`, which
+meant a numpy seed could exempt a file for a generator the rule never reported on.
 
 What counts as a test is decided by syntax alone — a runner call, a `#[test]` attribute, a `test_`
 prefix or a `pytest.mark` decorator. Neither rule knows about test directories, because an analyzer

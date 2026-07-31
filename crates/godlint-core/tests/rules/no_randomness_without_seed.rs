@@ -74,6 +74,66 @@ fn names_the_generator_and_the_fix() {
 }
 
 #[test]
+fn asks_rust_for_the_fix_that_rust_offers() {
+    let message = reported(
+        "tests/a.rs",
+        "#[test]\nfn a() {\n    let n: usize = rand::random();\n}\n",
+    )
+    .first()
+    .expect("reports the generator")
+    .to_string();
+
+    assert!(
+        message.contains("replace it with a seeded StdRng"),
+        "rand::random cannot be seeded, so telling Rust to seed the generator is wrong: {message}"
+    );
+}
+
+#[test]
+fn keeps_a_rust_file_that_seeds_its_own_generator() {
+    for seed in [
+        "StdRng::seed_from_u64(7)",
+        "SmallRng::seed_from_u64(7)",
+        "SeedableRng::from_seed(bytes)",
+    ] {
+        let source =
+            format!("#[test]\nfn a() {{\n    let mut r = {seed};\n    rand::random();\n}}\n");
+
+        assert!(reported("tests/a.rs", &source).is_empty(), "{seed}");
+    }
+}
+
+#[test]
+fn reads_the_current_rand_and_numpy_spellings() {
+    assert_eq!(
+        reported(
+            "tests/a.rs",
+            "#[test]\nfn a() {\n    let r = rand::rng();\n}\n"
+        )
+        .len(),
+        1,
+        "rand 0.9 renamed thread_rng to rng"
+    );
+    for generator in [
+        "np.random.rand(3)",
+        "numpy.random.randint(5)",
+        "np.random.choice(pool)",
+    ] {
+        let source = format!("def test_a():\n    v = {generator}\n");
+
+        assert_eq!(reported("tests/test_a.py", &source).len(), 1, "{generator}");
+    }
+    assert!(
+        reported(
+            "tests/test_a.py",
+            "def test_a():\n    np.random.seed(1)\n    v = np.random.rand(3)\n"
+        )
+        .is_empty(),
+        "the catalogue knew this seed before it knew the generator it seeds"
+    );
+}
+
+#[test]
 fn keeps_a_file_that_seeds_its_generator() {
     assert!(
         reported(
