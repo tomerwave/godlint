@@ -1,0 +1,9 @@
+version: 1
+
+exclude:
+  - .github/workflows/excluded.yml
+
+rules:
+  ci/overprovisioned-secrets:
+    severity: error
+

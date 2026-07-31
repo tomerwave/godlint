@@ -505,7 +505,9 @@ to a run step, which is what `ci/no-pull-request-target-checkout` would need.
 | `ci/require-concurrency-cancel` | Planned | Workflow fact | Medium | Which triggers must cancel in progress |
 | `ci/template-injection` | Shipped | Step and expression facts | High | `allow-in` path globs |
 | `ci/bot-conditions` | Shipped | Step, job and expression facts | High | `bots`, defaulting to three common identities |
-| `ci/secrets-inherit` | Planned | Job fact | High | Which callees may inherit |
+| `ci/secrets-inherit` | Shipped | Job fact | High | `allow-in` path globs |
+| `ci/overprovisioned-secrets` | Shipped | Step, setting and expression facts | High | Severity only |
+| `ci/unredacted-secrets` | Shipped | Step and expression facts | High | Severity only |
 
 ### Phase 6 — Semantic and external capabilities
 

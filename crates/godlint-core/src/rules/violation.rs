@@ -69,6 +69,13 @@ pub enum Violation {
     AttackerInfluencedBotCondition {
         expression: String,
     },
+    InheritedSecrets {
+        job: String,
+    },
+    OverprovisionedSecrets {
+        setting: String,
+    },
+    UnredactedSecret,
     TestHelperInProduction {
         module: String,
         segment: String,
@@ -261,7 +268,7 @@ fn template_injection(formatter: &mut fmt::Formatter<'_>, expression: &str) -> f
     )
 }
 
-fn bot_condition(formatter: &mut fmt::Formatter<'_>, expression: &str) -> fmt::Result {
+fn bot(formatter: &mut fmt::Formatter<'_>, expression: &str) -> fmt::Result {
     write!(
         formatter,
         "\"{expression}\" checks an actor field that is attacker-influenced on the trigger, so \
@@ -318,9 +325,10 @@ impl fmt::Display for Violation {
                 unversioned,
             } => mutable_action(formatter, reference, *unversioned),
             Self::TemplateInjection { expression } => template_injection(formatter, expression),
-            Self::AttackerInfluencedBotCondition { expression } => {
-                bot_condition(formatter, expression)
-            }
+            Self::AttackerInfluencedBotCondition { expression } => bot(formatter, expression),
+            Self::InheritedSecrets { job } => inherited_secrets(formatter, job),
+            Self::OverprovisionedSecrets { setting } => overprovisioned_secrets(formatter, setting),
+            Self::UnredactedSecret => formatter.write_str(UNREDACTED_SECRET),
             Self::TestHelperInProduction { module, segment } => helper(formatter, module, segment),
             Self::InternalImport { module, marker, .. } => internal(formatter, module, marker),
             Self::SleepInTest { callee } => write!(formatter, "{callee} {SLEEP_IN_TEST}"),
@@ -333,6 +341,24 @@ impl fmt::Display for Violation {
 
 const UNDECLARED_PERMISSIONS: &str = "No permissions are declared anywhere in this workflow, so \
      every job runs with whatever the repository grants by default; declare what the workflow needs.";
+
+const UNREDACTED_SECRET: &str = "This script writes a secret to GITHUB_ENV or GITHUB_OUTPUT, where \
+     GitHub's masking does not follow it; keep the secret in its original context.";
+
+fn inherited_secrets(formatter: &mut fmt::Formatter<'_>, job: &str) -> fmt::Result {
+    write!(
+        formatter,
+        "The called workflow receives every secret available to {job}, not only the secrets it \
+         needs; name each secret explicitly."
+    )
+}
+
+fn overprovisioned_secrets(formatter: &mut fmt::Formatter<'_>, setting: &str) -> fmt::Result {
+    write!(
+        formatter,
+        "{setting} receives the whole secrets context; pass only the named secret it needs."
+    )
+}
 
 fn filename_case(formatter: &mut fmt::Formatter<'_>, name: &str, case: &str) -> fmt::Result {
     write!(formatter, "{name} is not {case}; rename the file to match.")

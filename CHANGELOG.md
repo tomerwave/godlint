@@ -11,6 +11,14 @@ speaks about.
 
 ### Added
 
+- `ci/secrets-inherit` — reports `secrets: inherit` on a reusable-workflow call because it gives the
+  callee every secret available to the caller; name the required secrets instead. Named secrets and
+  no `secrets:` declaration are silent, and `allow-in` path globs scope trusted callers.
+- `ci/overprovisioned-secrets` — reports a step input or environment variable set to the whole
+  `${{ secrets }}` context, including `toJSON(secrets)`, while named secret members stay silent.
+- `ci/unredacted-secrets` — reports a `run:` script that combines a direct `secrets.*` expression
+  with `$GITHUB_ENV` or `$GITHUB_OUTPUT`, where GitHub's masking no longer follows the value. It
+  deliberately does not infer data flow through variables or earlier steps.
 - `ci/template-injection` — reports attacker-influenced GitHub expressions interpolated directly
   into a workflow `run:` script, where the runner expands them before the shell sees the command.
   Expressions passed through `env:` or `with:` stay silent; binding the value to an environment

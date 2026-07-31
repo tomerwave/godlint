@@ -50,6 +50,7 @@ pub mod no_skipped_test;
 pub mod no_sleep_in_test;
 pub mod no_test_helper_in_production;
 pub mod no_weak_hash;
+pub mod overprovisioned_secrets;
 pub mod parameter_count;
 pub mod pin_third_party_actions;
 mod reference;
@@ -67,8 +68,10 @@ mod registry;
 pub mod restricted_call;
 pub mod restricted_import;
 pub mod return_count;
+pub mod secrets_inherit;
 pub mod template_injection;
 pub mod todo_requires_reference;
+pub mod unredacted_secrets;
 pub mod unused_suppression;
 
 pub use languages::{Absence, Languages};
@@ -349,14 +352,12 @@ fn finding(
     violation: Violation,
 ) -> Finding {
     let location = file.location(range);
-    let severity = reporting.severity.min(violation.cap());
-
     Finding {
         path: file.path().to_path_buf(),
         range,
         line: location.start.line,
         column: location.start.column,
-        severity,
+        severity: reporting.severity.min(violation.cap()),
         rule_id: reporting.rule_id,
         violation,
     }
@@ -368,11 +369,14 @@ type WorkflowEvaluator = fn(&[WorkflowFacts], &Config) -> Vec<Finding>;
 
 const WORKFLOW_EVALUATORS: &[WorkflowEvaluator] = &[
     bot_conditions::evaluate,
+    overprovisioned_secrets::evaluate,
     pin_third_party_actions::evaluate,
     explicit_workflow_permissions::evaluate,
+    secrets_inherit::evaluate,
     template_injection::evaluate,
     no_inline_script::evaluate,
     no_monolithic_job::evaluate,
+    unredacted_secrets::evaluate,
 ];
 
 const EVALUATORS: &[Evaluator] = &[
@@ -430,8 +434,8 @@ pub fn evaluate(
         findings.extend(evaluate_rule(workflows, config));
     }
 
-    let raw_findings = findings;
-    let mut findings = suppression::apply(raw_findings.clone(), &suppressions);
+    let unused_suppressions = unused_suppression::evaluate(&suppressions, &findings, config);
+    let mut findings = suppression::apply(findings, &suppressions);
 
     findings.extend(accountable_suppression::evaluate(
         &suppressions,
@@ -439,11 +443,7 @@ pub fn evaluate(
         today,
     ));
 
-    findings.extend(unused_suppression::evaluate(
-        &suppressions,
-        &raw_findings,
-        config,
-    ));
+    findings.extend(unused_suppressions);
 
     findings.sort_by(|left, right| {
         (&left.path, left.line, left.column, left.rule_id).cmp(&(

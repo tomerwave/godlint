@@ -1,0 +1,7 @@
+exit-code: 1
+
+stdout: |
+  .github/workflows/ci.yml:10:15: error[ci/unredacted-secrets] This script writes a secret to GITHUB_ENV or GITHUB_OUTPUT, where GitHub's masking does not follow it; keep the secret in its original context.
+  .github/workflows/ci.yml:12:11: error[ci/unredacted-secrets] This script writes a secret to GITHUB_ENV or GITHUB_OUTPUT, where GitHub's masking does not follow it; keep the secret in its original context.
+
+stderr: ""

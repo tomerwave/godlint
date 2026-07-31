@@ -1,0 +1,13 @@
+name: Excluded
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: owner/action@v1
+        with:
+          all-secrets: ${{ secrets }}
+

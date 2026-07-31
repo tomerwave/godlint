@@ -1,0 +1,10 @@
+name: Trusted
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    uses: owner/repository/.github/workflows/publish.yml@main
+    secrets: inherit
+
