@@ -69,6 +69,9 @@ mod no_focused_test;
 #[path = "rules/no_production_log.rs"]
 mod no_production_log;
 
+#[path = "rules/no_network_in_unit_test.rs"]
+mod no_network_in_unit_test;
+
 #[path = "rules/no_randomness_without_seed.rs"]
 mod no_randomness_without_seed;
 

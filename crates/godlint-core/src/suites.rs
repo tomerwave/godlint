@@ -6,10 +6,10 @@ use crate::config::{
     EmptyErrorHandlerRule, EmptyFunctionRule, ExplicitTimerDelayRule, FilenameCaseRule,
     ForbiddenDependencyRule, FunctionNestingRule, FunctionStatementsRule, LineLimitRule,
     ModuleIndependenceRule, NoCommentsRule, NoDynamicExecutionRule, NoEmptyTestRule,
-    NoFocusedTestRule, NoInsecureRandomRule, NoProductionLogRule, NoRandomnessWithoutSeedRule,
-    NoSkippedTestRule, NoSleepInTestRule, NoWeakHashRule, ParameterCountRule, RestrictedCallRule,
-    RestrictedImportRule, ReturnCountRule, Rules, Severity, TodoRequiresReferenceRule,
-    UnusedSuppressionRule, default_configuration_paths, default_markers,
+    NoFocusedTestRule, NoInsecureRandomRule, NoNetworkInUnitTestRule, NoProductionLogRule,
+    NoRandomnessWithoutSeedRule, NoSkippedTestRule, NoSleepInTestRule, NoWeakHashRule,
+    ParameterCountRule, RestrictedCallRule, RestrictedImportRule, ReturnCountRule, Rules, Severity,
+    TodoRequiresReferenceRule, UnusedSuppressionRule, default_configuration_paths, default_markers,
     default_reference_prefixes,
 };
 
@@ -233,6 +233,13 @@ fn testing(rules: &mut Rules) {
         .no_randomness_without_seed
         .get_or_insert(NoRandomnessWithoutSeedRule {
             severity: error,
+            allow_in: Vec::new(),
+        });
+    rules
+        .no_network_in_unit_test
+        .get_or_insert(NoNetworkInUnitTestRule {
+            severity: error,
+            unit_paths: Vec::new(),
             allow_in: Vec::new(),
         });
 }

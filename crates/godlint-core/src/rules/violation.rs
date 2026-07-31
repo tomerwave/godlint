@@ -58,6 +58,9 @@ pub enum Violation {
         callee: String,
         remedy: String,
     },
+    NetworkInUnitTest {
+        callee: String,
+    },
     RestrictedImport {
         module: String,
     },
@@ -142,6 +145,11 @@ const SLEEP_IN_TEST: &str = concat!(
 
 const UNSEEDED_RANDOM: &str = "is unseeded, so a failure here cannot be reproduced;";
 
+const NETWORK_IN_UNIT_TEST: &str = concat!(
+    "reaches the network from a unit test, which makes it slow, dependent on a service being up, ",
+    "and unable to run offline; inject the client and fake it."
+);
+
 const COMMENT_NOT_PERMITTED: &str = "Comment is not permitted; express the intent in the code.";
 
 fn unverified_hash(formatter: &mut fmt::Formatter<'_>, callee: &str) -> fmt::Result {
@@ -223,6 +231,9 @@ impl fmt::Display for Violation {
             Self::EmptyTest => formatter.write_str(EMPTY_TEST),
             Self::SleepInTest { callee } => write!(formatter, "{callee} {SLEEP_IN_TEST}"),
             Self::UnseededRandom { callee, remedy } => unseeded(formatter, callee, remedy),
+            Self::NetworkInUnitTest { callee } => {
+                write!(formatter, "{callee} {NETWORK_IN_UNIT_TEST}")
+            }
             Self::InsecureRandom { callee, secure } => insecure_random(formatter, callee, secure),
         }
     }

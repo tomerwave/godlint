@@ -89,6 +89,8 @@ pub struct Rules {
     pub no_sleep_in_test: Option<NoSleepInTestRule>,
     #[serde(rename = "testing/no-randomness-without-seed")]
     pub no_randomness_without_seed: Option<NoRandomnessWithoutSeedRule>,
+    #[serde(rename = "testing/no-network-in-unit-test")]
+    pub no_network_in_unit_test: Option<NoNetworkInUnitTestRule>,
     #[serde(rename = "security/no-weak-hash")]
     pub no_weak_hash: Option<NoWeakHashRule>,
     #[serde(rename = "security/no-insecure-random")]
@@ -278,6 +280,16 @@ pub struct NoSkippedTestRule {
 #[serde(deny_unknown_fields)]
 pub struct NoSleepInTestRule {
     pub severity: Severity,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct NoNetworkInUnitTestRule {
+    pub severity: Severity,
+    #[serde(default, rename = "unit-paths")]
+    pub unit_paths: Vec<String>,
+    #[serde(default, rename = "allow-in")]
+    pub allow_in: Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]

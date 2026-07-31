@@ -98,6 +98,7 @@ Rust is out of scope. It has no `catch`, and a discarded `Result` is `reliabilit
 | `testing/no-skipped-test` | A test that does not run: `.skip` or `.todo` in JavaScript and TypeScript, `#[ignore]` beside `#[test]` in Rust, and a `pytest.mark.skip` or `unittest.skip` decorator in Python |
 | `testing/no-sleep-in-test` | A test that waits on the clock: `time.sleep` or `asyncio.sleep` in Python, `thread::sleep` or `tokio::time::sleep` in Rust, and `page.waitForTimeout` or `browser.pause` in JavaScript and TypeScript |
 | `testing/no-randomness-without-seed` | A test drawing from a general-purpose generator in a file that never seeds one, so a failure cannot be reproduced |
+| `testing/no-network-in-unit-test` | A test in a declared unit path calling an HTTP or socket client, so it is slow, dependent on a service being up, and unable to run offline |
 
 `no-empty-test` reads the test's own body rather than any function inside it, so a test that registers
 an empty callback is not empty itself. A test with no body to read at all, such as `it.todo('later')`,
@@ -166,9 +167,51 @@ renamed to in rand 0.9.
 numpy is covered on both sides. It used to know `np.random.seed` without knowing `np.random.rand`, which
 meant a numpy seed could exempt a file for a generator the rule never reported on.
 
+`no-network-in-unit-test` is silent until configured, which puts it in an established category rather
+than a new one: `architecture/restricted-call`, `restricted-import`, `dependency-boundary`,
+`module-independence`, `security/forbidden-dependency` and `filename-case` all ship in `recommended@1`
+at error with an empty list and say nothing until a repository fills it in. What is new here is only
+*which* fact is missing — whether a given test is a unit test is a property of the repository rather
+than of the file, so the rule reports nothing until `unit-paths` names the directories that hold them:
+
+```yaml
+rules:
+  testing/no-network-in-unit-test:
+    severity: error
+    unit-paths:
+      - tests/unit/**
+```
+
+`allow-in` carves an exemption out of the declared paths, which is what a mocked client needs: a test
+that assigns `global.fetch` and then calls it is following this rule's own advice, and a callee match
+cannot tell that from a real request.
+
+`recommended@1` enables it at error like every other rule, and with no `unit-paths` it stays silent
+rather than guessing. Guessing was the alternative and it is worse in both directions: a repository
+following Rust's convention keeps its integration tests in `tests/`, where reaching the real service is
+the entire point, and a repository with no such split would have every test reported at error.
+
+This repository does not name the rule in its own `godlint.yaml`, and cannot yet: the released-agreement
+check runs the *published* binary against this tree, and the configuration schema rejects an unknown
+rule key outright, so a `godlint.yaml` naming a rule that does not exist in the last release fails to
+parse. The rule is dogfooded through the adopted suite, and the fixture under
+`crates/godlint-cli/tests/fixtures/rules/no-network-in-unit-test/` is the worked example instead. That
+interaction is filed separately; it will hold for every future rule that needs configuration to say
+anything.
+
+`no-network-in-unit-test` matches the client's written spelling, so it inherits the same two blind spots
+the call rules document above, and one more of its own. An alias escapes it: `from requests import get`
+then `get(url)` is not reported. A seam escapes it: `requests.Session().get(...)`,
+`httpx.Client().get(...)` and `reqwest::Client::new().get(...)` are indirect calls, so no callee fact
+names them. And a client reached from a fixture rather than from the test — `beforeEach(async () => {
+await fetch(url) })`, or a `pytest.fixture` — falls outside every test's range and is silent, which is a
+common shape of exactly this smell. All three want import resolution or a fixture fact; none is a
+configuration matter.
+
 What counts as a test is decided by syntax alone — a runner call, a `#[test]` attribute, a `test_`
-prefix or a `pytest.mark` decorator. Neither rule knows about test directories, because an analyzer
-sees no configuration; a repository that keeps tests somewhere unusual is not covered by that alone.
+prefix or a `pytest.mark` decorator. None of the test rules knows about test directories on its own,
+because an analyzer sees no configuration; a repository that keeps tests somewhere unusual is covered
+only where a rule takes paths from configuration, as `no-network-in-unit-test` does.
 
 ## Logging
 

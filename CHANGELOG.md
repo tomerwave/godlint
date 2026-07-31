@@ -28,6 +28,18 @@ speaks about.
   because that takes import resolution; and a mocked sleep under
   `patch("time.sleep")` is reported although it is instant, for the same reason the alias escapes.
 
+- `testing/no-network-in-unit-test` — reports a test calling an HTTP or socket client from a path the
+  repository has declared as unit tests. Such a test is slow, fails when a service is down, and cannot
+  run offline; it usually also means the seam that should have been injected was not. Which test is a
+  unit test is a fact about the repository rather than about the file, so the rule reports nothing until
+  `unit-paths` names them, and `allow-in` carves exemptions back out of those paths for a mocked client.
+  Being silent until configured puts it in an established category rather than a new one: six rules
+  already ship in the suite at error with an empty list. `recommended@1` enables it at error and it stays silent
+  until then, because guessing is worse in both directions: Rust's own convention puts integration tests
+  in `tests/`, where reaching the real service is the point, and a repository with no such split would
+  see every test reported. The fixture directory is the worked example; this repository cannot name the
+  rule in its own `godlint.yaml` until the next release, because the configuration schema rejects an
+  unknown rule key and the released-agreement check runs the published binary against this tree.
 - `testing/no-randomness-without-seed` — reports a test drawing from a general-purpose generator in a
   file that never seeds one. A failure there cannot be reproduced, so the report is not actionable. The
   catalogue is shared with `security/no-insecure-random`, because the same call is unpredictable to an

@@ -12,11 +12,12 @@ use crate::{
         module_independence::ModuleIndependence, no_comments::NoComments,
         no_dynamic_execution::NoDynamicExecution, no_empty_test::NoEmptyTest,
         no_focused_test::NoFocusedTest, no_insecure_random::NoInsecureRandom,
-        no_production_log::NoProductionLog, no_randomness_without_seed::NoRandomnessWithoutSeed,
-        no_skipped_test::NoSkippedTest, no_sleep_in_test::NoSleepInTest, no_weak_hash::NoWeakHash,
-        parameter_count::ParameterCount, restricted_call::RestrictedCall,
-        restricted_import::RestrictedImport, return_count::ReturnCount,
-        todo_requires_reference::TodoRequiresReference, unused_suppression::UnusedSuppression,
+        no_network_in_unit_test::NoNetworkInUnitTest, no_production_log::NoProductionLog,
+        no_randomness_without_seed::NoRandomnessWithoutSeed, no_skipped_test::NoSkippedTest,
+        no_sleep_in_test::NoSleepInTest, no_weak_hash::NoWeakHash, parameter_count::ParameterCount,
+        restricted_call::RestrictedCall, restricted_import::RestrictedImport,
+        return_count::ReturnCount, todo_requires_reference::TodoRequiresReference,
+        unused_suppression::UnusedSuppression,
     },
 };
 
@@ -107,6 +108,11 @@ severity!(no_focused_test_severity, NoFocusedTest, no_focused_test);
 severity!(no_empty_test_severity, NoEmptyTest, no_empty_test);
 severity!(no_skipped_test_severity, NoSkippedTest, no_skipped_test);
 severity!(no_sleep_in_test_severity, NoSleepInTest, no_sleep_in_test);
+severity!(
+    no_network_in_unit_test_severity,
+    NoNetworkInUnitTest,
+    no_network_in_unit_test
+);
 severity!(
     no_randomness_without_seed_severity,
     NoRandomnessWithoutSeed,
@@ -263,6 +269,11 @@ const REGISTRATIONS: &[Registration] = &[
     Registration {
         id: NoRandomnessWithoutSeed::ID,
         severity: no_randomness_without_seed_severity,
+        suppressible: true,
+    },
+    Registration {
+        id: NoNetworkInUnitTest::ID,
+        severity: no_network_in_unit_test_severity,
         suppressible: true,
     },
     Registration {
