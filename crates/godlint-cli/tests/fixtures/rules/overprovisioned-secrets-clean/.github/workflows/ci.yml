@@ -1,0 +1,14 @@
+name: CI
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: owner/action@v1
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          serialized-token: ${{ toJSON(secrets.NPM_TOKEN) }}
+

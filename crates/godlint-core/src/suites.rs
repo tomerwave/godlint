@@ -9,11 +9,12 @@ use crate::config::{
     NoCommentsRule, NoDynamicExecutionRule, NoEmptyTestRule, NoFocusedTestRule,
     NoInsecureRandomRule, NoInternalImportRule, NoMonolithicJobRule, NoNetworkInUnitTestRule,
     NoProductionLogRule, NoRandomnessWithoutSeedRule, NoShellCommandRule, NoSkippedTestRule,
-    NoSleepInTestRule, NoTestHelperInProductionRule, NoWeakHashRule, ParameterCountRule,
-    PinThirdPartyActionsRule, RestrictedCallRule, RestrictedImportRule, ReturnCountRule, Rules,
-    Severity, TemplateInjectionRule, TodoRequiresReferenceRule, UnusedSuppressionRule,
-    default_bots, default_configuration_paths, default_markers, default_reference_prefixes,
-    default_test_helpers, default_test_paths, default_trusted_owners,
+    NoSleepInTestRule, NoTestHelperInProductionRule, NoWeakHashRule, OverprovisionedSecretsRule,
+    ParameterCountRule, PinThirdPartyActionsRule, RestrictedCallRule, RestrictedImportRule,
+    ReturnCountRule, Rules, SecretsInheritRule, Severity, TemplateInjectionRule,
+    TodoRequiresReferenceRule, UnredactedSecretsRule, UnusedSuppressionRule, default_bots,
+    default_configuration_paths, default_markers, default_reference_prefixes, default_test_helpers,
+    default_test_paths, default_trusted_owners,
 };
 
 pub const RECOMMENDED: &str = "recommended@1";
@@ -63,6 +64,20 @@ fn continuous_integration(rules: &mut Rules) {
         max_steps: JOB_STEPS,
         allow_in: Vec::new(),
     });
+    rules.secrets_inherit.get_or_insert(SecretsInheritRule {
+        severity: Severity::Error,
+        allow_in: Vec::new(),
+    });
+    rules
+        .overprovisioned_secrets
+        .get_or_insert(OverprovisionedSecretsRule {
+            severity: Severity::Error,
+        });
+    rules
+        .unredacted_secrets
+        .get_or_insert(UnredactedSecretsRule {
+            severity: Severity::Error,
+        });
     rules
         .template_injection
         .get_or_insert(TemplateInjectionRule {

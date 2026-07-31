@@ -1,0 +1,6 @@
+exit-code: 1
+
+stdout: |
+  .github/workflows/ci.yml:9:14: error[ci/secrets-inherit] The called workflow receives every secret available to publish, not only the secrets it needs; name each secret explicitly.
+
+stderr: ""

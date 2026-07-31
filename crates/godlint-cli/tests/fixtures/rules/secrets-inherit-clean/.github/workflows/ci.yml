@@ -1,0 +1,13 @@
+name: CI
+
+on:
+  workflow_dispatch:
+
+jobs:
+  named:
+    uses: owner/repository/.github/workflows/publish.yml@main
+    secrets:
+      token: ${{ secrets.NPM_TOKEN }}
+  none:
+    uses: owner/repository/.github/workflows/test.yml@main
+

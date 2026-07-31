@@ -1,0 +1,13 @@
+name: CI
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - run: 'echo "TOKEN=${{ secrets.NPM_TOKEN }}" >> "$GITHUB_ENV"'
+      - run: |
+          echo "digest=${{ secrets.SIGNING_KEY }}" >> "$GITHUB_OUTPUT"
+

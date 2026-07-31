@@ -1,0 +1,8 @@
+exit-code: 1
+
+stdout: |
+  .github/workflows/ci.yml:12:24: error[ci/overprovisioned-secrets] all-secrets receives the whole secrets context; pass only the named secret it needs.
+  .github/workflows/ci.yml:14:31: error[ci/overprovisioned-secrets] SERIALIZED_SECRETS receives the whole secrets context; pass only the named secret it needs.
+
+stderr: ""
+

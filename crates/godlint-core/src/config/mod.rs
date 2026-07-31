@@ -128,6 +128,12 @@ pub struct Rules {
     pub no_inline_script: Option<LineLimitRule>,
     #[serde(rename = "ci/no-monolithic-job")]
     pub no_monolithic_job: Option<NoMonolithicJobRule>,
+    #[serde(rename = "ci/secrets-inherit")]
+    pub secrets_inherit: Option<SecretsInheritRule>,
+    #[serde(rename = "ci/overprovisioned-secrets")]
+    pub overprovisioned_secrets: Option<OverprovisionedSecretsRule>,
+    #[serde(rename = "ci/unredacted-secrets")]
+    pub unredacted_secrets: Option<UnredactedSecretsRule>,
     #[serde(flatten)]
     unrecognised: BTreeMap<String, IgnoredAny>,
 }

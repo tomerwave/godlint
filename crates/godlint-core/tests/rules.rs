@@ -112,6 +112,15 @@ mod parameter_count;
 #[path = "rules/explicit_workflow_permissions.rs"]
 mod explicit_workflow_permissions;
 
+#[path = "rules/secrets_inherit.rs"]
+mod secrets_inherit;
+
+#[path = "rules/overprovisioned_secrets.rs"]
+mod overprovisioned_secrets;
+
+#[path = "rules/unredacted_secrets.rs"]
+mod unredacted_secrets;
+
 #[path = "rules/pin_third_party_actions.rs"]
 mod pin_third_party_actions;
 

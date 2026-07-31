@@ -19,10 +19,12 @@ use crate::{
         no_randomness_without_seed::NoRandomnessWithoutSeed, no_shell_command::NoShellCommand,
         no_skipped_test::NoSkippedTest, no_sleep_in_test::NoSleepInTest,
         no_test_helper_in_production::NoTestHelperInProduction, no_weak_hash::NoWeakHash,
-        parameter_count::ParameterCount, pin_third_party_actions::PinThirdPartyActions,
-        restricted_call::RestrictedCall, restricted_import::RestrictedImport,
-        return_count::ReturnCount, template_injection::TemplateInjection,
-        todo_requires_reference::TodoRequiresReference, unused_suppression::UnusedSuppression,
+        overprovisioned_secrets::OverprovisionedSecrets, parameter_count::ParameterCount,
+        pin_third_party_actions::PinThirdPartyActions, restricted_call::RestrictedCall,
+        restricted_import::RestrictedImport, return_count::ReturnCount,
+        secrets_inherit::SecretsInherit, template_injection::TemplateInjection,
+        todo_requires_reference::TodoRequiresReference, unredacted_secrets::UnredactedSecrets,
+        unused_suppression::UnusedSuppression,
     },
 };
 
@@ -192,6 +194,17 @@ severity!(
     no_monolithic_job_severity,
     NoMonolithicJob,
     no_monolithic_job
+);
+severity!(secrets_inherit_severity, SecretsInherit, secrets_inherit);
+severity!(
+    overprovisioned_secrets_severity,
+    OverprovisionedSecrets,
+    overprovisioned_secrets
+);
+severity!(
+    unredacted_secrets_severity,
+    UnredactedSecrets,
+    unredacted_secrets
 );
 
 const REGISTRATIONS: &[Registration] = &[
@@ -451,6 +464,24 @@ const REGISTRATIONS: &[Registration] = &[
         id: NoMonolithicJob::ID,
         languages: NoMonolithicJob::LANGUAGES,
         severity: no_monolithic_job_severity,
+        suppressible: true,
+    },
+    Registration {
+        id: SecretsInherit::ID,
+        languages: SecretsInherit::LANGUAGES,
+        severity: secrets_inherit_severity,
+        suppressible: true,
+    },
+    Registration {
+        id: OverprovisionedSecrets::ID,
+        languages: OverprovisionedSecrets::LANGUAGES,
+        severity: overprovisioned_secrets_severity,
+        suppressible: true,
+    },
+    Registration {
+        id: UnredactedSecrets::ID,
+        languages: UnredactedSecrets::LANGUAGES,
+        severity: unredacted_secrets_severity,
         suppressible: true,
     },
 ];

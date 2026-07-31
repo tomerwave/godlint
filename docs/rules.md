@@ -1,6 +1,6 @@
 # Rule reference
 
-Forty-one rules are implemented. Every one has an identifier of the form `family/name`, which is
+Forty-four rules are implemented. Every one has an identifier of the form `family/name`, which is
 what a configuration entry and a suppression directive both name. [The rule roadmap](rule-roadmap.md)
 records the families still to come, and the reasoning behind each threshold `recommended@1` sets.
 [Language support](#language-support) records which languages each rule covers.
@@ -23,8 +23,11 @@ enforced there.
 | `ci/explicit-workflow-permissions` | — | — | — | ✓ |
 | `ci/no-inline-script` | — | — | — | ✓ |
 | `ci/no-monolithic-job` | — | — | — | ✓ |
+| `ci/overprovisioned-secrets` | — | — | — | ✓ |
 | `ci/pin-third-party-actions` | — | — | — | ✓ |
+| `ci/secrets-inherit` | — | — | — | ✓ |
 | `ci/template-injection` | — | — | — | ✓ |
+| `ci/unredacted-secrets` | — | — | — | ✓ |
 | `logging/no-production-log` | ✓ | ✓ | ✓ | — |
 | `maintainability/cognitive-complexity` | ✓ | ✓ | ✓ | — |
 | `maintainability/condition-complexity` | ✓ | ✓ | ✓ | — |
@@ -180,9 +183,28 @@ have to decide what interpolation looks like inside an f-string.
 | `ci/bot-conditions` | A step or job condition that compares an attacker-influenced actor field with a configured bot identity |
 | `ci/pin-third-party-actions` | A workflow step using a third-party action at a ref that can move |
 | `ci/explicit-workflow-permissions` | A job that runs with whatever the repository grants by default |
+| `ci/overprovisioned-secrets` | A step input or environment variable receiving the whole `secrets` context |
 | `ci/template-injection` | An attacker-influenced expression interpolated directly into a `run:` script |
 | `ci/no-inline-script` | A `run:` script exceeding its effective-line limit |
 | `ci/no-monolithic-job` | A job exceeding its step limit |
+| `ci/secrets-inherit` | A reusable-workflow call passing every secret available to its job |
+| `ci/unredacted-secrets` | A script directly writing a secret expression to `GITHUB_ENV` or `GITHUB_OUTPUT` |
+
+
+`ci/secrets-inherit` reports the `inherit` value in a job-level `secrets: inherit` declaration.
+The called workflow receives every secret available to the caller whether it needs them or not;
+name each secret explicitly instead. A named `secrets:` mapping and an absent `secrets:` declaration
+are silent. `allow-in` accepts path globs for trusted callers where inheritance is deliberate.
+
+`ci/overprovisioned-secrets` reports a step input or environment variable whose value is exactly
+`${{ secrets }}` or `${{ toJSON(secrets) }}`. The finding names the setting that receives the whole
+context. A reference to one member, including `${{ secrets.NPM_TOKEN }}` and
+`${{ toJSON(secrets.NPM_TOKEN) }}`, is silent.
+
+`ci/unredacted-secrets` reports a `run:` script only when that same script contains both a direct
+`secrets.*` expression and a reference to `$GITHUB_ENV` or `$GITHUB_OUTPUT`. Merely using a secret is
+silent, as is writing a non-secret value to either file. The rule cannot see a secret laundered
+through a variable in an earlier step; that would require data flow the workflow facts do not have.
 
 `ci/template-injection` reports expressions in a step's `run:` script when the expression reads a
 context GitHub documents as attacker-influenced. The runner expands the expression before the shell
