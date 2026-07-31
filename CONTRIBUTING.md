@@ -43,7 +43,9 @@ Start with [local development](docs/local-development.md) for the build and the 
 
 Branch from `main` and name the branch with a Conventional Commits type, a slash, and a lower-case
 description — `feat/import-fact`. The accepted types are `feat`, `fix`, `perf`, `docs`, `style`,
-`refactor`, `test`, `build`, `ci`, `chore` and `revert`. Further slashes are allowed. A required check
+`refactor`, `test`, `build`, `ci`, `chore`, `revert` and `release`. The last is not a Conventional
+Commits type; it is accepted because a version bump is not honestly any of the others, and `release/0.3.0`
+says what the branch is for more clearly than `chore/` would. Further slashes are allowed. A required check
 enforces this; it cannot refuse the push, only the merge, because GitHub's own branch-name rule is not
 available on this repository's plan.
 
