@@ -107,6 +107,56 @@ spans the whole call expression. The second exists because some findings are a *
 `testing/no-sleep-in-test` recognises JavaScript's commonest test sleep as a timer nested inside a
 `Promise`, and nesting is a question about extents. A callee range cannot answer it — the callee of
 `setTimeout` sits outside the callee of `Promise`, not inside it.
+`AssertionFact` records an assertion's range, its spelled name, whether it was a macro, and how many
+operands it took. Which calls count is a framework question, so each language module answers it the way
+it answers what a test is, and each answers a different shape of question. Python has assertion
+*syntax*: `assert value == 1` is a statement, not a call, so no call fact would ever have seen it.
+Rust's assertions are macros, which the six-name list matches exactly. JavaScript has neither — an
+assertion is `expect`, a type assertion such as `expectTypeOf` or `assertType`, or the `assert` module —
+so the fact reads the callee. Type assertions are in that list because a typed suite may have no other
+kind: measured against zod, they account for most of what its tests assert.
+
+A JavaScript assertion's range spans the whole chain — `expect(total).toBe(100)`, not just
+`expect(total)` — while its operand count still belongs to the `expect` call. The two differ because the
+matcher is what the assertion actually checks: without the wider range, `expect(total).toBe(100)` and
+`expect(total).toBeGreaterThan(50)` have identical text, and `no-duplicate-assertion` reports the second
+as a repeat of the first. The climb stops as soon as the assertion is no longer in the callee or object
+position, so an assertion passed as an argument does not swallow the call it is passed to.
+
+Two choices in that matching are deliberate. The names are explicit sets rather than an `assert`
+prefix, because a prefix silently claims a domain helper called `assert_invariant`, and #90 rejected
+that before the code was written; a test asserts exactly that. And `expect(value).toBe(1)` produces one
+assertion rather than two: the matcher is a second call on the same chain, and counting it would double
+every count that `assertion-required` is meant to read.
+
+Rust has one assertion that is not a call at all: `#[should_panic]`. The attribute *is* the assertion,
+so the fact records it, named `should_panic` with no operands. Its range is the function's rather than
+the attribute's, because the attribute precedes the function and would otherwise fall outside the test
+that owns it, and every rule asking "does this test assert" works by range containment. Without this,
+`assertion-required` reports every `should_panic` test in every Rust repository.
+
+`operands` counts what the assertion was given, so a Rust `assert!(value, "explains")` is two. Reaching
+that number in Rust means counting commas in a `token_tree`, because tree-sitter does not parse a macro's
+arguments, and every part of that count was wrong before it was right. Commas inside a nested tree belong
+to that tree. A trailing comma is punctuation. And a comma between *type* arguments separates nothing:
+`assert_eq!(HashMap::<String, u32>::new(), m)` takes two operands, not three. Type arguments are found by
+the turbofish, because in expression position generics need one — a bare `<` is a comparison, and
+swallowing everything after it would lose the message in `assert!(a < b, "explains")`. tree-sitter spells
+`>>` as a single token, which closes two levels and is also the shift operator, so it saturates rather
+than underflows. Each of those four is pinned by a test.
+
+Three boundaries are deliberate and none is a defect, but none was obvious either. A path-qualified macro
+is not an assertion: `static_assertions::assert_eq!` is a compile-time check rather than a test
+assertion, and the cost is that `core::assert_eq!` is missed too. `should`-style JavaScript —
+`x.should.equal(1)` — is not recorded, because the assertion is a property access rather than a call.
+Neither is `raises(...)` reached through `from pytest import raises`; that is the same alias limit the
+call rules document. All three want either a name list a repository can extend or import resolution.
+
+The fact deliberately does not record whether an operand *was* the message. That takes a per-name arity
+table for three ecosystems — `assert.equal(a, b, msg)` puts it third and `chai.expect(value, msg)`
+second, while Jest's `expect` has no message argument at all — and a wrong table would make
+`assertion-message-required` demand a message where the framework has none. The rule that needs it
+brings it, with its own review.
 
 `ErrorHandlerFact` records the handler's range and whether its body only stands in for one. The
 adapter finds that body by looking for it rather than by position: a Python `except_clause` puts the
