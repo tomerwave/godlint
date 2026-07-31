@@ -53,6 +53,11 @@ fn recommended(rules: &mut Rules) {
 }
 
 fn continuous_integration(rules: &mut Rules) {
+    workflow_shape(rules);
+    workflow_secrets(rules);
+}
+
+fn workflow_shape(rules: &mut Rules) {
     rules.no_inline_script.get_or_insert(LineLimitRule {
         severity: Severity::Error,
         max_lines: INLINE_SCRIPT_LINES,
@@ -64,6 +69,9 @@ fn continuous_integration(rules: &mut Rules) {
         max_steps: JOB_STEPS,
         allow_in: Vec::new(),
     });
+}
+
+fn workflow_secrets(rules: &mut Rules) {
     rules.secrets_inherit.get_or_insert(SecretsInheritRule {
         severity: Severity::Error,
         allow_in: Vec::new(),
@@ -103,7 +111,6 @@ fn continuous_integration(rules: &mut Rules) {
             trusted_owners: default_trusted_owners(),
         });
 }
-
 fn maintainability(rules: &mut Rules) {
     size(rules);
     complexity(rules);
