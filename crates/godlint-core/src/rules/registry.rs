@@ -6,20 +6,22 @@ use crate::{
         condition_complexity::ConditionComplexity, decision_complexity::DecisionComplexity,
         dependency_boundary::DependencyBoundary, direct_environment_read::DirectEnvironmentRead,
         empty_error_handler::EmptyErrorHandler, empty_function::EmptyFunction,
-        explicit_timer_delay::ExplicitTimerDelay, file_size::FileSize, filename_case::FilenameCase,
-        forbidden_dependency::ForbiddenDependency, function_nesting::FunctionNesting,
-        function_size::FunctionSize, function_statements::FunctionStatements,
-        module_independence::ModuleIndependence, no_comments::NoComments,
-        no_dynamic_execution::NoDynamicExecution, no_empty_test::NoEmptyTest,
-        no_focused_test::NoFocusedTest, no_insecure_random::NoInsecureRandom,
-        no_internal_import::NoInternalImport, no_network_in_unit_test::NoNetworkInUnitTest,
-        no_production_log::NoProductionLog, no_randomness_without_seed::NoRandomnessWithoutSeed,
-        no_shell_command::NoShellCommand, no_skipped_test::NoSkippedTest,
-        no_sleep_in_test::NoSleepInTest, no_test_helper_in_production::NoTestHelperInProduction,
-        no_weak_hash::NoWeakHash, parameter_count::ParameterCount,
-        pin_third_party_actions::PinThirdPartyActions, restricted_call::RestrictedCall,
-        restricted_import::RestrictedImport, return_count::ReturnCount,
-        todo_requires_reference::TodoRequiresReference, unused_suppression::UnusedSuppression,
+        explicit_timer_delay::ExplicitTimerDelay,
+        explicit_workflow_permissions::ExplicitWorkflowPermissions, file_size::FileSize,
+        filename_case::FilenameCase, forbidden_dependency::ForbiddenDependency,
+        function_nesting::FunctionNesting, function_size::FunctionSize,
+        function_statements::FunctionStatements, module_independence::ModuleIndependence,
+        no_comments::NoComments, no_dynamic_execution::NoDynamicExecution,
+        no_empty_test::NoEmptyTest, no_focused_test::NoFocusedTest,
+        no_insecure_random::NoInsecureRandom, no_internal_import::NoInternalImport,
+        no_network_in_unit_test::NoNetworkInUnitTest, no_production_log::NoProductionLog,
+        no_randomness_without_seed::NoRandomnessWithoutSeed, no_shell_command::NoShellCommand,
+        no_skipped_test::NoSkippedTest, no_sleep_in_test::NoSleepInTest,
+        no_test_helper_in_production::NoTestHelperInProduction, no_weak_hash::NoWeakHash,
+        parameter_count::ParameterCount, pin_third_party_actions::PinThirdPartyActions,
+        restricted_call::RestrictedCall, restricted_import::RestrictedImport,
+        return_count::ReturnCount, todo_requires_reference::TodoRequiresReference,
+        unused_suppression::UnusedSuppression,
     },
 };
 
@@ -168,6 +170,11 @@ severity!(
     module_independence
 );
 severity!(filename_case_severity, FilenameCase, filename_case);
+severity!(
+    explicit_workflow_permissions_severity,
+    ExplicitWorkflowPermissions,
+    explicit_workflow_permissions
+);
 severity!(
     pin_third_party_actions_severity,
     PinThirdPartyActions,
@@ -395,6 +402,12 @@ const REGISTRATIONS: &[Registration] = &[
         id: FilenameCase::ID,
         languages: FilenameCase::LANGUAGES,
         severity: filename_case_severity,
+        suppressible: true,
+    },
+    Registration {
+        id: ExplicitWorkflowPermissions::ID,
+        languages: ExplicitWorkflowPermissions::LANGUAGES,
+        severity: explicit_workflow_permissions_severity,
         suppressible: true,
     },
     Registration {

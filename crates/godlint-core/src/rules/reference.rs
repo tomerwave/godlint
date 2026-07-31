@@ -30,6 +30,29 @@ pub fn evaluate_action_rule<R: ActionRule>(
     )
 }
 
+pub trait WorkflowRule: Rule {
+    fn check(
+        workflow: &WorkflowFacts,
+        configuration: &Self::Configuration,
+    ) -> Vec<(SourceRange, Violation)>;
+}
+
+pub fn evaluate_workflow_rule<R: WorkflowRule>(
+    workflows: &[WorkflowFacts],
+    configuration: &R::Configuration,
+) -> Vec<Finding> {
+    let reporting = Reporting::of::<R>(configuration);
+
+    report(
+        reporting,
+        workflows.iter().flat_map(|workflow| {
+            R::check(workflow, configuration)
+                .into_iter()
+                .map(|(range, violation)| (workflow.file(), range, violation))
+        }),
+    )
+}
+
 pub trait CallRule: Rule {
     fn check(call: &CallFact, configuration: &Self::Configuration) -> Option<Violation>;
 }

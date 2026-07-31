@@ -1,0 +1,8 @@
+exit-code: 1
+
+stdout: |
+  .github/workflows/commented.yml:1:1: error[ci/explicit-workflow-permissions] No permissions are declared anywhere in this workflow, so every job runs with whatever the repository grants by default; declare what the workflow needs.
+  .github/workflows/mixed.yml:13:3: error[ci/explicit-workflow-permissions] open declares no permissions and the workflow declares none either, so it runs with whatever the repository grants by default; declare what it needs.
+  .github/workflows/nothing.yml:1:1: error[ci/explicit-workflow-permissions] No permissions are declared anywhere in this workflow, so every job runs with whatever the repository grants by default; declare what the workflow needs.
+
+stderr: ""

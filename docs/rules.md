@@ -1,6 +1,6 @@
 # Rule reference
 
-Thirty-eight rules are implemented. Every one has an identifier of the form `family/name`, which is
+Thirty-nine rules are implemented. Every one has an identifier of the form `family/name`, which is
 what a configuration entry and a suppression directive both name. [The rule roadmap](rule-roadmap.md)
 records the families still to come, and the reasoning behind each threshold `recommended@1` sets.
 [Language support](#language-support) records which languages each rule covers.
@@ -19,6 +19,7 @@ enforced there.
 | `architecture/no-internal-import` | ✓ | ✓ | — | — |
 | `architecture/restricted-call` | ✓ | ✓ | ✓ | — |
 | `architecture/restricted-import` | ✓ | ✓ | ✓ | — |
+| `ci/explicit-workflow-permissions` | — | — | — | ✓ |
 | `ci/pin-third-party-actions` | — | — | — | ✓ |
 | `logging/no-production-log` | ✓ | ✓ | ✓ | — |
 | `maintainability/cognitive-complexity` | ✓ | ✓ | ✓ | — |
@@ -173,6 +174,7 @@ have to decide what interpolation looks like inside an f-string.
 | Rule | What it reports |
 | --- | --- |
 | `ci/pin-third-party-actions` | A workflow step using a third-party action at a ref that can move |
+| `ci/explicit-workflow-permissions` | A job that runs with whatever the repository grants by default |
 
 A `uses:` reference names either a commit or something mutable. A tag, a branch and a version string can
 all be repointed by whoever owns the action, and whatever they point at next runs inside your workflow
@@ -188,6 +190,28 @@ pinned, including GitHub's own.
 
 A reference with no version at all reports a different message, because it is a different mistake: it
 runs whatever the action's default branch holds today.
+
+### What `explicit-workflow-permissions` reports, and where
+
+A workflow with no `permissions` block inherits the repository default, which is usually broader than
+any job needs, and the failure is invisible until a token is abused. What the rule reports depends on
+what is missing, because the fix does:
+
+| The workflow | Reported |
+| --- | --- |
+| declares no `permissions`, and no job does either | once, at the file — one line at the top fixes it |
+| declares none, and *some* jobs declare their own | once per job that does not, at that job's line |
+| declares `permissions` | nothing; every job is covered by it |
+| declares `permissions`, under `require-per-job: true` | once per job that does not narrow it further |
+
+Reporting per job in the mixed case rather than once at the top is deliberate: a workflow whose other
+jobs are already narrowed does not need a blanket block, and the finding should name the job that is
+still open. Reporting once when nothing is declared anywhere is the same principle from the other side —
+six findings for one missing line would be noise.
+
+`require-per-job` is off in `recommended@1`. A job inheriting a workflow-level block is a deliberate
+choice a repository may have made, and a rule that argued with it would be turned off rather than
+tightened.
 
 Godlint reads `.github/workflows/*.yml` with a YAML grammar rather than by matching text, so a `uses:`
 inside a comment, inside a string, or in a step *named* `uses:` is not a use. A workflow removed by an

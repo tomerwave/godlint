@@ -21,6 +21,7 @@ pub mod empty_error_handler;
 pub mod empty_function;
 mod enclosing;
 pub mod explicit_timer_delay;
+pub mod explicit_workflow_permissions;
 pub mod file_size;
 pub mod filename_case;
 pub mod forbidden_dependency;
@@ -53,9 +54,9 @@ mod violation;
 
 pub use reference::{
     AccessRule, ActionRule, CallInTestRule, CallRule, ConditionRule, ErrorHandlerRule, ImportRule,
-    TestRule, evaluate_access_rule, evaluate_action_rule, evaluate_call_in_test_rule,
+    TestRule, WorkflowRule, evaluate_access_rule, evaluate_action_rule, evaluate_call_in_test_rule,
     evaluate_call_rule, evaluate_condition_rule, evaluate_error_handler_rule, evaluate_import_rule,
-    evaluate_test_rule,
+    evaluate_test_rule, evaluate_workflow_rule,
 };
 mod registry;
 pub mod restricted_call;
@@ -412,7 +413,10 @@ type Evaluator = fn(&[SourceFacts], &Config) -> Vec<Finding>;
 
 type WorkflowEvaluator = fn(&[WorkflowFacts], &Config) -> Vec<Finding>;
 
-const WORKFLOW_EVALUATORS: &[WorkflowEvaluator] = &[pin_third_party_actions::evaluate];
+const WORKFLOW_EVALUATORS: &[WorkflowEvaluator] = &[
+    pin_third_party_actions::evaluate,
+    explicit_workflow_permissions::evaluate,
+];
 
 const EVALUATORS: &[Evaluator] = &[
     function_size::evaluate,

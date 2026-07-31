@@ -7,6 +7,10 @@ use std::{
     process::{Command, Output},
 };
 
+use godlint_core::{
+    analyzers::workflow,
+    source::{TextFile, Workflow},
+};
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -104,6 +108,8 @@ fixture_tests! {
     no_weak_hash_clean => "no-weak-hash-clean",
     explicit_timer_delay_clean => "explicit-timer-delay-clean",
     empty_error_handler_clean => "empty-error-handler-clean",
+    explicit_workflow_permissions => "explicit-workflow-permissions",
+    explicit_workflow_permissions_clean => "explicit-workflow-permissions-clean",
     pin_third_party_actions => "pin-third-party-actions",
     pin_third_party_actions_clean => "pin-third-party-actions-clean",
     rust_try_operator => "rust-try-operator",
@@ -112,6 +118,56 @@ fixture_tests! {
     todo_requires_reference => "todo-requires-reference",
     unused_suppression => "unused-suppression",
     unused_suppression_clean => "unused-suppression-clean",
+}
+
+#[test]
+fn every_workflow_fixture_is_yaml_that_github_would_accept() {
+    let mut checked = 0;
+
+    for path in workflow_fixtures(&fixtures_root()) {
+        let relative = PathBuf::from(".github/workflows").join(
+            path.file_name()
+                .unwrap_or_else(|| panic!("{} has no name", path.display())),
+        );
+        let contents = fs::read_to_string(&path)
+            .unwrap_or_else(|error| panic!("reads {}: {error}", path.display()));
+        let file = TextFile::new(relative, contents)
+            .unwrap_or_else(|error| panic!("reads {}: {error}", path.display()));
+        let facts = workflow::read(&file)
+            .unwrap_or_else(|error| panic!("reads {}: {error}", path.display()));
+
+        assert!(
+            facts.unparsed().is_empty(),
+            "{}: a fixture the grammar cannot read proves whatever the rule happens to do \
+             with the wreckage, which is not the rule's behaviour",
+            path.display()
+        );
+        checked += 1;
+    }
+
+    assert!(checked > 0, "no workflow fixtures were found to check");
+}
+
+fn workflow_fixtures(root: &Path) -> Vec<PathBuf> {
+    let mut found = Vec::new();
+
+    for fixture in fs::read_dir(root).unwrap_or_else(|error| panic!("reads fixtures: {error}")) {
+        let directory = fixture
+            .unwrap_or_else(|error| panic!("reads entry: {error}"))
+            .path()
+            .join(".github/workflows");
+
+        if let Ok(entries) = fs::read_dir(&directory) {
+            found.extend(
+                entries
+                    .filter_map(Result::ok)
+                    .map(|entry| entry.path())
+                    .filter(|path| Workflow::names(path)),
+            );
+        }
+    }
+
+    found
 }
 
 #[test]

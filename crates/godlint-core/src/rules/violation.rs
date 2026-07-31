@@ -55,6 +55,10 @@ pub enum Violation {
     ShellCommand {
         shell: String,
     },
+    UndeclaredPermissions,
+    InheritedPermissions {
+        job: String,
+    },
     MutableActionReference {
         reference: String,
         unversioned: bool,
@@ -291,6 +295,8 @@ impl fmt::Display for Violation {
             Self::EmptyTest => formatter.write_str(EMPTY_TEST),
             Self::MissingAssertion => formatter.write_str(MISSING_ASSERTION),
             Self::ShellCommand { shell } => write!(formatter, "{shell} {SHELL_COMMAND}"),
+            Self::UndeclaredPermissions => formatter.write_str(UNDECLARED_PERMISSIONS),
+            Self::InheritedPermissions { job } => inherited(formatter, job),
             Self::MutableActionReference {
                 reference,
                 unversioned,
@@ -309,6 +315,9 @@ impl fmt::Display for Violation {
     }
 }
 
+const UNDECLARED_PERMISSIONS: &str = "No permissions are declared anywhere in this workflow, so \
+     every job runs with whatever the repository grants by default; declare what the workflow needs.";
+
 fn filename_case(formatter: &mut fmt::Formatter<'_>, name: &str, case: &str) -> fmt::Result {
     write!(formatter, "{name} is not {case}; rename the file to match.")
 }
@@ -319,6 +328,14 @@ fn forbidden(formatter: &mut fmt::Formatter<'_>, package: &str) -> fmt::Result {
 
 fn network(formatter: &mut fmt::Formatter<'_>, callee: &str) -> fmt::Result {
     write!(formatter, "{callee} {NETWORK_IN_UNIT_TEST}")
+}
+
+fn inherited(formatter: &mut fmt::Formatter<'_>, job: &str) -> fmt::Result {
+    write!(
+        formatter,
+        "{job} declares no permissions and the workflow declares none either, so it runs with \
+         whatever the repository grants by default; declare what it needs."
+    )
 }
 
 fn mutable_action(
