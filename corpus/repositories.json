@@ -6,6 +6,7 @@
       "commit": "414f0513c33883adf6f2b46901d4f0b38a455851",
       "languages": ["python"],
       "unreadable-budget": 0,
+      "workflow-unreadable-budget": 0,
       "reason": "Reads cleanly. A single-language library, and the cheapest signal that ordinary Python still parses."
     },
     {
@@ -14,6 +15,7 @@
       "commit": "36e4a824f340fdee7ed50937ba8e7f6bc7d17f81",
       "languages": ["python"],
       "unreadable-budget": 0,
+      "workflow-unreadable-budget": 0,
       "reason": "Reads cleanly."
     },
     {
@@ -22,6 +24,7 @@
       "commit": "a3714473feb3d2908add734d340e7755fd85e0a3",
       "languages": ["javascript"],
       "unreadable-budget": 0,
+      "workflow-unreadable-budget": 0,
       "reason": "Reads cleanly. Plain JavaScript with no build step, so nothing here is transpiler-specific."
     },
     {
@@ -30,6 +33,7 @@
       "commit": "435f59fc4b43af3ab32f34d53fa34978f393fe52",
       "languages": ["rust"],
       "unreadable-budget": 0,
+      "workflow-unreadable-budget": 0,
       "reason": "Reads cleanly. Idiomatic Rust including macros, which is where the call rules go blind."
     },
     {
@@ -38,6 +42,7 @@
       "commit": "912f0f51b0ced654d0069741e7160834dca742ee",
       "languages": ["typescript"],
       "unreadable-budget": 4,
+      "workflow-unreadable-budget": 0,
       "reason": "Four files use TypeScript 4.7 variance annotations on type parameters, which tree-sitter-typescript does not implement: tree-sitter/tree-sitter-typescript#364. Everything else in those files is still read."
     },
     {
@@ -46,6 +51,7 @@
       "commit": "39f402ebd5e4f86c1e579597c4fce4a91665e7db",
       "languages": ["rust", "typescript", "javascript"],
       "unreadable-budget": 67,
+      "workflow-unreadable-budget": 0,
       "reason": "Rust and TypeScript in one tree, which is why it is here. Six files are deliberately not valid UTF-8, being encoding test fixtures. The rest are syntax the grammars do not implement."
     },
     {
@@ -54,6 +60,7 @@
       "commit": "705ede9033af896f23282a557f4cc3306a704f53",
       "languages": ["typescript", "javascript"],
       "unreadable-budget": 55,
+      "workflow-unreadable-budget": 0,
       "reason": "The largest TypeScript tree in the corpus. One file is above the four-mebibyte read ceiling, which is the ceiling working rather than a defect."
     },
     {
@@ -62,6 +69,7 @@
       "commit": "575ee181b80cf88850e6653406a03766f89d5387",
       "languages": ["python", "typescript"],
       "unreadable-budget": 412,
+      "workflow-unreadable-budget": 0,
       "reason": "A monolith with Python and TSX side by side. 408 of these are .tsx, nearly all one construct: a generic type argument on a call followed by a template literal, as in styled('a')<{disabled?: boolean}>`...`, which the tsx grammar does not parse. Three are Python type-parameter defaults from PEP 696. This budget is the largest single argument for teaching the grammars both forms."
     },
     {
@@ -70,6 +78,7 @@
       "commit": "d9442197a9f85914dc918a3d552892534825670f",
       "languages": ["python"],
       "unreadable-budget": 11,
+      "workflow-unreadable-budget": 0,
       "reason": "The largest Python tree in the corpus, at eighteen thousand files. Every entry is PEP 696 type-parameter defaults, which tree-sitter-python does not implement."
     }
   ]

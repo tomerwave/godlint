@@ -2,7 +2,8 @@ exit-code: 1
 
 stdout: |
   .github/workflows/report.yml:10:21: error[ci/template-injection] "github.event.issue.title" is attacker-influenced, and the runner expands it into the script before the shell runs; bind it to an env variable and reference the variable quoted.
-  .github/workflows/report.yml:11:21: error[ci/template-injection] "github.event.review_comment.body" is attacker-influenced, and the runner expands it into the script before the shell runs; bind it to an env variable and reference the variable quoted.
-  .github/workflows/report.yml:13:17: error[ci/template-injection] "github.event.workflow_run.head_branch" is attacker-influenced, and the runner expands it into the script before the shell runs; bind it to an env variable and reference the variable quoted.
-  .github/workflows/report.yml:14:17: error[ci/template-injection] "github.event.workflow_run.head_commit.message" is attacker-influenced, and the runner expands it into the script before the shell runs; bind it to an env variable and reference the variable quoted.
+  .github/workflows/report.yml:11:21: warning[ci/template-injection] "inputs.version" comes from whoever triggered the workflow. Reaching it through workflow_dispatch requires write access, but a calling workflow may pass a value it does not control; bind it to an env variable and reference the variable quoted.
+  .github/workflows/report.yml:12:21: error[ci/template-injection] "github.event.review_comment.body" is attacker-influenced, and the runner expands it into the script before the shell runs; bind it to an env variable and reference the variable quoted.
+  .github/workflows/report.yml:14:17: error[ci/template-injection] "github.event.workflow_run.head_branch" is attacker-influenced, and the runner expands it into the script before the shell runs; bind it to an env variable and reference the variable quoted.
+  .github/workflows/report.yml:15:17: error[ci/template-injection] "github.event.workflow_run.head_commit.message" is attacker-influenced, and the runner expands it into the script before the shell runs; bind it to an env variable and reference the variable quoted.
 stderr: ""

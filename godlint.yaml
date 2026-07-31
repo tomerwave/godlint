@@ -22,11 +22,3 @@ exclude:
 
 suites:
   - recommended@1
-
-rules:
-  ci/no-monolithic-job:
-    severity: error
-    max-steps: 7
-    # Matrix targets declare mutually exclusive platform steps; no target runs all eleven.
-    allow-in:
-      - .github/workflows/release.yml

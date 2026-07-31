@@ -229,9 +229,18 @@ credential keys; arbitrary container settings are not credentials, and this rule
 secret-looking values elsewhere.
 
 `ci/template-injection` reports expressions in a step's `run:` script when the expression reads a
-context GitHub documents as attacker-influenced. The runner expands the expression before the shell
-runs, so shell quoting around the expression does not turn it back into data. Bind the expression to
-an `env:` variable and reference that variable quoted in the script instead.
+context GitHub documents as attacker-influenced. Event-driven values such as issue and pull request
+text, comments, reviews, discussions, commit data, page names, head refs and workflow-run data report
+at the configured severity. The runner expands the expression before the shell runs, so shell quoting
+around the expression does not turn it back into data. Bind the expression to an `env:` variable and
+reference that variable quoted in the script instead.
+
+`inputs.*` and `github.event.inputs.*` report at no higher than warning. A manually dispatched
+workflow can only receive those values from someone with write access, who can already edit and run
+the workflow; a reusable workflow can, however, receive a value its calling workflow does not
+control. In a measurement of 94 workflows from the nine pinned corpus repositories, the rule reported
+16 findings: every one was a dispatch input and none was an event-driven context. Capping this tier
+keeps that uncertainty visible without making the measured false-positive class block adoption.
 
 Expressions in `env:` and `with:` values are deliberately silent. In particular, passing an
 attacker-influenced value through `env:` is GitHub's documented remedy; reporting it would tell the
@@ -647,11 +656,12 @@ how a rule can be adopted as a warning before it is adopted as a gate. See
 [configuration](configuration.md).
 
 One finding can report below the severity its rule is configured at, when the rule is certain
-something is wrong but not certain enough to block. `security/no-weak-hash` is the case that exists:
+something is wrong but not certain enough to block. `security/no-weak-hash` uses this split:
 `crypto.createHash("md5")` names a broken algorithm and reports at the configured severity, while
 `crypto.createHash(algorithm)` reports at warning, because the algorithm might be SHA-256 and Godlint
-cannot tell. The message says which of the two it is, so a reader is never left guessing why one line
-is an error and the next is not.
+cannot tell. `ci/template-injection` likewise keeps event-driven contexts at the configured severity
+and caps workflow inputs at warning. Each tier has its own message, so a reader is never left guessing
+why one line is an error and the next is not.
 
 A rule can only lower a finding this way, never raise it: a repository that configured the rule at
 `info` still gets `info`. That direction is deliberate — the configured severity is a ceiling the

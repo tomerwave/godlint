@@ -70,6 +70,7 @@ pub enum Violation {
     },
     TemplateInjection {
         expression: String,
+        certain: bool,
     },
     AttackerInfluencedBotCondition {
         expression: String,
@@ -268,12 +269,25 @@ fn insecure_random(formatter: &mut fmt::Formatter<'_>, callee: &str, secure: &st
     )
 }
 
-fn template_injection(formatter: &mut fmt::Formatter<'_>, expression: &str) -> fmt::Result {
-    write!(
-        formatter,
-        "\"{expression}\" is attacker-influenced, and the runner expands it into the script \
-         before the shell runs; bind it to an env variable and reference the variable quoted."
-    )
+fn template_injection(
+    formatter: &mut fmt::Formatter<'_>,
+    expression: &str,
+    certain: bool,
+) -> fmt::Result {
+    if certain {
+        write!(
+            formatter,
+            "\"{expression}\" is attacker-influenced, and the runner expands it into the script \
+             before the shell runs; bind it to an env variable and reference the variable quoted."
+        )
+    } else {
+        write!(
+            formatter,
+            "\"{expression}\" comes from whoever triggered the workflow. Reaching it through \
+             workflow_dispatch requires write access, but a calling workflow may pass a value it \
+             does not control; bind it to an env variable and reference the variable quoted."
+        )
+    }
 }
 
 fn bot(formatter: &mut fmt::Formatter<'_>, expression: &str) -> fmt::Result {
@@ -289,7 +303,9 @@ impl Violation {
     pub(crate) fn cap(&self) -> Severity {
         match self {
             Self::InternalImport { certain: false, .. } => Severity::Warning,
-            Self::MissingAssertion | Self::UnverifiedHash { .. } => Severity::Warning,
+            Self::MissingAssertion
+            | Self::UnverifiedHash { .. }
+            | Self::TemplateInjection { certain: false, .. } => Severity::Warning,
             _ => Severity::Error,
         }
     }
@@ -334,7 +350,7 @@ impl fmt::Display for Violation {
             Self::InheritedPermissions { job } => inherited(formatter, job),
             Self::HardcodedContainerCredential { key, job } => credential(formatter, key, job),
             Self::MutableActionReference { reference, unversioned } => mutable_action(formatter, reference, *unversioned),
-            Self::TemplateInjection { expression } => template_injection(formatter, expression),
+            Self::TemplateInjection { expression, certain } => template_injection(formatter, expression, *certain),
             Self::AttackerInfluencedBotCondition { expression } => bot(formatter, expression),
             Self::InheritedSecrets { job } => inherited_secrets(formatter, job),
             Self::OverprovisionedSecrets { setting } => overprovisioned_secrets(formatter, setting),

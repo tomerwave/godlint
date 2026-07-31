@@ -30,7 +30,7 @@ const FILE_LINES: NonZeroU32 = NonZeroU32::new(500).expect("500 is not zero");
 
 const INLINE_SCRIPT_LINES: NonZeroU32 = NonZeroU32::new(8).expect("8 is not zero");
 
-const JOB_STEPS: u32 = 7;
+const JOB_STEPS: u32 = 20;
 
 pub fn names() -> impl Iterator<Item = &'static str> {
     SUITES.iter().map(|(name, _)| *name)
