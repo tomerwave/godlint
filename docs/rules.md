@@ -112,13 +112,26 @@ Two adjacent rules fire on the same empty test on purpose, and it is worth knowi
 findings, at the same position in Rust. They are different policies — one says a function has no body,
 the other says a test cannot fail — and neither suppresses the other.
 
-`no-sleep-in-test` reports a sleep only where the call falls inside a test's range, so a helper in
-the same file may still sleep. It matches the callee's written spelling per language, which leaves two
-gaps. A sleep reached through an alias — `from time import sleep` and then a bare `sleep(2)` — is not
-reported, because that takes import resolution. JavaScript has no blocking sleep, so the smell there
-is a duration passed to a runner's own wait: the two unambiguous spellings are covered, and
+`no-sleep-in-test` reports a sleep only where the call falls inside a test's range — at any depth, so a
+loop body or a closure counts — which means a helper in the same file may still sleep, and so may a
+`pytest.fixture` or a `beforeEach`. A sleeping fixture is exactly as flaky as a sleeping test; it is
+outside every test's range, so this rule cannot see it, and closing that needs a fixture fact.
+
+It matches the callee's written spelling per language, which leaves three gaps and one false positive.
+
+A sleep reached through an alias — `from time import sleep` and then a bare `sleep(2)` — is not reported,
+because that takes import resolution.
+
+JavaScript's most common test sleep is not covered: `await new Promise((r) => setTimeout(r, 500))`. That
+is a *shape* rather than a name, so no callee match reaches it, and `reliability/explicit-timer-delay`
+does not either — it fires on a `setTimeout` with fewer than two arguments, which is the opposite case.
+What is covered is a duration passed to a runner's own wait, `page.waitForTimeout` and `browser.pause`.
 `cy.wait(500)` is not, because Godlint cannot yet tell a number argument from a string one and
 `cy.wait('@alias')` is the fix rather than the defect.
+
+The false positive: a mocked sleep. `with patch("time.sleep"): time.sleep(999)` is instant and is still
+reported, because seeing the patch takes the same resolution the alias gap needs. Suppress it where it
+matters.
 
 What counts as a test is decided by syntax alone — a runner call, a `#[test]` attribute, a `test_`
 prefix or a `pytest.mark` decorator. Neither rule knows about test directories, because an analyzer

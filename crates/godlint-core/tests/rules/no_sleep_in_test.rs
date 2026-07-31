@@ -69,6 +69,53 @@ fn names_the_call_it_reports() {
 }
 
 #[test]
+fn reads_a_sleep_however_deeply_it_is_nested_in_the_test() {
+    assert_eq!(
+        violations(
+            "tests/worker.rs",
+            "#[test]\nfn drains() {\n    for _ in 0..3 {\n        thread::sleep(delay);\n    }\n}\n"
+        )
+        .len(),
+        1,
+        "containment is what decides, so a loop body is still inside the test"
+    );
+    assert_eq!(
+        violations(
+            "tests/worker.rs",
+            "#[test]\nfn drains() {\n    let f = || {\n        thread::sleep(delay);\n    };\n}\n"
+        )
+        .len(),
+        1
+    );
+}
+
+#[test]
+fn reads_a_test_declared_by_another_runners_attribute() {
+    assert_eq!(
+        violations(
+            "tests/worker.rs",
+            "#[tokio::test]\nasync fn drains() {\n    tokio::time::sleep(delay).await;\n}\n"
+        )
+        .len(),
+        1,
+        "an attribute path ending in test is a test, whichever runner owns it"
+    );
+}
+
+#[test]
+fn keeps_a_sleep_reached_through_an_alias() {
+    assert!(
+        violations(
+            "tests/test_worker.py",
+            "from time import sleep\n\n\ndef test_drains():\n    sleep(2)\n"
+        )
+        .is_empty(),
+        "documented gap: matching the written spelling is what stops this reporting anything named \
+         sleep, and closing it takes import resolution"
+    );
+}
+
+#[test]
 fn keeps_a_sleep_outside_a_test() {
     assert!(
         violations(
