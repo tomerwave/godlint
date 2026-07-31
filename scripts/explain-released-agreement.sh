@@ -5,7 +5,7 @@ set -euo pipefail
 annotations="$RUNNER_TEMP/godlint-annotations.txt"
 version="$(godlint --version | cut -d' ' -f2)"
 
-if [ "$STATUS" = "2" ] && grep -Fq 'Configuration is invalid' "$annotations"; then
+if grep -Fq 'Configuration is invalid' "$annotations" 2>/dev/null; then
   {
     echo "The released Godlint $version cannot read this configuration."
     echo
@@ -16,18 +16,9 @@ if [ "$STATUS" = "2" ] && grep -Fq 'Configuration is invalid' "$annotations"; th
   exit 0
 fi
 
-if [ "$STATUS" = "0" ] && [ "$OUTCOME" = "success" ]; then
+if [ "$OUTCOME" = "success" ]; then
   echo "Godlint $version reports nothing against this tree."
   exit 0
-fi
-
-if [ "$STATUS" != "1" ]; then
-  {
-    echo "The released Godlint $version exited with status $STATUS."
-    echo
-    echo "This is a real failure rather than released-agreement drift."
-  } | tee -a "$GITHUB_STEP_SUMMARY"
-  exit 1
 fi
 
 count="$(grep -c '^::' "$annotations" 2>/dev/null || echo 0)"

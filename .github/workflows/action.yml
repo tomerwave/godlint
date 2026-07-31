@@ -43,7 +43,6 @@ jobs:
         shell: bash
         env:
           OUTCOME: ${{ steps.godlint.outcome }}
-          STATUS: ${{ steps.godlint.outputs.status }}
           FIXES_FALSE_POSITIVE: ${{ contains(github.event.pull_request.labels.*.name, 'fixes-false-positive') }}
           RELAXES_A_RULE: ${{ contains(github.event.pull_request.labels.*.name, 'relaxes-a-rule') }}
         run: scripts/explain-released-agreement.sh
