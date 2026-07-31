@@ -1,10 +1,12 @@
 use std::{error::Error, fmt};
 
-use crate::source::{SourceFile, SourceRange};
+use crate::source::{SourceFile, SourceRange, range_contains};
 
 pub mod workflow;
 
-pub use workflow::{ActionFact, JobFact};
+pub use workflow::{
+    ActionFact, CredentialFact, ExpressionFact, JobFact, Secrets, Setting, StepFact,
+};
 
 macro_rules! function_metrics {
     ($($(#[$documentation:meta])* $name:ident),+ $(,)?) => {
@@ -500,10 +502,6 @@ impl FunctionFact {
     pub fn is_abstract(&self) -> bool {
         self.is_abstract
     }
-}
-
-fn range_contains(container: SourceRange, candidate: SourceRange) -> bool {
-    container.start() <= candidate.start() && candidate.end() <= container.end()
 }
 
 impl fmt::Display for FunctionFactError {

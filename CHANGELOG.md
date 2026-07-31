@@ -11,6 +11,10 @@ speaks about.
 
 ### Added
 
+- Workflow rules can now ask about each step and its settings, expressions inside YAML values,
+  comments, job dependencies and reusable-workflow secrets, and literal container or service
+  credentials. Every site retains its source range, so a rule can relate an expression to a command or
+  condition without mistaking an example in a comment for executable workflow policy.
 - `ci/explicit-workflow-permissions` — reports a job that runs with whatever the repository grants by
   default. What it reports follows the fix: a workflow declaring nothing anywhere is one finding at the
   file, because one line at the top closes it, while a workflow whose *other* jobs are already narrowed

@@ -325,12 +325,14 @@ def block(body: str, key: str) -> list[str]:
     return lines
 
 
+def examined_globs() -> list[str]:
+    return [line.strip('",') for line in block(read(MUTANTS), "examine_globs") if line.strip('",')]
+
+
 def examined_paths() -> set[str]:
     """The trigger path each examined glob needs, as a workflow would spell it."""
 
-    globs = (line.strip('",') for line in block(read(MUTANTS), "examine_globs"))
-
-    return {glob.replace("/*.rs", "/**") for glob in globs if glob}
+    return {glob.replace("/**/*.rs", "/**").replace("/*.rs", "/**") for glob in examined_globs()}
 
 
 def triggered_paths() -> set[str]:
@@ -349,6 +351,16 @@ def check_mutation_scope(report: Report) -> None:
     """
 
     triggered = triggered_paths()
+
+    # A single-level glob examines one directory and silently drops every module a split
+    # moves into a subdirectory of it. That is how 477 lines of workflow reader escaped the
+    # gate on the day it was written.
+    for glob in examined_globs():
+        report.check(
+            not glob.endswith("/*.rs") or glob.endswith("/**/*.rs"),
+            f"{MUTANTS}: {glob} examines one directory only; write it as **/*.rs so a module "
+            "moved into a subdirectory stays mutated",
+        )
 
     report.check(
         len(triggered) > 0,

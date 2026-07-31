@@ -4,7 +4,8 @@ use std::path::PathBuf;
 
 use godlint_core::{
     analyzers::workflow::{self, WorkflowFacts},
-    source::{TextFile, Workflow},
+    facts::{JobFact, Secrets, StepFact},
+    source::{SourceRange, TextFile, Workflow},
 };
 
 fn workflow(body: &str) -> WorkflowFacts {
@@ -24,6 +25,10 @@ fn references(facts: &WorkflowFacts) -> Vec<&str> {
         .iter()
         .map(|action| action.reference())
         .collect()
+}
+
+fn text(facts: &WorkflowFacts, range: SourceRange) -> &str {
+    &facts.file().text()[range.start()..range.end()]
 }
 
 const WORKFLOW: &str = "name: CI
@@ -52,6 +57,60 @@ jobs:
     steps:
       - uses: some/action@0f1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c
 ";
+
+const DETAILED_WORKFLOW: &str = r#"name: Detailed CI
+
+# workflow comment
+on:
+  pull_request:
+
+jobs:
+  prepare: # job comment
+    runs-on: ubuntu-latest
+  build:
+    needs: prepare
+    runs-on: ubuntu-latest
+    container:
+      image: registry.example.test/build:latest
+      credentials:
+        username: builder
+        password: 'literal: password'
+    services:
+      database:
+        image: postgres:17
+        credentials:
+          username: ${{ secrets.SERVICE_USER }}
+          password: ${{ secrets.SERVICE_PASSWORD }}
+    steps:
+      # step comment
+      - name: 'Checkout source'
+        if: ${{ GitHub.ref == 'refs/heads/main' }}
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.TOKEN }}
+          label: "${{ format('{0}', github.actor) }}"
+        env:
+          MODE: test
+      - run: |
+          echo "${{ github.actor }}"
+  matrix:
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    steps: []
+  release:
+    needs:
+      - build
+      - matrix
+    uses: ./.github/workflows/release.yml
+    secrets: inherit
+  deploy:
+    needs: release
+    uses: owner/repository/.github/workflows/deploy.yml@v1
+    secrets:
+      token: ${{ secrets.DEPLOY_TOKEN }}
+
+# ignored expression ${{ secrets.COMMENT_TOKEN }}
+"#;
 
 #[test]
 fn only_a_file_in_the_workflow_directory_is_a_workflow() {
@@ -268,4 +327,241 @@ fn records_where_it_stopped_understanding_a_workflow() {
 #[test]
 fn a_workflow_it_understands_records_nothing_unparsed() {
     assert!(workflow(WORKFLOW).unparsed().is_empty());
+}
+
+#[test]
+fn reads_each_step_as_a_job_owned_site_with_its_settings() {
+    let facts = workflow(DETAILED_WORKFLOW);
+
+    assert!(facts.unparsed().is_empty());
+    assert_eq!(facts.steps().len(), 2);
+    assert_checkout_step(&facts, &facts.steps()[0]);
+    assert_command_step(&facts, &facts.steps()[1]);
+}
+
+fn assert_checkout_step(facts: &WorkflowFacts, checkout: &StepFact) {
+    assert_eq!(checkout.file(), facts.file());
+    assert_eq!(text(facts, checkout.range()), "name");
+    assert_eq!(checkout.job(), "build");
+    assert_eq!(checkout.name(), Some("Checkout source"));
+    assert_eq!(text(facts, checkout.uses().unwrap()), "actions/checkout@v4");
+    assert_eq!(
+        text(facts, checkout.condition().unwrap()),
+        "${{ GitHub.ref == 'refs/heads/main' }}"
+    );
+    assert_eq!(
+        checkout
+            .inputs()
+            .iter()
+            .map(|setting| (setting.key(), text(facts, setting.range())))
+            .collect::<Vec<_>>(),
+        vec![
+            ("token", "${{ secrets.TOKEN }}"),
+            ("label", "\"${{ format('{0}', github.actor) }}\"")
+        ]
+    );
+    assert_eq!(checkout.inputs()[0].file(), facts.file());
+    assert_eq!(checkout.environment()[0].key(), "MODE");
+    assert_eq!(text(facts, checkout.environment()[0].range()), "test");
+}
+
+fn assert_command_step(facts: &WorkflowFacts, command: &StepFact) {
+    assert_eq!(text(facts, command.range()), "run");
+    assert_eq!(command.name(), None);
+    assert!(text(facts, command.run().unwrap()).contains("${{ github.actor }}"));
+}
+
+#[test]
+fn reads_job_dependencies_calls_secrets_bodies_and_step_counts() {
+    let facts = workflow(DETAILED_WORKFLOW);
+    let jobs = facts.jobs();
+
+    assert_eq!(jobs.len(), 5);
+    assert_build_job(&facts, &jobs[1]);
+    assert_job_needs(&jobs[2], &["prepare", "build"]);
+    assert_job_needs(&jobs[3], &["build", "matrix"]);
+    assert_reusable_job(&facts, &jobs[3]);
+    assert_named_secrets(&facts, &jobs[4]);
+}
+
+fn assert_build_job(facts: &WorkflowFacts, build: &JobFact) {
+    assert!(text(facts, build.body()).contains("needs: prepare"));
+    assert_eq!(build.step_count(), 2);
+    assert_eq!(build.needs()[0].key(), "prepare");
+    assert_eq!(text(facts, build.needs()[0].range()), "prepare");
+    assert_eq!(build.needs()[0].file(), facts.file());
+}
+
+fn assert_job_needs(job: &JobFact, expected: &[&str]) {
+    assert_eq!(
+        job.needs()
+            .iter()
+            .map(|need| need.key())
+            .collect::<Vec<_>>(),
+        expected
+    );
+}
+
+fn assert_reusable_job(facts: &WorkflowFacts, release: &JobFact) {
+    assert_eq!(release.step_count(), 0);
+    assert_eq!(
+        text(facts, release.calls_workflow().unwrap()),
+        "./.github/workflows/release.yml"
+    );
+    match release.secrets() {
+        Some(Secrets::Inherit { range }) => assert_eq!(text(facts, *range), "inherit"),
+        other => panic!("expected inherited secrets, got {other:?}"),
+    }
+}
+
+fn assert_named_secrets(facts: &WorkflowFacts, deploy: &JobFact) {
+    assert_eq!(
+        text(facts, deploy.calls_workflow().unwrap()),
+        "owner/repository/.github/workflows/deploy.yml@v1"
+    );
+    match deploy.secrets() {
+        Some(Secrets::Named(settings)) => {
+            assert_eq!(settings[0].key(), "token");
+            assert_eq!(
+                text(facts, settings[0].range()),
+                "${{ secrets.DEPLOY_TOKEN }}"
+            );
+        }
+        other => panic!("expected named secrets, got {other:?}"),
+    }
+}
+
+#[test]
+fn expressions_are_ordered_scalar_ranges_with_matchable_contexts() {
+    let facts = workflow(DETAILED_WORKFLOW);
+    let expressions = facts.expressions();
+
+    assert_eq!(
+        expressions
+            .iter()
+            .map(|fact| fact.body())
+            .collect::<Vec<_>>(),
+        vec![
+            "secrets.SERVICE_USER",
+            "secrets.SERVICE_PASSWORD",
+            "GitHub.ref == 'refs/heads/main'",
+            "secrets.TOKEN",
+            "format('{0}', github.actor)",
+            "github.actor",
+            "secrets.DEPLOY_TOKEN"
+        ]
+    );
+    assert_eq!(
+        expressions
+            .iter()
+            .map(|fact| fact.context())
+            .collect::<Vec<_>>(),
+        vec![
+            "secrets.service_user",
+            "secrets.service_password",
+            "github.ref",
+            "secrets.token",
+            "format('{0}', github.actor)",
+            "github.actor",
+            "secrets.deploy_token"
+        ]
+    );
+    assert_eq!(
+        text(&facts, expressions[2].range()),
+        "${{ GitHub.ref == 'refs/heads/main' }}"
+    );
+    let condition = facts.steps()[0].condition().unwrap();
+    let run = facts.steps()[1].run().unwrap();
+    assert!(condition.start() <= expressions[2].range().start());
+    assert!(expressions[2].range().end() <= condition.end());
+    assert!(run.start() <= expressions[5].range().start());
+    assert!(expressions[5].range().end() <= run.end());
+}
+
+#[test]
+fn an_expression_written_in_a_yaml_comment_is_not_an_expression() {
+    let facts =
+        workflow("jobs:\n  build:\n    # ${{ secrets.TOKEN }}\n    runs-on: ubuntu-latest\n");
+
+    assert!(facts.unparsed().is_empty());
+    assert!(facts.expressions().is_empty());
+    assert_eq!(facts.comments().len(), 1);
+}
+
+#[test]
+fn comments_are_source_ordered_ranges_including_inline_comments() {
+    let facts = workflow(DETAILED_WORKFLOW);
+    let comments = facts
+        .comments()
+        .iter()
+        .map(|range| text(&facts, *range))
+        .collect::<Vec<_>>();
+
+    assert_eq!(
+        comments,
+        vec![
+            "# workflow comment",
+            "# job comment",
+            "# step comment",
+            "# ignored expression ${{ secrets.COMMENT_TOKEN }}"
+        ]
+    );
+}
+
+#[test]
+fn credentials_are_scoped_to_their_job_and_classified_by_interpolation() {
+    let facts = workflow(DETAILED_WORKFLOW);
+    let credentials = facts.credentials();
+
+    assert_eq!(credentials.len(), 4);
+    assert_eq!(
+        credentials
+            .iter()
+            .map(|fact| (
+                fact.key(),
+                fact.job(),
+                text(&facts, fact.range()),
+                fact.is_literal()
+            ))
+            .collect::<Vec<_>>(),
+        vec![
+            ("username", "build", "builder", true),
+            ("password", "build", "'literal: password'", true),
+            ("username", "build", "${{ secrets.SERVICE_USER }}", false),
+            (
+                "password",
+                "build",
+                "${{ secrets.SERVICE_PASSWORD }}",
+                false
+            )
+        ]
+    );
+}
+
+#[test]
+fn empty_workflow_shapes_produce_empty_collections_without_parse_gaps() {
+    let no_jobs = workflow("name: Empty\non:\n  push:\n");
+    let no_steps = workflow("jobs:\n  build:\n    runs-on: ubuntu-latest\n");
+    let run_only = workflow("jobs:\n  build:\n    steps:\n      - run: echo ok\n");
+
+    for facts in [&no_jobs, &no_steps, &run_only] {
+        assert!(facts.unparsed().is_empty());
+    }
+    assert_empty_workflow(&no_jobs);
+    assert_eq!(no_steps.jobs()[0].step_count(), 0);
+    assert!(no_steps.steps().is_empty());
+    assert_eq!(run_only.steps()[0].name(), None);
+    assert_eq!(text(&run_only, run_only.steps()[0].range()), "run");
+    assert_eq!(
+        text(&run_only, run_only.steps()[0].run().unwrap()),
+        "echo ok"
+    );
+}
+
+fn assert_empty_workflow(facts: &WorkflowFacts) {
+    assert!(facts.jobs().is_empty());
+    assert!(facts.steps().is_empty());
+    assert!(facts.expressions().is_empty());
+    assert!(facts.comments().is_empty());
+    assert!(facts.credentials().is_empty());
 }

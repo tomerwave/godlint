@@ -242,6 +242,24 @@ The grammar is the point rather than a preference. This repository's own validat
 line and a column because a node has a byte range. `analyzers::workflow` is a fixture in
 `crates/godlint-core/tests/workflows.rs` writing all three of those shapes and expecting silence.
 
+The reader also exposes each job's body, dependencies, reusable-workflow call and secrets; each
+step's action, command, condition, inputs and environment; container and service credentials;
+comments; and expression interpolations. These are syntax sites rather than policy decisions. They
+let rules ask whether a command is long, a credential is literal, a job depends on another job, or
+an expression reads a sensitive context without teaching a rule YAML grammar names.
+
+Expressions are scanned only inside scalar value nodes. Scanning the file text would turn an example
+inside a YAML comment into executable policy, while walking scalar values also retains expressions in
+quoted and block values. An expression records its whole range, trimmed body and leading context path.
+The whole context path is lowercased for case-insensitive matching, while the body remains as written
+for display. A leading function call is not a context path and retains its whole body for a rule to
+search.
+
+An expression does not store whether it came from `run`, `if` or `with`. Step values and expressions
+already have ranges, so a rule intersects them to answer that question. Keeping the site out of the
+expression fact avoids duplicating the YAML ancestry and lets the same expression serve rules that care
+about a step, a job body, or the whole workflow.
+
 A workflow is not source, and the split is in the type rather than in a convention. `TextFile` owns what
 a path and a byte offset mean — position derivation, range validation, repository-relative paths —
 and `SourceFile` is a `TextFile` that has a `Language`. A workflow has a `TextFile` and no language, so

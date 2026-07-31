@@ -57,6 +57,10 @@ pub struct SourceRange {
     end: usize,
 }
 
+pub(crate) fn range_contains(container: SourceRange, candidate: SourceRange) -> bool {
+    container.start() <= candidate.start() && candidate.end() <= container.end()
+}
+
 #[derive(Debug)]
 pub enum SourceFileError {
     AbsolutePath { path: PathBuf },
