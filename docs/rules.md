@@ -99,6 +99,7 @@ Rust is out of scope. It has no `catch`, and a discarded `Result` is `reliabilit
 | `testing/no-sleep-in-test` | A test that waits on the clock: `time.sleep` or `asyncio.sleep` in Python, `thread::sleep` or `tokio::time::sleep` in Rust, and `page.waitForTimeout` or `browser.pause` in JavaScript and TypeScript |
 | `testing/no-randomness-without-seed` | A test drawing from a general-purpose generator in a file that never seeds one, so a failure cannot be reproduced |
 | `testing/no-network-in-unit-test` | A test in a declared unit path calling an HTTP or socket client, so it is slow, dependent on a service being up, and unable to run offline |
+| `testing/assertion-required` | A test that asserts nothing, so it passes unless the code raises. Reported at warning, whatever severity is configured |
 
 `no-empty-test` reads the test's own body rather than any function inside it, so a test that registers
 an empty callback is not empty itself. A test with no body to read at all, such as `it.todo('later')`,
@@ -207,6 +208,43 @@ names them. And a client reached from a fixture rather than from the test — `b
 await fetch(url) })`, or a `pytest.fixture` — falls outside every test's range and is silent, which is a
 common shape of exactly this smell. All three want import resolution or a fixture fact; none is a
 configuration matter.
+
+`assertion-required` reports at warning whatever severity it is configured at. Whether a test asserts
+through a helper is not decidable without resolution, and with `fail-on` at its default of `error` that
+means the rule informs rather than fails a build.
+
+The cap reuses `Violation::cap()`, but it is worth being precise about how this use differs from
+`security/no-weak-hash`'s, because the two are not the same shape. `no-weak-hash` emits two violations
+and caps only one: an algorithm it cannot read is capped, and an algorithm named outright keeps its
+configured severity, so the rule stays sharp on what it can prove. `assertion-required` has one
+violation and caps it, so the cap is rule-wide. That is the blunter instrument, and it is the honest one
+here — there is no subcase where the rule *can* prove a test asserts nothing, because the assertion may
+always be inside a helper it cannot follow.
+
+A hard gate is still reachable, and the documentation would be misleading not to say so: `fail-on:
+warning` makes any warning fail the run. The cost is that it is not rule-scoped — it promotes every
+warning in the repository, including `no-weak-hash`'s unreadable algorithm. There is no per-rule route
+to a gate.
+
+Three things that look assertion-free are not, and are silent:
+
+| Shape | Why |
+| --- | --- |
+| `pytest.raises`, `#[should_panic]` | Asserting that something raises is asserting |
+| A `describe` or other suite | It asserts through the tests inside it, so reporting it would double every finding |
+| An empty test | That is `no-empty-test`'s finding, and two findings for one defect is noise |
+
+What remains is the helper case, and `extra-assertions` is the answer to it — a repository that asserts
+through `verify_refund` names it rather than turning the rule off. Names match the spelling as written,
+so `helpers.verifyOrder` and a bare `verifyOrder` are different entries:
+
+```yaml
+rules:
+  testing/assertion-required:
+    severity: error
+    extra-assertions:
+      - verify_refund
+```
 
 What counts as a test is decided by syntax alone — a runner call, a `#[test]` attribute, a `test_`
 prefix or a `pytest.mark` decorator. None of the test rules knows about test directories on its own,

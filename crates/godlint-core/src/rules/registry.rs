@@ -2,11 +2,11 @@ use crate::{
     config::{Config, Severity},
     rules::{
         Rule, accountable_suppression::AccountableSuppression,
-        cognitive_complexity::CognitiveComplexity, condition_complexity::ConditionComplexity,
-        decision_complexity::DecisionComplexity, dependency_boundary::DependencyBoundary,
-        direct_environment_read::DirectEnvironmentRead, empty_error_handler::EmptyErrorHandler,
-        empty_function::EmptyFunction, explicit_timer_delay::ExplicitTimerDelay,
-        file_size::FileSize, filename_case::FilenameCase,
+        assertion_required::AssertionRequired, cognitive_complexity::CognitiveComplexity,
+        condition_complexity::ConditionComplexity, decision_complexity::DecisionComplexity,
+        dependency_boundary::DependencyBoundary, direct_environment_read::DirectEnvironmentRead,
+        empty_error_handler::EmptyErrorHandler, empty_function::EmptyFunction,
+        explicit_timer_delay::ExplicitTimerDelay, file_size::FileSize, filename_case::FilenameCase,
         forbidden_dependency::ForbiddenDependency, function_nesting::FunctionNesting,
         function_size::FunctionSize, function_statements::FunctionStatements,
         module_independence::ModuleIndependence, no_comments::NoComments,
@@ -105,6 +105,11 @@ severity!(
 );
 severity!(no_weak_hash_severity, NoWeakHash, no_weak_hash);
 severity!(no_focused_test_severity, NoFocusedTest, no_focused_test);
+severity!(
+    assertion_required_severity,
+    AssertionRequired,
+    assertion_required
+);
 severity!(no_empty_test_severity, NoEmptyTest, no_empty_test);
 severity!(no_skipped_test_severity, NoSkippedTest, no_skipped_test);
 severity!(no_sleep_in_test_severity, NoSleepInTest, no_sleep_in_test);
@@ -244,6 +249,11 @@ const REGISTRATIONS: &[Registration] = &[
     Registration {
         id: EmptyErrorHandler::ID,
         severity: empty_error_handler_severity,
+        suppressible: true,
+    },
+    Registration {
+        id: AssertionRequired::ID,
+        severity: assertion_required_severity,
         suppressible: true,
     },
     Registration {

@@ -1,0 +1,7 @@
+exit-code: 0
+
+stdout: |
+  example.js:1:1: warning[testing/assertion-required] This test asserts nothing, so it passes unless the code raises; assert what the code should do, or name the helper that asserts for it in extra-assertions.
+  example.py:1:1: warning[testing/assertion-required] This test asserts nothing, so it passes unless the code raises; assert what the code should do, or name the helper that asserts for it in extra-assertions.
+  example.rs:2:1: warning[testing/assertion-required] This test asserts nothing, so it passes unless the code raises; assert what the code should do, or name the helper that asserts for it in extra-assertions.
+stderr: ""

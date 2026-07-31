@@ -296,6 +296,7 @@ semantic capability exists.
 | `testing/no-sleep-in-test` | Shipped | High | Callee match against a per-language catalogue, scoped to calls inside a test | Refuse a test that waits on the clock rather than on the condition |
 | `testing/no-randomness-without-seed` | Shipped | High | Generator catalogue scoped to calls inside a test, exempting a file that seeds | Refuse a test whose failure cannot be reproduced |
 | `testing/no-network-in-unit-test` | Shipped | High | Client catalogue scoped to calls inside a test, in a declared unit path | Refuse a unit test that reaches the network |
+| `testing/assertion-required` | Shipped | Medium | Assertion facts counted per test, capped at warning | Ask a test to state what it checks |
 | `security/no-weak-hash` | Shipped | High | Direct callee match, plus a literal algorithm argument to a hash factory | Require a collision-resistant hash where collision resistance matters |
 | `reliability/explicit-timer-delay` | Shipped | High | Direct JavaScript/TypeScript timer calls with fewer than two arguments | Require an intentional delay value |
 | `logging/no-production-log` | Shipped | High | Direct logging callee match | Ban debug logging outside approved paths |
@@ -480,7 +481,7 @@ ships at error through `recommended@1`.
 | `testing/no-sleep-in-test` | Shipped | Test fact | High | Per-language sleep catalogue, scoped to calls inside a test |
 | `testing/no-randomness-without-seed` | Shipped | Test fact | High | Generator catalogue scoped to calls inside a test |
 | `testing/no-network-in-unit-test` | Shipped | Test fact | High | Client catalogue scoped to a declared unit path |
-| `testing/assertion-required` | Planned | Test and assertion facts | Medium | Configured framework assertion APIs |
+| `testing/assertion-required` | Shipped | Test and assertion facts | Medium | Per-language assertion sets, plus configured helpers |
 | `testing/no-mock-production-module` | Planned | Mock and import facts | Medium | Explicit configured production boundaries |
 
 ### Phase 6 — Semantic and external capabilities

@@ -1,0 +1,7 @@
+version: 1
+
+rules:
+  testing/assertion-required:
+    severity: error
+    extra-assertions:
+      - verify_refund
