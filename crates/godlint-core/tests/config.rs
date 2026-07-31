@@ -144,10 +144,48 @@ fn accepts_the_empty_error_handler_rule() {
 }
 
 #[test]
-fn rejects_an_unknown_rule() {
-    let result = load("version: 1\nrules:\n  maintainability/unknown: {}\n");
+fn ignores_an_unknown_rule_and_says_which() {
+    let config = load("version: 1\nrules:\n  maintainability/unknown: {}\n")
+        .unwrap_or_else(|error| panic!("a rule this version lacks must not stop a run: {error}"));
+    let unrecognised: Vec<&str> = config.rules.unrecognised().collect();
 
-    assert!(matches!(result, Err(ConfigError::Parse { .. })));
+    assert_eq!(unrecognised, vec!["maintainability/unknown"]);
+}
+
+#[test]
+fn an_unknown_rule_does_not_silence_the_rules_beside_it() {
+    let config = load(concat!(
+        "version: 1\n",
+        "rules:\n",
+        "  maintainability/unknown: {}\n",
+        "  maintainability/file-size:\n",
+        "    severity: error\n",
+        "    max-lines: 10\n",
+    ))
+    .unwrap_or_else(|error| panic!("loads: {error}"));
+
+    assert!(
+        config.rules.file_size.is_some(),
+        "a newer key must cost only itself"
+    );
+}
+
+#[test]
+fn a_rule_with_an_unknown_option_is_still_refused() {
+    let result = load(concat!(
+        "version: 1\n",
+        "rules:\n",
+        "  maintainability/file-size:\n",
+        "    severity: error\n",
+        "    max-lines: 10\n",
+        "    max-line: 10\n",
+    ));
+
+    assert!(
+        matches!(result, Err(ConfigError::Parse { .. })),
+        "an option on a rule that does exist decides how it behaves, so a name it does not \
+         know must not be ignored"
+    );
 }
 
 #[test]

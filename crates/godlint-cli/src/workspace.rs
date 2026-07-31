@@ -6,6 +6,8 @@ use godlint_core::{
     scan::{ScanReport, scan},
 };
 
+use crate::report;
+
 const CONFIG_NAME: &str = "godlint.yaml";
 
 pub struct Workspace {
@@ -17,8 +19,13 @@ pub struct Workspace {
 impl Workspace {
     pub fn prepare(paths: &[String]) -> Result<Self, String> {
         let located = Located::new(paths)?;
-        let config = Config::load(located.root.join(CONFIG_NAME))
-            .map_err(|error| format!("Configuration is invalid: {error}"))?;
+        let path = located.root.join(CONFIG_NAME);
+        let config =
+            Config::load(&path).map_err(|error| format!("Configuration is invalid: {error}"))?;
+
+        for notice in report::notices(&path, &config) {
+            eprintln!("{notice}");
+        }
 
         Ok(Self {
             config,

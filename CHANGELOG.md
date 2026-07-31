@@ -9,6 +9,17 @@ speaks about.
 
 ## [Unreleased]
 
+### Changed
+
+- A rule name under `rules:` that this version of Godlint does not know is now reported and ignored
+  rather than refusing the whole file. One configuration often has to be read by two versions at once
+  — a pinned one in CI and a newer one locally — and a hard stop made adopting a rule an atomic
+  upgrade across every consumer. The notice names the key, and the nearest rule it knows when there is
+  one, because ignoring a *misspelling* is the case this makes dangerous. Everything else is still
+  refused, and [the configuration guide](docs/configuration.md#what-a-version-may-read) states where
+  the line is and why: an unknown rule key can only subtract the rule it names, while an unknown
+  option, top-level key or suite name could make a run mean something other than the file says.
+
 ### Added
 
 - A language support matrix in [the rule reference](docs/rules.md#language-support), recording for

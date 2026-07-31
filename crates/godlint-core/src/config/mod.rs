@@ -1,6 +1,6 @@
-use std::{fs, num::NonZeroU32, path::Path};
+use std::{collections::BTreeMap, fs, num::NonZeroU32, path::Path};
 
-use serde::Deserialize;
+use serde::{Deserialize, de::IgnoredAny};
 
 use crate::suites;
 
@@ -39,7 +39,6 @@ pub struct Config {
 }
 
 #[derive(Debug, Default, Deserialize)]
-#[serde(deny_unknown_fields)]
 pub struct Rules {
     #[serde(rename = "maintainability/function-size")]
     pub function_size: Option<LineLimitRule>,
@@ -115,6 +114,14 @@ pub struct Rules {
     pub forbidden_dependency: Option<ForbiddenDependencyRule>,
     #[serde(rename = "architecture/filename-case")]
     pub filename_case: Option<FilenameCaseRule>,
+    #[serde(flatten)]
+    unrecognised: BTreeMap<String, IgnoredAny>,
+}
+
+impl Rules {
+    pub fn unrecognised(&self) -> impl Iterator<Item = &str> {
+        self.unrecognised.keys().map(String::as_str)
+    }
 }
 
 #[derive(Debug, Deserialize)]

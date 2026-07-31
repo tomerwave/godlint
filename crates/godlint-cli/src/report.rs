@@ -1,4 +1,11 @@
-use godlint_core::{VERSION, config::Severity, rules::Finding, scan::ScanReport};
+use std::path::Path;
+
+use godlint_core::{
+    VERSION,
+    config::{Config, Severity},
+    rules::{Finding, closest_rule_id},
+    scan::ScanReport,
+};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Format {
@@ -43,6 +50,26 @@ fn lines(findings: &[Finding], render_one: impl Fn(&Finding) -> String) -> Strin
         .map(render_one)
         .collect::<Vec<_>>()
         .join("\n")
+}
+
+pub fn notices(path: &Path, config: &Config) -> Vec<String> {
+    config
+        .rules
+        .unrecognised()
+        .map(|rule| notice(path, rule))
+        .collect()
+}
+
+fn notice(path: &Path, rule: &str) -> String {
+    let suggestion = closest_rule_id(rule)
+        .map(|closest| format!(" Did you mean {}?", visible(closest)))
+        .unwrap_or_default();
+
+    format!(
+        "{}: rules: {} is not a rule godlint {VERSION} knows, so it is ignored.{suggestion}",
+        visible(&path.display().to_string()),
+        visible(rule)
+    )
 }
 
 pub fn visible(text: &str) -> String {
