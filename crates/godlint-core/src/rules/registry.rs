@@ -13,11 +13,11 @@ use crate::{
         no_dynamic_execution::NoDynamicExecution, no_empty_test::NoEmptyTest,
         no_focused_test::NoFocusedTest, no_insecure_random::NoInsecureRandom,
         no_network_in_unit_test::NoNetworkInUnitTest, no_production_log::NoProductionLog,
-        no_randomness_without_seed::NoRandomnessWithoutSeed, no_skipped_test::NoSkippedTest,
-        no_sleep_in_test::NoSleepInTest, no_weak_hash::NoWeakHash, parameter_count::ParameterCount,
-        restricted_call::RestrictedCall, restricted_import::RestrictedImport,
-        return_count::ReturnCount, todo_requires_reference::TodoRequiresReference,
-        unused_suppression::UnusedSuppression,
+        no_randomness_without_seed::NoRandomnessWithoutSeed, no_shell_command::NoShellCommand,
+        no_skipped_test::NoSkippedTest, no_sleep_in_test::NoSleepInTest, no_weak_hash::NoWeakHash,
+        parameter_count::ParameterCount, restricted_call::RestrictedCall,
+        restricted_import::RestrictedImport, return_count::ReturnCount,
+        todo_requires_reference::TodoRequiresReference, unused_suppression::UnusedSuppression,
     },
 };
 
@@ -112,6 +112,7 @@ severity!(
 );
 severity!(no_empty_test_severity, NoEmptyTest, no_empty_test);
 severity!(no_skipped_test_severity, NoSkippedTest, no_skipped_test);
+severity!(no_shell_command_severity, NoShellCommand, no_shell_command);
 severity!(no_sleep_in_test_severity, NoSleepInTest, no_sleep_in_test);
 severity!(
     no_network_in_unit_test_severity,
@@ -284,6 +285,11 @@ const REGISTRATIONS: &[Registration] = &[
     Registration {
         id: NoNetworkInUnitTest::ID,
         severity: no_network_in_unit_test_severity,
+        suppressible: true,
+    },
+    Registration {
+        id: NoShellCommand::ID,
+        severity: no_shell_command_severity,
         suppressible: true,
     },
     Registration {

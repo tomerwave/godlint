@@ -61,6 +61,21 @@ speaks about.
   TypeScript, `#[ignore]` beside `#[test]` in Rust in either order, and a `pytest.mark.skip` or
   `unittest.skip` decorator in Python. A skipped test rots without anything noticing, so the rule asks
   for it to be deleted, fixed, or suppressed with an owner and an expiry.
+- `security/no-shell-command` — reports a command run through a shell, where any interpolated value
+  becomes executable. The three languages put the defect in three different places, so the rule reads
+  three signals. Python's callee is innocent and the argument is the finding, so the check is callee-blind — any call
+  passing a truthy `shell=` reports, which is what sees `sp.run(...)` and `run(...)` after an aliased or
+  `from` import without listing either — and `shell=False` is read rather than merely looked for. JavaScript's callee is the
+  finding — `exec` shells out, `execFile` does not — but the common spelling destructures it, so a bare
+  `exec` counts only where the file imports `child_process` by `import` or `require`; without that
+  import the same name is a regular expression's `exec`, so `pattern.exec(reference)` is silent. Python's
+  bare names are read the same way, so `from os import system` then `system(cmd)` is reported, gated on the
+  file importing `os`, `commands` or `subprocess` — and in both languages a name the file **declares
+  itself** is never the module's, so a local `def system(x)` or `function exec(p)` is silent. Rust's
+  program is the finding, so `Command::new("sh")` is reported and `Command::new("git")` is not. A literal
+  command with nothing interpolated is reported too: it is not injectable today, but the argument-array
+  form is no harder to write, and reporting only interpolated strings would mean deciding what
+  interpolation looks like inside an f-string. `allow-in` exempts a release script.
 - `testing/assertion-required` — reports a test that asserts nothing. Such a test verifies only that the
   code does not raise, so it passes when the behaviour is wrong, which is the failure a test exists to
   prevent. It reports at **warning** whatever severity is configured, including inside `recommended@1`,

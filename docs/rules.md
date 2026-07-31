@@ -67,7 +67,35 @@ Neither policy rule about suppressions can itself be suppressed. See
 | `security/direct-environment-read` | Environment access outside a configuration boundary |
 | `security/no-weak-hash` | A broken hash algorithm, named either by the callee — Python `hashlib.md5`/`hashlib.sha1`, Rust `md5::compute`, `Md5::new`, `Sha1::new` — or by a literal argument to a factory: `crypto.createHash("md5")`, `crypto.createHmac("sha1", …)`, `hashlib.new("md5")`. Spelling and case do not matter (`MD5`, `sha-1`). An algorithm it cannot read reports at warning rather than at the configured severity. `allow-in` exempts a cache key or an ETag, where collision resistance is not the point |
 | `security/no-insecure-random` | A general-purpose random generator, which is predictable: JavaScript `Math.random` and `crypto.pseudoRandomBytes`, Python's `random` module, Rust `rand::random` and `rand::thread_rng`. `allow-in` exempts a path where unpredictability is not the point |
+| `security/no-shell-command` | A command run through a shell, which makes any interpolated value executable: Python `shell=True` on a `subprocess` launcher, `os.system`, `os.popen`; JavaScript `child_process.exec`/`execSync`, including a destructured or required `exec` where the module is imported; Rust `Command::new` given a shell as its program. `allow-in` exempts a release script |
 | `security/forbidden-dependency` | An import of a package the project has ruled out |
+
+`no-shell-command` reads three different signals, because the languages put the defect in three
+different places. In Python the callee is innocent and the *argument* is the finding, so the check is
+callee-blind: **any** call passing a truthy `shell=` reports, not only a `subprocess` launcher. That is
+what lets it see `sp.run(...)` after `import subprocess as sp`, and `run(...)` after `from subprocess
+import run`, without listing either. The price is that a domain function of your own taking a `shell`
+keyword is reported too. `shell=False` and `shell=0` are read rather than merely looked for. In
+JavaScript the callee is the finding — `exec` shells out and `execFile` does not — but the common
+spelling destructures it, so a bare `exec` counts only in a file that imports `child_process`, by
+either `import` or `require`. A member call is read the same way with one difference: a receiver spelled
+`child_process` or `childProcess` names the module itself and needs no corroboration, while a short alias
+(`cp`) is only the module in a file that imports it. Both halves are load-bearing — without the import a
+bare `exec` is a regular expression's, and accepting *any* receiver in a file that imports the module
+reports every regular expression in it. The cost is that an unusual alias is missed.
+
+Python's bare names are read the same way, which closes the `from`-import forms: `from os import system`
+then `system(cmd)` is reported, and so are `popen`, `getoutput` and `getstatusoutput`, each gated on the
+file importing `os`, `commands` or `subprocess`. That gate matters more in Python than in JavaScript
+because `import os` is everywhere, so one more condition applies in both languages: a name the **file
+declares itself** is never the module's. A file with its own `def system(x)` or `function exec(p)` is
+silent, which is where a reported false positive came from. In Rust the program is the finding, so
+`Command::new("sh")` is reported and `Command::new("git")` is not, by basename, so `/bin/sh` counts; a
+program Godlint cannot read is left alone.
+
+A literal command with nothing interpolated is reported too. It is not injectable today, but the
+argument-array form is no harder to write, and a rule that reports only interpolated strings would
+have to decide what interpolation looks like inside an f-string.
 
 ## Reliability
 

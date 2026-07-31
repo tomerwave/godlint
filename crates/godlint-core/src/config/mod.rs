@@ -87,6 +87,8 @@ pub struct Rules {
     pub no_focused_test: Option<NoFocusedTestRule>,
     #[serde(rename = "testing/no-skipped-test")]
     pub no_skipped_test: Option<NoSkippedTestRule>,
+    #[serde(rename = "security/no-shell-command")]
+    pub no_shell_command: Option<NoShellCommandRule>,
     #[serde(rename = "testing/no-sleep-in-test")]
     pub no_sleep_in_test: Option<NoSleepInTestRule>,
     #[serde(rename = "testing/no-randomness-without-seed")]
@@ -284,6 +286,14 @@ pub struct NoFocusedTestRule {
 #[serde(deny_unknown_fields)]
 pub struct NoSkippedTestRule {
     pub severity: Severity,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct NoShellCommandRule {
+    pub severity: Severity,
+    #[serde(default, rename = "allow-in")]
+    pub allow_in: Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]

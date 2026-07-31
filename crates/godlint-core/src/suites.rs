@@ -7,10 +7,10 @@ use crate::config::{
     FilenameCaseRule, ForbiddenDependencyRule, FunctionNestingRule, FunctionStatementsRule,
     LineLimitRule, ModuleIndependenceRule, NoCommentsRule, NoDynamicExecutionRule, NoEmptyTestRule,
     NoFocusedTestRule, NoInsecureRandomRule, NoNetworkInUnitTestRule, NoProductionLogRule,
-    NoRandomnessWithoutSeedRule, NoSkippedTestRule, NoSleepInTestRule, NoWeakHashRule,
-    ParameterCountRule, RestrictedCallRule, RestrictedImportRule, ReturnCountRule, Rules, Severity,
-    TodoRequiresReferenceRule, UnusedSuppressionRule, default_configuration_paths, default_markers,
-    default_reference_prefixes,
+    NoRandomnessWithoutSeedRule, NoShellCommandRule, NoSkippedTestRule, NoSleepInTestRule,
+    NoWeakHashRule, ParameterCountRule, RestrictedCallRule, RestrictedImportRule, ReturnCountRule,
+    Rules, Severity, TodoRequiresReferenceRule, UnusedSuppressionRule, default_configuration_paths,
+    default_markers, default_reference_prefixes,
 };
 
 pub const RECOMMENDED: &str = "recommended@1";
@@ -183,6 +183,10 @@ fn dangerous_apis(rules: &mut Rules) {
     rules
         .no_dynamic_execution
         .get_or_insert(NoDynamicExecutionRule { severity: error });
+    rules.no_shell_command.get_or_insert(NoShellCommandRule {
+        severity: error,
+        allow_in: Vec::new(),
+    });
     rules
         .no_insecure_random
         .get_or_insert(NoInsecureRandomRule {
