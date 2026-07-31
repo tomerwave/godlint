@@ -1,0 +1,8 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    uses: vendor/reusable-workflow@v2

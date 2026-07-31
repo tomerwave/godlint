@@ -19,7 +19,10 @@ pub struct NoInternalImport;
 impl Rule for NoInternalImport {
     const ID: &'static str = "architecture/no-internal-import";
 
-    const LANGUAGES: Languages = Languages::all_but(&[(Dialect::Rust, Absence::NoSuchConstruct)]);
+    const LANGUAGES: Languages = Languages::all_but(&[
+        (Dialect::Rust, Absence::NoSuchConstruct),
+        (Dialect::Workflow, Absence::NoSuchConstruct),
+    ]);
 
     type Configuration = NoInternalImportRule;
 

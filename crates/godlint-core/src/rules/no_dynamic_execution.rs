@@ -21,7 +21,10 @@ pub struct NoDynamicExecution;
 impl Rule for NoDynamicExecution {
     const ID: &'static str = "security/no-dynamic-execution";
 
-    const LANGUAGES: Languages = Languages::all_but(&[(Dialect::Rust, Absence::NoSuchConstruct)]);
+    const LANGUAGES: Languages = Languages::all_but(&[
+        (Dialect::Rust, Absence::NoSuchConstruct),
+        (Dialect::Workflow, Absence::NoSuchConstruct),
+    ]);
 
     type Configuration = NoDynamicExecutionRule;
 

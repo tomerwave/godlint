@@ -243,7 +243,7 @@ jobs:
           TAG: ${{ github.ref_name }}
         run: python3 packaging/build_wheels.py "${TAG#v}" --binaries binaries --out wheels
 
-      - uses: pypa/gh-action-pypi-publish@release/v1
+      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1
         with:
           packages-dir: wheels
 

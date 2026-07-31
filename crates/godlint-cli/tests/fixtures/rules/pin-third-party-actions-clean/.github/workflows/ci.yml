@@ -1,0 +1,13 @@
+name: CI
+
+on:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/analyze@v3
+      - uses: vendor/setup@0f1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c
+      - uses: ./.github/actions/local

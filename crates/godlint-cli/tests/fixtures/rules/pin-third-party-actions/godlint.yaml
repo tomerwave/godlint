@@ -1,0 +1,10 @@
+version: 1
+
+exclude:
+  - .github/workflows/legacy.yml
+
+rules:
+  ci/pin-third-party-actions:
+    severity: error
+    trusted-owners:
+      - actions

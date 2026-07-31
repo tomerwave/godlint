@@ -102,6 +102,9 @@ mod no_dynamic_execution;
 #[path = "rules/parameter_count.rs"]
 mod parameter_count;
 
+#[path = "rules/pin_third_party_actions.rs"]
+mod pin_third_party_actions;
+
 #[path = "rules/registry.rs"]
 mod registry;
 

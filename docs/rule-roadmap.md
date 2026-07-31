@@ -487,6 +487,21 @@ ships at error through `recommended@1`.
 | `testing/assertion-required` | Shipped | Test and assertion facts | Medium | Per-language assertion sets, plus configured helpers |
 | `testing/no-mock-production-module` | Planned | Mock and import facts | Medium | Explicit configured production boundaries |
 
+### Phase 7 — Continuous integration policy
+
+The workflow reader landed with #92, so a rule about CI configuration is now a file-local fact rule
+like any other. The reader knows `uses:` references, the jobs a workflow declares, and where
+`permissions` and `concurrency` are declared; it deliberately does not relate a trigger to a checkout
+to a run step, which is what `ci/no-pull-request-target-checkout` would need.
+
+| Rule | Status | Facts | Confidence | Configuration |
+| --- | --- | --- | --- | --- |
+| `ci/pin-third-party-actions` | Shipped | Action fact | High | `trusted-owners`, defaulting to the two GitHub-owned accounts |
+| `ci/explicit-workflow-permissions` | Planned | Workflow and job facts | High | Whether job-level narrowing is also required |
+| `ci/require-concurrency-cancel` | Planned | Workflow fact | Medium | Which triggers must cancel in progress |
+| `ci/template-injection` | Planned | Step and expression facts | High | Trusted expression contexts |
+| `ci/secrets-inherit` | Planned | Job fact | High | Which callees may inherit |
+
 ### Phase 6 — Semantic and external capabilities
 
 Only after the syntax/fact rules are stable:

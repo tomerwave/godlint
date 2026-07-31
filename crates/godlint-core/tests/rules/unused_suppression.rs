@@ -23,7 +23,7 @@ fn findings(
     .unwrap_or_else(|error| panic!("reads configuration: {error}"));
     let today = Date::parse(TODAY).unwrap_or_else(|error| panic!("parses {TODAY}: {error}"));
 
-    evaluate(&[facts], &config, today)
+    evaluate(&[facts], &[], &config, today)
         .into_iter()
         .map(|finding| finding.violation)
         .collect()

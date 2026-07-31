@@ -16,6 +16,7 @@ impl Rule for NoFocusedTest {
     const LANGUAGES: Languages = Languages::all_but(&[
         (Dialect::Python, Absence::NoSuchConstruct),
         (Dialect::Rust, Absence::NoSuchConstruct),
+        (Dialect::Workflow, Absence::NoSuchConstruct),
     ]);
 
     type Configuration = NoFocusedTestRule;

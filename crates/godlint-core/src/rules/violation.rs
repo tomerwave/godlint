@@ -55,6 +55,10 @@ pub enum Violation {
     ShellCommand {
         shell: String,
     },
+    MutableActionReference {
+        reference: String,
+        unversioned: bool,
+    },
     TestHelperInProduction {
         module: String,
         segment: String,
@@ -272,12 +276,8 @@ impl fmt::Display for Violation {
             Self::DynamicExecution { callee } => write!(formatter, "{callee} {DYNAMIC_EXECUTION}"),
             Self::DirectEnvironmentRead { target } => environment(formatter, target),
             Self::TimerWithoutDelay { callee } => write!(formatter, "{callee} {TIMER_DELAY}"),
-            Self::FilenameCase { name, case } => {
-                write!(formatter, "{name} is not {case}; rename the file to match.")
-            }
-            Self::ForbiddenDependency { package } => {
-                write!(formatter, "{package} {FORBIDDEN_DEPENDENCY}")
-            }
+            Self::FilenameCase { name, case } => filename_case(formatter, name, case),
+            Self::ForbiddenDependency { package } => forbidden(formatter, package),
             Self::CrossedBoundary { from, to } => crossed_boundary(formatter, from, to),
             Self::BrokeIndependence { set, from, to } => {
                 broke_independence(formatter, set, from, to)
@@ -291,6 +291,10 @@ impl fmt::Display for Violation {
             Self::EmptyTest => formatter.write_str(EMPTY_TEST),
             Self::MissingAssertion => formatter.write_str(MISSING_ASSERTION),
             Self::ShellCommand { shell } => write!(formatter, "{shell} {SHELL_COMMAND}"),
+            Self::MutableActionReference {
+                reference,
+                unversioned,
+            } => mutable_action(formatter, reference, *unversioned),
             Self::TestHelperInProduction { module, segment } => {
                 test_helper(formatter, module, segment)
             }
@@ -299,10 +303,40 @@ impl fmt::Display for Violation {
             }
             Self::SleepInTest { callee } => write!(formatter, "{callee} {SLEEP_IN_TEST}"),
             Self::UnseededRandom { callee, remedy } => unseeded(formatter, callee, remedy),
-            Self::NetworkInUnitTest { callee } => {
-                write!(formatter, "{callee} {NETWORK_IN_UNIT_TEST}")
-            }
+            Self::NetworkInUnitTest { callee } => network(formatter, callee),
             Self::InsecureRandom { callee, secure } => insecure_random(formatter, callee, secure),
         }
     }
+}
+
+fn filename_case(formatter: &mut fmt::Formatter<'_>, name: &str, case: &str) -> fmt::Result {
+    write!(formatter, "{name} is not {case}; rename the file to match.")
+}
+
+fn forbidden(formatter: &mut fmt::Formatter<'_>, package: &str) -> fmt::Result {
+    write!(formatter, "{package} {FORBIDDEN_DEPENDENCY}")
+}
+
+fn network(formatter: &mut fmt::Formatter<'_>, callee: &str) -> fmt::Result {
+    write!(formatter, "{callee} {NETWORK_IN_UNIT_TEST}")
+}
+
+fn mutable_action(
+    formatter: &mut fmt::Formatter<'_>,
+    reference: &str,
+    unversioned: bool,
+) -> fmt::Result {
+    if unversioned {
+        return write!(
+            formatter,
+            "{reference} names no version at all, so it runs whatever the default branch holds; \
+             pin it to a commit SHA."
+        );
+    }
+
+    write!(
+        formatter,
+        "{reference} is a mutable ref, so the action can change under you and it runs with your \
+         workflow's token; pin it to a commit SHA."
+    )
 }

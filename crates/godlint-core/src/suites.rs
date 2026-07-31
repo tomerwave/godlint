@@ -9,9 +9,10 @@ use crate::config::{
     NoFocusedTestRule, NoInsecureRandomRule, NoInternalImportRule, NoNetworkInUnitTestRule,
     NoProductionLogRule, NoRandomnessWithoutSeedRule, NoShellCommandRule, NoSkippedTestRule,
     NoSleepInTestRule, NoTestHelperInProductionRule, NoWeakHashRule, ParameterCountRule,
-    RestrictedCallRule, RestrictedImportRule, ReturnCountRule, Rules, Severity,
-    TodoRequiresReferenceRule, UnusedSuppressionRule, default_configuration_paths, default_markers,
-    default_reference_prefixes, default_test_helpers, default_test_paths,
+    PinThirdPartyActionsRule, RestrictedCallRule, RestrictedImportRule, ReturnCountRule, Rules,
+    Severity, TodoRequiresReferenceRule, UnusedSuppressionRule, default_configuration_paths,
+    default_markers, default_reference_prefixes, default_test_helpers, default_test_paths,
+    default_trusted_owners,
 };
 
 pub const RECOMMENDED: &str = "recommended@1";
@@ -42,6 +43,16 @@ fn recommended(rules: &mut Rules) {
     reliability(rules);
     logging(rules);
     testing(rules);
+    continuous_integration(rules);
+}
+
+fn continuous_integration(rules: &mut Rules) {
+    rules
+        .pin_third_party_actions
+        .get_or_insert(PinThirdPartyActionsRule {
+            severity: Severity::Error,
+            trusted_owners: default_trusted_owners(),
+        });
 }
 
 fn maintainability(rules: &mut Rules) {

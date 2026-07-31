@@ -16,7 +16,8 @@ use crate::{
         no_production_log::NoProductionLog, no_randomness_without_seed::NoRandomnessWithoutSeed,
         no_shell_command::NoShellCommand, no_skipped_test::NoSkippedTest,
         no_sleep_in_test::NoSleepInTest, no_test_helper_in_production::NoTestHelperInProduction,
-        no_weak_hash::NoWeakHash, parameter_count::ParameterCount, restricted_call::RestrictedCall,
+        no_weak_hash::NoWeakHash, parameter_count::ParameterCount,
+        pin_third_party_actions::PinThirdPartyActions, restricted_call::RestrictedCall,
         restricted_import::RestrictedImport, return_count::ReturnCount,
         todo_requires_reference::TodoRequiresReference, unused_suppression::UnusedSuppression,
     },
@@ -167,6 +168,11 @@ severity!(
     module_independence
 );
 severity!(filename_case_severity, FilenameCase, filename_case);
+severity!(
+    pin_third_party_actions_severity,
+    PinThirdPartyActions,
+    pin_third_party_actions
+);
 
 const REGISTRATIONS: &[Registration] = &[
     Registration {
@@ -389,6 +395,12 @@ const REGISTRATIONS: &[Registration] = &[
         id: FilenameCase::ID,
         languages: FilenameCase::LANGUAGES,
         severity: filename_case_severity,
+        suppressible: true,
+    },
+    Registration {
+        id: PinThirdPartyActions::ID,
+        languages: PinThirdPartyActions::LANGUAGES,
+        severity: pin_third_party_actions_severity,
         suppressible: true,
     },
 ];

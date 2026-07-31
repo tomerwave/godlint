@@ -32,7 +32,7 @@ pub fn evaluate(
                 .filter(|suppression| is_unused(suppression, findings, config))
                 .map(|suppression| {
                     (
-                        suppression.source(),
+                        suppression.source().text_file(),
                         suppression.range(),
                         Violation::UnusedSuppression,
                     )

@@ -20,6 +20,7 @@ impl Rule for ExplicitTimerDelay {
     const LANGUAGES: Languages = Languages::all_but(&[
         (Dialect::Python, Absence::NoSuchConstruct),
         (Dialect::Rust, Absence::NoSuchConstruct),
+        (Dialect::Workflow, Absence::NoSuchConstruct),
     ]);
 
     type Configuration = ExplicitTimerDelayRule;

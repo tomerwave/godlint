@@ -11,18 +11,30 @@ speaks about.
 
 ### Added
 
+- `ci/pin-third-party-actions` — reports a workflow step using a third-party action at a ref that can
+  move. A tag, a branch or a version string can be repointed by whoever owns the action, and what they
+  point at next runs in your workflow with your token; only a full forty-character commit SHA counts as
+  pinned, and a short SHA does not, because it is neither what GitHub resolves nor collision-resistant.
+  A local `./path` action, a `docker://` image, and any owner in `trusted-owners` are silent.
+  `trusted-owners` defaults to `actions` and `github` — the accounts GitHub publishes from — because
+  pinning those too is a policy decision rather than closing a hole; set it to `[]` to require every
+  action to be pinned. Enabling it on this repository found five unpinned third-party uses across four
+  workflows, now pinned. A workflow finding cannot be suppressed inline, because comment facts come
+  from source and not from YAML; an `exclude` glob is the way to scope it.
 - Godlint reads `.github/workflows/*.yml` as well as source, through a new `tree-sitter-yaml`
   grammar and `analyzers::workflow`. `WorkflowFacts` exposes every `uses:` reference with its
   owner, name and version and whether that version is a commit rather than a movable tag; which
   jobs a workflow declares; and whether `permissions` and `concurrency` are declared, at the
-  workflow level or per job. No rule consumes this yet — `ci/pin-third-party-actions` and
-  `ci/explicit-workflow-permissions` are what it is for. A workflow is discovered by the same walk
+  workflow level or per job. `ci/pin-third-party-actions` is the first rule to read them and
+  `ci/explicit-workflow-permissions` is next. A workflow is discovered by the same walk
   as source, skipped by the same `exclude` globs, and bounded by the same maximum file size.
   Reading the syntax rather than the text is what lets a `uses:` inside a comment, a string, or a
   step named `uses:` be ignored, and what gives a finding a real line and column.
 
 ### Changed
 
+- `rules::evaluate` takes the workflow facts alongside the source facts. A caller inside this
+  repository passes `&report.workflows`; a caller outside it that analyses no workflows passes `&[]`.
 - A rule name under `rules:` that this version of Godlint does not know is now reported and ignored
   rather than refusing the whole file. One configuration often has to be read by two versions at once
   — a pinned one in CI and a newer one locally — and a hard stop made adopting a rule an atomic

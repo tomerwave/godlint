@@ -1,9 +1,34 @@
 use crate::{
-    analyzers::SourceFacts,
-    facts::{AccessFact, CallFact, ConditionFact, ErrorHandlerFact, ImportFact, TestFact},
-    rules::{Finding, Ranged, Reporting, Rule, Violation, collect_ranged, enclosing::in_test},
+    analyzers::{SourceFacts, workflow::WorkflowFacts},
+    facts::{
+        AccessFact, ActionFact, CallFact, ConditionFact, ErrorHandlerFact, ImportFact, TestFact,
+    },
+    rules::{
+        Finding, Ranged, Reporting, Rule, Violation, collect_ranged, enclosing::in_test, report,
+    },
     source::SourceRange,
 };
+
+pub trait ActionRule: Rule {
+    fn check(action: &ActionFact, configuration: &Self::Configuration) -> Option<Violation>;
+}
+
+pub fn evaluate_action_rule<R: ActionRule>(
+    workflows: &[WorkflowFacts],
+    configuration: &R::Configuration,
+) -> Vec<Finding> {
+    let reporting = Reporting::of::<R>(configuration);
+
+    report(
+        reporting,
+        workflows.iter().flat_map(|workflow| {
+            workflow.actions().iter().filter_map(|action| {
+                R::check(action, configuration)
+                    .map(|violation| (action.file(), action.range(), violation))
+            })
+        }),
+    )
+}
 
 pub trait CallRule: Rule {
     fn check(call: &CallFact, configuration: &Self::Configuration) -> Option<Violation>;

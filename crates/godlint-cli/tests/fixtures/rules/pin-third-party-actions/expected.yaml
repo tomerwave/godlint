@@ -1,0 +1,10 @@
+exit-code: 1
+
+stdout: |
+  .github/workflows/ci.yml:11:15: error[ci/pin-third-party-actions] vendor/setup@v3 is a mutable ref, so the action can change under you and it runs with your workflow's token; pin it to a commit SHA.
+  .github/workflows/ci.yml:12:15: error[ci/pin-third-party-actions] vendor/setup@main is a mutable ref, so the action can change under you and it runs with your workflow's token; pin it to a commit SHA.
+  .github/workflows/ci.yml:14:15: error[ci/pin-third-party-actions] vendor/setup names no version at all, so it runs whatever the default branch holds; pin it to a commit SHA.
+  .github/workflows/ci.yml:15:15: error[ci/pin-third-party-actions] vendor/quoted@v1 is a mutable ref, so the action can change under you and it runs with your workflow's token; pin it to a commit SHA.
+  .github/workflows/release.yml:8:11: error[ci/pin-third-party-actions] vendor/reusable-workflow@v2 is a mutable ref, so the action can change under you and it runs with your workflow's token; pin it to a commit SHA.
+
+stderr: ""
