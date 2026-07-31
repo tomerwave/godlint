@@ -2,6 +2,10 @@ use std::{error::Error, fmt};
 
 use crate::source::{SourceFile, SourceRange};
 
+pub mod workflow;
+
+pub use workflow::{ActionFact, JobFact};
+
 macro_rules! function_metrics {
     ($($(#[$documentation:meta])* $name:ident),+ $(,)?) => {
         $(

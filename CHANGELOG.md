@@ -9,6 +9,18 @@ speaks about.
 
 ## [Unreleased]
 
+### Added
+
+- Godlint reads `.github/workflows/*.yml` as well as source, through a new `tree-sitter-yaml`
+  grammar and `analyzers::workflow`. `WorkflowFacts` exposes every `uses:` reference with its
+  owner, name and version and whether that version is a commit rather than a movable tag; which
+  jobs a workflow declares; and whether `permissions` and `concurrency` are declared, at the
+  workflow level or per job. No rule consumes this yet — `ci/pin-third-party-actions` and
+  `ci/explicit-workflow-permissions` are what it is for. A workflow is discovered by the same walk
+  as source, skipped by the same `exclude` globs, and bounded by the same maximum file size.
+  Reading the syntax rather than the text is what lets a `uses:` inside a comment, a string, or a
+  step named `uses:` be ignored, and what gives a finding a real line and column.
+
 ### Changed
 
 - A rule name under `rules:` that this version of Godlint does not know is now reported and ignored

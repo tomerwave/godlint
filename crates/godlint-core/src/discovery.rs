@@ -5,7 +5,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::{glob, paths, source::Language};
+use crate::{
+    glob, paths,
+    source::{Language, Workflow},
+};
 
 #[derive(Debug)]
 pub enum DiscoveryError {
@@ -98,7 +101,7 @@ impl Walk<'_> {
     }
 
     fn add_supported_file(&mut self, path: &Path) {
-        if Language::from_path(path).is_some() {
+        if Language::from_path(path).is_some() || Workflow::names(path) {
             self.files.insert(path.to_path_buf());
         }
     }

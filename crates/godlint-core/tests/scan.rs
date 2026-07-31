@@ -87,3 +87,50 @@ fn a_file_at_the_limit_is_still_scanned() {
     );
     assert_eq!(report.facts.len(), 1);
 }
+
+#[test]
+fn a_scan_collects_workflows_beside_the_source_it_finds() {
+    let repository = Repository::new();
+
+    repository.write("source.rs", "fn main() {}\n");
+    repository.write(
+        ".github/workflows/ci.yml",
+        "jobs:\n  build:\n    steps:\n      - uses: actions/checkout@v4\n",
+    );
+    repository.write(".github/dependabot.yml", "version: 2\n");
+
+    let report = repository.scan();
+    let workflows: Vec<&Path> = report
+        .workflows
+        .iter()
+        .map(|workflow| workflow.file().path())
+        .collect();
+
+    assert!(report.issues.is_empty(), "{:?}", report.issues);
+    assert_eq!(report.facts.len(), 1, "the source file is still scanned");
+    assert_eq!(
+        workflows,
+        vec![Path::new(".github/workflows/ci.yml")],
+        "only what GitHub will run is a workflow"
+    );
+    assert_eq!(report.workflows[0].actions().len(), 1);
+}
+
+#[test]
+fn an_excluded_workflow_is_not_read() {
+    let repository = Repository::new();
+
+    repository.write(
+        ".github/workflows/ci.yml",
+        "jobs:\n  build:\n    steps:\n      - uses: actions/checkout@v4\n",
+    );
+
+    let root = repository.directory.path();
+    let report = scan(root, &[root.to_path_buf()], &[".github".to_owned()])
+        .unwrap_or_else(|error| panic!("scans repository: {error}"));
+
+    assert!(
+        report.workflows.is_empty(),
+        "a workflow is subject to the same exclusions as source"
+    );
+}

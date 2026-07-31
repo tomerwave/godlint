@@ -24,6 +24,7 @@ expected: read it here.
 | `analyzers` | Parsing, and extraction of language-neutral facts |
 | `analyzers::vocabulary` | The questions the extractor asks a grammar |
 | `analyzers::metrics` | Derivation of the function metrics |
+| `analyzers::workflow` | Reading a GitHub Actions workflow into workflow facts |
 | `facts` | The fact types rules consume |
 | `rules` | Rule declarations, the drivers that run them, and the registry |
 | `config` | The configuration schema and its validation |
@@ -226,6 +227,31 @@ lambda itself. Structural predicates therefore apply only to named nodes.
 Tree-sitter and its official Rust, JavaScript, TypeScript/TSX, and Python grammars
 provide the syntax boundary. The adapters retain Tree-sitter nodes and byte spans; no
 parser type crosses into rules, findings, or reporters.
+
+### Workflows are read, not grepped
+
+A GitHub Actions workflow is policy in the same repository, and two of the things that go wrong there
+are unambiguous: an unpinned third-party action is arbitrary code execution against the CI token, and a
+workflow with no `permissions` block inherits more than it needs. Neither is visible in source, so
+`.github/workflows/*.yml` is read as well — by `tree-sitter-yaml`, through `analyzers::workflow`, into
+`WorkflowFacts`.
+
+The grammar is the point rather than a preference. This repository's own validator greps workflows for
+`permissions:`, and a grep cannot tell a key from a comment, a string, or a step called
+`name: uses: something`. The facts distinguish them because the parser does, and a finding can name a
+line and a column because a node has a byte range. `analyzers::workflow` is a fixture in
+`crates/godlint-core/tests/workflows.rs` writing all three of those shapes and expecting silence.
+
+A workflow is not source, and the split is in the type rather than in a convention. `TextFile` owns what
+a path and a byte offset mean — position derivation, range validation, repository-relative paths —
+and `SourceFile` is a `TextFile` that has a `Language`. A workflow has a `TextFile` and no language, so
+no source rule can be handed one by accident, and the position arithmetic behind every finding exists
+once.
+
+Discovery and the byte limit are shared: a workflow is found by the same walk, skipped by the same
+`exclude` globs, and refused by the same maximum size as any other file. `Workflow::names` is the only
+place that decides what counts — a YAML file directly inside a `.github/workflows` directory, which is
+what GitHub itself will run.
 
 ### Which languages a rule covers
 
