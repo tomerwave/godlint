@@ -1,9 +1,12 @@
 use godlint_core::{
     config::{EmptyFunctionRule, Severity},
-    rules::{FunctionRule, Rule, Violation, empty_function::EmptyFunction},
+    rules::{
+        FunctionRule, Rule, Violation,
+        empty_function::{self, EmptyFunction},
+    },
 };
 
-use super::support::function;
+use super::support::{function, rule_violations};
 
 fn configuration(allow_names: &[&str]) -> EmptyFunctionRule {
     EmptyFunctionRule {
@@ -93,16 +96,59 @@ fn accepts_an_abstract_declaration() {
 
 #[test]
 fn accepts_a_constructor_that_assigns_parameter_properties() {
-    let (facts, constructor) = super::support::nth_function(
-        "src/example.ts",
-        "class Service {\n  constructor(private readonly dep: string) {}\n}",
-        0,
+    for declaration in [
+        "public dep: string",
+        "private dep: string",
+        "protected dep: string",
+        "readonly dep: string",
+        "private readonly dep: string",
+    ] {
+        let source = format!("class Service {{\n  constructor({declaration}) {{}}\n}}");
+        let (facts, constructor) = super::support::nth_function("src/example.ts", &source, 0);
+
+        assert_eq!(
+            EmptyFunction::check(&constructor, &facts, &configuration(&[])),
+            None,
+            "{declaration} declares and initializes a parameter property"
+        );
+        assert_eq!(
+            constructor.parameter_count().value(),
+            1,
+            "the property modifier does not change the declared parameter count"
+        );
+    }
+}
+
+#[test]
+fn reports_an_empty_constructor_without_a_parameter_property() {
+    assert_eq!(
+        check(
+            "src/example.ts",
+            "class Service {\n  constructor(dep: string) {}\n}",
+            &[],
+        ),
+        Some(Violation::EmptyBody)
+    );
+}
+
+#[test]
+fn accepts_typescript_declarations_that_have_no_implementation_body() {
+    let body = concat!(
+        "version: 1\n",
+        "rules:\n",
+        "  maintainability/empty-function:\n",
+        "    severity: error\n",
     );
 
-    assert_eq!(
-        EmptyFunction::check(&constructor, &facts, &configuration(&[])),
-        None
-    );
+    for source in [
+        "abstract class Base {\n  abstract run(value: string): void;\n}",
+        "interface Runner {\n  run(value: string): void;\n}",
+    ] {
+        assert!(
+            rule_violations(empty_function::evaluate, "src/example.ts", source, body).is_empty(),
+            "a declaration without an implementation body is not an empty implementation: {source}"
+        );
+    }
 }
 
 #[test]

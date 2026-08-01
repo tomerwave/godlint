@@ -64,6 +64,27 @@ fn excludes_a_python_class_receiver() {
 }
 
 #[test]
+fn receiver_like_parameters_are_excluded_only_in_first_position() {
+    for (path, source) in [
+        ("src/example.py", "def handler(one, self):\n    return one"),
+        (
+            "src/example.rs",
+            "struct Handler;\nimpl Handler {\n    fn handle(one: u32, self) {}\n}",
+        ),
+        (
+            "src/example.ts",
+            "function handler(one: number, self: unknown) { return one; }",
+        ),
+    ] {
+        assert_eq!(
+            count(path, source),
+            2,
+            "a receiver is only ever the first parameter: {path}"
+        );
+    }
+}
+
+#[test]
 fn reports_a_function_over_its_limit() {
     assert_eq!(
         function_limits::<ParameterCount>(

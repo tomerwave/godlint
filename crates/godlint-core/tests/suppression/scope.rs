@@ -19,6 +19,35 @@ fn an_enclosing_directive_resolves_to_the_innermost_function() {
 }
 
 #[test]
+fn an_enclosing_directive_resolves_to_a_late_nested_function() {
+    let configuration = concat!(
+        "version: 1\n",
+        "rules:\n",
+        "  maintainability/parameter-count:\n",
+        "    severity: error\n",
+        "    max-parameters: 0\n",
+    );
+    let source = concat!(
+        "fn outer(outer_value: u32) {\n",
+        "    prepare_a_very_long_prefix_so_the_nested_declaration_is_near_the_end();\n",
+        "    prepare_another_very_long_prefix_so_range_position_cannot_choose_the_outer_function();\n",
+        "    let inner = |inner_value: u32| {\n",
+        "        // godlint-ignore-enclosing maintainability/parameter-count -- callback signature\n",
+        "        consume(inner_value);\n",
+        "    };\n",
+        "    let _ = inner;\n",
+        "    consume(outer_value);\n",
+        "}\n",
+    );
+
+    assert_eq!(
+        surviving("src/example.rs", source, configuration),
+        vec![(1, 1)],
+        "only the late nested function is covered; the outer function still reports"
+    );
+}
+
+#[test]
 fn an_enclosing_directive_does_not_reach_a_nested_declaration() {
     let directive =
         "    // godlint-ignore-enclosing maintainability/empty-function -- outer is a stub\n";

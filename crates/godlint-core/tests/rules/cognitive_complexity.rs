@@ -83,6 +83,42 @@ fn an_else_if_chain_stays_flat_in_every_language() {
 }
 
 #[test]
+fn an_else_if_costs_one_even_when_its_chain_is_nested() {
+    for (path, source) in [
+        (
+            "src/example.js",
+            concat!(
+                "function classify(a, b, c) {\n",
+                "  if (a) {\n",
+                "    if (b) return 1;\n",
+                "    else if (c) return 2;\n",
+                "  }\n",
+                "  return 0;\n",
+                "}",
+            ),
+        ),
+        (
+            "src/example.rs",
+            concat!(
+                "fn classify(a: bool, b: bool, c: bool) -> u32 {\n",
+                "    if a {\n",
+                "        if b { return 1; }\n",
+                "        else if c { return 2; }\n",
+                "    }\n",
+                "    0\n",
+                "}",
+            ),
+        ),
+    ] {
+        assert_eq!(
+            score(path, source),
+            4,
+            "the outer if costs 1, the nested if costs 2, and its else-if still costs only 1: {path}"
+        );
+    }
+}
+
+#[test]
 fn a_genuinely_nested_else_still_pays_for_its_depth() {
     assert_eq!(
         score(
@@ -135,6 +171,16 @@ fn a_run_of_one_operator_costs_less_than_mixed_operators() {
             "def f(a, b, c, d):\n    if a and b or c and d:\n        pass",
             4,
         ),
+        (
+            "src/example.js",
+            "function f(a, b, c, d) { if (a && b && c && d) {} }",
+            2,
+        ),
+        (
+            "src/example.js",
+            "function f(a, b, c, d) { if (a && b || c && d) {} }",
+            4,
+        ),
     ];
 
     for (path, source, expected) in cases {
@@ -172,13 +218,27 @@ fn a_loop_nests_its_body_the_same_way_a_branch_does() {
 
 #[test]
 fn a_closures_complexity_belongs_to_the_closure_rather_than_its_host() {
+    let source = concat!(
+        "function host() {\n",
+        "  const classify = (x) => {\n",
+        "    if (x > 1) return 1;\n",
+        "    if (x > 2) return 2;\n",
+        "    return 0;\n",
+        "  };\n",
+        "}\n",
+    );
+    let (_, host) = super::support::nth_function("src/example.js", source, 0);
+    let (_, closure) = super::support::nth_function("src/example.js", source, 1);
+
     assert_eq!(
-        score(
-            "src/example.rs",
-            "fn host() {\n    let f = |x: u32| {\n        if x > 1 {}\n        if x > 2 {}\n    };\n}",
-        ),
+        host.cognitive_score().value(),
         0,
-        "every other function metric in this repository stops at a nested function, and so does this one"
+        "the host does not inherit the nested arrow's branches"
+    );
+    assert_eq!(
+        closure.cognitive_score().value(),
+        2,
+        "the nested arrow retains its own complexity"
     );
 }
 

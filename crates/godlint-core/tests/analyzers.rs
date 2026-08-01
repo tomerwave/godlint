@@ -512,3 +512,29 @@ fn a_constructed_call_records_its_constructor() {
         "new expressions are calls, so a constructed Function can be reported"
     );
 }
+
+#[test]
+fn only_an_attribute_reads_as_a_python_access() {
+    let facts = analyze(&source(
+        "example.py",
+        concat!(
+            "value = os.environ\n",
+            "picked = mapping['key']\n",
+            "called = fetch()\n",
+            "plain = bare\n",
+        ),
+    ))
+    .unwrap_or_else(|error| panic!("analyzes accesses: {error}"));
+    let targets: Vec<&str> = facts
+        .accesses()
+        .iter()
+        .map(|access| access.target())
+        .collect();
+
+    assert_eq!(
+        targets,
+        vec!["os.environ"],
+        "a subscript, a call and a plain name are not attribute reads, so a rule about \
+         os.environ must not see them"
+    );
+}
