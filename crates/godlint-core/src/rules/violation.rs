@@ -68,6 +68,19 @@ pub enum Violation {
         reference: String,
         unversioned: bool,
     },
+    UnlabelledActionPin {
+        action: String,
+    },
+    ContradictoryActionLabels {
+        action: String,
+        sha: String,
+        labels: Vec<String>,
+    },
+    ContradictoryActionPins {
+        action: String,
+        label: String,
+        shas: Vec<String>,
+    },
     TemplateInjection {
         expression: String,
         certain: bool,
@@ -303,7 +316,8 @@ impl Violation {
     pub(crate) fn cap(&self) -> Severity {
         match self {
             Self::InternalImport { certain: false, .. } => Severity::Warning,
-            Self::MissingAssertion
+            Self::UnlabelledActionPin { .. }
+            | Self::MissingAssertion
             | Self::UnverifiedHash { .. }
             | Self::TemplateInjection { certain: false, .. } => Severity::Warning,
             _ => Severity::Error,
@@ -341,15 +355,15 @@ impl fmt::Display for Violation {
             Self::ProductionLog { callee } => write!(formatter, "{callee} {PRODUCTION_LOG}"),
             Self::WeakHash { weak, strong } => weak_hash(formatter, weak, strong),
             Self::UnverifiedHash { callee } => unverified_hash(formatter, callee),
-            Self::FocusedTest => write!(formatter, "{FOCUSED_TEST}"),
-            Self::SkippedTest => write!(formatter, "{SKIPPED_TEST}"),
-            Self::EmptyTest => formatter.write_str(EMPTY_TEST),
-            Self::MissingAssertion => formatter.write_str(MISSING_ASSERTION),
+            Self::FocusedTest | Self::SkippedTest | Self::EmptyTest | Self::MissingAssertion => formatter.write_str(if matches!(self, Self::FocusedTest) { FOCUSED_TEST } else if matches!(self, Self::SkippedTest) { SKIPPED_TEST } else if matches!(self, Self::EmptyTest) { EMPTY_TEST } else { MISSING_ASSERTION }),
             Self::ShellCommand { shell } => write!(formatter, "{shell} {SHELL_COMMAND}"),
             Self::UndeclaredPermissions => formatter.write_str(UNDECLARED_PERMISSIONS),
             Self::InheritedPermissions { job } => inherited(formatter, job),
             Self::HardcodedContainerCredential { key, job } => credential(formatter, key, job),
             Self::MutableActionReference { reference, unversioned } => mutable_action(formatter, reference, *unversioned),
+            Self::UnlabelledActionPin { action } => unlabelled_action_pin(formatter, action),
+            Self::ContradictoryActionLabels { action, sha, labels } => contradictory_action_labels(formatter, action, sha, labels),
+            Self::ContradictoryActionPins { action, label, shas } => contradictory_action_pins(formatter, action, label, shas),
             Self::TemplateInjection { expression, certain } => template_injection(formatter, expression, *certain),
             Self::AttackerInfluencedBotCondition { expression } => bot(formatter, expression),
             Self::InheritedSecrets { job } => inherited_secrets(formatter, job),
@@ -430,5 +444,38 @@ fn mutable_action(
         formatter,
         "{reference} is a mutable ref, so the action can change under you and it runs with your \
          workflow's token; pin it to a commit SHA."
+    )
+}
+
+fn unlabelled_action_pin(formatter: &mut fmt::Formatter<'_>, action: &str) -> fmt::Result {
+    write!(
+        formatter,
+        "{action} is pinned to an unreadable commit without a trailing version label; add the tag or version beside it."
+    )
+}
+
+fn contradictory_action_labels(
+    formatter: &mut fmt::Formatter<'_>,
+    action: &str,
+    sha: &str,
+    labels: &[String],
+) -> fmt::Result {
+    write!(
+        formatter,
+        "{action}@{sha} carries contradictory version labels {}; make every occurrence state the same version.",
+        labels.join(", ")
+    )
+}
+
+fn contradictory_action_pins(
+    formatter: &mut fmt::Formatter<'_>,
+    action: &str,
+    label: &str,
+    shas: &[String],
+) -> fmt::Result {
+    write!(
+        formatter,
+        "{action} labels different commits as {label}: {}; update every occurrence to one commit or correct the labels.",
+        shas.join(", ")
     )
 }

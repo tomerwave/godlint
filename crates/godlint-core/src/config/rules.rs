@@ -259,6 +259,14 @@ pub struct PinThirdPartyActionsRule {
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
+pub struct StaleActionRefsRule {
+    pub severity: Severity,
+    #[serde(default, rename = "allow-in")]
+    pub allow_in: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct TemplateInjectionRule {
     pub severity: Severity,
     #[serde(default, rename = "allow-in")]

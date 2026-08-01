@@ -1,0 +1,8 @@
+name: Allowed
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    uses: vendor/allowed/.github/workflows/build.yml@4f5a6b7c8d9e0f123a4b5c6d7e8f9012a3b4c5d6

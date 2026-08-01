@@ -28,9 +28,9 @@ use crate::{
         overprovisioned_secrets::OverprovisionedSecrets, parameter_count::ParameterCount,
         pin_third_party_actions::PinThirdPartyActions, restricted_call::RestrictedCall,
         restricted_import::RestrictedImport, return_count::ReturnCount,
-        secrets_inherit::SecretsInherit, template_injection::TemplateInjection,
-        todo_requires_reference::TodoRequiresReference, unredacted_secrets::UnredactedSecrets,
-        unused_suppression::UnusedSuppression,
+        secrets_inherit::SecretsInherit, stale_action_refs::StaleActionRefs,
+        template_injection::TemplateInjection, todo_requires_reference::TodoRequiresReference,
+        unredacted_secrets::UnredactedSecrets, unused_suppression::UnusedSuppression,
     },
 };
 
@@ -274,6 +274,12 @@ const REGISTRATIONS: &[Registration] = &[
         id: PinThirdPartyActions::ID,
         languages: PinThirdPartyActions::LANGUAGES,
         severity: pin_third_party_actions_severity,
+        suppressible: true,
+    },
+    Registration {
+        id: StaleActionRefs::ID,
+        languages: StaleActionRefs::LANGUAGES,
+        severity: stale_action_refs_severity,
         suppressible: true,
     },
     Registration {

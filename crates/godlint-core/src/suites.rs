@@ -12,10 +12,10 @@ use crate::config::{
     NoSkippedTestRule, NoSleepInTestRule, NoTestHelperInProductionRule, NoWeakHashRule,
     NoWorkflowCommentsRule, OverprovisionedSecretsRule, ParameterCountRule,
     PinThirdPartyActionsRule, RestrictedCallRule, RestrictedImportRule, ReturnCountRule, Rules,
-    SecretsInheritRule, Severity, TemplateInjectionRule, TodoRequiresReferenceRule,
-    UnredactedSecretsRule, UnusedSuppressionRule, default_bots, default_configuration_paths,
-    default_markers, default_reference_prefixes, default_test_helpers, default_test_paths,
-    default_trusted_owners,
+    SecretsInheritRule, Severity, StaleActionRefsRule, TemplateInjectionRule,
+    TodoRequiresReferenceRule, UnredactedSecretsRule, UnusedSuppressionRule, default_bots,
+    default_configuration_paths, default_markers, default_reference_prefixes, default_test_helpers,
+    default_test_paths, default_trusted_owners,
 };
 
 pub const RECOMMENDED: &str = "recommended@1";
@@ -120,6 +120,10 @@ fn workflow_hygiene(rules: &mut Rules) {
         .get_or_insert(NoWorkflowCommentsRule {
             severity: Severity::Error,
         });
+    rules.stale_action_refs.get_or_insert(StaleActionRefsRule {
+        severity: Severity::Error,
+        allow_in: Vec::new(),
+    });
     rules
         .hardcoded_container_credentials
         .get_or_insert(HardcodedContainerCredentialsRule {

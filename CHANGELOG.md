@@ -71,6 +71,12 @@ speaks about.
   action to be pinned. Enabling it on this repository found five unpinned third-party uses across four
   workflows, now pinned. A workflow finding cannot be suppressed inline, because comment facts come
   from source and not from YAML; an `exclude` glob is the way to scope it.
+- `ci/stale-action-refs` — makes full commit pins reviewable without network access. It reports a pin
+  without an inline version label at warning, and reports repository-proven contradictions at the
+  configured severity when the same action and SHA carry different labels or the same action and label
+  name different SHAs. `allow-in` removes paths from reporting and comparison. The rule deliberately
+  cannot verify that a label names the pinned commit; zizmor's online `stale-action-refs` and
+  `ref-version-mismatch` audits cover that external check.
 - `ci/secrets-inherit` — reports `secrets: inherit` on a reusable-workflow call because it gives the
   callee every secret available to the caller; name the required secrets instead. Named secrets and
   no `secrets:` declaration are silent, and `allow-in` path globs scope trusted callers.

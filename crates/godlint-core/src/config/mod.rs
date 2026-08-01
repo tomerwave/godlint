@@ -118,6 +118,8 @@ pub struct Rules {
     pub filename_case: Option<FilenameCaseRule>,
     #[serde(rename = "ci/pin-third-party-actions")]
     pub pin_third_party_actions: Option<PinThirdPartyActionsRule>,
+    #[serde(rename = "ci/stale-action-refs")]
+    pub stale_action_refs: Option<StaleActionRefsRule>,
     #[serde(rename = "ci/explicit-workflow-permissions")]
     pub explicit_workflow_permissions: Option<ExplicitWorkflowPermissionsRule>,
     #[serde(rename = "ci/no-comments")]

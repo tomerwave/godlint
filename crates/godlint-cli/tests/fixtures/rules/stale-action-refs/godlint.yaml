@@ -1,0 +1,10 @@
+version: 1
+
+exclude:
+  - .github/workflows/excluded.yml
+
+rules:
+  ci/stale-action-refs:
+    severity: error
+    allow-in:
+      - "**/allowed.yml"

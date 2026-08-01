@@ -492,14 +492,16 @@ ships at error through `recommended@1`.
 
 ### Phase 7 — Continuous integration policy
 
-The workflow reader landed with #92, so a rule about CI configuration is now a file-local fact rule
-like any other. The reader knows `uses:` references, the jobs a workflow declares, and where
+The workflow reader landed with #92, so CI rules consume workflow facts rather than YAML parser nodes.
+Most inspect one file; `ci/stale-action-refs` compares action facts across every workflow passed to the
+repository rule driver. The reader knows `uses:` references, the jobs a workflow declares, and where
 `permissions` and `concurrency` are declared; it deliberately does not relate a trigger to a checkout
 to a run step, which is what `ci/no-pull-request-target-checkout` would need.
 
 | Rule | Status | Facts | Confidence | Configuration |
 | --- | --- | --- | --- | --- |
 | `ci/pin-third-party-actions` | Shipped | Action fact | High | `trusted-owners`, defaulting to the two GitHub-owned accounts |
+| `ci/stale-action-refs` | Shipped | Repository-wide action and comment facts | High, with unlabelled pins capped at warning | `allow-in` path globs |
 | `ci/explicit-workflow-permissions` | Shipped | Workflow and job facts | High | `require-per-job`, off by default |
 | `ci/no-comments` | Shipped | Workflow comment facts | High | `severity` only |
 | `ci/hardcoded-container-credentials` | Shipped | Credential fact | High | `severity` only |

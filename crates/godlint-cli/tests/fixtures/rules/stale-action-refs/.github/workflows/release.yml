@@ -1,0 +1,11 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: "actions/checkout@1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c" # v3
+      - uses: 'vendor/setup@3f4a5b6c7d8e9f012a3b4c5d6e7f8091a2b3c4d5' # V2
