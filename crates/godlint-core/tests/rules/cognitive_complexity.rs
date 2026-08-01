@@ -149,6 +149,23 @@ fn a_multiway_branch_costs_one_however_many_arms_it_has() {
 }
 
 #[test]
+fn a_rust_let_else_is_a_branch_and_pays_for_nesting() {
+    let straight = "fn example() { run(); }";
+    let ordinary = "fn example() { let value = 1; run(value); }";
+    let refutable = "fn example(option: Option<u32>) { let Some(value) = option else { return; }; run(value); }";
+    let nested = concat!(
+        "fn example(option: Option<u32>, enabled: bool) {",
+        " if enabled { let Some(value) = option else { return; }; run(value); }",
+        "}",
+    );
+
+    assert_eq!(score("src/straight.rs", straight), 0);
+    assert_eq!(score("src/ordinary.rs", ordinary), 0);
+    assert_eq!(score("src/refutable.rs", refutable), 1);
+    assert_eq!(score("src/nested.rs", nested), 3);
+}
+
+#[test]
 fn a_run_of_one_operator_costs_less_than_mixed_operators() {
     let cases = [
         (

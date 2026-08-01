@@ -135,6 +135,17 @@ fn counts_the_rust_try_operator() {
 }
 
 #[test]
+fn a_rust_let_else_adds_one_decision_and_an_ordinary_let_adds_none() {
+    let straight = "fn example() { run(); }";
+    let ordinary = "fn example() { let value = 1; run(value); }";
+    let refutable = "fn example(option: Option<u32>) { let Some(value) = option else { return; }; run(value); }";
+
+    assert_eq!(complexity("src/straight.rs", straight), 1);
+    assert_eq!(complexity("src/ordinary.rs", ordinary), 1);
+    assert_eq!(complexity("src/refutable.rs", refutable), 2);
+}
+
+#[test]
 fn attributes_closure_branching_to_the_closure() {
     let (_, host) = function(
         "src/example.rs",
