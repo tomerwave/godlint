@@ -7,7 +7,36 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 change the `godlint-core` API; the command line and the configuration schema are what the version
 speaks about.
 
-## [Unreleased]
+## [0.5.0] - 2026-08-01
+
+### Added
+
+- `ci/stale-action-refs` — makes full commit pins reviewable without network access. It reports a pin
+  without an inline version label at warning, and reports repository-proven contradictions at the
+  configured severity when the same action and SHA carry different labels or the same action and label
+  name different SHAs. A single leading `v` is normalised before comparing, because `v4.6.2` and
+  `4.6.2` name the same release and reporting them as a contradiction would spend the rule's only
+  asset — that it speaks when a label lies. `allow-in` removes paths from reporting and comparison.
+  The rule deliberately cannot verify that a label names the pinned commit; zizmor's online
+  `stale-action-refs` and `ref-version-mismatch` audits cover that external check.
+- `ci/no-silenced-failure` — reports checks that cannot make a workflow fail: literal
+  `continue-on-error: true` settings and scripts ending `|| true`, `; exit 0`, or `|| exit 0`. A
+  same-job read of `steps.<id>.outcome` or `.conclusion` proves a deliberate soft step and stays
+  silent. Corpus-common `continue-on-error` and `|| true` findings are capped at warning; explicit
+  exit-zero endings stay at the configured severity.
+
+### Changed
+
+- `ci/no-monolithic-job` raises the `recommended@1` step limit from 7 to 20, the p90 of 231 jobs
+  across 94 workflows in nine widely used repositories. The former limit came from this repository
+  alone and reported 36% of real jobs. Raising it also made this repository's own `release.yml`
+  exemption unnecessary, which is what confirmed the number was wrong rather than the workflow.
+- `ci/no-inline-script` keeps its limit of 8 after the same measurement — across 981 real scripts it
+  is p85, and 15% exceed it — so the number is now corpus-backed rather than repository-derived.
+- A condition written without braces is read as an expression by every rule that reads conditions.
+  GitHub treats an `if:` as an expression whether or not it is wrapped in `${{ … }}`, so
+  `ci/bot-conditions` was missing the idiomatic spelling entirely and `ci/no-silenced-failure`'s
+  escape hatch did not open for it. Both now share one reader.
 
 ### Fixed
 
@@ -16,6 +45,12 @@ speaks about.
   function whose first statement returned a literal — `return "active"` — was reported as a comment at
   error under `recommended@1`. A real docstring, including a module docstring, still reports. Found by
   writing deliberately bad Python to probe for rules Godlint is missing.
+- A declared drift in `.github/accepted-drift.md` survives the merge that lands it, so a pull request
+  that deliberately relaxes a rule no longer has to be re-declared on every subsequent branch.
+- `validate-pull-request.py` runs its change-scoped checks whether or not `--release-line` is passed,
+  and fails when it cannot find a release line to compare against. Only CI passed the flag, so a local
+  run reported one fewer check than CI ran and printed that all of them passed — including, on one
+  branch, the check that then failed the pull request.
 
 ## [0.4.0] - 2026-07-31
 
@@ -64,11 +99,9 @@ speaks about.
   The measurement is source-based, so compressed one-line command chains remain a documented
   boundary rather than a shell parser hidden inside a line rule.
 - `ci/no-monolithic-job` — reports a workflow job above its configured step limit.
-  `recommended@1` adopts the corpus p90 of 20 after measuring 231 jobs in 94 workflows; the former
-  repository-derived limit of 7 reported 36% of corpus jobs. It counts independently reviewable and
-  retryable steps; command aggregation inside a step remains `no-inline-script`'s concern. Raising
-  the limit makes this repository's `release.yml` exemption unnecessary, which confirms that the
-  number was wrong rather than the workflow.
+  `recommended@1` adopts 7 after measuring 21 jobs: p50 was 3, p95 was 7 and the maximum was 11.
+  It counts independently reviewable and retryable steps; command aggregation inside a step remains
+  `no-inline-script`'s concern.
 - `ci/overprovisioned-secrets` — reports a step input or environment variable set to the whole
   `${{ secrets }}` context, including `toJSON(secrets)`, while named secret members stay silent.
 - `ci/pin-third-party-actions` — reports a workflow step using a third-party action at a ref that can
@@ -81,12 +114,6 @@ speaks about.
   action to be pinned. Enabling it on this repository found five unpinned third-party uses across four
   workflows, now pinned. A workflow finding cannot be suppressed inline, because comment facts come
   from source and not from YAML; an `exclude` glob is the way to scope it.
-- `ci/stale-action-refs` — makes full commit pins reviewable without network access. It reports a pin
-  without an inline version label at warning, and reports repository-proven contradictions at the
-  configured severity when the same action and SHA carry different labels or the same action and label
-  name different SHAs. `allow-in` removes paths from reporting and comparison. The rule deliberately
-  cannot verify that a label names the pinned commit; zizmor's online `stale-action-refs` and
-  `ref-version-mismatch` audits cover that external check.
 - `ci/secrets-inherit` — reports `secrets: inherit` on a reusable-workflow call because it gives the
   callee every secret available to the caller; name the required secrets instead. Named secrets and
   no `secrets:` declaration are silent, and `allow-in` path globs scope trusted callers.
@@ -97,11 +124,6 @@ speaks about.
 - `ci/unredacted-secrets` — reports a `run:` script that combines a direct `secrets.*` expression
   with `$GITHUB_ENV` or `$GITHUB_OUTPUT`, where GitHub's masking no longer follows the value. It
   deliberately does not infer data flow through variables or earlier steps.
-- `ci/no-silenced-failure` — reports checks that cannot make a workflow fail: literal
-  `continue-on-error: true` settings and scripts ending `|| true`, `; exit 0`, or
-  `|| exit 0`. A same-job read of `steps.<id>.outcome` or `.conclusion` proves a deliberate soft
-  step and stays silent. Corpus-common `continue-on-error` and `|| true` findings are capped at
-  warning; explicit exit-zero endings stay at the configured severity.
 - A language support matrix in [the rule reference](docs/rules.md#language-support), recording for
   every rule which of the three dialects it covers, and distinguishing a language that has no such
   construct from one Godlint has not taught the rule yet. Each rule declares this as

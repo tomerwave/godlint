@@ -58,11 +58,15 @@ if run_explanation failure false false "$finding" \
   exit 1
 fi
 
-cp .github/accepted-drift.md "$temporary/accepted-drift.md"
+printf '%s\n' \
+  '# Accepted released drift' \
+  '' \
+  '- `ci/no-monolithic-job` — relaxed rule: the corpus said the old threshold was wrong.' \
+  > "$temporary/accepted-drift.md"
 declared_finding='::error file=.github/workflows/release.yml,line=1,title=ci/no-monolithic-job::too many steps'
 run_explanation failure false false "$declared_finding" > "$temporary/file-declaration.out"
 grep -q 'ci/no-monolithic-job is a relaxed rule' "$temporary/file-declaration.out"
-grep -q 'Reason: "Across 231 real jobs, the median was 6 steps and 36% exceeded the old threshold of 7' "$temporary/file-declaration.out"
+grep -q 'Reason: "the corpus said the old threshold was wrong."' "$temporary/file-declaration.out"
 
 if run_explanation failure false false "$declared_finding
 $finding" > "$temporary/partly-declared.out" 2>&1; then

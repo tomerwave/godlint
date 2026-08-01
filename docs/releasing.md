@@ -6,11 +6,19 @@ built.
 
 ## Before tagging
 
-Delete `.github/accepted-drift.md` before tagging. Its declarations describe temporary disagreement
-with the currently released binary and become stale when the new binary catches up with the tree.
+Leave `.github/accepted-drift.md` in place, and delete it in the first pull request after the release
+publishes. Its declarations describe temporary disagreement with the currently released binary, and
+that binary is still the previous one while the release pull request is open — so a release pull
+request that deleted the file would fail its own released-agreement check, naming the very drift the
+release is about to resolve. The declaration expires when the new binary is published, not when the
+tag is created.
+
 Prefer this file to the `relaxes-a-rule` and `fixes-false-positive` labels: a label is a coarse,
 temporary declaration that dies with its pull request, while the file names each rule precisely,
 survives the merge, and keeps `main` honest.
+
+A stale declaration is currently reported as a notice rather than a failure, so deleting it is
+remembered rather than enforced.
 
 Rename the changelog's `Unreleased` section to the version, make sure the workspace version already
 says the same, and check that all three agree:
