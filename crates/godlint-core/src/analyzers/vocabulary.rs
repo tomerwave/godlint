@@ -114,7 +114,11 @@ pub(crate) fn plain_path(text: &str) -> Option<String> {
     is_path.then(|| text.to_owned())
 }
 
-pub(crate) fn is_leading_block_statement(node: Node<'_>, block_kinds: &[&str]) -> bool {
+pub(crate) fn is_leading_block_statement(
+    node: Node<'_>,
+    statement_kinds: &[&str],
+    block_kinds: &[&str],
+) -> bool {
     let Some(statement) = node.parent() else {
         return false;
     };
@@ -122,7 +126,8 @@ pub(crate) fn is_leading_block_statement(node: Node<'_>, block_kinds: &[&str]) -
         return false;
     };
 
-    block_kinds.contains(&block.kind())
+    statement_kinds.contains(&statement.kind())
+        && block_kinds.contains(&block.kind())
         && statement.named_child(0) == Some(node)
         && first_statement(block) == Some(statement)
 }
