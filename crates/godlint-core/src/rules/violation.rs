@@ -336,6 +336,7 @@ impl Violation {
 
 impl fmt::Display for Violation {
     #[rustfmt::skip]
+    // godlint-ignore-next-line maintainability/function-size owner=tomer expires=2026-12-31 -- #208 will remove the size pressure without weakening exhaustiveness
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Limit {
@@ -376,7 +377,10 @@ impl fmt::Display for Violation {
             Self::InheritedSecrets { job } => inherited_secrets(formatter, job),
             Self::OverprovisionedSecrets { setting } => overprovisioned_secrets(formatter, setting),
             Self::UnredactedSecret => formatter.write_str(UNREDACTED_SECRET),
-            Self::StepContinuesOnError | Self::JobContinuesOnError | Self::ScriptOrTrue | Self::ScriptExitsSuccessfully { .. } => silenced_failure(formatter, self),
+            Self::StepContinuesOnError => formatter.write_str(STEP_CONTINUES_ON_ERROR),
+            Self::JobContinuesOnError => formatter.write_str(JOB_CONTINUES_ON_ERROR),
+            Self::ScriptOrTrue => formatter.write_str(SCRIPT_OR_TRUE),
+            Self::ScriptExitsSuccessfully { ending } => script_exits_successfully(formatter, ending),
             Self::TestHelperInProduction { module, segment } => helper(formatter, module, segment),
             Self::InternalImport { module, marker, .. } => internal(formatter, module, marker),
             Self::SleepInTest { callee } => write!(formatter, "{callee} {SLEEP_IN_TEST}"),
@@ -407,18 +411,6 @@ fn script_exits_successfully(formatter: &mut fmt::Formatter<'_>, ending: &str) -
         formatter,
         "This script ends with `{ending}`, so the step cannot report failure; preserve the failing exit status."
     )
-}
-
-fn silenced_failure(formatter: &mut fmt::Formatter<'_>, violation: &Violation) -> fmt::Result {
-    match violation {
-        Violation::StepContinuesOnError => formatter.write_str(STEP_CONTINUES_ON_ERROR),
-        Violation::JobContinuesOnError => formatter.write_str(JOB_CONTINUES_ON_ERROR),
-        Violation::ScriptOrTrue => formatter.write_str(SCRIPT_OR_TRUE),
-        Violation::ScriptExitsSuccessfully { ending } => {
-            script_exits_successfully(formatter, ending)
-        }
-        _ => unreachable!(),
-    }
 }
 
 fn inherited_secrets(formatter: &mut fmt::Formatter<'_>, job: &str) -> fmt::Result {

@@ -53,37 +53,36 @@ fn job_violations(workflow: &WorkflowFacts) -> Vec<(SourceRange, Violation)> {
 
 fn step_violations(workflow: &WorkflowFacts) -> Vec<(SourceRange, Violation)> {
     workflow
-        .steps()
+        .jobs()
         .iter()
-        .flat_map(|step| {
-            let mut violations = Vec::new();
-
-            if let Some(range) = literal_true(workflow, step.continue_on_error())
-                && !outcome_is_read(workflow, step)
+        .fold(Vec::new(), |mut violations, job| {
+            for step in workflow
+                .steps()
+                .iter()
+                .filter(|step| step.job() == job.name())
             {
-                violations.push((range, Violation::StepContinuesOnError));
-            }
+                if let Some(range) = literal_true(workflow, step.continue_on_error())
+                    && !outcome_is_read(workflow, job, step)
+                {
+                    violations.push((range, Violation::StepContinuesOnError));
+                }
 
-            if let Some(script) = step.run()
-                && let Some(violation) = swallowed_script(workflow, script)
-            {
-                violations.push((script, violation));
+                if let Some(script) = step.run()
+                    && let Some(violation) = swallowed_script(workflow, script)
+                {
+                    violations.push((script, violation));
+                }
             }
-
             violations
         })
-        .collect()
 }
 
 fn literal_true(workflow: &WorkflowFacts, range: Option<SourceRange>) -> Option<SourceRange> {
     range.filter(|range| workflow.file().text()[range.start()..range.end()].trim() == "true")
 }
 
-fn outcome_is_read(workflow: &WorkflowFacts, step: &StepFact) -> bool {
+fn outcome_is_read(workflow: &WorkflowFacts, job: &JobFact, step: &StepFact) -> bool {
     let Some(id) = step.id() else {
-        return false;
-    };
-    let Some(job) = workflow.jobs().iter().find(|job| job.name() == step.job()) else {
         return false;
     };
     let outcome = format!("steps.{id}.outcome");
