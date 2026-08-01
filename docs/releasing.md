@@ -6,6 +6,12 @@ built.
 
 ## Before tagging
 
+Delete `.github/accepted-drift.md` before tagging. Its declarations describe temporary disagreement
+with the currently released binary and become stale when the new binary catches up with the tree.
+Prefer this file to the `relaxes-a-rule` and `fixes-false-positive` labels: a label is a coarse,
+temporary declaration that dies with its pull request, while the file names each rule precisely,
+survives the merge, and keeps `main` honest.
+
 Rename the changelog's `Unreleased` section to the version, make sure the workspace version already
 says the same, and check that all three agree:
 

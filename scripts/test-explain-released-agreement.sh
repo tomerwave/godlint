@@ -25,6 +25,7 @@ run_explanation() {
   PATH="$temporary/bin:$PATH" \
     RUNNER_TEMP="$temporary/runner" \
     GITHUB_STEP_SUMMARY="$temporary/summary" \
+    ACCEPTED_DRIFT_FILE="$temporary/accepted-drift.md" \
     OUTCOME="$outcome" \
     FIXES_FALSE_POSITIVE="$fixes_false_positive" \
     RELAXES_A_RULE="$relaxes_a_rule" \
@@ -57,10 +58,48 @@ if run_explanation failure false false "$finding" \
   exit 1
 fi
 
+cp .github/accepted-drift.md "$temporary/accepted-drift.md"
+declared_finding='::error file=.github/workflows/release.yml,line=1,title=ci/no-monolithic-job::too many steps'
+run_explanation failure false false "$declared_finding" > "$temporary/file-declaration.out"
+grep -q 'ci/no-monolithic-job is a relaxed rule' "$temporary/file-declaration.out"
+grep -q 'Reason: "Across 231 real jobs, the median was 6 steps and 36% exceeded the old threshold of 7' "$temporary/file-declaration.out"
+
+if run_explanation failure false false "$declared_finding
+$finding" > "$temporary/partly-declared.out" 2>&1; then
+  echo "a declaration for one finding must not accept another finding" >&2
+  exit 1
+fi
+grep -q '^::error::Undeclared rules reported by released Godlint: maintainability/function-size$' "$temporary/partly-declared.out"
+
+if run_explanation failure false false "$finding" > "$temporary/wrong-declaration.out" 2>&1; then
+  echo "an unrelated declaration must not accept an undeclared finding" >&2
+  exit 1
+fi
+grep -q '^::error::Undeclared rules reported by released Godlint: maintainability/function-size$' "$temporary/wrong-declaration.out"
+grep -q 'Unused declaration.*ci/no-monolithic-job was not reported' "$temporary/wrong-declaration.out"
+
+run_explanation success false false "" > "$temporary/unused-declaration.out"
+grep -q 'Unused declaration.*ci/no-monolithic-job was not reported' "$temporary/unused-declaration.out"
+
+unparseable_finding='::error file=src/main.rs,line=1::too large'
+if run_explanation failure false false "$unparseable_finding" > "$temporary/unparseable.out" 2>&1; then
+  echo "a finding whose rule id cannot be parsed must fail" >&2
+  exit 1
+fi
+grep -q '^::error::Undeclared rules reported by released Godlint: <unparseable rule id>$' "$temporary/unparseable.out"
+rm "$temporary/accepted-drift.md"
+
 run_explanation failure true false "$finding" > "$temporary/false-positive.out"
 grep -q 'fixes a false positive' "$temporary/false-positive.out"
 
 run_explanation failure false true "$finding" > "$temporary/relaxed-rule.out"
 grep -q 'relaxes a rule' "$temporary/relaxed-rule.out"
 
-echo "released agreement accepts success and a configuration the release cannot read, and requires a drift label for anything else"
+printf '%s\n' '# Accepted released drift' > "$temporary/accepted-drift.md"
+if run_explanation failure false false "$finding" \
+  > "$temporary/empty-declaration.out" 2>&1; then
+  echo "an accepted-drift file without a recognisable declaration must fail" >&2
+  exit 1
+fi
+
+echo "released agreement accepts success, unreadable configuration, labels, and recognisable tree declarations, and rejects undeclared drift"
