@@ -1,0 +1,12 @@
+name: CI
+
+on:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: vendor/unlabelled@0f1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c
+      - uses: actions/checkout@1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c # v4
+      - uses: vendor/setup@2f3a4b5c6d7e8f901a2b3c4d5e6f708192a3b4c5 # v2

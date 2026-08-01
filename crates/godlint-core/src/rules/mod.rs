@@ -71,6 +71,7 @@ pub mod restricted_call;
 pub mod restricted_import;
 pub mod return_count;
 pub mod secrets_inherit;
+pub mod stale_action_refs;
 pub mod template_injection;
 pub mod todo_requires_reference;
 pub mod unredacted_secrets;
@@ -375,6 +376,7 @@ const WORKFLOW_EVALUATORS: &[WorkflowEvaluator] = &[
     hardcoded_container_credentials::evaluate,
     no_workflow_comments::evaluate,
     pin_third_party_actions::evaluate,
+    stale_action_refs::evaluate,
     explicit_workflow_permissions::evaluate,
     secrets_inherit::evaluate,
     template_injection::evaluate,

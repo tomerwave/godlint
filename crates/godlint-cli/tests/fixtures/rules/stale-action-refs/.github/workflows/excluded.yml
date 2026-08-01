@@ -1,0 +1,10 @@
+name: Excluded
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: vendor/excluded@5f6a7b8c9d0e1f234a5b6c7d8e9f0123a4b5c6d7

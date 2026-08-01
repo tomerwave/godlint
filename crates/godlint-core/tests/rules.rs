@@ -115,6 +115,9 @@ mod explicit_workflow_permissions;
 #[path = "rules/secrets_inherit.rs"]
 mod secrets_inherit;
 
+#[path = "rules/stale_action_refs.rs"]
+mod stale_action_refs;
+
 #[path = "rules/overprovisioned_secrets.rs"]
 mod overprovisioned_secrets;
 

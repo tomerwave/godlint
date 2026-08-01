@@ -1,6 +1,6 @@
 # Rule reference
 
-Forty-eight rules are implemented. Every one has an identifier of the form `family/name`, which is
+Forty-nine rules are implemented. Every one has an identifier of the form `family/name`, which is
 what a configuration entry and a suppression directive both name. [The rule roadmap](rule-roadmap.md)
 records the families still to come, and the reasoning behind each threshold `recommended@1` sets.
 [Language support](#language-support) records which languages each rule covers.
@@ -28,6 +28,7 @@ enforced there.
 | `ci/overprovisioned-secrets` | — | — | — | ✓ |
 | `ci/pin-third-party-actions` | — | — | — | ✓ |
 | `ci/secrets-inherit` | — | — | — | ✓ |
+| `ci/stale-action-refs` | — | — | — | ✓ |
 | `ci/template-injection` | — | — | — | ✓ |
 | `ci/unredacted-secrets` | — | — | — | ✓ |
 | `logging/no-production-log` | ✓ | ✓ | ✓ | — |
@@ -191,6 +192,7 @@ have to decide what interpolation looks like inside an f-string.
 | --- | --- |
 | `ci/bot-conditions` | A step or job condition that compares an attacker-influenced actor field with a configured bot identity |
 | `ci/pin-third-party-actions` | A workflow step using a third-party action at a ref that can move |
+| `ci/stale-action-refs` | A commit-pinned action without an inline version label, or contradictory labels and pins within the repository |
 | `ci/explicit-workflow-permissions` | A job that runs with whatever the repository grants by default |
 | `ci/overprovisioned-secrets` | A step input or environment variable receiving the whole `secrets` context |
 | `ci/hardcoded-container-credentials` | A literal username or password in a job container or service |
@@ -218,13 +220,29 @@ silent, as is writing a non-secret value to either file. The rule cannot see a s
 through a variable in an earlier step; that would require data flow the workflow facts do not have.
 
 `ci/no-comments` reports workflow comments except a comment trailing a `uses:` value on the same line.
-That label makes a pinned SHA reviewable and lets `ci/stale-action-refs` check that the version named
-beside it remains truthful, reconciling that rule with `ci/pin-third-party-actions`. The exemption is
+That label makes a pinned SHA reviewable and lets `ci/stale-action-refs` compare the claim with every
+other workflow in the repository, reconciling that rule with `ci/pin-third-party-actions`. The exemption is
 unconditional because repositories that pin by SHA need the label, while an unpinned reference has no
 pin label to preserve. A comment above `uses:` or trailing any other key remains commentary and is
 reported. YAML has no doc-comment construct, so `allow-doc-comments` has no workflow equivalent and
 this rule has no option beyond `severity`. Workflow suppressions are not available: excluding a path
 is the only way to remove a workflow from the rule's scope.
+
+`ci/stale-action-refs` reports three signals available from repository contents alone. A forty-character
+commit pin with no comment trailing its `uses:` value reports because a reviewer cannot read the SHA.
+That signal is capped at warning: in the 94-workflow corpus, 396 of 765 commit pins lack an inline label,
+including all 385 pins in Deno, which keeps version information in a trailing block instead. The rule also
+reports every occurrence when one action and SHA carry different labels, or one action and label name
+different SHAs. Those contradictions stay at the configured severity because the repository itself proves
+that the claims cannot all agree. Action names, hexadecimal SHA spelling, and labels are compared without
+ASCII case distinctions. One leading `v` in a label is ignored, so `v4.6.2` and `4.6.2` agree; no other
+part of a label is normalized. `allow-in` path globs remove a workflow from both findings and
+cross-workflow comparison.
+
+The rule does not determine whether a label such as `# v4` genuinely names the pinned commit. That requires
+looking up the action repository, and Godlint does not use network access. It has no online mode or feature
+flag. Use [zizmor's `stale-action-refs` and `ref-version-mismatch` audits](https://docs.zizmor.sh/audits/)
+for that external verification.
 
 Godlint reads workflows, not composite actions: `Workflow::names` recognizes YAML files directly in
 `.github/workflows/`, so nothing in the `ci/` family sees a root `action.yml`.

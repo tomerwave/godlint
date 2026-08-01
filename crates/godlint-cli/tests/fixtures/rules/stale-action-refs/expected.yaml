@@ -1,0 +1,10 @@
+exit-code: 1
+
+stdout: |
+  .github/workflows/ci.yml:10:15: warning[ci/stale-action-refs] vendor/unlabelled@0f1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c is pinned to an unreadable commit without a trailing version label; add the tag or version beside it.
+  .github/workflows/ci.yml:11:15: error[ci/stale-action-refs] actions/checkout@1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c carries contradictory version labels v3, v4; make every occurrence state the same version.
+  .github/workflows/ci.yml:12:15: error[ci/stale-action-refs] vendor/setup labels different commits as v2: 2f3a4b5c6d7e8f901a2b3c4d5e6f708192a3b4c5, 3f4a5b6c7d8e9f012a3b4c5d6e7f8091a2b3c4d5; update every occurrence to one commit or correct the labels.
+  .github/workflows/release.yml:10:15: error[ci/stale-action-refs] actions/checkout@1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c carries contradictory version labels v3, v4; make every occurrence state the same version.
+  .github/workflows/release.yml:11:15: error[ci/stale-action-refs] vendor/setup labels different commits as v2: 2f3a4b5c6d7e8f901a2b3c4d5e6f708192a3b4c5, 3f4a5b6c7d8e9f012a3b4c5d6e7f8091a2b3c4d5; update every occurrence to one commit or correct the labels.
+
+stderr: ""

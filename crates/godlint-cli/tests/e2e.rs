@@ -122,6 +122,8 @@ fixture_tests! {
     explicit_workflow_permissions_clean => "explicit-workflow-permissions-clean",
     secrets_inherit => "secrets-inherit",
     secrets_inherit_clean => "secrets-inherit-clean",
+    stale_action_refs => "stale-action-refs",
+    stale_action_refs_clean => "stale-action-refs-clean",
     overprovisioned_secrets => "overprovisioned-secrets",
     overprovisioned_secrets_clean => "overprovisioned-secrets-clean",
     unredacted_secrets => "unredacted-secrets",
