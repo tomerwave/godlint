@@ -29,8 +29,16 @@ examine_globs = [
 # changes, and would report survivors that are in fact well covered.
 test_workspace = true
 
+# The multiplier is measured against an uncontended baseline and the mutants then run
+# several at a time against a copied tree, so the floor is what actually decides. It was 60
+# seconds, and the first full sweep reported 76 timeouts — `analyzers/rust.rs` alone
+# accounted for 27. Running that file by itself produced no timeouts at all and eight
+# genuine misses, so the floor was not catching non-termination: it was killing slow runs
+# and reporting real gaps as timeouts. The uncontended suite takes about ten seconds and a
+# mutant of that file about forty, so 300 leaves room for contention while still ending a
+# mutant that truly does not terminate.
 timeout_multiplier = 5.0
-minimum_test_timeout = 60
+minimum_test_timeout = 300
 
 exclude_re = [
     # `is_conditional` exists because every language must fill the `Vocabulary` slot, and its only
