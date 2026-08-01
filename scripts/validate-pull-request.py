@@ -441,20 +441,49 @@ def check_documentation_links(report: Report) -> None:
 
 
 def changed_files(base: str) -> list[str]:
-    diff = subprocess.run(
-        ["git", "diff", "--name-only", f"{base}...HEAD"],
+    committed = git(
+        ["diff", "--name-only", f"{base}...HEAD"],
+        f"cannot diff against {base}",
+    )
+
+    return sorted(set(committed.splitlines()) | uncommitted_files())
+
+
+def uncommitted_files() -> set[str]:
+    """Paths changed in the working tree, staged or not, including untracked files.
+
+    A local run happens before the commit as often as after it, and a change the diff
+    against the release line cannot see is a change these checks silently skip.
+    """
+
+    paths: set[str] = set()
+
+    for line in git(
+        ["status", "--porcelain=1", "--untracked-files=all"],
+        "cannot read the working tree",
+    ).splitlines():
+        path = line[3:] if len(line) > 3 else ""
+        _, _, renamed_to = path.partition(" -> ")
+        paths.add(renamed_to or path)
+
+    return {path for path in paths if path}
+
+
+def git(arguments: list[str], failure: str) -> str:
+    result = subprocess.run(
+        ["git", *arguments],
         capture_output=True,
         text=True,
         check=False,
     )
 
-    if diff.returncode != 0:
+    if result.returncode != 0:
         raise SystemExit(
-            f"cannot diff against {base}: {diff.stderr.strip()}\n"
+            f"{failure}: {result.stderr.strip()}\n"
             "The change-scoped checks did not run, which is a failure and not a pass."
         )
 
-    return [line for line in diff.stdout.splitlines() if line]
+    return result.stdout
 
 
 def discovered_release_line() -> str:
