@@ -11,6 +11,7 @@ speaks about.
 
 ### Changed
 
+<<<<<<< HEAD
 - Deciding that a path is not excluded no longer allocates. `glob::segment_matches` built two
   `Vec<char>`s and a table per segment comparison before comparing anything, including for the
   literal patterns every `exclude:` list is made of — `target`, `node_modules`, `.venv`. Measured on
@@ -21,6 +22,20 @@ speaks about.
   --continue` accepts a staged file whose conflict was never resolved, so a botched resolution lands
   as a commit that looks deliberate — which is exactly what happened while rebasing this branch, and
   all 1046 checks passed over a changelog full of `<<<<<<<`.
+=======
+- Nothing a user can observe: five rules asked a shared question in their own private spelling.
+  `security/forbidden-dependency`, `architecture/restricted-import` and `architecture/filename-case`
+  each carried a copy of the path-glob match that `rules::catalogue` already provides, and
+  `architecture/dependency-boundary` and `architecture/module-independence` carried byte-identical
+  helpers for which declared set holds a file and which names an imported module. That pair is now
+  `scoped::endpoints`, so a change to how a set claims a file happens once instead of twice.
+- `validate-pull-request.py` compares the mutation gate's scope with the tree rather than only with
+  the mutation workflow's trigger paths. Twelve files in `godlint-core` — including the ones that
+  decide which files are scanned, whether an `exclude` pattern matches, and whether a suppression
+  has expired — generate no mutants at all, and nothing said so. Each is now named with the reason
+  it is outside, a file that is neither examined nor named fails the check, and #245 carries the
+  plan for bringing them in.
+>>>>>>> dabf45a (test: compare the mutation gate's scope with the tree)
 - `maintainability/cognitive-complexity` counts a Rust `let … else` as a branch, weighted by the
   nesting it sits at, the way every other branching form is counted. `decision-complexity` already
   counted it, so the two metrics disagreed about whether a refutable binding is a decision; a
