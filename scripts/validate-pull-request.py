@@ -38,7 +38,7 @@ WORKFLOWS = Path(".github/workflows")
 MUTANTS = Path(".cargo/mutants.toml")
 MUTANTS_WORKFLOW = WORKFLOWS / "mutants.yml"
 
-CORE_SOURCE = Path("crates/godlint-core/src")
+CRATES = Path("crates")
 
 # A file here is outside the mutation gate on purpose, with the reason it is outside. The gate's
 # scope was previously checked only against the workflow's trigger paths — two of our own lists,
@@ -60,6 +60,13 @@ UNMUTATED = {
     "crates/godlint-core/src/config/rules.rs": "#245: configuration parsing",
     "crates/godlint-core/src/config/validate.rs": "#245: configuration validation",
     "crates/godlint-core/src/config/error.rs": "#245: shapes the message a rejected configuration prints",
+    "crates/godlint-cli/src/report.rs": "#245: decides the JSON, SARIF and annotation shapes three gates parse",
+    "crates/godlint-cli/src/workspace.rs": "#245: holds the message the released-agreement gate greps for",
+    "crates/godlint-cli/src/commands/check.rs": "#245: decides the exit code CI branches on",
+    "crates/godlint-cli/src/commands/config.rs": "#245: prints the resolved configuration",
+    "crates/godlint-cli/src/commands/suppressions.rs": "#245: prints the suppression inventory",
+    "crates/godlint-cli/src/commands/mod.rs": "#245: dispatches subcommands",
+    "crates/godlint-cli/src/main.rs": "parses arguments and returns an exit code; the e2e corpus is its test",
 }
 
 ROADMAP = Path("docs/rule-roadmap.md")
@@ -322,15 +329,18 @@ def check_mutation_config(report: Report) -> None:
         "whether a mutant was caught",
     )
 
+    # Counting comment lines and exclusions and comparing the totals passes an exclusion with a
+    # five-line essay beside four with nothing, so each exclusion is paired with the line above it.
     exclusions = block(body, "exclude_re")
-    entries = [line for line in exclusions if line.startswith('"')]
-    commented = [line for line in exclusions if line.startswith("#")]
 
-    report.check(
-        len(commented) >= len(entries),
-        f"{MUTANTS}: every exclusion needs a stated reason; found {len(entries)} "
-        f"exclusions and {len(commented)} comment lines beside them",
-    )
+    for index, line in enumerate(exclusions):
+        if not line.startswith('"'):
+            continue
+
+        report.check(
+            index > 0 and exclusions[index - 1].startswith("#"),
+            f"{MUTANTS}: the exclusion {line} has no reason on the line above it",
+        )
 
 
 def block(body: str, key: str) -> list[str]:
@@ -358,6 +368,10 @@ def examined_paths() -> set[str]:
     """The trigger path each examined glob needs, as a workflow would spell it."""
 
     return {glob.replace("/**/*.rs", "/**").replace("/*.rs", "/**") for glob in examined_globs()}
+
+
+def workflow_files() -> list[Path]:
+    return [path for path in WORKFLOWS.iterdir() if path.suffix in (".yml", ".yaml")]
 
 
 def triggered_paths() -> set[str]:
@@ -392,7 +406,7 @@ def glob_matcher(pattern: str) -> re.Pattern[str]:
 
 
 def check_mutation_coverage(report: Report) -> None:
-    """Every Rust file in godlint-core is examined by the mutation gate, or explained.
+    """Every Rust file in the workspace is examined by the mutation gate, or explained.
 
     Comparing the gate's globs with the workflow's trigger paths says nothing about a file that
     appears in neither, which is how the layer deciding what is *seen* stayed outside the gate.
@@ -400,9 +414,11 @@ def check_mutation_coverage(report: Report) -> None:
     """
 
     matchers = [glob_matcher(glob) for glob in examined_globs()]
-    examined = lambda path: any(matcher.match(path) for matcher in matchers)
 
-    for source in sorted(CORE_SOURCE.rglob("*.rs")):
+    def examined(path: str) -> bool:
+        return any(matcher.match(path) for matcher in matchers)
+
+    for source in sorted(CRATES.glob("*/src/**/*.rs")):
         path = source.as_posix()
         report.check(
             examined(path) or path in UNMUTATED,
@@ -501,7 +517,9 @@ def check_workflows(report: Report) -> None:
 
     versions: set[str] = set()
 
-    for workflow in sorted(WORKFLOWS.glob("*.yml")):
+    # source.rs reads both extensions, so a workflow named .yaml is scanned by Godlint. Globbing
+    # one of them here would leave that file outside this gate with nothing said.
+    for workflow in sorted(workflow_files()):
         versions.update(re.findall(r"rustup toolchain install (\S+)", read(workflow)))
 
     report.check(

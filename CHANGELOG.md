@@ -62,6 +62,14 @@ speaks about.
   booleans in the core schema, and reporting them would rest on a guess about GitHub's coercion that
   cannot be checked without a network. Found by probing the built binary while reviewing the rule,
   not by reading it.
+  plan for bringing them in. The walk covers every crate: `godlint-cli` was outside the gate in
+  its entirety, including the module that decides the JSON, SARIF and annotation shapes three
+  other gates parse.
+- Two more gates in `validate-pull-request.py` stopped taking a proxy for the thing. The workflow
+  toolchain check globbed `*.yml` while `source.rs` reads both `yaml` and `yml`, so a workflow named
+  `.yaml` was scanned by Godlint and invisible to the gate; and "every mutation exclusion needs a
+  reason" counted comment lines against exclusion lines, which passed one exclusion with a five-line
+  essay beside four with none. Each exclusion is now paired with the line above it.
 
 ## [0.5.0] - 2026-08-01
 
