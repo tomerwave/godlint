@@ -103,6 +103,13 @@ fails, and so does a fixture reporting a rule in a dialect the rule says it does
 `decision-complexity` counts a `match` or `switch` once rather than once per arm, and a guard on an
 arm counts. `function-statements` counts through nested blocks but not into nested functions.
 
+For Python, `parameter-count` recognizes a receiver by the first parameter's spelling (`self` or
+`cls`), not by whether the function is declared directly in a class body. This supports bound-task
+idioms while accepting one narrow false negative: a module-level function that happens to name its
+first ordinary parameter `self` or `cls`. Across 2,170 functions measured in `requests` and `flask`,
+the only module-level function with that shape was a Flask Celery task declared with `bind=True`,
+where the first parameter is the bound task instance and excluding it is correct.
+
 `cognitive-complexity` measures how hard a function is to *read* rather than how many paths run
 through it, which is where it parts company with `decision-complexity`. Every branch costs one, plus the
 nesting depth it sits at, so four flat guard clauses cost 4 while four nested branches cost 10. Three

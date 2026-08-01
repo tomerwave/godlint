@@ -101,3 +101,42 @@ fn javascript_reads_the_environment_through_an_access_not_a_call() {
         "no JavaScript or TypeScript call reads the environment directly"
     );
 }
+
+#[test]
+fn one_javascript_environment_access_produces_one_finding() {
+    let configuration = concat!(
+        "version: 1\n",
+        "rules:\n",
+        "  security/direct-environment-read:\n",
+        "    severity: error\n"
+    );
+
+    assert_eq!(
+        violations("src/service.ts", "process.env", configuration),
+        vec![Violation::DirectEnvironmentRead {
+            target: "process.env".to_owned(),
+        }]
+    );
+}
+
+#[test]
+fn a_rust_environment_read_is_one_finding_rather_than_two() {
+    let configuration = concat!(
+        "version: 1\n",
+        "rules:\n",
+        "  security/direct-environment-read:\n",
+        "    severity: error\n"
+    );
+
+    assert_eq!(
+        violations(
+            "src/main.rs",
+            "fn run() {\n    let home = std::env::var(\"HOME\");\n}\n",
+            configuration
+        )
+        .len(),
+        1,
+        "Rust reads the environment through a call, and nothing in it is a member access, so the \
+         same read must not also arrive as one"
+    );
+}

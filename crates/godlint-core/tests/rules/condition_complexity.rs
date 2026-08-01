@@ -56,6 +56,25 @@ fn reports_a_condition_over_its_limit() {
 }
 
 #[test]
+fn does_not_count_nonlogical_binary_operators() {
+    for (path, source) in [
+        (
+            "src/example.rs",
+            "fn example(a: u32, b: u32, c: u32) {\n    if a + b > c {}\n}",
+        ),
+        (
+            "src/example.js",
+            "function example(a, b, c) {\n  if (a + b > c) {}\n}",
+        ),
+    ] {
+        assert!(
+            violations(path, source).is_empty(),
+            "arithmetic and comparison operators are not logical condition operators: {path}"
+        );
+    }
+}
+
+#[test]
 fn counts_every_operator_flat_rather_than_discounting_repeated_ones() {
     assert_eq!(
         violations(

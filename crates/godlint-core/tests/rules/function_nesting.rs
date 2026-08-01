@@ -85,6 +85,26 @@ fn reads_an_else_if_chain_as_one_level() {
 }
 
 #[test]
+fn an_ordinary_branch_inside_else_still_adds_a_level() {
+    for (path, source) in [
+        (
+            "src/example.js",
+            "function example() {\n  if (a) {\n    run();\n  } else {\n    while (b) run();\n  }\n}",
+        ),
+        (
+            "src/example.py",
+            "def example():\n    if a:\n        run()\n    else:\n        while b:\n            run()",
+        ),
+    ] {
+        assert_eq!(
+            depth(path, source),
+            2,
+            "only an else-if stays flat; a loop inside else remains nested: {path}"
+        );
+    }
+}
+
+#[test]
 fn attributes_nesting_inside_a_closure_to_the_closure() {
     let (_, host) = function(
         "src/example.rs",
@@ -115,5 +135,77 @@ fn accepts_a_function_at_its_limit() {
             &configuration(2),
         )
         .is_empty()
+    );
+}
+
+const NESTED_IN_ELSE: [(&str, &str); 3] = [
+    (
+        "src/example.js",
+        "function classify(a, items) {\n  if (a) {\n    return 1;\n  } else {\n    for (const item of items) {\n      if (item) {\n        return 2;\n      }\n    }\n  }\n  return 0;\n}\n",
+    ),
+    (
+        "src/example.rs",
+        "fn classify(a: bool, items: &[bool]) -> u32 {\n    if a {\n        return 1;\n    } else {\n        for item in items {\n            if *item {\n                return 2;\n            }\n        }\n    }\n    0\n}\n",
+    ),
+    (
+        "src/example.py",
+        "def classify(a, items):\n    if a:\n        return 1\n    else:\n        for item in items:\n            if item:\n                return 2\n    return 0\n",
+    ),
+];
+
+const CHAINED_ELSE_IF: [(&str, &str); 3] = [
+    (
+        "src/chain.js",
+        "function classify(a, b) {\n  if (a) {\n    return 1;\n  } else if (b) {\n    return 2;\n  }\n  return 0;\n}\n",
+    ),
+    (
+        "src/chain.rs",
+        "fn classify(a: bool, b: bool) -> u32 {\n    if a {\n        return 1;\n    } else if b {\n        return 2;\n    }\n    0\n}\n",
+    ),
+    (
+        "src/chain.py",
+        "def classify(a, b):\n    if a:\n        return 1\n    elif b:\n        return 2\n    return 0\n",
+    ),
+];
+
+#[test]
+fn a_loop_inside_an_else_nests() {
+    for (path, source) in NESTED_IN_ELSE {
+        assert_eq!(
+            depth(path, source),
+            3,
+            "the else, the loop inside it and the loop's own branch each nest: {path}"
+        );
+    }
+}
+
+#[test]
+fn an_else_if_continues_the_chain_rather_than_nesting() {
+    for (path, source) in CHAINED_ELSE_IF {
+        assert_eq!(
+            depth(path, source),
+            1,
+            "an else-if is the same decision continued, not a level deeper: {path}"
+        );
+    }
+}
+
+#[test]
+fn a_braceless_else_holding_a_loop_still_nests() {
+    let source = concat!(
+        "function classify(a, items) {\n",
+        "  if (a) return 1;\n",
+        "  else for (const item of items) {\n",
+        "    if (item) return 2;\n",
+        "  }\n",
+        "  return 0;\n",
+        "}\n",
+    );
+
+    assert_eq!(
+        depth("src/braceless.js", source),
+        3,
+        "the loop is the else itself rather than a block inside it, and it still opens a level \
+         — only an else-if is the same decision continued"
     );
 }

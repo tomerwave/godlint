@@ -33,6 +33,23 @@ timeout_multiplier = 5.0
 minimum_test_timeout = 60
 
 exclude_re = [
+    # `is_conditional` exists because every language must fill the `Vocabulary` slot, and its only
+    # consumer is `metrics::child_opens_block`, which asks it about a node that is already a nesting
+    # kind sitting in an `else`. In Python that node is an `elif_clause` or an `else_clause`, neither
+    # of which is a nesting kind, so the walk returns before consulting the predicate at all: no
+    # Python source can distinguish any answer it gives.
+    "analyzers/python.rs.* is_conditional",
+    # Rust reaches the predicate, but only ever with an `if_expression` — an `else if` — because Rust
+    # has no braceless `else for`, and a plain `else { }` block is not a nesting kind. That kind
+    # already answers true, so replacing the body with `true` cannot change a measurement. The other
+    # two mutants of the same function are killable and are not excluded.
+    "analyzers/rust.rs.*replace is_conditional -> bool with true",
+    # Rust reads the environment through a call, not a member access, so `is_access` answers false
+    # for every kind. Making it answer true was checked by hand rather than argued: the only Rust text
+    # that then yields a path is one `security/direct-environment-read` already reports as a call, at
+    # the same position with the same message, so the output is byte-identical. Nothing a Rust file can
+    # say distinguishes the two.
+    "analyzers/rust.rs.*replace is_access -> bool with true",
     # The cursor only skips comments that can no longer overlap a later line, so failing
     # to advance it costs time and changes nothing. No test can distinguish this mutant
     # from the original, which makes it an equivalent mutant rather than a missing case.

@@ -44,6 +44,45 @@ fn counts_an_implicit_tail_expression() {
 }
 
 #[test]
+fn a_concise_arrow_body_is_one_implicit_exit_path() {
+    assert_eq!(paths("src/example.ts", "const increment = x => x + 1;"), 1);
+}
+
+#[test]
+fn a_block_arrow_body_counts_its_explicit_return_only() {
+    assert_eq!(
+        paths(
+            "src/example.ts",
+            "const increment = x => { return x + 1; };",
+        ),
+        1
+    );
+}
+
+#[test]
+fn a_concise_arrow_returning_an_object_is_one_implicit_exit_path() {
+    assert_eq!(
+        paths("src/example.ts", "const wrap = value => ({ value });",),
+        1
+    );
+}
+
+#[test]
+fn a_nested_concise_arrow_keeps_its_exit_path_out_of_its_block_bodied_host() {
+    let source = concat!(
+        "const outer = value => {\n",
+        "  const inner = item => item + 1;\n",
+        "  return inner(value);\n",
+        "};\n",
+    );
+    let (_, outer) = super::support::nth_function("src/example.ts", source, 0);
+    let (_, inner) = super::support::nth_function("src/example.ts", source, 1);
+
+    assert_eq!(outer.return_paths().value(), 1);
+    assert_eq!(inner.return_paths().value(), 1);
+}
+
+#[test]
 fn counts_the_rust_try_operator() {
     assert_eq!(
         paths(
@@ -75,5 +114,30 @@ fn accepts_a_function_at_its_limit() {
             &configuration(2),
         )
         .is_empty()
+    );
+}
+
+#[test]
+fn a_python_lambda_returns_its_expression_and_a_def_without_return_does_not() {
+    let source = concat!(
+        "def silent(value):\n",
+        "    print(value)\n",
+        "\n",
+        "\n",
+        "double = lambda value: value * 2\n",
+    );
+
+    assert_eq!(
+        paths("src/example.py", source),
+        0,
+        "a def that never returns has no exit path to count"
+    );
+    assert_eq!(
+        super::support::nth_function("src/example.py", source, 1)
+            .1
+            .return_paths()
+            .value(),
+        1,
+        "a lambda returns its expression, so the implicit exit is a path"
     );
 }
