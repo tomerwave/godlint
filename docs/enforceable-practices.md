@@ -3,7 +3,7 @@
 Status: proposed rule direction, reviewed 2026-08-01.
 
 This document applies Godlint's decidability, false-positive, and threshold filters to four
-sources of engineering guidance. The result is seven candidate policies. Each has a specific
+sources of engineering guidance. The result is nine candidate policies. Each has a specific
 fact or research gate; none should bypass the ordinary proposal process and go straight to
 implementation.
 
@@ -16,10 +16,12 @@ syntax can prove a violation deterministically and the exception can be configur
 | --- | --- | --- | --- |
 | `architecture/no-module-load-side-effect` | P1 | High for configured calls | Call-scope fact |
 | `reliability/no-control-flow-in-finally` | P1 | High | A fact for exits that escape a `finally` suite |
+| `reliability/redundant-catch-rethrow` | P1 | High for an unchanged rethrow | Catch binding and statement facts |
 | `policy/accountable-tool-suppression` | P2 | High after syntax is specified | A native-suppression fact for comments and Rust attributes |
 | `security/lockfile-required` | P2 | High when explicitly enabled | Manifest and repository-file facts |
 | `security/pinned-container-image` | P2 | High | A Dockerfile reader |
 | `security/dockerignore-required` | P2 | High for declared build contexts | Dockerfile, ignore-file, and build-context facts |
+| `maintainability/similar-block` | P3 | Medium | Token fingerprints, exclusions, and corpus calibration |
 | `security/no-dynamic-module-path` | P3 | Medium | Corpus calibration and dynamic-import call coverage |
 
 ### `architecture/no-module-load-side-effect`
@@ -57,6 +59,21 @@ failures disappear.
 
 PEP 8 states this recommendation directly. Unlike most PEP 8 guidance, it is a reliability
 property shared by two supported dialects rather than a Python formatting convention.
+
+### `reliability/redundant-catch-rethrow`
+
+Report a handler whose only executable statement rethrows the unchanged exception. The handler
+does not recover, translate, add context, clean up, or define a boundary; it only obscures normal
+propagation.
+
+- **Detection:** a JavaScript/TypeScript `catch (error) { throw error; }` or Python
+  `except ... as error: raise error` with no other executable statement.
+- **Languages:** JavaScript, TypeScript, and Python. Rust propagates values rather than throwing.
+- **Configuration:** severity and path exclusions only.
+- **Remediation:** remove the handler and let the error propagate.
+- **False-positive boundary:** a bare Python `raise` preserves traceback better but is still
+  redundant when it is the handler's only action. A handler that logs, translates, retries,
+  recovers, or cleans up is outside this rule and needs separate policy.
 
 ### `policy/accountable-tool-suppression`
 
@@ -132,6 +149,27 @@ dangerous when input is not trusted.
   design. Without taint analysis, a variable is not proof of attacker control, so this cannot enter
   `recommended@1` until a corpus shows that the opt-in policy is useful.
 
+### `maintainability/similar-block`
+
+Report large same-language blocks whose normalized token streams are at least 85% similar. This
+targets copied logic that has drifted slightly, not repeated keywords or formatting.
+
+- **Detection:** compare language-tokenized blocks with a deterministic token edit-similarity
+  score: `1 - edit_distance / max(token_count)`. Ignore whitespace and comments; preserve names
+  and literals by default.
+- **Configuration:** `similarity` defaulting to `0.85`, `min-tokens`, `min-lines`, path exclusions,
+  and optional identifier or literal normalization.
+- **Scope:** compare functions and contiguous statement blocks in the same language; exclude
+  vendored, generated, snapshot, migration, and fixture paths by explicit configuration.
+- **Output:** one stable canonical pair, both ranges, token counts, score, and a fingerprint.
+- **False-positive boundary:** duplication is evidence to inspect, not proof that an abstraction is
+  correct. Start as warning, measure precision on a multilingual corpus, and require accountable
+  suppression before considering suite promotion.
+
+The 85% threshold is a product starting point, not borrowed proof. PMD CPD validates token-based
+clone detection and minimum-token gates, but primarily finds exact clones. Godlint must calibrate
+its own fuzzy metric rather than imply equivalent results.
+
 ## Already covered
 
 These sources also validate policy Godlint already ships. No duplicate rule is needed.
@@ -157,7 +195,7 @@ These sources also validate policy Godlint already ships. No duplicate rule is n
 | Rust cloning, borrowing, iterator selection, `unwrap`, `expect`, panic use, and Clippy lint groups | Delegate to Clippy. Several require type information and all are Rust-specific. Godlint may enforce a repository-specific call restriction, but should not duplicate Clippy's catalogue. |
 | JavaScript strict equality, `const`, arrow functions, callback style, and import placement | Delegate to ESLint or Biome. |
 | SRP, OCP, LSP, ISP, composition over inheritance, and YAGNI | Do not claim direct enforcement. Their violation depends on responsibilities, contracts, or product need, none of which syntax proves. Enforce concrete dependency boundaries and complexity ceilings instead. |
-| DRY as a duplicate-block rule | Do not build from this evidence. Text duplication is not the same as duplicated knowledge, and generated code, tests, and deliberate parallel implementations create noisy matches. Reconsider only with a precise corpus and exemption model. |
+| DRY as proof that an abstraction is required | Do not claim this. `maintainability/similar-block` may surface evidence, but generated code, tests, and deliberately parallel implementations remain valid exceptions. |
 | Law of Demeter as a member-chain limit | Do not build as a shared default. Fluent APIs and Rust iterator chains make length a poor proxy for coupling. |
 | Promise handling and EventEmitter error listeners | Semantic phase. Correctness depends on knowing that an expression is a promise or an object is an EventEmitter. |
 | Error-path tests and per-test database data | Validate through coverage and integration-test design. Source syntax cannot prove that the failure behavior was exercised or that records are isolated. |
@@ -171,7 +209,9 @@ These sources also validate policy Godlint already ships. No duplicate rule is n
    `policy/accountable-tool-suppression`.
 4. Add repository manifest facts, then implement `security/lockfile-required`.
 5. Add one Dockerfile/build-context subsystem, then deliver both container rules from it.
-6. Measure dynamic module loading in real repositories before promoting its candidate beyond
+6. Prototype and corpus-calibrate `maintainability/similar-block` at 85% before making it an
+   opt-in warning.
+7. Measure dynamic module loading in real repositories before promoting its candidate beyond
    warning.
 
 Each rule still needs its own proposal, valid and invalid examples, configuration cases,
