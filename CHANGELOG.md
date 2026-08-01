@@ -7,6 +7,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 change the `godlint-core` API; the command line and the configuration schema are what the version
 speaks about.
 
+## [Unreleased]
+
+### Fixed
+
+- `style/no-comments` no longer reports a returned string literal as a docstring. The check confirmed
+  the string was the first thing in a block but never that the string *was* the statement, so a Python
+  function whose first statement returned a literal — `return "active"` — was reported as a comment at
+  error under `recommended@1`. A real docstring, including a module docstring, still reports. Found by
+  writing deliberately bad Python to probe for rules Godlint is missing.
+
 ## [0.4.0] - 2026-07-31
 
 ### Added

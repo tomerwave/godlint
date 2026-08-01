@@ -126,6 +126,38 @@ fn honours_each_language_documentation_convention() {
 }
 
 #[test]
+fn reports_a_python_docstring_only_where_the_string_is_the_whole_statement() {
+    assert_eq!(
+        violations(
+            "src/example.py",
+            "def example():\n    \"\"\"Documented.\"\"\"\n    return 1\n",
+            false
+        ),
+        1
+    );
+    assert_eq!(
+        violations(
+            "src/example.py",
+            "def example():\n    return \"active\"\n",
+            false
+        ),
+        0
+    );
+    assert_eq!(
+        violations(
+            "src/example.py",
+            "def example(value):\n    assert \"active\" in value\n    return value\n",
+            false
+        ),
+        0
+    );
+    assert_eq!(
+        violations("src/example.py", "\"module docstring\"\nvalue = 1\n", false),
+        1
+    );
+}
+
+#[test]
 fn permits_a_shebang() {
     assert_eq!(
         violations(

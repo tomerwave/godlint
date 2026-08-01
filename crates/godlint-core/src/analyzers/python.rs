@@ -48,6 +48,8 @@ const VOCABULARY: Vocabulary = Vocabulary {
 
 const DOCSTRING_BLOCKS: [&str; 2] = ["block", "module"];
 
+const DOCSTRING_STATEMENTS: [&str; 1] = ["expression_statement"];
+
 const ABSTRACT_DECORATORS: [&str; 2] = ["abstractmethod", "overload"];
 
 fn is_function(kind: &str) -> bool {
@@ -417,7 +419,9 @@ fn is_abstract(node: Node<'_>, source: &str) -> bool {
 }
 
 fn comment_kind(node: Node<'_>, source: &str) -> Option<CommentKind> {
-    if node.kind() == "string" && is_leading_block_statement(node, &DOCSTRING_BLOCKS) {
+    if node.kind() == "string"
+        && is_leading_block_statement(node, &DOCSTRING_STATEMENTS, &DOCSTRING_BLOCKS)
+    {
         return Some(CommentKind::Docstring);
     }
 

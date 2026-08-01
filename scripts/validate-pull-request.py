@@ -5,8 +5,9 @@ A checklist records an intention; this records a fact. Every check here is one a
 reviewer would otherwise have to perform by hand, and each failure names the file to
 edit rather than the box to tick.
 
-Run with no arguments to check the working tree. Pass --release-line <ref> to additionally
-apply the checks that depend on what a change touched.
+The checks that depend on what a change touched always run: --release-line <ref> names the
+ref to compare against, and without it the script discovers one. A run that cannot find a
+release line fails rather than quietly reporting fewer checks than it did in CI.
 
 Those checks measure the branch against the release line rather than against whichever
 branch a pull request targets, because a changelog entry describes a change as a release
@@ -456,6 +457,23 @@ def changed_files(base: str) -> list[str]:
     return [line for line in diff.stdout.splitlines() if line]
 
 
+def discovered_release_line() -> str:
+    for candidate in ("origin/main", "main"):
+        resolved = subprocess.run(
+            ["git", "rev-parse", "--verify", "--quiet", candidate],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if resolved.returncode == 0:
+            return candidate
+
+    raise SystemExit(
+        "no release line to compare against: pass --release-line.\n"
+        "The change-scoped checks did not run, which is a failure and not a pass."
+    )
+
+
 def check_change(report: Report, release_line: str) -> None:
     changed = changed_files(release_line)
 
@@ -492,8 +510,7 @@ def main() -> int:
     check_workflows(report)
     check_documentation_links(report)
 
-    if arguments.release_line:
-        check_change(report, arguments.release_line)
+    check_change(report, arguments.release_line or discovered_release_line())
 
     if report.failures:
         print(f"{len(report.failures)} of {report.checked} checks failed:\n")
