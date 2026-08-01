@@ -1,0 +1,11 @@
+exit-code: 1
+
+stdout: |
+  .github/workflows/ci.yml:10:28: warning[ci/no-silenced-failure] This step can fail while the job stays green, and no later expression reads its outcome; remove continue-on-error or inspect steps.<id>.outcome.
+  .github/workflows/ci.yml:17:14: warning[ci/no-silenced-failure] This script ends with `|| true`, so the step stays green when the command fails; remove the fallback or check the command's status explicitly.
+  .github/workflows/ci.yml:18:15: warning[ci/no-silenced-failure] This script ends with `|| true`, so the step stays green when the command fails; remove the fallback or check the command's status explicitly.
+  .github/workflows/ci.yml:19:14: error[ci/no-silenced-failure] This script ends with `; exit 0`, so the step cannot report failure; preserve the failing exit status.
+  .github/workflows/ci.yml:20:14: error[ci/no-silenced-failure] This script ends with `|| exit 0`, so the step cannot report failure; preserve the failing exit status.
+  .github/workflows/ci.yml:22:24: warning[ci/no-silenced-failure] This job can fail while the workflow stays green; remove continue-on-error or exclude the workflow when the soft failure is deliberate.
+
+stderr: ""

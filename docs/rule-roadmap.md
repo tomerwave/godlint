@@ -514,6 +514,7 @@ to a run step, which is what `ci/no-pull-request-target-checkout` would need.
 | `ci/secrets-inherit` | Shipped | Job fact | High | `allow-in` path globs |
 | `ci/overprovisioned-secrets` | Shipped | Step, setting and expression facts | High | Severity only |
 | `ci/unredacted-secrets` | Shipped | Step and expression facts | High | Severity only |
+| `ci/no-silenced-failure` | Shipped | Job, step and expression facts | High for explicit exit-zero endings; measured soft-failure forms capped at warning | Severity only |
 
 `ci/unnecessary-job-dependency` is not decidable from workflow syntax. The `announce` job declares
 `needs: [publish, npm, pypi]` but downloads its artifacts from `binaries`; those three dependencies

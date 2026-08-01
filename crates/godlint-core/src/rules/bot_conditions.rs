@@ -3,8 +3,9 @@ use crate::{
     config::{BotConditionsRule, Config, Severity},
     rules::{
         Finding, Languages, Rule, Violation, WorkflowRule, evaluate_workflow_rule, when_configured,
+        workflow_condition::expressions_in_condition,
     },
-    source::{SourceRange, range_contains},
+    source::SourceRange,
 };
 
 const ACTOR_CONTEXTS: [&str; 2] = ["github.actor", "github.triggering_actor"];
@@ -50,22 +51,9 @@ fn violations_in_condition(
     condition: SourceRange,
     configuration: &BotConditionsRule,
 ) -> Vec<(SourceRange, Violation)> {
-    let expressions = workflow
-        .expressions()
-        .iter()
-        .filter(|expression| range_contains(condition, expression.range()))
-        .collect::<Vec<_>>();
-
-    if expressions.is_empty() {
-        let body = &workflow.file().text()[condition.start()..condition.end()];
-        return violation(condition, body, configuration)
-            .into_iter()
-            .collect();
-    }
-
-    expressions
+    expressions_in_condition(workflow, condition)
         .into_iter()
-        .filter_map(|expression| violation(expression.range(), expression.body(), configuration))
+        .filter_map(|(range, body)| violation(range, body, configuration))
         .collect()
 }
 

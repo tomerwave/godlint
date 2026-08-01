@@ -87,6 +87,11 @@ speaks about.
 - `ci/unredacted-secrets` — reports a `run:` script that combines a direct `secrets.*` expression
   with `$GITHUB_ENV` or `$GITHUB_OUTPUT`, where GitHub's masking no longer follows the value. It
   deliberately does not infer data flow through variables or earlier steps.
+- `ci/no-silenced-failure` — reports checks that cannot make a workflow fail: literal
+  `continue-on-error: true` settings and scripts ending `|| true`, `; exit 0`, or
+  `|| exit 0`. A same-job read of `steps.<id>.outcome` or `.conclusion` proves a deliberate soft
+  step and stays silent. Corpus-common `continue-on-error` and `|| true` findings are capped at
+  warning; explicit exit-zero endings stay at the configured severity.
 - A language support matrix in [the rule reference](docs/rules.md#language-support), recording for
   every rule which of the three dialects it covers, and distinguishing a language that has no such
   construct from one Godlint has not taught the rule yet. Each rule declares this as

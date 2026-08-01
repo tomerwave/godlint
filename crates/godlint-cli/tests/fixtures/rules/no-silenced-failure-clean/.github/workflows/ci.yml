@@ -1,0 +1,24 @@
+name: Clean
+
+on:
+  workflow_dispatch:
+    inputs:
+      experimental:
+        type: boolean
+
+jobs:
+  check:
+    continue-on-error: ${{ inputs.experimental }}
+    runs-on: ubuntu-latest
+    steps:
+      - continue-on-error: false
+        run: ./scripts/check.sh
+      - id: probe
+        continue-on-error: true
+        run: ./scripts/probe.sh
+      - env:
+          OUTCOME: ${{ steps.probe.conclusion }}
+        run: echo "$OUTCOME"
+      - run: |
+          x=true
+          exit $x

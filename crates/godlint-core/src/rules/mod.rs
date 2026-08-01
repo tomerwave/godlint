@@ -47,6 +47,7 @@ pub mod no_network_in_unit_test;
 pub mod no_production_log;
 pub mod no_randomness_without_seed;
 pub mod no_shell_command;
+pub mod no_silenced_failure;
 pub mod no_skipped_test;
 pub mod no_sleep_in_test;
 pub mod no_test_helper_in_production;
@@ -76,6 +77,7 @@ pub mod template_injection;
 pub mod todo_requires_reference;
 pub mod unredacted_secrets;
 pub mod unused_suppression;
+mod workflow_condition;
 
 pub use languages::{Absence, Languages};
 pub use metric::Metric;
@@ -382,6 +384,7 @@ const WORKFLOW_EVALUATORS: &[WorkflowEvaluator] = &[
     template_injection::evaluate,
     no_inline_script::evaluate,
     no_monolithic_job::evaluate,
+    no_silenced_failure::evaluate,
     unredacted_secrets::evaluate,
 ];
 

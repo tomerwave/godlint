@@ -1,6 +1,6 @@
 # Rule reference
 
-Forty-nine rules are implemented. Every one has an identifier of the form `family/name`, which is
+Fifty rules are implemented. Every one has an identifier of the form `family/name`, which is
 what a configuration entry and a suppression directive both name. [The rule roadmap](rule-roadmap.md)
 records the families still to come, and the reasoning behind each threshold `recommended@1` sets.
 [Language support](#language-support) records which languages each rule covers.
@@ -25,6 +25,7 @@ enforced there.
 | `ci/no-comments` | — | — | — | ✓ |
 | `ci/no-inline-script` | — | — | — | ✓ |
 | `ci/no-monolithic-job` | — | — | — | ✓ |
+| `ci/no-silenced-failure` | — | — | — | ✓ |
 | `ci/overprovisioned-secrets` | — | — | — | ✓ |
 | `ci/pin-third-party-actions` | — | — | — | ✓ |
 | `ci/secrets-inherit` | — | — | — | ✓ |
@@ -202,6 +203,7 @@ have to decide what interpolation looks like inside an f-string.
 | `ci/no-monolithic-job` | A job exceeding its step limit |
 | `ci/secrets-inherit` | A reusable-workflow call passing every secret available to its job |
 | `ci/unredacted-secrets` | A script directly writing a secret expression to `GITHUB_ENV` or `GITHUB_OUTPUT` |
+| `ci/no-silenced-failure` | A step or job configured to stay green after failure, or a script that discards a failing exit status |
 
 
 `ci/secrets-inherit` reports the `inherit` value in a job-level `secrets: inherit` declaration.
@@ -218,6 +220,28 @@ context. A reference to one member, including `${{ secrets.NPM_TOKEN }}` and
 `secrets.*` expression and a reference to `$GITHUB_ENV` or `$GITHUB_OUTPUT`. Merely using a secret is
 silent, as is writing a non-secret value to either file. The rule cannot see a secret laundered
 through a variable in an earlier step; that would require data flow the workflow facts do not have.
+
+`ci/no-silenced-failure` reports a literal `continue-on-error: true` on a step or job and a `run:`
+script ending `|| true`, `; exit 0`, or `|| exit 0`. A step is silent when it has an `id` and an
+expression anywhere in the same job reads `steps.<id>.outcome` or `steps.<id>.conclusion`; braced
+`${{ }}` values and the implicit expression in an unbraced `if:` both count. That is observable soft
+failure rather than discarded failure. The search does not cross the job body, because a step
+outcome is not available from another job. Expression-valued and false `continue-on-error` settings
+remain literal facts and are silent because the rule only decides the exact `true` value.
+
+Job outcomes have no same-workflow expression equivalent, so a literal job-level setting cannot
+prove its own intent. It is reported at warning, and excluding that workflow is the escape hatch for
+a deliberate always-soft job. Step-level `continue-on-error` is capped at warning too: 49 instances
+appeared in the 94-workflow corpus, and after the outcome/conclusion exemption 42 remained, many on
+deliberate diagnostic, cleanup, or artifact-upload steps. The suite still configures the rule at
+error, so the cap preserves that measured uncertainty rather than weakening definite findings.
+
+The script half is a substring judgement at the trimmed end of `run()`, at the same confidence boundary as
+`ci/unredacted-secrets`' `$GITHUB_ENV` match; it is not a shell parser. An indirect status such as
+`x=true` followed by `exit $x` is not seen, while `|| true` inside a quoted string is reported. All
+nine measured `|| true` matches were deliberate cleanup or diagnostics, so that spelling is capped
+at warning. The more explicit `; exit 0` and `|| exit 0` spellings stay at the configured severity;
+neither appeared in the corpus.
 
 `ci/no-comments` reports workflow comments except a comment trailing a `uses:` value on the same line.
 That label makes a pinned SHA reviewable and lets `ci/stale-action-refs` compare the claim with every

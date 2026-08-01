@@ -110,6 +110,8 @@ fixture_tests! {
     no_production_log_clean => "no-production-log-clean",
     no_internal_import_clean => "no-internal-import-clean",
     no_shell_command_clean => "no-shell-command-clean",
+    no_silenced_failure => "no-silenced-failure",
+    no_silenced_failure_clean => "no-silenced-failure-clean",
     no_skipped_test_clean => "no-skipped-test-clean",
     no_test_helper_in_production_clean => "no-test-helper-in-production-clean",
     no_sleep_in_test_clean => "no-sleep-in-test-clean",
