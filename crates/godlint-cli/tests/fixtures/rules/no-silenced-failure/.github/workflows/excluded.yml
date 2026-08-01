@@ -1,0 +1,11 @@
+name: Excluded
+
+on:
+  workflow_dispatch:
+
+jobs:
+  ignored:
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    steps:
+      - run: check; exit 0

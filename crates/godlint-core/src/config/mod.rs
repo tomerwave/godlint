@@ -140,6 +140,8 @@ pub struct Rules {
     pub overprovisioned_secrets: Option<OverprovisionedSecretsRule>,
     #[serde(rename = "ci/unredacted-secrets")]
     pub unredacted_secrets: Option<UnredactedSecretsRule>,
+    #[serde(rename = "ci/no-silenced-failure")]
+    pub no_silenced_failure: Option<NoSilencedFailureRule>,
     #[serde(flatten)]
     unrecognised: BTreeMap<String, IgnoredAny>,
 }

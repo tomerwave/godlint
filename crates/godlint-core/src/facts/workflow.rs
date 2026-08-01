@@ -29,6 +29,7 @@ pub struct JobFact {
     name: String,
     body: SourceRange,
     condition: Option<SourceRange>,
+    continue_on_error: Option<SourceRange>,
     declares_permissions: bool,
     needs: Vec<Setting>,
     secrets: Option<Secrets>,
@@ -41,10 +42,12 @@ pub struct StepFact {
     file: TextFile,
     range: SourceRange,
     job: String,
+    id: Option<SourceRange>,
     name: Option<SourceRange>,
     run: Option<SourceRange>,
     uses: Option<SourceRange>,
     condition: Option<SourceRange>,
+    continue_on_error: Option<SourceRange>,
     inputs: Vec<Setting>,
     environment: Vec<Setting>,
 }
@@ -69,6 +72,7 @@ pub(crate) struct JobFactDetails {
     pub name: String,
     pub body: SourceRange,
     pub condition: Option<SourceRange>,
+    pub continue_on_error: Option<SourceRange>,
     pub declares_permissions: bool,
     pub needs: Vec<Setting>,
     pub secrets: Option<Secrets>,
@@ -79,10 +83,12 @@ pub(crate) struct JobFactDetails {
 pub(crate) struct StepFactDetails {
     pub range: SourceRange,
     pub job: String,
+    pub id: Option<SourceRange>,
     pub name: Option<SourceRange>,
     pub run: Option<SourceRange>,
     pub uses: Option<SourceRange>,
     pub condition: Option<SourceRange>,
+    pub continue_on_error: Option<SourceRange>,
     pub inputs: Vec<Setting>,
     pub environment: Vec<Setting>,
 }
@@ -166,6 +172,7 @@ impl JobFact {
             name,
             body: range,
             condition: None,
+            continue_on_error: None,
             declares_permissions,
             needs: Vec::new(),
             secrets: None,
@@ -181,6 +188,7 @@ impl JobFact {
             name: details.name,
             body: details.body,
             condition: details.condition,
+            continue_on_error: details.continue_on_error,
             declares_permissions: details.declares_permissions,
             needs: details.needs,
             secrets: details.secrets,
@@ -213,6 +221,10 @@ impl JobFact {
         self.condition
     }
 
+    pub fn continue_on_error(&self) -> Option<SourceRange> {
+        self.continue_on_error
+    }
+
     pub fn needs(&self) -> &[Setting] {
         &self.needs
     }
@@ -236,10 +248,12 @@ impl StepFact {
             file,
             range: details.range,
             job: details.job,
+            id: details.id,
             name: details.name,
             run: details.run,
             uses: details.uses,
             condition: details.condition,
+            continue_on_error: details.continue_on_error,
             inputs: details.inputs,
             environment: details.environment,
         }
@@ -257,6 +271,10 @@ impl StepFact {
         &self.job
     }
 
+    pub fn id(&self) -> Option<&str> {
+        self.id.map(|range| text(&self.file, range))
+    }
+
     pub fn name(&self) -> Option<&str> {
         self.name.map(|range| text(&self.file, range))
     }
@@ -271,6 +289,10 @@ impl StepFact {
 
     pub fn condition(&self) -> Option<SourceRange> {
         self.condition
+    }
+
+    pub fn continue_on_error(&self) -> Option<SourceRange> {
+        self.continue_on_error
     }
 
     pub fn inputs(&self) -> &[Setting] {

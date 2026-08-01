@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - continue-on-error: true
+        run: ./scripts/check.sh
+      - id: probe
+        continue-on-error: true
+        run: ./scripts/probe.sh
+      - if: ${{ steps.probe.outcome == 'failure' }}
+        run: echo "probe failed"
+      - run: cleanup || true
+      - run: "cleanup || true"
+      - run: check; exit 0
+      - run: check || exit 0
+  optional:
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    steps:
+      - run: ./scripts/optional.sh

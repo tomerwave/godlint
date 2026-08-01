@@ -16,8 +16,10 @@ use super::syntax::{
 const COMMENT: &str = "comment";
 const CONTAINER: &str = "container";
 const CREDENTIALS: &str = "credentials";
+const CONTINUE_ON_ERROR: &str = "continue-on-error";
 const ENV: &str = "env";
 const IF: &str = "if";
+const ID: &str = "id";
 const NAME: &str = "name";
 const NEEDS: &str = "needs";
 const PASSWORD: &str = "password";
@@ -57,15 +59,23 @@ struct JobLinks {
 
 struct StepSites {
     range: SourceRange,
+    id: Option<SourceRange>,
     name: Option<SourceRange>,
     run: Option<SourceRange>,
     uses: Option<SourceRange>,
     condition: Option<SourceRange>,
+    continue_on_error: Option<SourceRange>,
 }
 
 struct StepSettings {
     inputs: Vec<Setting>,
     environment: Vec<Setting>,
+}
+
+struct StepPolicySites {
+    id: Option<SourceRange>,
+    name: Option<SourceRange>,
+    continue_on_error: Option<SourceRange>,
 }
 
 pub(super) fn jobs(
@@ -127,6 +137,7 @@ fn job_details(
         name: nodes.name.clone(),
         body,
         condition: optional_range(value_of(nodes.body, IF, file), file)?,
+        continue_on_error: optional_range(value_of(nodes.body, CONTINUE_ON_ERROR, file), file)?,
         declares_permissions: declared(nodes.body, PERMISSIONS, file),
         needs: links.needs,
         secrets: links.secrets,
@@ -185,10 +196,12 @@ fn step(
     let details = StepFactDetails {
         range: sites.range,
         job: job.to_owned(),
+        id: sites.id,
         name: sites.name,
         run: sites.run,
         uses: sites.uses,
         condition: sites.condition,
+        continue_on_error: sites.continue_on_error,
         inputs: settings.inputs,
         environment: settings.environment,
     };
@@ -201,16 +214,19 @@ fn step_sites(
     body: Option<Node<'_>>,
     file: &TextFile,
 ) -> Result<StepSites, AnalyzerError> {
+    let policy = step_policy_sites(body, file)?;
     let (uses, condition) = step_action_sites(body, file)?;
 
     Ok(StepSites {
         range: range(key, file)?,
-        name: optional_range(value_of(body, NAME, file), file)?,
+        id: policy.id,
+        name: policy.name,
         run: value_of(body, RUN, file)
             .map(|node| script_range(node, file))
             .transpose()?,
         uses,
         condition,
+        continue_on_error: policy.continue_on_error,
     })
 }
 
@@ -247,6 +263,17 @@ fn script_range(node: Node<'_>, file: &TextFile) -> Result<SourceRange, Analyzer
             path: file.path().to_path_buf(),
             source,
         })
+}
+
+fn step_policy_sites(
+    body: Option<Node<'_>>,
+    file: &TextFile,
+) -> Result<StepPolicySites, AnalyzerError> {
+    Ok(StepPolicySites {
+        id: optional_range(value_of(body, ID, file), file)?,
+        name: optional_range(value_of(body, NAME, file), file)?,
+        continue_on_error: optional_range(value_of(body, CONTINUE_ON_ERROR, file), file)?,
+    })
 }
 
 fn step_action_sites(

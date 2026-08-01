@@ -159,6 +159,13 @@ fn accepts_template_injection_path_exceptions() {
 }
 
 #[test]
+fn accepts_no_silenced_failure() {
+    let result = load("version: 1\nrules:\n  ci/no-silenced-failure:\n    severity: error\n");
+
+    assert!(result.is_ok());
+}
+
+#[test]
 fn accepts_no_monolithic_job_path_exceptions() {
     let config = load(concat!(
         "version: 1\n",

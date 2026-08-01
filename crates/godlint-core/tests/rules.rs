@@ -91,6 +91,9 @@ mod no_monolithic_job;
 #[path = "rules/no_shell_command.rs"]
 mod no_shell_command;
 
+#[path = "rules/no_silenced_failure.rs"]
+mod no_silenced_failure;
+
 #[path = "rules/no_test_helper_in_production.rs"]
 mod no_test_helper_in_production;
 

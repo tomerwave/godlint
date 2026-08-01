@@ -9,8 +9,8 @@ use crate::config::{
     ModuleIndependenceRule, NoCommentsRule, NoDynamicExecutionRule, NoEmptyTestRule,
     NoFocusedTestRule, NoInsecureRandomRule, NoInternalImportRule, NoMonolithicJobRule,
     NoNetworkInUnitTestRule, NoProductionLogRule, NoRandomnessWithoutSeedRule, NoShellCommandRule,
-    NoSkippedTestRule, NoSleepInTestRule, NoTestHelperInProductionRule, NoWeakHashRule,
-    NoWorkflowCommentsRule, OverprovisionedSecretsRule, ParameterCountRule,
+    NoSilencedFailureRule, NoSkippedTestRule, NoSleepInTestRule, NoTestHelperInProductionRule,
+    NoWeakHashRule, NoWorkflowCommentsRule, OverprovisionedSecretsRule, ParameterCountRule,
     PinThirdPartyActionsRule, RestrictedCallRule, RestrictedImportRule, ReturnCountRule, Rules,
     SecretsInheritRule, Severity, StaleActionRefsRule, TemplateInjectionRule,
     TodoRequiresReferenceRule, UnredactedSecretsRule, UnusedSuppressionRule, default_bots,
@@ -86,6 +86,11 @@ fn workflow_secrets(rules: &mut Rules) {
     rules
         .unredacted_secrets
         .get_or_insert(UnredactedSecretsRule {
+            severity: Severity::Error,
+        });
+    rules
+        .no_silenced_failure
+        .get_or_insert(NoSilencedFailureRule {
             severity: Severity::Error,
         });
     rules

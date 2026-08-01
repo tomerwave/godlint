@@ -303,6 +303,12 @@ pub struct UnredactedSecretsRule {
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
+pub struct NoSilencedFailureRule {
+    pub severity: Severity,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct NoWeakHashRule {
     pub severity: Severity,
     #[serde(default, rename = "allow-in")]

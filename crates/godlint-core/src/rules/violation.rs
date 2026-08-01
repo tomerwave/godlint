@@ -95,6 +95,12 @@ pub enum Violation {
         setting: String,
     },
     UnredactedSecret,
+    StepContinuesOnError,
+    JobContinuesOnError,
+    ScriptOrTrue,
+    ScriptExitsSuccessfully {
+        ending: &'static str,
+    },
     TestHelperInProduction {
         module: String,
         segment: String,
@@ -317,6 +323,9 @@ impl Violation {
         match self {
             Self::InternalImport { certain: false, .. } => Severity::Warning,
             Self::UnlabelledActionPin { .. }
+            | Self::StepContinuesOnError
+            | Self::JobContinuesOnError
+            | Self::ScriptOrTrue
             | Self::MissingAssertion
             | Self::UnverifiedHash { .. }
             | Self::TemplateInjection { certain: false, .. } => Severity::Warning,
@@ -338,9 +347,7 @@ impl fmt::Display for Violation {
             Self::EmptyErrorHandler => formatter.write_str(EMPTY_ERROR_HANDLER),
             Self::MissingReference { marker } => write!(formatter, "{marker} {MISSING_REFERENCE}"),
             Self::CommentNotPermitted => formatter.write_str(COMMENT_NOT_PERMITTED),
-            Self::WorkflowCommentNotPermitted => {
-                formatter.write_str(WORKFLOW_COMMENT_NOT_PERMITTED)
-            }
+            Self::WorkflowCommentNotPermitted => formatter.write_str(WORKFLOW_COMMENT_NOT_PERMITTED),
             Self::UnaccountableSuppression { defect } => defect.fmt(formatter),
             Self::UnusedSuppression => formatter.write_str(UNUSED_SUPPRESSION),
             Self::RestrictedCall { callee } => write!(formatter, "{callee} {RESTRICTED_CALL}"),
@@ -369,6 +376,7 @@ impl fmt::Display for Violation {
             Self::InheritedSecrets { job } => inherited_secrets(formatter, job),
             Self::OverprovisionedSecrets { setting } => overprovisioned_secrets(formatter, setting),
             Self::UnredactedSecret => formatter.write_str(UNREDACTED_SECRET),
+            Self::StepContinuesOnError | Self::JobContinuesOnError | Self::ScriptOrTrue | Self::ScriptExitsSuccessfully { .. } => silenced_failure(formatter, self),
             Self::TestHelperInProduction { module, segment } => helper(formatter, module, segment),
             Self::InternalImport { module, marker, .. } => internal(formatter, module, marker),
             Self::SleepInTest { callee } => write!(formatter, "{callee} {SLEEP_IN_TEST}"),
@@ -384,6 +392,34 @@ const UNDECLARED_PERMISSIONS: &str = "No permissions are declared anywhere in th
 
 const UNREDACTED_SECRET: &str = "This script writes a secret to GITHUB_ENV or GITHUB_OUTPUT, where \
      GitHub's masking does not follow it; keep the secret in its original context.";
+
+const STEP_CONTINUES_ON_ERROR: &str = "This step can fail while the job stays green, and no later \
+     expression reads its outcome; remove continue-on-error or inspect steps.<id>.outcome.";
+
+const JOB_CONTINUES_ON_ERROR: &str = "This job can fail while the workflow stays green; remove \
+     continue-on-error or exclude the workflow when the soft failure is deliberate.";
+
+const SCRIPT_OR_TRUE: &str = "This script ends with `|| true`, so the step stays green when the \
+     command fails; remove the fallback or check the command's status explicitly.";
+
+fn script_exits_successfully(formatter: &mut fmt::Formatter<'_>, ending: &str) -> fmt::Result {
+    write!(
+        formatter,
+        "This script ends with `{ending}`, so the step cannot report failure; preserve the failing exit status."
+    )
+}
+
+fn silenced_failure(formatter: &mut fmt::Formatter<'_>, violation: &Violation) -> fmt::Result {
+    match violation {
+        Violation::StepContinuesOnError => formatter.write_str(STEP_CONTINUES_ON_ERROR),
+        Violation::JobContinuesOnError => formatter.write_str(JOB_CONTINUES_ON_ERROR),
+        Violation::ScriptOrTrue => formatter.write_str(SCRIPT_OR_TRUE),
+        Violation::ScriptExitsSuccessfully { ending } => {
+            script_exits_successfully(formatter, ending)
+        }
+        _ => unreachable!(),
+    }
+}
 
 fn inherited_secrets(formatter: &mut fmt::Formatter<'_>, job: &str) -> fmt::Result {
     write!(
