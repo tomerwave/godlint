@@ -143,6 +143,13 @@ speaks about.
 
 ### Internal
 
+- Nothing a user can observe: a fact stores the details it was built from instead of copying them
+  across field by field. `SourceFacts` re-declared all ten of `Collected`'s vectors and then moved
+  them one at a time, and `FunctionFact`, `JobFact` and `StepFact` each re-declared their `Details`
+  struct in full and copied every field. `TestFact` and `AssertionFact` already did the right thing,
+  so the file was arguing with itself. 76 lines shorter, and adding an eleventh fact kind is one edit
+  rather than three that have to agree.
+
 - Nothing a user can observe: twenty-one rule configuration structs are declared by two macros
   instead of by hand. Thirteen were exactly `{ severity }` and eight exactly `{ severity, allow-in }`,
   and `config/rules.rs` already had the parameterised form for this situation in `count_limit_rules!`.
