@@ -176,7 +176,16 @@ start after its end. A `SourceRange` that exists is therefore a range that has a
 checked, so locating one cannot fail, and no fact needs to re-validate what its type already
 records. That is what makes rule evaluation infallible — the single error a rule could once
 report was a location failure that could not occur, and an error variant that cannot happen
-still has to be handled by every caller. That
+still has to be handled by every caller.
+
+`TextFile::slice` follows from that guarantee rather than hedging against it. It indexes the text
+directly, so a range built by a different file panics instead of yielding a plausible answer. The
+alternative — returning an empty string — would turn a broken proof into a rule that quietly declines
+to fire, and a linter that silently misses a finding is worse than one that crashes and says why. This
+is the same contract `str` itself offers for a bad index, so a caller outside this crate meets the
+behaviour it already expects.
+
+That
 derivation binary-searches a line-start index built once per file, because scanning to
 the offset instead would make reporting cost grow with a finding's distance into the
 file — which is invisible while rules fire rarely and quadratic once one fires per

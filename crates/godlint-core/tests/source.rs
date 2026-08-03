@@ -2,7 +2,7 @@
 
 use std::path::{Path, PathBuf};
 
-use godlint_core::source::{Language, SourceFile, SourceFileError, SourcePosition};
+use godlint_core::source::{Language, SourceFile, SourceFileError, SourcePosition, TextFile};
 
 #[test]
 fn reports_the_line_an_offset_falls_on() {
@@ -128,4 +128,27 @@ fn a_path_reads_with_forward_slashes_whatever_the_platform_uses() {
         !file.path_text().contains('\\'),
         "a native separator must not reach a policy"
     );
+}
+
+#[test]
+fn slice_returns_the_text_a_range_covers() {
+    let file = TextFile::new(PathBuf::from("src/a.ts"), "const value = 1;\n".into())
+        .unwrap_or_else(|error| panic!("creates file: {error}"));
+    let range = file
+        .range(6, 11)
+        .unwrap_or_else(|error| panic!("makes range: {error}"));
+
+    assert_eq!(file.slice(range), "value");
+    assert_eq!(file.slice(file.full_range()), "const value = 1;\n");
+}
+
+#[test]
+#[should_panic(expected = "out of bounds")]
+fn slice_refuses_a_range_from_another_file_loudly() {
+    let short = TextFile::new(PathBuf::from("src/short.ts"), "a\n".into())
+        .unwrap_or_else(|error| panic!("creates file: {error}"));
+    let long = TextFile::new(PathBuf::from("src/long.ts"), "a longer file\n".into())
+        .unwrap_or_else(|error| panic!("creates file: {error}"));
+
+    let _ = short.slice(long.full_range());
 }

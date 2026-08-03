@@ -6,7 +6,7 @@ use crate::{
     source::{SourceRange, TextFile},
 };
 
-use crate::facts::workflow::{JobFactDetails, StepFactDetails};
+use crate::facts::workflow::{JobFactDetails, StepFactDetails, unbraced};
 
 use super::syntax::{
     content, declared, first_pair, key_of, mapping, node_text, pairs, range, sequence_items,
@@ -467,7 +467,7 @@ fn expressions_in(
                 path: file.path().to_path_buf(),
                 source,
             })?;
-        let body = file.text()[expression.start() + 3..expression.end() - 2].trim();
+        let body = unbraced(file.slice(expression));
 
         found.push(ExpressionFact::new(file.clone(), expression, context(body)));
         offset = end;

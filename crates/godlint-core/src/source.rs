@@ -164,6 +164,10 @@ impl TextFile {
         }
     }
 
+    pub fn slice(&self, range: SourceRange) -> &str {
+        &self.text[range.start..range.end]
+    }
+
     pub fn range(&self, start: usize, end: usize) -> Result<SourceRange, SourceFileError> {
         if start > end {
             return Err(SourceFileError::ReversedRange { start, end });
