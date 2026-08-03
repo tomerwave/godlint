@@ -1,7 +1,3 @@
-mod severity;
-
-use severity::*;
-
 use crate::{
     config::{Config, Severity},
     rules::{
@@ -42,308 +38,79 @@ struct Registration {
     languages: Languages,
 }
 
-const REGISTRATIONS: &[Registration] = &[
-    Registration {
-        id: FunctionSize::ID,
-        languages: FunctionSize::LANGUAGES,
-        severity: function_size_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: FunctionNesting::ID,
-        languages: FunctionNesting::LANGUAGES,
-        severity: function_nesting_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: FileSize::ID,
-        languages: FileSize::LANGUAGES,
-        severity: file_size_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: EmptyFunction::ID,
-        languages: EmptyFunction::LANGUAGES,
-        severity: empty_function_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: TodoRequiresReference::ID,
-        languages: TodoRequiresReference::LANGUAGES,
-        severity: todo_requires_reference_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: ParameterCount::ID,
-        languages: ParameterCount::LANGUAGES,
-        severity: parameter_count_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: DecisionComplexity::ID,
-        languages: DecisionComplexity::LANGUAGES,
-        severity: decision_complexity_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: ConditionComplexity::ID,
-        languages: ConditionComplexity::LANGUAGES,
-        severity: condition_complexity_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: CognitiveComplexity::ID,
-        languages: CognitiveComplexity::LANGUAGES,
-        severity: cognitive_complexity_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: ReturnCount::ID,
-        languages: ReturnCount::LANGUAGES,
-        severity: return_count_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: FunctionStatements::ID,
-        languages: FunctionStatements::LANGUAGES,
-        severity: function_statements_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: NoComments::ID,
-        languages: NoComments::LANGUAGES,
-        severity: no_comments_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: AccountableSuppression::ID,
-        languages: AccountableSuppression::LANGUAGES,
-        severity: accountable_suppression_severity,
-        suppressible: false,
-    },
-    Registration {
-        id: UnusedSuppression::ID,
-        languages: UnusedSuppression::LANGUAGES,
-        severity: unused_suppression_severity,
-        suppressible: false,
-    },
-    Registration {
-        id: RestrictedCall::ID,
-        languages: RestrictedCall::LANGUAGES,
-        severity: restricted_call_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: NoDynamicExecution::ID,
-        languages: NoDynamicExecution::LANGUAGES,
-        severity: no_dynamic_execution_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: DirectEnvironmentRead::ID,
-        languages: DirectEnvironmentRead::LANGUAGES,
-        severity: direct_environment_read_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: ExplicitTimerDelay::ID,
-        languages: ExplicitTimerDelay::LANGUAGES,
-        severity: explicit_timer_delay_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: EmptyErrorHandler::ID,
-        languages: EmptyErrorHandler::LANGUAGES,
-        severity: empty_error_handler_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: AssertionRequired::ID,
-        languages: AssertionRequired::LANGUAGES,
-        severity: assertion_required_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: NoEmptyTest::ID,
-        languages: NoEmptyTest::LANGUAGES,
-        severity: no_empty_test_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: NoFocusedTest::ID,
-        languages: NoFocusedTest::LANGUAGES,
-        severity: no_focused_test_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: NoSkippedTest::ID,
-        languages: NoSkippedTest::LANGUAGES,
-        severity: no_skipped_test_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: NoSleepInTest::ID,
-        languages: NoSleepInTest::LANGUAGES,
-        severity: no_sleep_in_test_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: NoRandomnessWithoutSeed::ID,
-        languages: NoRandomnessWithoutSeed::LANGUAGES,
-        severity: no_randomness_without_seed_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: NoNetworkInUnitTest::ID,
-        languages: NoNetworkInUnitTest::LANGUAGES,
-        severity: no_network_in_unit_test_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: NoInternalImport::ID,
-        languages: NoInternalImport::LANGUAGES,
-        severity: no_internal_import_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: NoShellCommand::ID,
-        languages: NoShellCommand::LANGUAGES,
-        severity: no_shell_command_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: NoTestHelperInProduction::ID,
-        languages: NoTestHelperInProduction::LANGUAGES,
-        severity: no_test_helper_in_production_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: NoWeakHash::ID,
-        languages: NoWeakHash::LANGUAGES,
-        severity: no_weak_hash_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: NoInsecureRandom::ID,
-        languages: NoInsecureRandom::LANGUAGES,
-        severity: no_insecure_random_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: NoProductionLog::ID,
-        languages: NoProductionLog::LANGUAGES,
-        severity: no_production_log_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: RestrictedImport::ID,
-        languages: RestrictedImport::LANGUAGES,
-        severity: restricted_import_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: DependencyBoundary::ID,
-        languages: DependencyBoundary::LANGUAGES,
-        severity: dependency_boundary_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: ForbiddenDependency::ID,
-        languages: ForbiddenDependency::LANGUAGES,
-        severity: forbidden_dependency_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: ModuleIndependence::ID,
-        languages: ModuleIndependence::LANGUAGES,
-        severity: module_independence_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: FilenameCase::ID,
-        languages: FilenameCase::LANGUAGES,
-        severity: filename_case_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: ExplicitWorkflowPermissions::ID,
-        languages: ExplicitWorkflowPermissions::LANGUAGES,
-        severity: explicit_workflow_permissions_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: PinThirdPartyActions::ID,
-        languages: PinThirdPartyActions::LANGUAGES,
-        severity: pin_third_party_actions_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: StaleActionRefs::ID,
-        languages: StaleActionRefs::LANGUAGES,
-        severity: stale_action_refs_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: TemplateInjection::ID,
-        languages: TemplateInjection::LANGUAGES,
-        severity: template_injection_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: BotConditions::ID,
-        languages: BotConditions::LANGUAGES,
-        severity: bot_conditions_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: NoInlineScript::ID,
-        languages: NoInlineScript::LANGUAGES,
-        severity: no_inline_script_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: NoMonolithicJob::ID,
-        languages: NoMonolithicJob::LANGUAGES,
-        severity: no_monolithic_job_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: SecretsInherit::ID,
-        languages: SecretsInherit::LANGUAGES,
-        severity: secrets_inherit_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: OverprovisionedSecrets::ID,
-        languages: OverprovisionedSecrets::LANGUAGES,
-        severity: overprovisioned_secrets_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: UnredactedSecrets::ID,
-        languages: UnredactedSecrets::LANGUAGES,
-        severity: unredacted_secrets_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: NoSilencedFailure::ID,
-        languages: NoSilencedFailure::LANGUAGES,
-        severity: no_silenced_failure_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: NoWorkflowComments::ID,
-        languages: NoWorkflowComments::LANGUAGES,
-        severity: no_workflow_comments_severity,
-        suppressible: true,
-    },
-    Registration {
-        id: HardcodedContainerCredentials::ID,
-        languages: HardcodedContainerCredentials::LANGUAGES,
-        severity: hardcoded_container_credentials_severity,
-        suppressible: true,
-    },
-];
+macro_rules! registrations {
+    ($($rule:ty => $field:ident, $suppressible:literal);+ $(;)?) => {
+        const REGISTRATIONS: &[Registration] = &[
+            $(
+                Registration {
+                    id: <$rule>::ID,
+                    languages: <$rule>::LANGUAGES,
+                    severity: |config| {
+                        config
+                            .rules
+                            .$field
+                            .as_ref()
+                            .map_or(Severity::Off, <$rule as Rule>::severity)
+                    },
+                    suppressible: $suppressible,
+                }
+            ),+
+        ];
+    };
+}
+
+registrations! {
+    FunctionSize => function_size, true;
+    FunctionNesting => function_nesting, true;
+    FileSize => file_size, true;
+    EmptyFunction => empty_function, true;
+    TodoRequiresReference => todo_requires_reference, true;
+    ParameterCount => parameter_count, true;
+    DecisionComplexity => decision_complexity, true;
+    ConditionComplexity => condition_complexity, true;
+    CognitiveComplexity => cognitive_complexity, true;
+    ReturnCount => return_count, true;
+    FunctionStatements => function_statements, true;
+    NoComments => no_comments, true;
+    AccountableSuppression => accountable_suppression, false;
+    UnusedSuppression => unused_suppression, false;
+    RestrictedCall => restricted_call, true;
+    NoDynamicExecution => no_dynamic_execution, true;
+    DirectEnvironmentRead => direct_environment_read, true;
+    ExplicitTimerDelay => explicit_timer_delay, true;
+    EmptyErrorHandler => empty_error_handler, true;
+    AssertionRequired => assertion_required, true;
+    NoEmptyTest => no_empty_test, true;
+    NoFocusedTest => no_focused_test, true;
+    NoSkippedTest => no_skipped_test, true;
+    NoSleepInTest => no_sleep_in_test, true;
+    NoRandomnessWithoutSeed => no_randomness_without_seed, true;
+    NoNetworkInUnitTest => no_network_in_unit_test, true;
+    NoInternalImport => no_internal_import, true;
+    NoShellCommand => no_shell_command, true;
+    NoTestHelperInProduction => no_test_helper_in_production, true;
+    NoWeakHash => no_weak_hash, true;
+    NoInsecureRandom => no_insecure_random, true;
+    NoProductionLog => no_production_log, true;
+    RestrictedImport => restricted_import, true;
+    DependencyBoundary => dependency_boundary, true;
+    ForbiddenDependency => forbidden_dependency, true;
+    ModuleIndependence => module_independence, true;
+    FilenameCase => filename_case, true;
+    ExplicitWorkflowPermissions => explicit_workflow_permissions, true;
+    PinThirdPartyActions => pin_third_party_actions, true;
+    StaleActionRefs => stale_action_refs, true;
+    TemplateInjection => template_injection, true;
+    BotConditions => bot_conditions, true;
+    NoInlineScript => no_inline_script, true;
+    NoMonolithicJob => no_monolithic_job, true;
+    SecretsInherit => secrets_inherit, true;
+    OverprovisionedSecrets => overprovisioned_secrets, true;
+    UnredactedSecrets => unredacted_secrets, true;
+    NoSilencedFailure => no_silenced_failure, true;
+    NoWorkflowComments => no_workflow_comments, true;
+    HardcodedContainerCredentials => hardcoded_container_credentials, true;
+}
 
 pub fn rule_ids() -> impl Iterator<Item = &'static str> {
     REGISTRATIONS.iter().map(|registration| registration.id)

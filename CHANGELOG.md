@@ -153,6 +153,17 @@ speaks about.
   level deeper, under a name that is private to the crate. `Debug` is not a stability surface and no
   reporter, test or snapshot in this repository reads it, but it is not literally unchanged.
 
+- Nothing a user can observe: a rule is registered in one row instead of three coordinated places.
+  `registry.rs` held fifty six-line `Registration` literals, each naming a severity function that
+  `registry/severity.rs` generated from a second macro, with the thirty-line import list written out
+  in both files. A `registrations!` row now names the rule's type, its configuration field and
+  whether it can be suppressed, and the identifier and language support are read off the type rather
+  than restated — so those two cannot disagree with the rule at all, and the field is declared once
+  instead of in two files. 628 lines across two files become 171 in one, and `severity.rs` is gone.
+  Adding a rule was three coordinated edits plus two import lists, which is why
+  `docs/skills/add-a-rule.md` never mentioned `severity.rs` and every new rule carried an
+  undocumented obligation.
+
 - Nothing a user can observe: twenty-one rule configuration structs are declared by two macros
   instead of by hand. Thirteen were exactly `{ severity }` and eight exactly `{ severity, allow-in }`,
   and `config/rules.rs` already had the parameterised form for this situation in `count_limit_rules!`.
