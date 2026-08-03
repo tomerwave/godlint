@@ -48,6 +48,17 @@ speaks about.
   cannot be checked without a network. Found by probing the built binary while reviewing the rule,
   not by reading it.
 
+## [Unreleased]
+
+### Fixed
+
+- The lists `recommended@1` enforces by default are pinned by tests. Nothing asserted them: every
+  test passed its own markers, test paths and helpers, so deleting `XXX` from the marker defaults —
+  which silently stops `policy/todo-requires-reference` asking for a reference on an `XXX:` comment
+  in every repository using the suite — passed all 1,860 checks. This repository writes no comments
+  in Rust, so its own dogfooding could not notice either. Found when a one-line pull request proposed
+  exactly that change under a title claiming to add a marker.
+
 ## [0.5.0] - 2026-08-01
 
 ### Added
