@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
 use godlint_core::{
-    analyzers::SourceFacts, analyzers::analyze, config::Config, date::Date, rules::evaluate,
-    source::SourceFile, suppression::Suppression, suppression::collect,
+    analyzers::SourceFacts, analyzers::analyze, config::Config, date::Date, rules::Finding,
+    rules::evaluate, source::SourceFile, suppression::Suppression, suppression::collect,
 };
 
 pub(super) fn facts(path: &str, source: &str) -> SourceFacts {
@@ -22,6 +22,12 @@ pub(super) fn only(path: &str, source: &str) -> Suppression {
     assert_eq!(found.len(), 1, "expected exactly one suppression in {path}");
 
     found.remove(0)
+}
+
+pub(super) fn findings_in(path: &str, source: &str, body: &str) -> Vec<Finding> {
+    let facts = facts(path, source);
+
+    evaluate(std::slice::from_ref(&facts), &[], &config(body), today())
 }
 
 pub(super) fn config(body: &str) -> Config {

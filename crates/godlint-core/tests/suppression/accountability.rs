@@ -4,7 +4,9 @@ use godlint_core::{
     config::Severity, facts::CommentKind, rules::evaluate, suppression::is_directive_only,
 };
 
-use super::support::{config, facts, only, suppressions, surviving, today};
+use super::support::{
+    EMPTY_FUNCTION, config, facts, findings_in, only, suppressions, surviving, today,
+};
 
 #[test]
 fn identifies_a_comment_that_is_only_a_directive() {
@@ -283,5 +285,23 @@ fn a_directive_on_a_docstrings_opening_line_occupies_that_line() {
         [(2, 1)],
         "the docstring's opening line holds a directive, so the line-1 directive skips past it \
          rather than spending itself on the docstring; the docstring's own prose is still reported"
+    );
+}
+
+#[test]
+fn covers_refuses_a_finding_from_another_file_on_the_line_it_covers() {
+    let directive = "// godlint-ignore-next-line maintainability/empty-function -- a stub\n";
+    let stub = "fn example() {}\n";
+    let suppression = only("src/covered.rs", &format!("{directive}{stub}"));
+    let elsewhere = findings_in("src/other.rs", &format!("\n{stub}"), EMPTY_FUNCTION);
+
+    assert_eq!(elsewhere.len(), 1);
+    assert_eq!(
+        elsewhere[0].line, 2,
+        "the finding sits on the same line the directive covers, so only the path differs"
+    );
+    assert!(
+        !suppression.covers(&elsewhere[0]),
+        "covers is public, so it must refuse a finding from a file it does not sit in"
     );
 }
