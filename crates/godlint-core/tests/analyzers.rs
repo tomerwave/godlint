@@ -344,6 +344,43 @@ fn reads_no_import_from_a_file_that_has_none() {
 }
 
 #[test]
+fn reads_no_import_from_a_top_level_rust_use_list() {
+    let facts = analyze(&source("example.rs", "use {std, core};\n"))
+        .unwrap_or_else(|error| panic!("analyzes: {error}"));
+    let modules: Vec<&str> = facts
+        .imports()
+        .iter()
+        .map(|import| import.module())
+        .collect();
+
+    assert_eq!(modules, Vec::<&str>::new());
+}
+
+#[test]
+fn parses_jsx_in_a_tsx_file() {
+    let facts = analyze(&source(
+        "Component.tsx",
+        "function render(value: string) { return <Component prop={value} />; }",
+    ))
+    .unwrap_or_else(|error| panic!("analyzes TSX: {error}"));
+
+    assert!(facts.unparsed().is_empty());
+    assert_eq!(facts.functions().len(), 1);
+}
+
+#[test]
+fn parses_an_angle_bracket_type_assertion_in_a_ts_file() {
+    let facts = analyze(&source(
+        "example.ts",
+        "function convert(input: unknown) { const value = <string>input; return value; }",
+    ))
+    .unwrap_or_else(|error| panic!("analyzes TypeScript: {error}"));
+
+    assert!(facts.unparsed().is_empty());
+    assert_eq!(facts.functions().len(), 1);
+}
+
+#[test]
 fn counts_direct_call_arguments() {
     let facts = analyze(&source(
         "example.ts",

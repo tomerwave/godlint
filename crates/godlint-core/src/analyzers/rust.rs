@@ -101,6 +101,7 @@ fn cognition(node: Node<'_>) -> Option<Cognition> {
         "if_expression" if is_else_if(node) => Some(Cognition::Hybrid),
         "if_expression" | "match_expression" | "for_expression" | "while_expression"
         | "loop_expression" => Some(Cognition::Structural),
+        "let_declaration" => is_refutable_let(node).then_some(Cognition::Structural),
         "else_clause" if holds_an_if(node) => None,
         "else_clause" => Some(Cognition::Hybrid),
         "binary_expression" if opens_operator_sequence(node) => Some(Cognition::Fundamental),

@@ -9,8 +9,22 @@ speaks about.
 
 ## [Unreleased]
 
+### Changed
+
+- `maintainability/cognitive-complexity` counts a Rust `let … else` as a branch, weighted by the
+  nesting it sits at, the way every other branching form is counted. `decision-complexity` already
+  counted it, so the two metrics disagreed about whether a refutable binding is a decision; a
+  `let Some(value) = option else { return; }` now costs 1 at the top level and 3 inside an `if`.
+  Nothing in this repository crosses the threshold of 15 as a result.
+
 ### Fixed
 
+- Four decisions in the analysers had no test depending on them, which a full mutation sweep of
+  `main` found: a Rust `use {std, core};` brace list must contribute no import, an ordinary `let`
+  must not count as a branch where a `let … else` does, and `.tsx` must be parsed by the TSX grammar
+  while `.ts` is parsed by the TypeScript one. That last pair reject each other's syntax in both
+  directions — JSX under TypeScript and an angle-bracket type assertion under TSX — so swapping them
+  broke nothing any test noticed until now.
 - `validate-pull-request.py`'s change-scoped checks see the working tree, not only what is committed.
   They read `git diff <release line>...HEAD`, so a local run before the commit — which is most of them —
   found no changed files, skipped the checks, and printed that every check passed. Staged, unstaged and
