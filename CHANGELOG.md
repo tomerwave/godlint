@@ -20,6 +20,16 @@ speaks about.
   to 1,093ms and the grouped path to 616ms, so the gap widens as a repository grows. Grouping cannot
   change which suppression matches: `covers` already required the paths to be equal, and `Ord` on a
   path agrees with `==` on it, so the map admits and rejects exactly the pairs the scan did.
+- Reading and parsing files runs on every core. The scan walked discovered files one at a time while
+  read, parse and fact collection are independent per file and share nothing mutable — 85% of the run
+  on one core. Chunks are merged in chunk order, so the facts arrive in the same order they did
+  sequentially and the output does not depend on how the work was divided. Measured on a 2,104-file
+  tree with ten cores: 1,244ms to 467ms, and eight consecutive runs are byte-identical. A tree of 32
+  files or fewer stays sequential, and a second thread appears at 33 — measured at that boundary, the
+  difference is inside the noise either way, because a run of that size is dominated by the 69ms it
+  takes to start and read the configuration. The win is 2.66× on a large repository and nothing at all
+  on a small one. Where a machine reports one core, `available_parallelism` returns 1 and the
+  sequential path is taken.
 
 - Deciding that a path is not excluded no longer allocates. `glob::segment_matches` built two
   `Vec<char>`s and a table per segment comparison before comparing anything, including for the

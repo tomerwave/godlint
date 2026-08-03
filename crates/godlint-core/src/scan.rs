@@ -2,7 +2,10 @@ use std::{
     error::Error,
     fmt, fs,
     io::Read,
+    num::NonZeroUsize,
+    panic::resume_unwind,
     path::{Path, PathBuf},
+    thread::{self, available_parallelism},
 };
 
 use crate::{
@@ -13,6 +16,7 @@ use crate::{
 
 pub const MAX_SOURCE_BYTES: u64 = 4 * 1024 * 1024;
 const UNREADABLE: &str = "unable to discover";
+const WORK_PER_WORKER: usize = 32;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ScanIssue {
@@ -43,13 +47,55 @@ pub fn scan(root: &Path, paths: &[PathBuf], excludes: &[String]) -> Result<ScanR
         issues: discovery_issues(root, discovered.failures),
     };
 
-    for path in discovered.files {
-        scan_file(root, &path, &mut report)?;
+    for scanned in scanned_in_parallel(root, &discovered.files)? {
+        report.facts.extend(scanned.facts);
+        report.workflows.extend(scanned.workflows);
+        report.issues.extend(scanned.issues);
     }
 
     report
         .issues
         .sort_by(|left, right| (&left.path, &left.message).cmp(&(&right.path, &right.message)));
+
+    Ok(report)
+}
+
+fn scanned_in_parallel(root: &Path, files: &[PathBuf]) -> Result<Vec<ScanReport>, ScanError> {
+    let workers = workers(files.len());
+
+    if workers <= 1 {
+        return scanned(root, files).map(|report| vec![report]);
+    }
+
+    thread::scope(|scope| {
+        let handles: Vec<_> = files
+            .chunks(files.len().div_ceil(workers))
+            .map(|chunk| scope.spawn(move || scanned(root, chunk)))
+            .collect();
+
+        handles
+            .into_iter()
+            .map(|handle| handle.join().unwrap_or_else(|panic| resume_unwind(panic)))
+            .collect()
+    })
+}
+
+fn workers(files: usize) -> usize {
+    let available = available_parallelism().map_or(1, NonZeroUsize::get);
+
+    available.min(files.div_ceil(WORK_PER_WORKER)).max(1)
+}
+
+fn scanned(root: &Path, files: &[PathBuf]) -> Result<ScanReport, ScanError> {
+    let mut report = ScanReport {
+        facts: Vec::new(),
+        workflows: Vec::new(),
+        issues: Vec::new(),
+    };
+
+    for path in files {
+        scan_file(root, path, &mut report)?;
+    }
 
     Ok(report)
 }

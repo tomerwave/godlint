@@ -154,3 +154,53 @@ fn a_workflow_it_cannot_read_becomes_an_issue_rather_than_silence() {
         report.issues[0]
     );
 }
+
+fn wide_repository(count: usize) -> Repository {
+    let repository = Repository::new();
+
+    for index in 0..count {
+        repository.write(
+            &format!("src/file{index:03}.ts"),
+            &format!("export const value{index} = {index};\n"),
+        );
+    }
+    repository.write("src/aaa-torn.ts", "export const value = ;\n");
+    repository.write("src/zzz-torn.ts", "export const value = ;\n");
+    repository.write(
+        ".github/workflows/one.yml",
+        "name: One\non: [push]\njobs: {}\n",
+    );
+
+    repository
+}
+
+#[test]
+fn a_tree_wide_enough_to_split_across_workers_keeps_its_order() {
+    let count = 200;
+    let report = wide_repository(count).scan();
+    let scanned: Vec<String> = report
+        .facts
+        .iter()
+        .map(|facts| facts.source().path_text().to_owned())
+        .collect();
+    let mut expected = scanned.clone();
+    expected.sort();
+
+    assert_eq!(report.facts.len(), count + 2);
+    assert_eq!(report.workflows.len(), 1);
+    assert_eq!(
+        scanned, expected,
+        "facts must come back in path order however the work was divided"
+    );
+    let torn: Vec<String> = report
+        .issues
+        .iter()
+        .map(|issue| issue.path.display().to_string())
+        .collect();
+
+    assert_eq!(
+        torn,
+        vec!["src/aaa-torn.ts".to_owned(), "src/zzz-torn.ts".to_owned()],
+        "issues from files in different chunks keep their order"
+    );
+}
