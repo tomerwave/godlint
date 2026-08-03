@@ -48,7 +48,7 @@ suite that reports its own test data.
 
 | Rule | Findings | The cost of fixing it |
 | --- | ---: | --- |
-| `architecture/filename-case` | 5 | `scripts/check-real-world.py`, `check-release.py`, `check-rule-coverage.py`, `validate-pull-request.py` and `packaging/build-npm.py` are kebab-case where the rule asks Python for snake_case. But a script's *name* is its interface exactly as its `print` is: these are named in four workflows, `CONTRIBUTING.md` and five documents, and `.github/workflows/real-world.yml` matches one as a **path trigger**, so renaming it silently changes when that workflow runs. Renaming would also leave `scripts/` mixed, since the four `.sh` files are correctly kebab-case. Worth doing deliberately, in a change that can be reviewed as an interface change — not as tidying. |
+| `architecture/filename-case` | 5 | `scripts/check-real-world.py`, `check-release.py`, `check-rule-coverage.py`, `validate-pull-request.py` and `packaging/build-npm.py` are kebab-case where the rule asks Python for snake_case. But a script's *name* is its interface exactly as its `print` is: these five names appear in four workflows and nineteen other files — seven documents under `docs/`, `AGENTS.md`, `CONTRIBUTING.md`, two pull-request templates, three agent skill definitions and `.cargo/mutants.toml` — and `.github/workflows/real-world.yml` matches one as a **path trigger**, so renaming it silently changes when that workflow runs. `validate-pull-request.py` alone is named in eighteen files. Renaming would also leave `scripts/` mixed, since the four `.sh` files are correctly kebab-case. Worth doing deliberately, in a change that can be reviewed as an interface change — not as tidying. |
 
 **16 are debt with no argument for them.**
 
@@ -64,7 +64,7 @@ suite that reports its own test data.
 `logging/no-production-log` takes rule-level `allow-in` path globs, and
 `architecture/restricted-call` takes them per call entry, with the built-in catalogue treated as
 additive — so those 28 findings could be declared per rule and every other path would stay enforced.
-That is four or five lines of configuration, not an exclusion.
+Measured by writing it: that configuration is about a dozen lines and takes the 127 findings to 99, removing exactly those 28 and nothing else. A dozen lines is not an exclusion.
 
 `style/no-comments` is the one that decides it. Its two settings are a severity and
 `allow-doc-comments`, and neither is a path. Nor is there a way around it elsewhere: the top-level
@@ -74,7 +74,7 @@ there is no `overrides` block; a suite is an opaque name with no options; and a 
 root of a git repository. With 78 findings the rule decides the outcome by itself, and the only ways
 to silence it here are removing the paths or writing 78 inline suppressions.
 
-Giving `style/no-comments` an `allow-in` would shrink this exclusion to the 21 findings above and
+Giving `style/no-comments` an `allow-in` would shrink this exclusion to the 5 and the 16 in the last two tables, and
 leave every other rule enforced on both directories. It would also serve any repository that wants
 prose-free product code and commented build scripts, which is not an unusual thing to want.
 
