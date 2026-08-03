@@ -33,6 +33,7 @@ jobs:
         shell: bash
         env:
           OUTCOME: ${{ steps.godlint.outcome }}
+          STATUS: ${{ steps.godlint.outputs.status }}
           FIXES_FALSE_POSITIVE: ${{ contains(github.event.pull_request.labels.*.name, 'fixes-false-positive') }}
           RELAXES_A_RULE: ${{ contains(github.event.pull_request.labels.*.name, 'relaxes-a-rule') }}
         run: scripts/explain-released-agreement.sh
@@ -62,13 +63,13 @@ jobs:
           annotations="$RUNNER_TEMP/godlint-annotations.txt"
 
           test "$OUTCOME" = "failure"
-          # Evidence for what docs/ci.md is allowed to claim: whether a composite action that fails
-          # still hands over its outputs. The file is the contract either way, because it is written
-          # before anything can fail.
-          echo "outputs from a failed action: status='$STATUS_OUTPUT' findings='$FINDINGS_OUTPUT'"
-          # Findings, and not some other way of failing: the action must carry Godlint's own status
-          # out, or a tree it could not read at all would fail this job exactly as findings do.
-          test "$(cat "$RUNNER_TEMP/godlint-status.txt")" = "1"
+          # Findings, and not some other way of failing: without the status a tree the action could
+          # not read at all would fail this job exactly as findings do. Asserting it here is also
+          # what holds open the two facts it depends on — that the check step runs to completion
+          # when it reports findings, and that a composite action that fails still hands over its
+          # outputs.
+          test "$STATUS_OUTPUT" = "1"
+          test "$FINDINGS_OUTPUT" = "2"
           grep -q '^::error .*title=architecture/filename-case::' "$annotations"
           grep -q '^::error .*title=logging/no-production-log::' "$annotations"
           echo "the action failed with findings as it should, and annotated both rules"

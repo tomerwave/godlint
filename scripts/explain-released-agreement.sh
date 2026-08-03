@@ -3,9 +3,7 @@
 set -euo pipefail
 
 annotations="$RUNNER_TEMP/godlint-annotations.txt"
-status_file="$RUNNER_TEMP/godlint-status.txt"
 accepted_drift_file="${ACCEPTED_DRIFT_FILE:-.github/accepted-drift.md}"
-status="$(cat "$status_file" 2>/dev/null || true)"
 version="$(godlint --version | cut -d' ' -f2)"
 drift_pattern='^- `([a-z0-9-]+/[a-z0-9-]+)` — (relaxed rule|fixed false positive): ([^[:space:]].*)$'
 declared_rules=()
@@ -34,16 +32,18 @@ report_all_declarations_unused() {
 
 # The status the released binary exited with, not the conclusion of the step that ran it: a step
 # says only whether it failed, while the status says what happened. 0 agrees, 1 reports findings,
-# anything else means the release stopped before it could judge the tree.
-if ! [[ "$status" =~ ^[0-9]+$ ]]; then
-  echo "::error::No exit status from the released Godlint in $status_file, so this check establishes nothing about drift."
+# anything else means the release stopped before it could judge the tree. It is empty when the
+# action failed before the check ran at all, which is not a statement about this tree either.
+if ! [[ "$STATUS" =~ ^[0-9]+$ ]]; then
+  echo "::error::No exit status from the released Godlint, so this check establishes nothing about drift."
   exit 1
 fi
 
-# The step's own conclusion answers the one question a status cannot: whether the action failed for
-# a reason that is not Godlint's verdict — a failed install, a failed step after the check. The
-# status file lives in RUNNER_TEMP, which outlives a step, so a run that never wrote one would
-# otherwise read whatever was left there and call it this run's answer.
+status="$STATUS"
+
+# The step's own conclusion answers the one question the status cannot: whether the action failed
+# for a reason that is not Godlint's verdict, such as a step after the check failing. Then the
+# status is Godlint's and honest while the failure is the action's own.
 if [ "$OUTCOME" = "failure" ] && [ "$status" = "0" ]; then
   echo "::error::The action failed while Godlint exited 0, so the failure is in the action rather than in this tree."
   exit 1

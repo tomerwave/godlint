@@ -29,7 +29,6 @@ run_explanation() {
   local outcome="${6:-$([ "$status" = "0" ] && echo success || echo failure)}"
 
   printf '%s\n' "$annotations" > "$temporary/runner/godlint-annotations.txt"
-  printf '%s\n' "$status" > "$temporary/runner/godlint-status.txt"
   : > "$temporary/summary"
 
   PATH="$temporary/bin:$PATH" \
@@ -38,6 +37,7 @@ run_explanation() {
     ACCEPTED_DRIFT_FILE="$temporary/accepted-drift.md" \
     CONFIGURATION_READS="$configuration_reads" \
     OUTCOME="$outcome" \
+    STATUS="$status" \
     FIXES_FALSE_POSITIVE="$fixes_false_positive" \
     RELAXES_A_RULE="$relaxes_a_rule" \
     scripts/explain-released-agreement.sh
@@ -83,7 +83,7 @@ if run_explanation "" false false "" true \
 fi
 grep -q '^::error::No exit status from the released Godlint' "$temporary/no-status.out"
 
-# A status of 0 left behind by an earlier step, and an action that failed on its own account.
+# Godlint agreed and the action failed anyway, so the failure is the action's own.
 if run_explanation 0 false false "" true failure \
   > "$temporary/failed-action.out" 2>&1; then
   echo "an action that failed while Godlint exited 0 must fail" >&2

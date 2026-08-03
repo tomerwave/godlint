@@ -131,10 +131,9 @@ runs:
       run: |
         set -uo pipefail
 
-        # Fixed paths, written before anything here can fail, so a following step can read the
-        # annotations and the exit status whatever this action's own outcome turns out to be.
+        # A fixed path, so a following step can read the annotations themselves rather than a count
+        # of them. Outputs survive this action failing, so they carry the numbers.
         output="$RUNNER_TEMP/godlint-annotations.txt"
-        status_file="$RUNNER_TEMP/godlint-status.txt"
 
         # A failing check is the expected case here, not an error to abort on: its status is the
         # whole point of the step. GitHub invokes this shell with -e, which the script's own set
@@ -147,7 +146,6 @@ runs:
         set -e
 
         findings="$(grep -c '^::' "$output" || true)"
-        echo "$status" > "$status_file"
         echo "findings=$findings" >> "$GITHUB_OUTPUT"
         echo "status=$status" >> "$GITHUB_OUTPUT"
         exit 0

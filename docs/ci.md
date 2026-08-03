@@ -57,10 +57,11 @@ every rule, so the shape of the work is still visible.
 | `findings` | How many findings were reported. |
 | `status` | The status `godlint check` exited with. |
 
-To act on a count without failing the job, set `fail-on: off` in the configuration and decide in a
-later step. A step that has to know **whether and why** the check failed reads
-`$RUNNER_TEMP/godlint-status.txt`, which the action writes before anything in it can fail, so it is
-there whatever the action's own outcome is:
+All three are readable from a later step even when the action fails, which is the run that has
+something to say. To act on a count without failing the job at all, set `fail-on: off` in the
+configuration and decide afterwards.
+
+`status` is what a step reads to know **why** a run failed rather than only that it did:
 
 | Status | Meaning |
 | --- | --- |

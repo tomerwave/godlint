@@ -11,28 +11,25 @@ speaks about.
 
 ### Changed
 
-- The action writes the status `godlint check` exited with to `$RUNNER_TEMP/godlint-status.txt`, so a
-  following step can tell findings from a run that could not finish. The action already published
-  that status as an output, but never for a run with findings — see the step-abort fixed below — and
-  the output was undocumented, which is part of why nothing noticed. A file written before anything
-  can fail is readable whatever the action's outcome, which is the reasoning already recorded above
-  the annotations file it now sits beside. This repository's own drift gate needed the status and
-  asked an error message for it instead: it decided whether the release could read the configuration
-  by matching the sentence `Configuration is
-  invalid`. The binary being matched is a *past* release, so no test in this repository could hold
-  that wording still, and rewording it would have silently reclassified an unreadable configuration
-  as drift. The gate now reads the status, and when the status says the check did not finish it asks
-  the release itself — `config validate` answers that question with an exit status. Two things follow
-  beyond the plumbing. A release that cannot parse a file exits 2 having still reported what it did
-  reach, and those partial findings were read as drift; they are now a failure to fix, because a
-  verdict on part of a tree is not a verdict. And the guidance the gate printed said adding a *rule*
-  lands there, which stopped being true when a release started ignoring a rule key it does not know
-  with a notice — only a configuration key, a suite or a configuration version does. The step's own
-  conclusion is still read, for the one question a status cannot answer: `RUNNER_TEMP` outlives a
-  step, so an action that failed before Godlint ran would have had a status file left there by
-  something else read as this run's answer. `docs/ci.md` documents the file, the `status` output and
-  what each status means. Found by this repository's own `ci/no-silenced-failure`, which reported the
-  drift job the moment nothing read that outcome any more.
+- The drift gate reads the status the released binary exited with instead of matching a sentence in
+  its output. It decided whether the release could read the configuration by grepping for
+  `Configuration is invalid`, and the binary being grepped is a *past* release — so no test in this
+  repository could hold that wording still, and rewording it in a later version would have silently
+  reclassified an unreadable configuration as drift, the one failure the gate exists to prevent. It
+  now reads the action's `status` output, which has to be fixed to exist at all for a run with
+  findings (below), and when the status says the check did not finish it asks the release itself:
+  `config validate` answers *can you read this configuration* with an exit status, and has since the
+  first release, so every binary the gate can run understands the question. Two things follow beyond
+  the plumbing. A release that cannot parse a file exits 2 having still reported what it did reach,
+  and those partial findings were read as drift with a choice of labels offered; a verdict on part of
+  a tree is not a verdict, so that now fails and says so. And the guidance the gate printed said
+  adding a *rule* lands there, which stopped being true when a release started ignoring an unknown
+  rule key with a notice — only a configuration key, a suite or a configuration version reaches it.
+  The step's own conclusion is still read, for the one question the status cannot answer: a step
+  after the check failing leaves Godlint's own status honest while the action failed for its own
+  reason. That the outcome is read at all was `ci/no-silenced-failure` reporting this repository's
+  drift job the moment nothing did. `docs/ci.md` documents the `status` output, which existed
+  undocumented, and what each status means.
 
 - Nothing a user can observe: the per-language module separator is defined once. Two rules kept their
   own copy — one returning a `char`, so Rust's `::` was halved to `:`, and one that used `/` for every
@@ -125,10 +122,11 @@ speaks about.
   for existing is that GitHub renders only so many annotations and a first adoption produces
   hundreds, ran only against trees that had nothing to summarise, where it printed `No findings.`
   The `findings` and `status` outputs were empty for the same reason, and `docs/ci.md` explained that
-  with the wrong cause — a composite action withholding outputs — which is why the real one went
-  unexamined for as long as it did. Found by adding an assertion to the `dirty` workflow job, which
-  had asserted the action fails but not why: the failure it proved all along was the step aborting,
-  which looks the same from outside as findings failing the run.
+  with the wrong cause — a composite action withholding its outputs when it fails, which measurably
+  it does not — and a wrong explanation is why the real one went unexamined this long. Found by
+  asserting in the `dirty` workflow job that the action fails *with findings*, where it had asserted
+  only that it fails: an aborting step and findings failing a run look identical from outside, so the
+  failure that job proved all along was the abort.
 - A blank `helpers` or `test-paths` entry for `testing/no-test-helper-in-production` is rejected as
   invalid configuration. The two were broken differently: `helpers: [""]` matched the empty segments
   that splitting a Rust `::` path on one colon produced and reported `crate::tests::helper` with the
