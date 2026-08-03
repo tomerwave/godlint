@@ -3,7 +3,9 @@
 set -euo pipefail
 
 annotations="$RUNNER_TEMP/godlint-annotations.txt"
+status_file="$RUNNER_TEMP/godlint-status.txt"
 accepted_drift_file="${ACCEPTED_DRIFT_FILE:-.github/accepted-drift.md}"
+status="$(cat "$status_file" 2>/dev/null || true)"
 version="$(godlint --version | cut -d' ' -f2)"
 drift_pattern='^- `([a-z0-9-]+/[a-z0-9-]+)` — (relaxed rule|fixed false positive): ([^[:space:]].*)$'
 declared_rules=()
@@ -30,20 +32,55 @@ report_all_declarations_unused() {
   fi
 }
 
-if grep -Fq 'Configuration is invalid' "$annotations" 2>/dev/null; then
-  {
-    echo "The released Godlint $version cannot read this configuration."
-    echo
-    echo "This is expected when a pull request adds a rule or configuration key that"
-    echo "the release does not have. It is not drift, needs neither drift label, and"
-    echo "goes green on its own after the next release."
-  } | tee -a "$GITHUB_STEP_SUMMARY"
+# The status the released binary exited with, not the conclusion of the step that ran it: a step
+# says only whether it failed, while the status says what happened. 0 agrees, 1 reports findings,
+# anything else means the release stopped before it could judge the tree.
+if ! [[ "$status" =~ ^[0-9]+$ ]]; then
+  echo "::error::No exit status from the released Godlint in $status_file, so this check establishes nothing about drift."
+  exit 1
+fi
+
+# The step's own conclusion answers the one question a status cannot: whether the action failed for
+# a reason that is not Godlint's verdict — a failed install, a failed step after the check. The
+# status file lives in RUNNER_TEMP, which outlives a step, so a run that never wrote one would
+# otherwise read whatever was left there and call it this run's answer.
+if [ "$OUTCOME" = "failure" ] && [ "$status" = "0" ]; then
+  echo "::error::The action failed while Godlint exited 0, so the failure is in the action rather than in this tree."
+  exit 1
+fi
+
+if [ "$status" = "0" ]; then
+  echo "Godlint $version reports nothing against this tree."
   report_all_declarations_unused
   exit 0
 fi
 
-if [ "$OUTCOME" = "success" ]; then
-  echo "Godlint $version reports nothing against this tree."
+if [ "$status" != "1" ]; then
+  # Whether the configuration is why is asked of the release itself, because `config validate`
+  # answers it with an exit status. Reading it out of an error message would tie this gate to the
+  # wording a *past* release chose, which no test in this repository can hold still.
+  if godlint config validate > /dev/null 2>&1; then
+    {
+      echo "The released Godlint $version could not check this tree, and the configuration is not why."
+      echo
+      echo "It exited $status, which is neither agreement nor findings, so this run establishes"
+      echo "nothing about drift in either direction: a file it could not parse or a path it would"
+      echo "not accept leaves part of the tree unchecked, so whatever it did report is a partial"
+      echo "answer. That is a failure to fix here, not drift to declare."
+    } | tee -a "$GITHUB_STEP_SUMMARY"
+    exit 1
+  fi
+
+  {
+    echo "The released Godlint $version cannot read this configuration."
+    echo
+    echo "This is expected when a pull request adds a configuration key, a suite or a"
+    echo "configuration version that the release does not have. It is not drift, needs"
+    echo "neither drift label, and goes green on its own after the next release."
+    echo
+    echo "Adding a *rule* does not land here: a release ignores a rule key it does not"
+    echo "know, with a notice, so the configuration still reads."
+  } | tee -a "$GITHUB_STEP_SUMMARY"
   report_all_declarations_unused
   exit 0
 fi

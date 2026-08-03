@@ -55,9 +55,21 @@ every rule, so the shape of the work is still visible.
 | --- | --- |
 | `version` | The version that ran, resolved if the input was `latest`. |
 | `findings` | How many findings were reported. |
+| `status` | The status `godlint check` exited with. |
 
-A composite action withholds its outputs when it fails, so `findings` is readable only from a run that
+A composite action withholds its outputs when it fails, so all three are readable only from a run that
 passed. To act on a failing count, set `fail-on: off` in the configuration and decide in a later step.
+A step that has to know **why** a failing run failed reads `$RUNNER_TEMP/godlint-status.txt`, which the
+action writes before it fails and GitHub therefore cannot withhold:
+
+| Status | Meaning |
+| --- | --- |
+| `0` | Nothing at or above `fail-on`. |
+| `1` | Findings at or above `fail-on`. |
+| `2` | Godlint could not check everything it was asked to — an unreadable configuration, a file it could not parse, a path it would not accept. Findings it did reach are still reported. |
+
+The distinction matters because a workflow that treats every non-zero status as findings reports a
+clean tree it could not read as a tree with problems.
 
 ### Versioning
 

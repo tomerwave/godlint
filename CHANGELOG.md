@@ -11,6 +11,27 @@ speaks about.
 
 ### Changed
 
+- The action writes the status `godlint check` exited with to `$RUNNER_TEMP/godlint-status.txt`, so a
+  following step can tell findings from a run that could not finish. A composite action's outputs are
+  withheld when it fails, which is precisely when that distinction is wanted, so the `status` output
+  was readable only from runs that did not need it — and it was undocumented, which is why nothing
+  noticed. This repository's own drift gate needed it and asked an error message instead: it decided
+  whether the release could read the configuration by matching the sentence `Configuration is
+  invalid`. The binary being matched is a *past* release, so no test in this repository could hold
+  that wording still, and rewording it would have silently reclassified an unreadable configuration
+  as drift. The gate now reads the status, and when the status says the check did not finish it asks
+  the release itself — `config validate` answers that question with an exit status. Two things follow
+  beyond the plumbing. A release that cannot parse a file exits 2 having still reported what it did
+  reach, and those partial findings were read as drift; they are now a failure to fix, because a
+  verdict on part of a tree is not a verdict. And the guidance the gate printed said adding a *rule*
+  lands there, which stopped being true when a release started ignoring a rule key it does not know
+  with a notice — only a configuration key, a suite or a configuration version does. The step's own
+  conclusion is still read, for the one question a status cannot answer: `RUNNER_TEMP` outlives a
+  step, so an action that failed before Godlint ran would have had a status file left there by
+  something else read as this run's answer. `docs/ci.md` documents the file, the `status` output and
+  what each status means. Found by this repository's own `ci/no-silenced-failure`, which reported the
+  drift job the moment nothing read that outcome any more.
+
 - Nothing a user can observe: the per-language module separator is defined once. Two rules kept their
   own copy — one returning a `char`, so Rust's `::` was halved to `:`, and one that used `/` for every
   language except Python, so a Rust path was a single segment. Neither was observable: splitting

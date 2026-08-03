@@ -60,6 +60,9 @@ jobs:
           annotations="$RUNNER_TEMP/godlint-annotations.txt"
 
           test "$OUTCOME" = "failure"
+          # Findings, and not some other way of failing: the action must carry Godlint's own status
+          # out, or a tree it could not read at all would fail this job exactly as findings do.
+          test "$(cat "$RUNNER_TEMP/godlint-status.txt")" = "1"
           grep -q '^::error .*title=architecture/filename-case::' "$annotations"
           grep -q '^::error .*title=logging/no-production-log::' "$annotations"
-          echo "the action failed as it should, and annotated both rules"
+          echo "the action failed with findings as it should, and annotated both rules"
