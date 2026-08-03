@@ -13,7 +13,7 @@ which.
 | 1 | `crates/godlint-core/src/rules/mod.rs` | `pub mod <name>;` |
 | 2 | `crates/godlint-core/src/rules/mod.rs` | `<name>::evaluate` listed in `EVALUATORS` — without this the rule compiles and never runs |
 | 3 | `crates/godlint-core/src/config/mod.rs` | A field on `Rules` renamed to the identifier via `#[serde(rename = "family/name")]` — without this the rule cannot be configured |
-| 4 | `crates/godlint-core/src/rules/registry.rs` | `id: <Struct>::ID` in `REGISTRATIONS` — without this a suppression naming the rule is silently treated as a typo, and `policy/unused-suppression` can never count its suppressions as used |
+| 4 | `crates/godlint-core/src/rules/registry.rs` | One `registrations!` row, `<Struct> => <config field>, <suppressible>;` — without this a suppression naming the rule is silently treated as a typo, and `policy/unused-suppression` can never count its suppressions as used. The config field is the one added in step 3, and the row is the only place the rule is registered: severity resolution and language support are derived from it |
 | 5 | `crates/godlint-cli/tests/fixtures/rules/<slug>/` | A fixture directory: per-language `example.*` files, `godlint.yaml`, `expected.yaml` |
 | 5b | `crates/godlint-cli/tests/e2e.rs` | Each new fixture directory declared, or `every_fixture_directory_is_declared` fails with two long sorted sets and no hint which name is missing |
 | 6 | `crates/godlint-core/tests/rules/<name>.rs` | Unit tests |
