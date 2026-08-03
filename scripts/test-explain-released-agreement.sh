@@ -111,6 +111,23 @@ if grep -q 'command not found' "$temporary/no-binary.out"; then
   exit 1
 fi
 
+# A checkout with no godlint.yaml. The release could not read a configuration that is not there, so
+# without a guard this reads as a release too old to understand one, and passes.
+gate="$PWD/scripts/explain-released-agreement.sh"
+printf '%s\n' 2 > "$temporary/runner/godlint-status.txt"
+if (
+  cd "$temporary" &&
+  env PATH="$temporary/bin:/usr/bin:/bin" RUNNER_TEMP="$temporary/runner" \
+    GITHUB_STEP_SUMMARY="$temporary/summary" \
+    ACCEPTED_DRIFT_FILE="$temporary/accepted-drift.md" \
+    CONFIGURATION_READS=false OUTCOME=failure STATUS=2 \
+    FIXES_FALSE_POSITIVE=false RELAXES_A_RULE=false "$gate"
+) > "$temporary/no-config.out" 2>&1; then
+  echo "a tree with no godlint.yaml must fail rather than read as an old release" >&2
+  exit 1
+fi
+grep -q '^::error::There is no godlint.yaml' "$temporary/no-config.out"
+
 # Godlint agreed and the action failed anyway, so the failure is the action's own.
 if run_explanation 0 false false "" true failure \
   > "$temporary/failed-action.out" 2>&1; then

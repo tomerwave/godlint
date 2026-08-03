@@ -59,6 +59,15 @@ if [ "$STATUS" = "0" ]; then
 fi
 
 if [ "$STATUS" != "1" ]; then
+  # `config validate` reads ./godlint.yaml, so this asserts the assumption the next line depends on:
+  # that this step's directory is the one the action checked. Without it a checkout with no
+  # configuration at all takes the vacuous branch below — `config validate` cannot read a file that
+  # is not there — and a repository with no policy would report as a release too old to read one.
+  if [ ! -f godlint.yaml ]; then
+    echo "::error::There is no godlint.yaml in $PWD, so nothing here states the policy the released binary was asked to apply."
+    exit 1
+  fi
+
   # Whether the configuration is why is asked of the release itself, because `config validate`
   # answers it with an exit status. Reading it out of an error message would tie this gate to the
   # wording a *past* release chose, which no test in this repository can hold still.

@@ -30,7 +30,10 @@ try:
 except StopIteration:
     sys.exit("action.yml has no step named 'Run Godlint'")
 
-run = next(i for i in range(step, len(lines)) if lines[i].strip() == "run: |")
+try:
+    run = next(i for i in range(step, len(lines)) if lines[i].strip() == "run: |")
+except StopIteration:
+    sys.exit("the 'Run Godlint' step has no 'run: |' block")
 indent = len(lines[run]) - len(lines[run].lstrip()) + 2
 
 collected = []
@@ -60,7 +63,7 @@ while [ "$index" -lt "${ANNOTATIONS:-0}" ]; do
   index=$((index + 1))
 done
 if [ "${GODLINT_STATUS:-0}" != "0" ] && [ "${ANNOTATIONS:-0}" = "0" ]; then
-  echo "Configuration is invalid: godlint.yaml: unknown field" >&2
+  echo "Configuration is invalid: godlint.yaml: unknown field \`std::process::exit\`" >&2
 fi
 exit "${GODLINT_STATUS:-0}"
 EOF
@@ -112,6 +115,12 @@ mkdir -p "$temporary/readonly"
 chmod a-w "$temporary/readonly"
 if run_step 1 2 "$temporary/readonly" > /dev/null 2>&1; then
   echo "unwritable annotations: the step must fail rather than count a truncated file" >&2
+  exit 1
+fi
+# Failing is not enough: the guard has to run before anything is published, or the step fails while
+# still handing over a status the gate will believe and a count taken from a truncated file.
+if [ -s "$temporary/output.txt" ]; then
+  echo "unwritable annotations: the step must publish nothing, got '$(output)'" >&2
   exit 1
 fi
 chmod u+w "$temporary/readonly"

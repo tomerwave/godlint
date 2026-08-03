@@ -25,6 +25,9 @@ speaks about.
   a tree is not a verdict, so that now fails and says so. And the guidance the gate printed said
   adding a *rule* lands there, which stopped being true when a release started ignoring an unknown
   rule key with a notice — only a configuration key, a suite or a configuration version reaches it.
+  A tree with no `godlint.yaml` at all is now reported rather than waved through: the release cannot
+  read a file that is not there, so with no check for one a repository stating no policy read as a
+  release too old to understand it, which is the same silent pass from the other direction.
   The step's own conclusion is still read, for the one question the status cannot answer: a step
   after the check failing leaves Godlint's own status honest while the action failed for its own
   reason. That the outcome is read at all was `ci/no-silenced-failure` reporting this repository's
