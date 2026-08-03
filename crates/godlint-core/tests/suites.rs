@@ -278,3 +278,76 @@ fn every_named_suite_is_applicable() {
         );
     }
 }
+
+#[test]
+fn recommended_pins_the_lists_a_rule_enforces_by_default() {
+    let config = recommended();
+
+    let todo = config
+        .rules
+        .todo_requires_reference
+        .as_ref()
+        .unwrap_or_else(|| panic!("recommended configures todo-requires-reference"));
+    assert_eq!(todo.markers, ["TODO", "FIXME", "HACK", "XXX"]);
+    assert_eq!(todo.reference_prefixes, ["#"]);
+
+    let actions = config
+        .rules
+        .pin_third_party_actions
+        .as_ref()
+        .unwrap_or_else(|| panic!("recommended configures pin-third-party-actions"));
+    assert_eq!(actions.trusted_owners, ["actions", "github"]);
+
+    let bots = config
+        .rules
+        .bot_conditions
+        .as_ref()
+        .unwrap_or_else(|| panic!("recommended configures bot-conditions"));
+    assert_eq!(
+        bots.bots,
+        ["dependabot[bot]", "github-actions[bot]", "renovate[bot]"]
+    );
+}
+
+#[test]
+fn recommended_pins_which_paths_count_as_tests() {
+    let config = recommended();
+
+    let helpers = config
+        .rules
+        .no_test_helper_in_production
+        .as_ref()
+        .unwrap_or_else(|| panic!("recommended configures no-test-helper-in-production"));
+    assert_eq!(
+        helpers.test_paths,
+        [
+            "**/tests/**",
+            "**/test/**",
+            "**/__tests__/**",
+            "**/*.test.*",
+            "**/*.spec.*",
+            "**/test_*.py",
+            "**/*_test.py",
+            "**/conftest.py",
+        ]
+    );
+    assert_eq!(
+        helpers.helpers,
+        [
+            "tests",
+            "test",
+            "__tests__",
+            "__mocks__",
+            "fixtures",
+            "mocks",
+            "conftest",
+        ]
+    );
+
+    let environment = config
+        .rules
+        .direct_environment_read
+        .as_ref()
+        .unwrap_or_else(|| panic!("recommended configures direct-environment-read"));
+    assert_eq!(environment.allow_in, ["**/config.*", "**/config/**"]);
+}
