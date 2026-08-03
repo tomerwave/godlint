@@ -152,8 +152,12 @@ def check_rule(report: Report, module: Path, identifier: str) -> None:
     # policy/unused-suppression whether a named rule is enabled. A rule missing from it is
     # reported as a typo when a directive names it, and its suppressions never count as
     # used, so both failures are silent.
+    #
+    # One `registrations!` row declares the identifier, the languages and the severity lookup
+    # together, so those three can no longer disagree with each other. Whether a rule appears at
+    # all is the part a macro cannot make true, which is what this checks.
     report.check(
-        f'id: {struct_name(module)}::ID' in read(REGISTRATIONS),
+        f"{struct_name(module)} => " in read(REGISTRATIONS),
         f"{REGISTRATIONS}: {name} is not registered, so a suppression cannot name {identifier}",
     )
 
