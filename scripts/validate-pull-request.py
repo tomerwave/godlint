@@ -377,6 +377,40 @@ def check_mutation_scope(report: Report) -> None:
         )
 
 
+def check_conflict_markers(report: Report) -> None:
+    """No tracked file carries a merge-conflict marker.
+
+    `git rebase --continue` accepts a staged file whose conflict is unresolved, so a failed
+    resolution lands as a commit that looks deliberate. Nothing else here reads a file for the
+    markers, and a changelog full of them passed every one of 1046 checks.
+    """
+
+    markers = ("<<<<<<< ", ">>>>>>> ")
+
+    for path in tracked_text_files():
+        lines = read(path).splitlines()
+        found = [
+            number
+            for number, line in enumerate(lines, start=1)
+            if line.startswith(markers) or line == "======="
+        ]
+        report.check(
+            not found,
+            f"{path}: unresolved conflict marker on line {found[0] if found else 0}",
+        )
+
+
+def tracked_text_files() -> list[Path]:
+    listed = git(["ls-files"], "cannot list tracked files").splitlines()
+
+    return [
+        Path(name)
+        for name in listed
+        if Path(name).suffix in (".md", ".rs", ".py", ".toml", ".yml", ".yaml", ".sh", ".json")
+        and Path(name).is_file()
+    ]
+
+
 def check_workflows(report: Report) -> None:
     """One toolchain across every workflow.
 
@@ -536,6 +570,7 @@ def main() -> int:
     check_language_matrix(report)
     check_mutation_config(report)
     check_mutation_scope(report)
+    check_conflict_markers(report)
     check_workflows(report)
     check_documentation_links(report)
 

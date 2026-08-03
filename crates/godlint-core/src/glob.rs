@@ -36,6 +36,10 @@ fn match_segments(pattern: &[&str], path: &[&str]) -> bool {
 }
 
 fn segment_matches(pattern: &str, segment: &str) -> bool {
+    if !pattern.contains(['*', '?']) {
+        return pattern == segment;
+    }
+
     let pattern: Vec<char> = pattern.chars().collect();
     let segment: Vec<char> = segment.chars().collect();
     let mut table = vec![false; segment.len() + 1];
