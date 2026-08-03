@@ -25,16 +25,7 @@ pub mod workflow;
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SourceFacts {
     source: SourceFile,
-    unparsed: Vec<SourceRange>,
-    accesses: Vec<AccessFact>,
-    comments: Vec<CommentFact>,
-    calls: Vec<CallFact>,
-    conditions: Vec<ConditionFact>,
-    error_handlers: Vec<ErrorHandlerFact>,
-    functions: Vec<FunctionFact>,
-    imports: Vec<ImportFact>,
-    tests: Vec<TestFact>,
-    assertions: Vec<AssertionFact>,
+    collected: Collected,
 }
 
 impl SourceFacts {
@@ -43,43 +34,43 @@ impl SourceFacts {
     }
 
     pub fn unparsed(&self) -> &[SourceRange] {
-        &self.unparsed
+        &self.collected.unparsed
     }
 
     pub fn functions(&self) -> &[FunctionFact] {
-        &self.functions
+        &self.collected.functions
     }
 
     pub fn accesses(&self) -> &[AccessFact] {
-        &self.accesses
+        &self.collected.accesses
     }
 
     pub fn comments(&self) -> &[CommentFact] {
-        &self.comments
+        &self.collected.comments
     }
 
     pub fn calls(&self) -> &[CallFact] {
-        &self.calls
+        &self.collected.calls
     }
 
     pub fn error_handlers(&self) -> &[ErrorHandlerFact] {
-        &self.error_handlers
+        &self.collected.error_handlers
     }
 
     pub fn conditions(&self) -> &[ConditionFact] {
-        &self.conditions
+        &self.collected.conditions
     }
 
     pub fn imports(&self) -> &[ImportFact] {
-        &self.imports
+        &self.collected.imports
     }
 
     pub fn tests(&self) -> &[TestFact] {
-        &self.tests
+        &self.collected.tests
     }
 
     pub fn assertions(&self) -> &[AssertionFact] {
-        &self.assertions
+        &self.collected.assertions
     }
 }
 
@@ -127,16 +118,7 @@ pub(crate) fn analyze_with(
 
     Ok(SourceFacts {
         source: source.clone(),
-        unparsed: collected.unparsed,
-        accesses: collected.accesses,
-        comments: collected.comments,
-        calls: collected.calls,
-        conditions: collected.conditions,
-        error_handlers: collected.error_handlers,
-        functions: collected.functions,
-        imports: collected.imports,
-        tests: collected.tests,
-        assertions: collected.assertions,
+        collected,
     })
 }
 
@@ -163,7 +145,7 @@ fn parse(
     Ok(tree)
 }
 
-#[derive(Default)]
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
 struct Collected {
     unparsed: Vec<SourceRange>,
     accesses: Vec<AccessFact>,

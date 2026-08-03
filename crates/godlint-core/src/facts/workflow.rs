@@ -25,31 +25,13 @@ pub enum Secrets {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct JobFact {
     file: TextFile,
-    range: SourceRange,
-    name: String,
-    body: SourceRange,
-    condition: Option<SourceRange>,
-    continue_on_error: Option<SourceRange>,
-    declares_permissions: bool,
-    needs: Vec<Setting>,
-    secrets: Option<Secrets>,
-    calls_workflow: Option<SourceRange>,
-    step_count: usize,
+    details: JobFactDetails,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct StepFact {
     file: TextFile,
-    range: SourceRange,
-    job: String,
-    id: Option<SourceRange>,
-    name: Option<SourceRange>,
-    run: Option<SourceRange>,
-    uses: Option<SourceRange>,
-    condition: Option<SourceRange>,
-    continue_on_error: Option<SourceRange>,
-    inputs: Vec<Setting>,
-    environment: Vec<Setting>,
+    details: StepFactDetails,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -67,6 +49,7 @@ pub struct CredentialFact {
     literal: bool,
 }
 
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct JobFactDetails {
     pub range: SourceRange,
     pub name: String,
@@ -80,6 +63,7 @@ pub(crate) struct JobFactDetails {
     pub step_count: usize,
 }
 
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct StepFactDetails {
     pub range: SourceRange,
     pub job: String,
@@ -161,19 +145,7 @@ impl Setting {
 
 impl JobFact {
     pub(crate) fn from_details(file: TextFile, details: JobFactDetails) -> Self {
-        Self {
-            file,
-            range: details.range,
-            name: details.name,
-            body: details.body,
-            condition: details.condition,
-            continue_on_error: details.continue_on_error,
-            declares_permissions: details.declares_permissions,
-            needs: details.needs,
-            secrets: details.secrets,
-            calls_workflow: details.calls_workflow,
-            step_count: details.step_count,
-        }
+        Self { file, details }
     }
 
     pub fn file(&self) -> &TextFile {
@@ -181,61 +153,49 @@ impl JobFact {
     }
 
     pub fn range(&self) -> SourceRange {
-        self.range
+        self.details.range
     }
 
     pub fn name(&self) -> &str {
-        &self.name
+        &self.details.name
     }
 
     pub fn declares_permissions(&self) -> bool {
-        self.declares_permissions
+        self.details.declares_permissions
     }
 
     pub fn body(&self) -> SourceRange {
-        self.body
+        self.details.body
     }
 
     pub fn condition(&self) -> Option<SourceRange> {
-        self.condition
+        self.details.condition
     }
 
     pub fn continue_on_error(&self) -> Option<SourceRange> {
-        self.continue_on_error
+        self.details.continue_on_error
     }
 
     pub fn needs(&self) -> &[Setting] {
-        &self.needs
+        &self.details.needs
     }
 
     pub fn secrets(&self) -> Option<&Secrets> {
-        self.secrets.as_ref()
+        self.details.secrets.as_ref()
     }
 
     pub fn calls_workflow(&self) -> Option<SourceRange> {
-        self.calls_workflow
+        self.details.calls_workflow
     }
 
     pub fn step_count(&self) -> usize {
-        self.step_count
+        self.details.step_count
     }
 }
 
 impl StepFact {
     pub(crate) fn new(file: TextFile, details: StepFactDetails) -> Self {
-        Self {
-            file,
-            range: details.range,
-            job: details.job,
-            id: details.id,
-            name: details.name,
-            run: details.run,
-            uses: details.uses,
-            condition: details.condition,
-            continue_on_error: details.continue_on_error,
-            inputs: details.inputs,
-            environment: details.environment,
-        }
+        Self { file, details }
     }
 
     pub fn file(&self) -> &TextFile {
@@ -243,43 +203,43 @@ impl StepFact {
     }
 
     pub fn range(&self) -> SourceRange {
-        self.range
+        self.details.range
     }
 
     pub fn job(&self) -> &str {
-        &self.job
+        &self.details.job
     }
 
     pub fn id(&self) -> Option<&str> {
-        self.id.map(|range| text(&self.file, range))
+        self.details.id.map(|range| text(&self.file, range))
     }
 
     pub fn name(&self) -> Option<&str> {
-        self.name.map(|range| text(&self.file, range))
+        self.details.name.map(|range| text(&self.file, range))
     }
 
     pub fn run(&self) -> Option<SourceRange> {
-        self.run
+        self.details.run
     }
 
     pub fn uses(&self) -> Option<SourceRange> {
-        self.uses
+        self.details.uses
     }
 
     pub fn condition(&self) -> Option<SourceRange> {
-        self.condition
+        self.details.condition
     }
 
     pub fn continue_on_error(&self) -> Option<SourceRange> {
-        self.continue_on_error
+        self.details.continue_on_error
     }
 
     pub fn inputs(&self) -> &[Setting] {
-        &self.inputs
+        &self.details.inputs
     }
 
     pub fn environment(&self) -> &[Setting] {
-        &self.environment
+        &self.details.environment
     }
 }
 

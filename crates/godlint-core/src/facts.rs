@@ -219,16 +219,7 @@ pub struct ConditionFact {
 pub struct FunctionFact {
     source: SourceFile,
     name: Option<String>,
-    range: SourceRange,
-    body_range: SourceRange,
-    parameter_count: ParameterCount,
-    decision_points: DecisionPoints,
-    cognitive_score: CognitiveScore,
-    return_paths: ReturnPaths,
-    statement_count: StatementCount,
-    block_depth: BlockDepth,
-    body_is_empty: bool,
-    is_abstract: bool,
+    details: FunctionFactDetails,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -442,16 +433,7 @@ impl FunctionFact {
         Ok(Self {
             source,
             name,
-            range: details.range,
-            body_range: details.body_range,
-            parameter_count: details.parameter_count,
-            decision_points: details.decision_points,
-            cognitive_score: details.cognitive_score,
-            return_paths: details.return_paths,
-            statement_count: details.statement_count,
-            block_depth: details.block_depth,
-            body_is_empty: details.body_is_empty,
-            is_abstract: details.is_abstract,
+            details,
         })
     }
 
@@ -464,43 +446,43 @@ impl FunctionFact {
     }
 
     pub fn range(&self) -> SourceRange {
-        self.range
+        self.details.range
     }
 
     pub fn body_range(&self) -> SourceRange {
-        self.body_range
+        self.details.body_range
     }
 
     pub fn parameter_count(&self) -> ParameterCount {
-        self.parameter_count
+        self.details.parameter_count
     }
 
     pub fn decision_points(&self) -> DecisionPoints {
-        self.decision_points
+        self.details.decision_points
     }
 
     pub fn cognitive_score(&self) -> CognitiveScore {
-        self.cognitive_score
+        self.details.cognitive_score
     }
 
     pub fn return_paths(&self) -> ReturnPaths {
-        self.return_paths
+        self.details.return_paths
     }
 
     pub fn statement_count(&self) -> StatementCount {
-        self.statement_count
+        self.details.statement_count
     }
 
     pub fn block_depth(&self) -> BlockDepth {
-        self.block_depth
+        self.details.block_depth
     }
 
     pub fn body_is_empty(&self) -> bool {
-        self.body_is_empty
+        self.details.body_is_empty
     }
 
     pub fn is_abstract(&self) -> bool {
-        self.is_abstract
+        self.details.is_abstract
     }
 }
 
