@@ -19,6 +19,8 @@ to understand what belongs in it.
 | --- | --- |
 | [Product scope](product-scope.md) | The vision, product promise, boundaries, and success criteria |
 | [Rule roadmap](rule-roadmap.md) | What is shipped, what is next, and why each threshold is the number it is |
+| [Enforceable practices research](enforceable-practices.md) | Which Node, SOLID/DRY/KISS, Rust, and PEP 8 ideas belong in Godlint |
+| [Deterministic quality gates](quality-gates.md) | Abstractions, duplication, meaningful tests, error policy, language profiles, and companion tools |
 | [Architecture](architecture.md) | Crate boundaries, and how a language's parser details stay behind one |
 | [Dogfooding](dogfooding.md) | How Godlint enforces policy on its own repository |
 

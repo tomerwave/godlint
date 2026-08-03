@@ -111,8 +111,13 @@ Future rules should deepen the constitution where deterministic evidence exists:
 - Restricted APIs, packages, and infrastructure access.
 - Configuration, environment, and secret-handling policy.
 - Test and error-handling requirements.
+- Similarity and mutation evidence where syntax alone cannot prove quality.
 - Suppression ownership and policy-debt visibility.
 - Cross-language consistency for shared engineering decisions.
+
+Godlint may compose pinned deterministic companion tools when a mature specialist owns the
+evidence. It preserves the specialist's rule identity and does not present delegated analysis as a
+native Godlint rule.
 
 ## Non-goals
 

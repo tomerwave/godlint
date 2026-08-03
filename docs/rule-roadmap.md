@@ -236,6 +236,15 @@ Extend `FunctionFact` only when the same data will serve multiple rules.
 
 Phase 2 is complete. Its fact additions stay small and reusable for future policy.
 
+### Similarity research
+
+`maintainability/similar-block` is an experimental cross-language candidate. Compare normalized
+same-language token streams with a configurable 85% edit-similarity threshold and minimum token
+and line counts. It starts as an opt-in warning: a match is evidence of copied logic, not proof that
+an abstraction is correct. Generated, vendored, migration, snapshot, and fixture paths require
+explicit configuration rather than silent exclusion. Promotion requires a multilingual precision
+and performance corpus.
+
 ### Accountable exceptions
 
 Shipped. [Inline suppression](suppressions.md) is the reference; this section records what
@@ -482,6 +491,8 @@ ships at error through `recommended@1`.
 | --- | --- | --- | --- | --- |
 | `reliability/empty-error-handler` | Shipped | Error-handler fact | High | Empty JavaScript/TypeScript `catch` bodies and Python `except` bodies containing only `pass` |
 | `reliability/ignored-error` | Planned | Error result/exception fact | Medium | Direct discard patterns only |
+| `reliability/redundant-catch-rethrow` | Proposed | Catch binding and statement facts | High | Handler whose only action rethrows the unchanged exception |
+| `reliability/no-control-flow-in-finally` | Proposed | Escaping `finally` exit fact | High | `return`, `break`, or `continue` that escapes a JavaScript/TypeScript or Python `finally` suite |
 | `testing/no-focused-test` | Planned | Test fact | High | Configured test framework names and attributes |
 | `testing/no-skipped-test` | Planned | Test fact | High | Configured skip APIs and decorators |
 | `testing/no-sleep-in-test` | Shipped | Test fact | High | Per-language sleep catalogue, scoped to calls inside a test |
@@ -529,6 +540,9 @@ Only after the syntax/fact rules are stable:
 - Optional Pyright, Clippy, and Cargo integrations with explicit capabilities.
 - Alias-aware restricted API rules, floating promise checks, and type-based security
   policy.
+- Configured domain error bases, preserved causes, and domain-to-transport boundary checks.
+- Pinned companion-gate reports for mutation testing and other specialist evidence; preserve
+  native finding IDs rather than relabeling external checks as Godlint rules.
 - Baselines, changed-files mode, JSON/SARIF reporters, and GitHub annotations before
   promoting stricter rules broadly.
 
