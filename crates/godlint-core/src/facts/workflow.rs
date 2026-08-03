@@ -160,27 +160,6 @@ impl Setting {
 }
 
 impl JobFact {
-    pub fn new(
-        file: TextFile,
-        range: SourceRange,
-        name: String,
-        declares_permissions: bool,
-    ) -> Self {
-        Self {
-            file,
-            range,
-            name,
-            body: range,
-            condition: None,
-            continue_on_error: None,
-            declares_permissions,
-            needs: Vec::new(),
-            secrets: None,
-            calls_workflow: None,
-            step_count: 0,
-        }
-    }
-
     pub(crate) fn from_details(file: TextFile, details: JobFactDetails) -> Self {
         Self {
             file,

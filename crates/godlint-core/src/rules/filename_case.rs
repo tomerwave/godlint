@@ -1,9 +1,8 @@
 use crate::{
     analyzers::SourceFacts,
     config::{Config, FilenameCaseRule, NamingCase, Severity},
-    glob,
     rules::{
-        FileRule, Finding, Rule, Violation, evaluate_file_rule, module_path, scoped,
+        FileRule, Finding, Rule, Violation, catalogue, evaluate_file_rule, module_path, scoped,
         when_configured,
     },
     source::{Language, SourceFile},
@@ -23,7 +22,7 @@ impl Rule for FilenameCase {
 
 impl FileRule for FilenameCase {
     fn check(source: &SourceFile, configuration: &Self::Configuration) -> Option<Violation> {
-        if matches(&configuration.allow, source) {
+        if catalogue::matches(source, &configuration.allow) {
             return None;
         }
 
@@ -63,10 +62,6 @@ fn ecmascript_case(source: &SourceFile) -> NamingCase {
         "jsx" | "tsx" => NamingCase::Pascal,
         _ => NamingCase::Kebab,
     }
-}
-
-fn matches(patterns: &[String], source: &SourceFile) -> bool {
-    glob::matches_any(patterns.iter().map(String::as_str), source.path_text())
 }
 
 fn stem(source: &SourceFile) -> Option<String> {

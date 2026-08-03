@@ -4,9 +4,9 @@ use crate::{
         Config, RestrictedImport as RestrictedImportConfiguration, RestrictedImportRule, Severity,
     },
     facts::ImportFact,
-    glob,
     rules::{
-        Finding, ImportRule, Rule, Violation, evaluate_import_rule, module_path, when_configured,
+        Finding, ImportRule, Rule, Violation, catalogue, evaluate_import_rule, module_path,
+        when_configured,
     },
 };
 
@@ -26,8 +26,10 @@ impl ImportRule for RestrictedImport {
     fn check(import: &ImportFact, configuration: &Self::Configuration) -> Option<Violation> {
         let restriction = restriction(import, &configuration.modules)?;
 
-        (!is_allowed(import, &restriction.allow_in)).then(|| Violation::RestrictedImport {
-            module: import.module().to_owned(),
+        (!catalogue::matches(import.source(), &restriction.allow_in)).then(|| {
+            Violation::RestrictedImport {
+                module: import.module().to_owned(),
+            }
         })
     }
 }
@@ -48,11 +50,4 @@ fn restriction<'a>(
     modules
         .iter()
         .find(|restriction| module_path::covers(&restriction.name, module, language))
-}
-
-fn is_allowed(import: &ImportFact, paths: &[String]) -> bool {
-    glob::matches_any(
-        paths.iter().map(String::as_str),
-        import.source().path_text(),
-    )
 }

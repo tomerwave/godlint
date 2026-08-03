@@ -38,6 +38,37 @@ WORKFLOWS = Path(".github/workflows")
 MUTANTS = Path(".cargo/mutants.toml")
 MUTANTS_WORKFLOW = WORKFLOWS / "mutants.yml"
 
+CRATES = Path("crates")
+
+# A file here is outside the mutation gate on purpose, with the reason it is outside. The gate's
+# scope was previously checked only against the workflow's trigger paths — two of our own lists,
+# compared with each other and never with the tree — so a file named in neither was silently
+# unmutated. Everything in this table except lib.rs meets .cargo/mutants.toml's own stated
+# criterion, that a surviving mutant there hides findings rather than changing one, and #245
+# carries the measured plan for bringing each one in. Adding a file to godlint-core now demands a
+# decision rather than nothing.
+UNMUTATED = {
+    "crates/godlint-core/src/lib.rs": "declares modules and re-exports; no decision to mutate",
+    "crates/godlint-core/src/glob.rs": "#245, first in: decides whether an exclude pattern matches",
+    "crates/godlint-core/src/date.rs": "#245: decides whether a suppression has expired",
+    "crates/godlint-core/src/paths.rs": "#245: path handling underneath discovery",
+    "crates/godlint-core/src/discovery.rs": "#245: decides which files are scanned",
+    "crates/godlint-core/src/scan.rs": "#245: drives the scan",
+    "crates/godlint-core/src/suites.rs": "#245: decides what recommended@1 enables, and at what severity",
+    "crates/godlint-core/src/source.rs": "#245: position math; larger, and more of its mutants will be equivalent",
+    "crates/godlint-core/src/config/mod.rs": "#245: configuration parsing",
+    "crates/godlint-core/src/config/rules.rs": "#245: configuration parsing",
+    "crates/godlint-core/src/config/validate.rs": "#245: configuration validation",
+    "crates/godlint-core/src/config/error.rs": "#245: shapes the message a rejected configuration prints",
+    "crates/godlint-cli/src/report.rs": "#245: decides the JSON, SARIF and annotation shapes three gates parse",
+    "crates/godlint-cli/src/workspace.rs": "#245: holds the message the released-agreement gate greps for",
+    "crates/godlint-cli/src/commands/check.rs": "#245: decides the exit code CI branches on",
+    "crates/godlint-cli/src/commands/config.rs": "#245: prints the resolved configuration",
+    "crates/godlint-cli/src/commands/suppressions.rs": "#245: prints the suppression inventory",
+    "crates/godlint-cli/src/commands/mod.rs": "#245: dispatches subcommands",
+    "crates/godlint-cli/src/main.rs": "parses arguments and returns an exit code; the e2e corpus is its test",
+}
+
 ROADMAP = Path("docs/rule-roadmap.md")
 RULES = Path("docs/rules.md")
 CHANGELOG = Path("CHANGELOG.md")
@@ -298,15 +329,18 @@ def check_mutation_config(report: Report) -> None:
         "whether a mutant was caught",
     )
 
+    # Counting comment lines and exclusions and comparing the totals passes an exclusion with a
+    # five-line essay beside four with nothing, so each exclusion is paired with the line above it.
     exclusions = block(body, "exclude_re")
-    entries = [line for line in exclusions if line.startswith('"')]
-    commented = [line for line in exclusions if line.startswith("#")]
 
-    report.check(
-        len(commented) >= len(entries),
-        f"{MUTANTS}: every exclusion needs a stated reason; found {len(entries)} "
-        f"exclusions and {len(commented)} comment lines beside them",
-    )
+    for index, line in enumerate(exclusions):
+        if not line.startswith('"'):
+            continue
+
+        report.check(
+            index > 0 and exclusions[index - 1].startswith("#"),
+            f"{MUTANTS}: the exclusion {line} has no reason on the line above it",
+        )
 
 
 def block(body: str, key: str) -> list[str]:
@@ -336,10 +370,71 @@ def examined_paths() -> set[str]:
     return {glob.replace("/**/*.rs", "/**").replace("/*.rs", "/**") for glob in examined_globs()}
 
 
+def workflow_files() -> list[Path]:
+    return [path for path in WORKFLOWS.iterdir() if path.suffix in (".yml", ".yaml")]
+
+
 def triggered_paths() -> set[str]:
     lines = block(read(MUTANTS_WORKFLOW).replace("    paths:", "paths = ["), "paths")
 
     return {line.lstrip("- ").strip("'\"") for line in lines if line.startswith("- ")}
+
+
+def glob_matcher(pattern: str) -> re.Pattern[str]:
+    """A mutants.toml glob as a regular expression, with `**/` matching zero or more directories.
+
+    `fnmatch` is wrong for this: its `*` crosses `/`, so `rules/**/*.rs` fails to match
+    `rules/mod.rs` and every rule module reads as unexamined. Getting that backwards makes a
+    scope check report the opposite of the truth, so the glob is translated by hand.
+    """
+
+    expression = ""
+    index = 0
+
+    while index < len(pattern):
+        if pattern.startswith("**/", index):
+            expression += "(?:[^/]+/)*"
+            index += 3
+        elif pattern[index] == "*":
+            expression += "[^/]*"
+            index += 1
+        else:
+            expression += re.escape(pattern[index])
+            index += 1
+
+    return re.compile(f"^{expression}$")
+
+
+def check_mutation_coverage(report: Report) -> None:
+    """Every Rust file in the workspace is examined by the mutation gate, or explained.
+
+    Comparing the gate's globs with the workflow's trigger paths says nothing about a file that
+    appears in neither, which is how the layer deciding what is *seen* stayed outside the gate.
+    This compares the globs with the tree instead.
+    """
+
+    matchers = [glob_matcher(glob) for glob in examined_globs()]
+
+    def examined(path: str) -> bool:
+        return any(matcher.match(path) for matcher in matchers)
+
+    for source in sorted(CRATES.glob("*/src/**/*.rs")):
+        path = source.as_posix()
+        report.check(
+            examined(path) or path in UNMUTATED,
+            f"{MUTANTS}: {path} is outside the mutation gate with no reason given; examine it, "
+            "or name it in UNMUTATED in this script with why it is outside",
+        )
+
+    for path in sorted(UNMUTATED):
+        report.check(
+            Path(path).exists(),
+            f"UNMUTATED names {path}, which no longer exists; delete the entry",
+        )
+        report.check(
+            not examined(path),
+            f"UNMUTATED names {path}, which {MUTANTS} now examines; delete the entry",
+        )
 
 
 def check_mutation_scope(report: Report) -> None:
@@ -422,7 +517,9 @@ def check_workflows(report: Report) -> None:
 
     versions: set[str] = set()
 
-    for workflow in sorted(WORKFLOWS.glob("*.yml")):
+    # source.rs reads both extensions, so a workflow named .yaml is scanned by Godlint. Globbing
+    # one of them here would leave that file outside this gate with nothing said.
+    for workflow in sorted(workflow_files()):
         versions.update(re.findall(r"rustup toolchain install (\S+)", read(workflow)))
 
     report.check(
@@ -569,6 +666,7 @@ def main() -> int:
     check_fixtures(report)
     check_language_matrix(report)
     check_mutation_config(report)
+    check_mutation_coverage(report)
     check_mutation_scope(report)
     check_conflict_markers(report)
     check_workflows(report)

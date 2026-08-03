@@ -1,11 +1,8 @@
 use crate::{
     analyzers::SourceFacts,
-    config::{Config, IndependentSet, Layer, ModuleIndependenceRule, Severity},
+    config::{Config, IndependentSet, ModuleIndependenceRule, Severity},
     facts::ImportFact,
-    rules::{
-        Finding, ImportRule, Rule, Violation, evaluate_import_rule, module_path, scoped,
-        when_configured,
-    },
+    rules::{Finding, ImportRule, Rule, Violation, evaluate_import_rule, scoped, when_configured},
 };
 
 pub struct ModuleIndependence;
@@ -37,28 +34,11 @@ pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Vec<Finding> {
 
 fn crossing(set: &IndependentSet, import: &ImportFact) -> Option<Violation> {
     let members = &set.members;
-    let from = scoped::most_specific(members, |member| contains(member, import))?;
-    let to = scoped::most_specific(members, |member| names(member, import))?;
+    let (from, to) = scoped::endpoints(members, import)?;
 
     (to != from).then(|| Violation::BrokeIndependence {
         set: set.name.clone(),
         from: members[from].name.clone(),
         to: members[to].name.clone(),
     })
-}
-
-fn contains(member: &Layer, import: &ImportFact) -> Option<usize> {
-    scoped::longest_match(&member.paths, import.source().path_text())
-}
-
-fn names(member: &Layer, import: &ImportFact) -> Option<usize> {
-    let module = import.module();
-    let language = import.source().language();
-
-    member
-        .modules
-        .iter()
-        .filter(|spelling| module_path::covers(spelling, module, language))
-        .map(String::len)
-        .max()
 }

@@ -21,6 +21,24 @@ speaks about.
   --continue` accepts a staged file whose conflict was never resolved, so a botched resolution lands
   as a commit that looks deliberate — which is exactly what happened while rebasing this branch, and
   all 1046 checks passed over a changelog full of `<<<<<<<`.
+- Nothing a user can observe: five rules asked a shared question in their own private spelling.
+  `security/forbidden-dependency`, `architecture/restricted-import` and `architecture/filename-case`
+  each carried a copy of the path-glob match that `rules::catalogue` already provides, and
+  `architecture/dependency-boundary` and `architecture/module-independence` carried byte-identical
+  helpers for which declared set holds a file and which names an imported module. That pair is now
+  `scoped::endpoints`, so a change to how a set claims a file happens once instead of twice.
+- Also nothing observable: `logical_operator`, `opens_operator_sequence`, `is_else_if` and the
+  comment-prefix lookup were byte-identical in the Rust and ECMAScript analysers, so they live in
+  `analyzers::vocabulary` now, where the shared analyser helpers already are and where naming a
+  grammar node kind is still in bounds. Python's versions genuinely differ and are untouched. A
+  second `JobFact` constructor with no callers is gone; it filled defaults a workflow never has and
+  would have silently set a job's body to its own first line.
+- `validate-pull-request.py` compares the mutation gate's scope with the tree rather than only with
+  the mutation workflow's trigger paths. Twelve files in `godlint-core` — including the ones that
+  decide which files are scanned, whether an `exclude` pattern matches, and whether a suppression
+  has expired — generate no mutants at all, and nothing said so. Each is now named with the reason
+  it is outside, a file that is neither examined nor named fails the check, and #245 carries the
+  plan for bringing them in.
 - `maintainability/cognitive-complexity` counts a Rust `let … else` as a branch, weighted by the
   nesting it sits at, the way every other branching form is counted. `decision-complexity` already
   counted it, so the two metrics disagreed about whether a refutable binding is a decision; a
@@ -47,6 +65,14 @@ speaks about.
   booleans in the core schema, and reporting them would rest on a guess about GitHub's coercion that
   cannot be checked without a network. Found by probing the built binary while reviewing the rule,
   not by reading it.
+  plan for bringing them in. The walk covers every crate: `godlint-cli` was outside the gate in
+  its entirety, including the module that decides the JSON, SARIF and annotation shapes three
+  other gates parse.
+- Two more gates in `validate-pull-request.py` stopped taking a proxy for the thing. The workflow
+  toolchain check globbed `*.yml` while `source.rs` reads both `yaml` and `yml`, so a workflow named
+  `.yaml` was scanned by Godlint and invisible to the gate; and "every mutation exclusion needs a
+  reason" counted comment lines against exclusion lines, which passed one exclusion with a five-line
+  essay beside four with none. Each exclusion is now paired with the line above it.
 
 ## [Unreleased]
 
