@@ -29,10 +29,12 @@ speaks about.
   key, for declarations that are perfectly good. It is not when a finding's rule id could not be
   parsed, because the unreadable one may *be* the declared rule. And it is not when the release
   claimed findings and the annotations hold none, which is no record rather than a record of nothing.
-  The first passes with a notice; the other two fail for their own reasons and say nothing about
-  declarations. A stale declaration also does not short-circuit the undeclared-finding report: a run
-  with both says both, and names every stale line with its own kind rather than the first — the first
-  attempt got the short-circuit wrong and the suite caught it, and review caught the other two.
+  All three report the declarations as not examined rather than stale. The configuration case then
+  passes; the other two leave the run red on the undeclared findings they could not read, unless a
+  drift label declares those findings, which is the escape a label has always been. A stale
+  declaration also does not short-circuit the undeclared-finding report: a run with both says both,
+  and names every stale line with its own kind rather than the first — the first attempt got the
+  short-circuit wrong and the suite caught it, and review caught the rest.
 - The drift gate reads the status the released binary exited with instead of matching a sentence in
   its output. It decided whether the release could read the configuration by grepping for
   `Configuration is invalid`, and the binary being grepped is a *past* release — so no test in this

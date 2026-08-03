@@ -214,6 +214,22 @@ if grep -q 'Stale declaration' "$temporary/unreadable-record.out"; then
 fi
 grep -q '^::notice::Declarations not examined' "$temporary/unreadable-record.out"
 
+# Partial evidence, which is what the guard is actually for: one rule read, one not, and a
+# declaration for neither. The unreadable one may be the declared rule, so a list with a gap in it
+# cannot retire anything — and a case with no readable rule at all does not test this, because the
+# empty-record half of the guard already covers that one.
+mixed_findings="$finding
+$unreadable_finding"
+if run_explanation 1 false false "$mixed_findings" > "$temporary/partial-record.out" 2>&1; then
+  echo "a partly unreadable findings list must fail" >&2
+  exit 1
+fi
+if grep -q 'Stale declaration' "$temporary/partial-record.out"; then
+  echo "a findings list with an unreadable entry cannot make a declaration stale" >&2
+  exit 1
+fi
+grep -q '^::notice::Declarations not examined' "$temporary/partial-record.out"
+
 # The release said findings and the annotations hold none. That is not a record of nothing, it is no
 # record, so it cannot retire a declaration either — and it must still fail, because the two disagree.
 if run_explanation 1 false false "" > "$temporary/empty-record.out" 2>&1; then

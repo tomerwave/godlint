@@ -40,8 +40,9 @@ is not the same as none of them failing:
   may never have reached.
 - **The release reported findings this gate could not read as a list of rules** — a rule id it could
   not parse, or an annotations file with nothing in it. The unreadable finding may *be* the declared
-  rule, so the declarations are reported as not examined. The check fails, because a release claiming
-  findings that cannot be read is a problem of its own.
+  rule, so the declarations are reported as not examined. The findings themselves still have to be
+  answered, so the check fails on them unless a drift label declares them — which is what a label has
+  always done, and unreadable findings are no exception.
 
 **A known limitation.** The released-agreement job runs on Linux, macOS and Windows, and each runner
 judges the file against its own findings. So drift on one platform only cannot be declared: the
