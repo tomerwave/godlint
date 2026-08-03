@@ -3,7 +3,9 @@ use crate::{
     config::{Config, NoTestHelperInProductionRule, Severity},
     facts::ImportFact,
     glob,
-    rules::{Finding, ImportRule, Rule, Violation, evaluate_import_rule, when_configured},
+    rules::{
+        Finding, ImportRule, Rule, Violation, evaluate_import_rule, module_path, when_configured,
+    },
     source::Language,
 };
 
@@ -61,7 +63,7 @@ fn names_a_test_tree(
     configuration: &NoTestHelperInProductionRule,
 ) -> Option<String> {
     module
-        .split(separator(language))
+        .split(module_path::separator(language))
         .find(|segment| {
             configuration
                 .helpers
@@ -69,12 +71,4 @@ fn names_a_test_tree(
                 .any(|helper| helper.eq_ignore_ascii_case(segment))
         })
         .map(str::to_owned)
-}
-
-fn separator(language: Language) -> char {
-    match language {
-        Language::Python => '.',
-        Language::Rust => ':',
-        Language::JavaScript | Language::TypeScript => '/',
-    }
 }

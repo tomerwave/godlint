@@ -8,7 +8,7 @@ pub(crate) fn covers(prefix: &str, module: &str, language: Language) -> bool {
     rest.is_empty() || rest.starts_with(separator(language))
 }
 
-fn separator(language: Language) -> &'static str {
+pub(crate) fn separator(language: Language) -> &'static str {
     match language {
         Language::JavaScript | Language::TypeScript => "/",
         Language::Python => ".",

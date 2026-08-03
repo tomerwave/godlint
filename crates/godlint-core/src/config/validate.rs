@@ -24,6 +24,7 @@ impl Config {
             Self::validate_no_production_log_rule,
             Self::validate_empty_function_rule,
             Self::validate_direct_environment_read_rule,
+            Self::validate_no_test_helper_rule,
         ]
         .iter()
         .try_for_each(|check| check(self))
@@ -200,6 +201,20 @@ impl Config {
         {
             return Err(ConfigError::BlankAllowIn {
                 rule: "logging/no-production-log",
+            });
+        }
+
+        Ok(())
+    }
+
+    fn validate_no_test_helper_rule(&self) -> Result<(), ConfigError> {
+        let Some(rule) = &self.rules.no_test_helper_in_production else {
+            return Ok(());
+        };
+
+        if any_blank(&rule.helpers) || any_blank(&rule.test_paths) {
+            return Err(ConfigError::BlankAllowIn {
+                rule: "testing/no-test-helper-in-production",
             });
         }
 

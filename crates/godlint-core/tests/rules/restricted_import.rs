@@ -218,3 +218,25 @@ fn a_segment_separator_is_the_one_the_language_spells() {
         "and a dot is, in Python"
     );
 }
+
+#[test]
+fn a_prefix_ending_in_a_colon_does_not_cover_a_rust_path() {
+    assert!(
+        violations(
+            "src/example.rs",
+            "use crate::internal::store;",
+            &restricting("crate:")
+        )
+        .is_empty(),
+        "a Rust module boundary is ::, so a prefix ending in one colon covers nothing"
+    );
+    assert_eq!(
+        violations(
+            "src/example.rs",
+            "use crate::internal::store;",
+            &restricting("crate")
+        )
+        .len(),
+        1
+    );
+}

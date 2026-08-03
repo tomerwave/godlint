@@ -11,6 +11,14 @@ speaks about.
 
 ### Changed
 
+- Nothing a user can observe: the per-language module separator is defined once. Two rules kept their
+  own copy — one returning a `char`, so Rust's `::` was halved to `:`, and one that used `/` for every
+  language except Python, so a Rust path was a single segment. Neither was observable: splitting
+  `crate::tests::helper` on one colon still yields `tests` between two empty segments, and the rule
+  whose separator was wrong for Rust returns before consulting it, because `is_own` treats every Rust
+  module as the file's own. That is why both survived. They now call `rules::module_path`, which has
+  been right all along.
+
 - Suppression matching is grouped by file instead of comparing every finding with every suppression.
   `apply` scanned the whole suppression list for each finding and `policy/unused-suppression` scanned
   the whole finding list for each suppression, so the cost grew with the *product* of two
@@ -77,6 +85,13 @@ speaks about.
   function reports all five of its measured values — with the single deliberate exception below.
 
 ### Fixed
+
+- A blank `helpers` or `test-paths` entry for `testing/no-test-helper-in-production` is rejected as
+  invalid configuration. The two were broken differently: `helpers: [""]` matched the empty segments
+  that splitting a Rust `::` path on one colon produced and reported `crate::tests::helper` with the
+  message `names , which is test scaffolding`, while a blank `test-paths` entry matched nothing at all,
+  so the option looked configured and did nothing. Every other list-valued option in the schema
+  already refused a blank entry; these two were missed.
 
 - Four decisions in the analysers had no test depending on them, which a full mutation sweep of
   `main` found: a Rust `use {std, core};` brace list must contribute no import, an ordinary `let`
