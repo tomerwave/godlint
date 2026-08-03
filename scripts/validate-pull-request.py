@@ -73,16 +73,30 @@ ROADMAP = Path("docs/rule-roadmap.md")
 RULES = Path("docs/rules.md")
 CHANGELOG = Path("CHANGELOG.md")
 
-# Behaviour a user can observe. Scan and path discovery belong here because a change to
-# either can stop reporting files that were reported before, which is exactly the kind of
-# change a reader of the changelog is looking for.
-NEEDS_CHANGELOG = (
-    f"{RULES_DIR}/",
-    "crates/godlint-core/src/analyzers/",
-    "crates/godlint-core/src/discovery.rs",
-    "crates/godlint-core/src/paths.rs",
-    str(CONFIG),
+# Keep a Changelog's six, plus Internal, which check-release.py drops from the release body. That
+# body is name-sensitive, so `internal` or `Internal notes` would ship a refactor to users.
+CHANGELOG_CATEGORIES = (
+    "Added",
+    "Changed",
+    "Deprecated",
+    "Removed",
+    "Fixed",
+    "Security",
+    "Internal",
 )
+
+# Every shipped source file needs a changelog entry when it changes, and the exemptions are
+# named here with a reason. The list used to run the other way — five paths that required an
+# entry — and what it omitted decided the policy: `config/rules.rs` holds every default
+# threshold, so raising one, the most user-visible change this project can make, needed no
+# entry at all. So did `suites.rs`, which decides what a suite enables and at what severity.
+#
+# An entry is cheap and a silence is not recoverable: a refactor's entry can say that nothing
+# a user can observe changed, which is a sentence worth writing, while a threshold that moved
+# without one is a release note nobody can reconstruct later.
+EXEMPT_FROM_CHANGELOG = {
+    "crates/godlint-core/src/lib.rs": "declares modules and re-exports; a change here is visible in another entry",
+}
 
 
 @dataclass
@@ -492,6 +506,12 @@ def check_changelog_shape(report: Report) -> None:
         elif line.startswith("### "):
             category = line[4:].strip()
             categories.setdefault(release, []).append(category)
+            report.check(
+                category in CHANGELOG_CATEGORIES,
+                f"{CHANGELOG}: line {number} names the category {category}, which is not one of "
+                f"{', '.join(CHANGELOG_CATEGORIES)}. Internal decides what the release body leaves "
+                "out, so a near miss ships a refactor to users",
+            )
         elif line.startswith("- ") and release:
             report.check(
                 bool(category),
@@ -613,7 +633,7 @@ def check_documentation_links(report: Report) -> None:
 
 def changed_files(base: str) -> list[str]:
     committed = git(
-        ["diff", "--name-only", f"{base}...HEAD"],
+        ["diff", "--name-only", "--no-renames", f"{base}...HEAD"],
         f"cannot diff against {base}",
     )
 
@@ -634,8 +654,12 @@ def uncommitted_files() -> set[str]:
         "cannot read the working tree",
     ).splitlines():
         path = line[3:] if len(line) > 3 else ""
-        _, _, renamed_to = path.partition(" -> ")
-        paths.add(renamed_to or path)
+        renamed_from, _, renamed_to = path.partition(" -> ")
+
+        paths.add(renamed_from)
+
+        if renamed_to:
+            paths.add(renamed_to)
 
     return {path for path in paths if path}
 
@@ -680,11 +704,51 @@ def check_change(report: Report, release_line: str) -> None:
     if not changed:
         return
 
+    shipped = [path for path in changed if ships_behaviour(path)]
+
     report.check(
-        not any(path.startswith(NEEDS_CHANGELOG) for path in changed)
-        or str(CHANGELOG) in changed,
-        f"{CHANGELOG}: observable behaviour — a rule, the configuration schema, or which files are scanned — changed without an entry",
+        not shipped or str(CHANGELOG) in changed,
+        f"{CHANGELOG}: {len(shipped)} shipped source file(s) changed without an entry, "
+        f"starting with {shipped[0] if shipped else 'none'}. An entry under Internal saying nothing "
+        "a user can observe changed is a valid entry; a silence is not",
     )
+
+
+def check_changelog_exemptions(report: Report) -> None:
+    """An exemption names a file git tracks under that exact name, and a shipped one.
+
+    `Path.exists` and `Path.is_file` are case-insensitive on macOS, so a key spelled `Lib.rs`
+    passed while exempting nothing, and the operator was told the file lacked an entry with no
+    hint that their own exemption had stopped matching. Git's index is exact.
+    """
+
+    tracked = set(git(["ls-files"], "cannot list tracked files").splitlines())
+
+    for path in sorted(EXEMPT_FROM_CHANGELOG):
+        report.check(
+            path in tracked,
+            f"EXEMPT_FROM_CHANGELOG names {path}, which git does not track under that exact "
+            "name; correct or delete the entry",
+        )
+        report.check(
+            is_shipped_path(path),
+            f"EXEMPT_FROM_CHANGELOG names {path}, which is not a crates/*/src/**.rs path, so it "
+            "exempts nothing",
+        )
+
+
+def ships_behaviour(path: str) -> bool:
+    """A path whose change a reader of the changelog would want to know about.
+
+    Everything the crates ship counts, because the alternative is a hand-kept list of what
+    matters, and the one this replaced omitted every default threshold in the suite.
+    """
+
+    return is_shipped_path(path) and path not in EXEMPT_FROM_CHANGELOG
+
+
+def is_shipped_path(path: str) -> bool:
+    return path.startswith("crates/") and "/src/" in path and path.endswith(".rs")
 
 
 
@@ -709,6 +773,7 @@ def main() -> int:
     check_mutation_coverage(report)
     check_mutation_scope(report)
     check_changelog_shape(report)
+    check_changelog_exemptions(report)
     check_conflict_markers(report)
     check_workflows(report)
     check_documentation_links(report)
