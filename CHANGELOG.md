@@ -129,6 +129,13 @@ speaks about.
   failure that job proved all along was the abort. Turning `-e` off covers the `tee` that writes the
   annotations as well, so its status is now checked rather than assumed — a half-written annotations
   file would otherwise have every count and every later step describing a shorter run than happened.
+  The step now has a test that runs its own body, extracted from `action.yml` so the test cannot
+  drift from the shipped step, under the shell GitHub uses. It was written after this step broke a
+  second time in the same pull request, for the neighbouring reason: `PIPESTATUS` describes the last
+  pipeline and an assignment is a command, so reading it on two lines read the second from the
+  assignment. Both breakages were invisible from outside — the step failed, GitHub skipped the rest
+  of the action, and the job failed the way findings fail. The test catches both, and catches
+  `| tee "$output" || true`, the obvious fix that silently reports every run as status 0.
 - A blank `helpers` or `test-paths` entry for `testing/no-test-helper-in-production` is rejected as
   invalid configuration. The two were broken differently: `helpers: [""]` matched the empty segments
   that splitting a Rust `::` path on one colon produced and reported `crate::tests::helper` with the

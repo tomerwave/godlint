@@ -142,8 +142,11 @@ runs:
         set +e
         # shellcheck disable=SC2086
         godlint check --format github $PATHS 2>&1 | tee "$output"
-        status=${PIPESTATUS[0]}
-        written=${PIPESTATUS[1]}
+        # Copied whole and at once: PIPESTATUS describes the last pipeline, and an assignment is
+        # itself a command, so reading it twice reads the second time from the assignment.
+        statuses=("${PIPESTATUS[@]}")
+        status=${statuses[0]}
+        written=${statuses[1]}
         set -e
 
         # Turning -e off covers tee as well, so its status is checked rather than assumed. A partial

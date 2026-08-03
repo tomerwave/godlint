@@ -28,6 +28,9 @@ jobs:
       - name: Test the released-agreement explanation
         run: scripts/test-explain-released-agreement.sh
 
+      - name: Test the action's check step
+        run: scripts/test-action-check-step.sh
+
       - name: Check what this change touched
         if: github.event_name == 'pull_request'
         run: |
