@@ -98,13 +98,13 @@ pub(super) fn measure(function: Node<'_>, vocabulary: &Vocabulary) -> Measured {
     }
 }
 
-fn counted_statements(body: Option<Node<'_>>, walked: u32, vocabulary: &Vocabulary) -> u32 {
+fn counted_statements(body: Option<Node<'_>>, inside_body: u32, vocabulary: &Vocabulary) -> u32 {
     let Some(body) = body else {
         return 0;
     };
 
     if (vocabulary.is_block)(body.kind()) {
-        walked
+        inside_body
     } else {
         1
     }
