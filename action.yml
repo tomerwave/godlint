@@ -131,13 +131,31 @@ runs:
       run: |
         set -uo pipefail
 
-        # A fixed path, so a following step can read the annotations even when this action fails
-        # and GitHub withholds its outputs.
+        # A fixed path, so a following step can read the annotations themselves rather than a count
+        # of them. Outputs survive this action failing, so they carry the numbers.
         output="$RUNNER_TEMP/godlint-annotations.txt"
 
+        # A failing check is the expected case here, not an error to abort on: its status is the
+        # whole point of the step. GitHub invokes this shell with -e, which a script's own `set -o`
+        # line cannot undo — only turning the flag off does — so without this the step ended at the
+        # pipeline below and never reached a single line after it.
+        set +e
         # shellcheck disable=SC2086
         godlint check --format github $PATHS 2>&1 | tee "$output"
-        status=${PIPESTATUS[0]}
+        # Copied whole and at once: PIPESTATUS describes the last pipeline, and an assignment is
+        # itself a command, so reading it twice reads the second time from the assignment.
+        statuses=("${PIPESTATUS[@]}")
+        status=${statuses[0]}
+        written=${statuses[1]}
+        set -e
+
+        # Turning -e off covers tee as well, so its status is checked rather than assumed. A partial
+        # annotations file is worse than no file: every count below it, and every step that reads
+        # it, would describe a shorter run than the one that happened.
+        if [ "$written" != "0" ]; then
+          echo "godlint-action: could not write the annotations to $output" >&2
+          exit 1
+        fi
 
         findings="$(grep -c '^::' "$output" || true)"
         echo "findings=$findings" >> "$GITHUB_OUTPUT"

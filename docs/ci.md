@@ -55,9 +55,24 @@ every rule, so the shape of the work is still visible.
 | --- | --- |
 | `version` | The version that ran, resolved if the input was `latest`. |
 | `findings` | How many findings were reported. |
+| `status` | The status `godlint check` exited with. |
 
-A composite action withholds its outputs when it fails, so `findings` is readable only from a run that
-passed. To act on a failing count, set `fail-on: off` in the configuration and decide in a later step.
+A later step can read all three even when the action fails, which is the run that has something to
+say — with one limit worth knowing: an output survives only if the step that set it ran. The action
+stops at its first failing step, so a failed install leaves all three empty rather than zero. To act
+on a count without failing the job at all, set `fail-on: off` in the configuration and decide
+afterwards.
+
+`status` is what a step reads to know **why** a run failed rather than only that it did:
+
+| Status | Meaning |
+| --- | --- |
+| `0` | Nothing at or above `fail-on`. |
+| `1` | Findings at or above `fail-on`. |
+| `2` | Godlint could not check everything it was asked to — an unreadable configuration, a file it could not parse, a path it would not accept. Findings it did reach are still reported. |
+
+The distinction matters because a workflow that treats every non-zero status as findings reports a
+clean tree it could not read as a tree with problems.
 
 ### Versioning
 

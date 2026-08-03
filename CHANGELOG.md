@@ -11,6 +11,29 @@ speaks about.
 
 ### Changed
 
+- The drift gate reads the status the released binary exited with instead of matching a sentence in
+  its output. It decided whether the release could read the configuration by grepping for
+  `Configuration is invalid`, and the binary being grepped is a *past* release — so no test in this
+  repository could hold that wording still, and rewording it in a later version would have silently
+  reclassified an unreadable configuration as drift, the one failure the gate exists to prevent. It
+  now reads the action's `status` output, which has to be fixed to exist at all for a run with
+  findings (below), and when the status says the check did not finish it asks the release itself:
+  `config validate` answers *can you read this configuration* with an exit status, and has since the
+  first release, so every binary the gate can run understands the question. Two things follow beyond
+  the plumbing. A release that cannot parse a file exits 2 having still reported what it did reach,
+  and those partial findings were read as drift with a choice of labels offered; a verdict on part of
+  a tree is not a verdict, so that now fails and says so. And the guidance the gate printed said
+  adding a *rule* lands there, which stopped being true when a release started ignoring an unknown
+  rule key with a notice — only a configuration key, a suite or a configuration version reaches it.
+  A tree with no `godlint.yaml` at all is now reported rather than waved through: the release cannot
+  read a file that is not there, so with no check for one a repository stating no policy read as a
+  release too old to understand it, which is the same silent pass from the other direction.
+  The step's own conclusion is still read, for the one question the status cannot answer: a step
+  after the check failing leaves Godlint's own status honest while the action failed for its own
+  reason. That the outcome is read at all was `ci/no-silenced-failure` reporting this repository's
+  drift job the moment nothing did. `docs/ci.md` documents the `status` output, which existed
+  undocumented, and what each status means.
+
 - Nothing a user can observe: the per-language module separator is defined once. Two rules kept their
   own copy — one returning a `char`, so Rust's `::` was halved to `:`, and one that used `/` for every
   language except Python, so a Rust path was a single segment. Neither was observable: splitting
@@ -94,6 +117,28 @@ speaks about.
 
 ### Fixed
 
+- The action's job summary appears when there are findings, which is the only time it was ever for.
+  GitHub invokes a `shell: bash` step as `bash -e`, and a script's own `set -uo pipefail` cannot undo
+  the `-e` it was invoked with, so the step ended at `godlint check | tee` the moment the check
+  reported anything — before writing the findings count, before writing the status, and before the
+  two steps after it, which a composite action skips once one fails. So `summary`, whose whole reason
+  for existing is that GitHub renders only so many annotations and a first adoption produces
+  hundreds, ran only against trees that had nothing to summarise, where it printed `No findings.`
+  The `findings` and `status` outputs were empty for the same reason, and `docs/ci.md` explained that
+  with the wrong cause — a composite action withholding its outputs when it fails, which measurably
+  it does not — and a wrong explanation is why the real one went unexamined this long. Found by
+  asserting in the `dirty` workflow job that the action fails *with findings*, where it had asserted
+  only that it fails: an aborting step and findings failing a run look identical from outside, so the
+  failure that job proved all along was the abort. Turning `-e` off covers the `tee` that writes the
+  annotations as well, so its status is now checked rather than assumed — a half-written annotations
+  file would otherwise have every count and every later step describing a shorter run than happened.
+  The step now has a test that runs its own body, extracted from `action.yml` so the test cannot
+  drift from the shipped step, under the shell GitHub uses. It was written after this step broke a
+  second time in the same pull request, for the neighbouring reason: `PIPESTATUS` describes the last
+  pipeline and an assignment is a command, so reading it on two lines read the second from the
+  assignment. Both breakages were invisible from outside — the step failed, GitHub skipped the rest
+  of the action, and the job failed the way findings fail. The test catches both, and catches
+  `| tee "$output" || true`, the obvious fix that silently reports every run as status 0.
 - A blank `helpers` or `test-paths` entry for `testing/no-test-helper-in-production` is rejected as
   invalid configuration. The two were broken differently: `helpers: [""]` matched the empty segments
   that splitting a Rust `::` path on one colon produced and reported `crate::tests::helper` with the

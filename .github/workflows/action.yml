@@ -33,6 +33,7 @@ jobs:
         shell: bash
         env:
           OUTCOME: ${{ steps.godlint.outcome }}
+          STATUS: ${{ steps.godlint.outputs.status }}
           FIXES_FALSE_POSITIVE: ${{ contains(github.event.pull_request.labels.*.name, 'fixes-false-positive') }}
           RELAXES_A_RULE: ${{ contains(github.event.pull_request.labels.*.name, 'relaxes-a-rule') }}
         run: scripts/explain-released-agreement.sh
@@ -54,12 +55,21 @@ jobs:
         shell: bash
         env:
           OUTCOME: ${{ steps.godlint.outcome }}
+          STATUS_OUTPUT: ${{ steps.godlint.outputs.status }}
+          FINDINGS_OUTPUT: ${{ steps.godlint.outputs.findings }}
         run: |
           set -euo pipefail
 
           annotations="$RUNNER_TEMP/godlint-annotations.txt"
 
           test "$OUTCOME" = "failure"
+          # Findings, and not some other way of failing: without the status a tree the action could
+          # not read at all would fail this job exactly as findings do. Asserting it here is also
+          # what holds open the two facts it depends on — that the check step runs to completion
+          # when it reports findings, and that a composite action that fails still hands over its
+          # outputs.
+          test "$STATUS_OUTPUT" = "1"
+          test "$FINDINGS_OUTPUT" = "2"
           grep -q '^::error .*title=architecture/filename-case::' "$annotations"
           grep -q '^::error .*title=logging/no-production-log::' "$annotations"
-          echo "the action failed as it should, and annotated both rules"
+          echo "the action failed with findings as it should, and annotated both rules"
