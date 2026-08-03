@@ -9,6 +9,18 @@ speaks about.
 
 ## [Unreleased]
 
+### Internal
+
+- Nothing a user can observe: twenty-one rule configuration structs are declared by two macros
+  instead of by hand. Thirteen were exactly `{ severity }` and eight exactly `{ severity, allow-in }`,
+  and `config/rules.rs` already had the parameterised form for this situation in `count_limit_rules!`.
+  The file is 89 lines shorter, every type name survives, and the schema is unchanged — an unknown
+  field still reports `` unknown field `allow_in`, expected `severity` or `allow-in` ``.
+- Nothing a user can observe: `Display for Violation` states the four test violations as four arms.
+  They shared one arm containing a four-way `if matches!(self, …)` chain that re-tested `self` to
+  recover what the match had already decided — the only line in a fifty-arm table a reader could not
+  scan. Exhaustiveness is unchanged, which is the property that arm exists to keep.
+
 ### Changed
 
 - Nothing a user can observe: the per-language module separator is defined once. Two rules kept their

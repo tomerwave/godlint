@@ -16,12 +16,6 @@ pub struct AccountableSuppressionRule {
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct UnusedSuppressionRule {
-    pub severity: Severity,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
 pub struct RestrictedCallRule {
     pub severity: Severity,
     #[serde(default)]
@@ -141,12 +135,6 @@ pub struct RestrictedImport {
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct NoDynamicExecutionRule {
-    pub severity: Severity,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
 pub struct DirectEnvironmentReadRule {
     pub severity: Severity,
     #[serde(default = "default_configuration_paths", rename = "allow-in")]
@@ -159,24 +147,6 @@ pub struct AssertionRequiredRule {
     pub severity: Severity,
     #[serde(default, rename = "extra-assertions")]
     pub extra_assertions: Vec<String>,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct NoEmptyTestRule {
-    pub severity: Severity,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct NoFocusedTestRule {
-    pub severity: Severity,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct NoSkippedTestRule {
-    pub severity: Severity,
 }
 
 #[derive(Debug, Deserialize)]
@@ -199,32 +169,10 @@ pub struct NoInternalImportRule {
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct NoShellCommandRule {
-    pub severity: Severity,
-    #[serde(default, rename = "allow-in")]
-    pub allow_in: Vec<String>,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct NoSleepInTestRule {
-    pub severity: Severity,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
 pub struct NoNetworkInUnitTestRule {
     pub severity: Severity,
     #[serde(default, rename = "unit-paths")]
     pub unit_paths: Vec<String>,
-    #[serde(default, rename = "allow-in")]
-    pub allow_in: Vec<String>,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct NoRandomnessWithoutSeedRule {
-    pub severity: Severity,
     #[serde(default, rename = "allow-in")]
     pub allow_in: Vec<String>,
 }
@@ -239,38 +187,10 @@ pub struct ExplicitWorkflowPermissionsRule {
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct NoWorkflowCommentsRule {
-    pub severity: Severity,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct HardcodedContainerCredentialsRule {
-    pub severity: Severity,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
 pub struct PinThirdPartyActionsRule {
     pub severity: Severity,
     #[serde(default = "default_trusted_owners", rename = "trusted-owners")]
     pub trusted_owners: Vec<String>,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct StaleActionRefsRule {
-    pub severity: Severity,
-    #[serde(default, rename = "allow-in")]
-    pub allow_in: Vec<String>,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct TemplateInjectionRule {
-    pub severity: Severity,
-    #[serde(default, rename = "allow-in")]
-    pub allow_in: Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -283,68 +203,6 @@ pub struct BotConditionsRule {
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct SecretsInheritRule {
-    pub severity: Severity,
-    #[serde(default, rename = "allow-in")]
-    pub allow_in: Vec<String>,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct OverprovisionedSecretsRule {
-    pub severity: Severity,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct UnredactedSecretsRule {
-    pub severity: Severity,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct NoSilencedFailureRule {
-    pub severity: Severity,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct NoWeakHashRule {
-    pub severity: Severity,
-    #[serde(default, rename = "allow-in")]
-    pub allow_in: Vec<String>,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct NoInsecureRandomRule {
-    pub severity: Severity,
-    #[serde(default, rename = "allow-in")]
-    pub allow_in: Vec<String>,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct NoProductionLogRule {
-    pub severity: Severity,
-    #[serde(default, rename = "allow-in")]
-    pub allow_in: Vec<String>,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct ExplicitTimerDelayRule {
-    pub severity: Severity,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct EmptyErrorHandlerRule {
-    pub severity: Severity,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
 pub struct LineLimitRule {
     pub severity: Severity,
     #[serde(rename = "max-lines")]
@@ -353,6 +211,59 @@ pub struct LineLimitRule {
     pub skip_blank_lines: bool,
     #[serde(default = "enabled", rename = "skip-comments")]
     pub skip_comments: bool,
+}
+
+macro_rules! severity_only_rules {
+    ($($name:ident),+ $(,)?) => {
+        $(
+            #[derive(Debug, Deserialize)]
+            #[serde(deny_unknown_fields)]
+            pub struct $name {
+                pub severity: Severity,
+            }
+        )+
+    };
+}
+
+macro_rules! allow_in_rules {
+    ($($name:ident),+ $(,)?) => {
+        $(
+            #[derive(Debug, Deserialize)]
+            #[serde(deny_unknown_fields)]
+            pub struct $name {
+                pub severity: Severity,
+                #[serde(default, rename = "allow-in")]
+                pub allow_in: Vec<String>,
+            }
+        )+
+    };
+}
+
+severity_only_rules! {
+    EmptyErrorHandlerRule,
+    ExplicitTimerDelayRule,
+    HardcodedContainerCredentialsRule,
+    NoDynamicExecutionRule,
+    NoEmptyTestRule,
+    NoFocusedTestRule,
+    NoSilencedFailureRule,
+    NoSkippedTestRule,
+    NoSleepInTestRule,
+    NoWorkflowCommentsRule,
+    OverprovisionedSecretsRule,
+    UnredactedSecretsRule,
+    UnusedSuppressionRule,
+}
+
+allow_in_rules! {
+    NoInsecureRandomRule,
+    NoProductionLogRule,
+    NoRandomnessWithoutSeedRule,
+    NoShellCommandRule,
+    NoWeakHashRule,
+    SecretsInheritRule,
+    StaleActionRefsRule,
+    TemplateInjectionRule,
 }
 
 macro_rules! count_limit_rules {
