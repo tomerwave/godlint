@@ -328,6 +328,34 @@ fn rejects_a_blank_restricted_call_name() {
 }
 
 #[test]
+fn rejects_a_blank_test_helper_name() {
+    let result = load(
+        "version: 1\nrules:\n  testing/no-test-helper-in-production:\n    severity: error\n    helpers:\n      - ' '\n",
+    );
+
+    assert!(matches!(
+        result,
+        Err(ConfigError::BlankAllowIn {
+            rule: "testing/no-test-helper-in-production"
+        })
+    ));
+}
+
+#[test]
+fn rejects_a_blank_test_helper_path() {
+    let result = load(
+        "version: 1\nrules:\n  testing/no-test-helper-in-production:\n    severity: error\n    test-paths:\n      - ' '\n",
+    );
+
+    assert!(matches!(
+        result,
+        Err(ConfigError::BlankAllowIn {
+            rule: "testing/no-test-helper-in-production"
+        })
+    ));
+}
+
+#[test]
 fn rejects_a_blank_restricted_call_allow_in_path() {
     let result = load(
         "version: 1\nrules:\n  architecture/restricted-call:\n    severity: error\n    calls:\n      - name: loadConfig\n        allow-in:\n          - ' '\n",

@@ -5,7 +5,7 @@ use crate::{
     glob,
     rules::{
         Absence, Finding, ImportRule, Languages, Rule, Violation, evaluate_import_rule,
-        when_configured,
+        module_path, when_configured,
     },
     source::{Dialect, Language},
 };
@@ -65,14 +65,8 @@ fn is_permitted(module: &str, configuration: &NoInternalImportRule) -> bool {
 }
 
 fn reached_past(module: &str, language: Language) -> Option<String> {
-    let separator = if language == Language::Python {
-        '.'
-    } else {
-        '/'
-    };
-
     let reached: Vec<&str> = module
-        .split(separator)
+        .split(module_path::separator(language))
         .skip(own_segments(module))
         .filter(|segment| is_marker(segment, language))
         .collect();

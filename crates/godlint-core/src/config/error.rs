@@ -93,7 +93,7 @@ impl fmt::Display for ConfigError {
                 duplicate(formatter, "architecture/restricted-call", name)
             }
             Self::BlankAllowIn { rule } => {
-                write!(formatter, "{rule} path patterns must not be blank")
+                write!(formatter, "{rule} entries must not be blank")
             }
             Self::InvalidExclude { pattern } => {
                 write!(formatter, "exclude pattern must not be blank: {pattern:?}")
