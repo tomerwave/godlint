@@ -11,6 +11,31 @@ speaks about.
 
 ### Changed
 
+- A declaration in `.github/accepted-drift.md` that the released binary does not report fails the
+  released-agreement check instead of printing a notice nobody reads. `docs/releasing.md` said the
+  quiet part out loud — "deleting it is remembered rather than enforced" — and remembering is not a
+  gate. What makes it worth failing is what a declaration is: it stands ready to accept disagreement
+  in one named rule, so a line left behind after the drift it described is resolved will silently
+  accept the *next* drift in that rule, which is the one case this check exists to catch. A stale
+  declaration is not untidiness, it is an exemption nobody is watching. The pressure lands where the
+  release process already expected it: the first pull request after a release either deletes the file
+  or goes red naming each line to remove.
+
+  Three things look like a stale declaration and are not, and calling any of them stale would have
+  been worse than the notice it replaces, because the instruction is *delete the line*. Staleness
+  reads "not among the rules the release reported", so it is only sound where that list is the whole
+  list. It is not when the release could not read this repository's configuration — it reported
+  nothing about any rule, so failing there would fail every pull request that adds a configuration
+  key, for declarations that are perfectly good. It is not when a finding's rule id could not be
+  parsed, because the unreadable one may *be* the declared rule. And it is not when the release
+  claimed findings and the annotations hold none, which is no record rather than a record of nothing.
+  None of the three is called stale. The configuration case reports its declarations *unexercised*
+  and passes; the other two report them *not examined* and leave the run red on the findings they
+  could not read, unless a drift label declares those, which is the escape a label has always been.
+  A stale declaration also does not short-circuit the undeclared-finding report: a run with both
+  says both,
+  and names every stale line with its own kind rather than the first — the first attempt got the
+  short-circuit wrong and the suite caught it, and review caught the rest.
 - The drift gate reads the status the released binary exited with instead of matching a sentence in
   its output. It decided whether the release could read the configuration by grepping for
   `Configuration is invalid`, and the binary being grepped is a *past* release — so no test in this

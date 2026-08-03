@@ -17,8 +17,41 @@ Prefer this file to the `relaxes-a-rule` and `fixes-false-positive` labels: a la
 temporary declaration that dies with its pull request, while the file names each rule precisely,
 survives the merge, and keeps `main` honest.
 
-A stale declaration is currently reported as a notice rather than a failure, so deleting it is
-remembered rather than enforced.
+Deleting it is enforced rather than remembered. Once the new binary is published it no longer
+reports the rules the file names, and a declaration the released binary does not report **fails** the
+released-agreement check — on every pull request, until the line is deleted. That is the intended
+pressure and it is worth knowing before it arrives: the first pull request after a release either
+deletes the file or goes red naming each line to remove.
+
+The reason it fails rather than notices is what a declaration is for. It stands ready to accept
+disagreement in one named rule, so a line left behind after the drift it described is resolved will
+silently accept the *next* drift in that rule — the one case this check exists to catch. A stale
+declaration is not untidiness, it is an exemption nobody is watching.
+
+Three situations look like a stale declaration and are not. None of them is reported as stale, which
+is not the same as none of them failing:
+
+- **The release cannot read this repository's configuration.** It reported nothing about any rule, so
+  its declarations are unexercised rather than spent, and they are reported as notices. The check
+  passes — otherwise every pull request adding a configuration key would fail on declarations that
+  are perfectly good.
+- **The release stopped before it could finish.** The check fails, for its own reason and with its own
+  message, and says nothing about declarations at all. A partial scan is not evidence about a rule it
+  may never have reached.
+- **The release reported findings this gate could not read as a list of rules** — a rule id it could
+  not parse, or an annotations file with nothing in it. The unreadable finding may *be* the declared
+  rule, so the declarations are reported as not examined. The findings themselves still have to be
+  answered, so the check fails on them unless a drift label declares them — which is what a label has
+  always done, and unreadable findings are no exception.
+
+**A known limitation.** The released-agreement job runs on Linux, macOS and Windows, and each runner
+judges the file against its own findings. So drift on one platform only cannot be declared: the
+declaration is used on the runner that reports the rule and stale on the two that do not, which now
+fails there instead of printing a notice. It has not come up: the only declaration this file has ever
+carried was a raised `ci/no-monolithic-job` threshold, which every platform reports alike. The
+alternative is a declaration any platform can leave unexamined, which is the accountability the file
+exists to provide — so if it does come up, the answer is a declaration that names the platform, not a
+quieter check.
 
 The release notes are every category in the version's section except `Internal`, which is where a
 change nothing a user can observe belongs — `check-release.py` drops it, so an entry recording that a
