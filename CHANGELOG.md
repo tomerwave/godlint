@@ -85,6 +85,19 @@ speaks about.
   in Rust, so its own dogfooding could not notice either. Found when a one-line pull request proposed
   exactly that change under a title claiming to add a marker.
 
+## [Unreleased]
+
+### Changed
+
+- Every function's metrics come from one walk of its syntax tree instead of five. Decision points,
+  cognitive score, return paths, statement count and block depth each recursed the same subtree
+  separately, re-reading every node's kind each time; on a 10,160-file tree that was 29% of the whole
+  run, more than parsing. One traversal carries the nesting level, block depth and else position that
+  the five walks each tracked alone. Measured on a 2,104-file tree, `godlint check` goes from 1.53s to
+  1.27s, and the numbers are unchanged: **byte-identical output over 16,896 findings** with every
+  metric's limit set to 1 so each function reports all five of its measured values, plus a
+  mixed-language corpus and this repository.
+
 ## [0.5.0] - 2026-08-01
 
 ### Added
