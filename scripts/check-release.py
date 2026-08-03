@@ -21,6 +21,7 @@ import sys
 from pathlib import Path
 
 CHANGELOG = Path("CHANGELOG.md")
+INTERNAL = "Internal"
 MANIFEST = Path("Cargo.toml")
 CRATES = Path("crates")
 
@@ -62,15 +63,38 @@ def notes(version: str) -> str:
 
     rest = text[start.end() :]
     end = re.search(r"^## ", rest, re.MULTILINE)
-    body = rest[: end.start()].strip() if end else rest.strip()
+    section = rest[: end.start()] if end else rest
+    body = without_internal(section).strip()
 
     if not body:
         raise SystemExit(
-            f"{CHANGELOG}: the section for {version} is empty. "
-            "A release with no notes says nothing about what changed."
+            f"{CHANGELOG}: the section for {version} announces nothing. "
+            f"{'Every entry is under Internal, which the release body leaves out' if section.strip() else 'The section is empty'}. "
+            "A release needs a sentence a user can read."
         )
 
     return body
+
+
+def without_internal(section: str) -> str:
+    """The section a release announces, which is every category except Internal.
+
+    The release body is this text verbatim, so it reaches people who will never read this
+    repository. An entry saying that a refactor changed nothing observable belongs in the log
+    and not in that announcement, and `Internal` is where it goes.
+    """
+
+    kept: list[str] = []
+    internal = False
+
+    for line in section.splitlines():
+        if line.startswith("### "):
+            internal = line[4:].strip() == INTERNAL
+
+        if not internal:
+            kept.append(line)
+
+    return "\n".join(kept)
 
 
 def main() -> int:

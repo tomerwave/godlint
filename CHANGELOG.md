@@ -9,18 +9,6 @@ speaks about.
 
 ## [Unreleased]
 
-### Internal
-
-- Nothing a user can observe: twenty-one rule configuration structs are declared by two macros
-  instead of by hand. Thirteen were exactly `{ severity }` and eight exactly `{ severity, allow-in }`,
-  and `config/rules.rs` already had the parameterised form for this situation in `count_limit_rules!`.
-  The file is 89 lines shorter, every type name survives, and the schema is unchanged — an unknown
-  field still reports `` unknown field `allow_in`, expected `severity` or `allow-in` ``.
-- Nothing a user can observe: `Display for Violation` states the four test violations as four arms.
-  They shared one arm containing a four-way `if matches!(self, …)` chain that re-tested `self` to
-  recover what the match had already decided — the only line in a fifty-arm table a reader could not
-  scan. Exhaustiveness is unchanged, which is the property that arm exists to keep.
-
 ### Changed
 
 - Nothing a user can observe: the per-language module separator is defined once. Two rules kept their
@@ -38,7 +26,20 @@ speaks about.
   `slice` indexes directly, so a range built by another file panics rather than returning a plausible
   empty string — a rule that quietly declines to fire is worse than a crash, and `docs/architecture.md`
   now records that reasoning where the range guarantee is stated.
-
+- `validate-pull-request.py` asks for a changelog entry when any shipped source file changes, rather
+  than when one of five hand-listed paths does. What the old list omitted decided the policy:
+  `config/rules.rs` holds every default threshold, so **raising one — the most user-visible change
+  this project can make — needed no entry at all**, and neither did `suites.rs`, which decides what a
+  suite enables and at what severity. Exemptions are now named with a reason instead of inferred from
+  a list of what someone remembered to include, and an entry that says nothing a user can observe
+  changed is a valid entry, which is the sentence a refactor should be made to write. Those entries go
+  under a new `### Internal` category that `check-release.py` leaves out of the release body, because
+  the body is the section verbatim and reaches people who will never read this repository — so the log
+  keeps the refactor and the announcement does not carry it. A file leaving `crates/*/src/` counts as
+  a change to it: `git diff --name-only` resolves a rename to its destination, so moving a shipped
+  module into `tests/` reported nothing at all until the diff was taken with `--no-renames`. The
+  category names are constrained too, because the release body is name-sensitive: `### internal`
+  would have shipped a refactor to users while looking right in the file.
 - Suppression matching is grouped by file instead of comparing every finding with every suppression.
   `apply` scanned the whole suppression list for each finding and `policy/unused-suppression` scanned
   the whole finding list for each suppression, so the cost grew with the *product* of two
@@ -58,7 +59,6 @@ speaks about.
   takes to start and read the configuration. The win is 2.66× on a large repository and nothing at all
   on a small one. Where a machine reports one core, `available_parallelism` returns 1 and the
   sequential path is taken.
-
 - Deciding that a path is not excluded no longer allocates. `glob::segment_matches` built two
   `Vec<char>`s and a table per segment comparison before comparing anything, including for the
   literal patterns every `exclude:` list is made of — `target`, `node_modules`, `.venv`. Measured on
@@ -73,18 +73,6 @@ speaks about.
   --continue` accepts a staged file whose conflict was never resolved, so a botched resolution lands
   as a commit that looks deliberate — which is exactly what happened while rebasing this branch, and
   all 1046 checks passed over a changelog full of `<<<<<<<`.
-- Nothing a user can observe: five rules asked a shared question in their own private spelling.
-  `security/forbidden-dependency`, `architecture/restricted-import` and `architecture/filename-case`
-  each carried a copy of the path-glob match that `rules::catalogue` already provides, and
-  `architecture/dependency-boundary` and `architecture/module-independence` carried byte-identical
-  helpers for which declared set holds a file and which names an imported module. That pair is now
-  `scoped::endpoints`, so a change to how a set claims a file happens once instead of twice.
-- Also nothing observable: `logical_operator`, `opens_operator_sequence`, `is_else_if` and the
-  comment-prefix lookup were byte-identical in the Rust and ECMAScript analysers, so they live in
-  `analyzers::vocabulary` now, where the shared analyser helpers already are and where naming a
-  grammar node kind is still in bounds. Python's versions genuinely differ and are untouched. A
-  second `JobFact` constructor with no callers is gone; it filled defaults a workflow never has and
-  would have silently set a job's body to its own first line.
 - `validate-pull-request.py` compares the mutation gate's scope with the tree rather than only with
   the mutation workflow's trigger paths. Twelve files in `godlint-core` — including the ones that
   decide which files are scanned, whether an `exclude` pattern matches, and whether a suppression
@@ -112,7 +100,6 @@ speaks about.
   message `names , which is test scaffolding`, while a blank `test-paths` entry matched nothing at all,
   so the option looked configured and did nothing. Every other list-valued option in the schema
   already refused a blank entry; these two were missed.
-
 - Four decisions in the analysers had no test depending on them, which a full mutation sweep of
   `main` found: a Rust `use {std, core};` brace list must contribute no import, an ordinary `let`
   must not count as a branch where a `let … else` does, and `.tsx` must be parsed by the TSX grammar
@@ -153,6 +140,30 @@ speaks about.
   gets its own finding at its own depth. Found by review of the walk consolidation, which made the
   inconsistency visible; across 453,807 functions in a 26,404-file corpus this changes 127 functions
   in 51 files, all of them curried, and none in this repository.
+
+### Internal
+
+- Nothing a user can observe: twenty-one rule configuration structs are declared by two macros
+  instead of by hand. Thirteen were exactly `{ severity }` and eight exactly `{ severity, allow-in }`,
+  and `config/rules.rs` already had the parameterised form for this situation in `count_limit_rules!`.
+  The file is 89 lines shorter, every type name survives, and the schema is unchanged — an unknown
+  field still reports `` unknown field `allow_in`, expected `severity` or `allow-in` ``.
+- Nothing a user can observe: `Display for Violation` states the four test violations as four arms.
+  They shared one arm containing a four-way `if matches!(self, …)` chain that re-tested `self` to
+  recover what the match had already decided — the only line in a fifty-arm table a reader could not
+  scan. Exhaustiveness is unchanged, which is the property that arm exists to keep.
+- Nothing a user can observe: five rules asked a shared question in their own private spelling.
+  `security/forbidden-dependency`, `architecture/restricted-import` and `architecture/filename-case`
+  each carried a copy of the path-glob match that `rules::catalogue` already provides, and
+  `architecture/dependency-boundary` and `architecture/module-independence` carried byte-identical
+  helpers for which declared set holds a file and which names an imported module. That pair is now
+  `scoped::endpoints`, so a change to how a set claims a file happens once instead of twice.
+- Also nothing observable: `logical_operator`, `opens_operator_sequence`, `is_else_if` and the
+  comment-prefix lookup were byte-identical in the Rust and ECMAScript analysers, so they live in
+  `analyzers::vocabulary` now, where the shared analyser helpers already are and where naming a
+  grammar node kind is still in bounds. Python's versions genuinely differ and are untouched. A
+  second `JobFact` constructor with no callers is gone; it filled defaults a workflow never has and
+  would have silently set a job's body to its own first line.
 
 ## [0.5.0] - 2026-08-01
 

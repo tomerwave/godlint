@@ -20,6 +20,11 @@ survives the merge, and keeps `main` honest.
 A stale declaration is currently reported as a notice rather than a failure, so deleting it is
 remembered rather than enforced.
 
+The release notes are every category in the version's section except `Internal`, which is where a
+change nothing a user can observe belongs — `check-release.py` drops it, so an entry recording that a
+refactor changed no behaviour stays in the log without being announced to people who will never read
+this repository.
+
 Rename the changelog's `Unreleased` section to the version, make sure the workspace version already
 says the same, and check that all three agree:
 

@@ -36,8 +36,13 @@ Start with [local development](docs/local-development.md) for the build and the 
   fixtures under `crates/godlint-cli/tests/fixtures/rules/<rule-id>/`.
 - A rule change needs valid, invalid, configuration and suppression fixtures; a safe fix also needs an
   expected-output fixture.
-- Update documentation when public behaviour, configuration, suite defaults or rule semantics change,
-  and add release-note text for anything user-visible.
+- Update documentation when public behaviour, configuration, suite defaults or rule semantics change.
+- Every change to a shipped source file — anything under `crates/*/src/` — needs a `CHANGELOG.md`
+  entry, and `validate-pull-request.py` refuses one without it. A refactor is not exempt: put it
+  under `### Internal`, which the log keeps and the release notes leave out. What earned this rule is
+  what the old one omitted, which was every default threshold in `config/rules.rs` — so raising one
+  needed no entry at all. Say plainly whether a user can observe the change; a wrong guess is
+  correctable in review and a silence is not.
 
 ## Branches and pull requests
 
