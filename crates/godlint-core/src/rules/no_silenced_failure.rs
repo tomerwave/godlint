@@ -9,6 +9,8 @@ use crate::{
     source::{SourceRange, range_contains},
 };
 
+const YAML_TRUE: [&str; 3] = ["true", "True", "TRUE"];
+
 pub struct NoSilencedFailure;
 
 impl Rule for NoSilencedFailure {
@@ -78,7 +80,9 @@ fn step_violations(workflow: &WorkflowFacts) -> Vec<(SourceRange, Violation)> {
 }
 
 fn literal_true(workflow: &WorkflowFacts, range: Option<SourceRange>) -> Option<SourceRange> {
-    range.filter(|range| workflow.file().text()[range.start()..range.end()].trim() == "true")
+    range.filter(|range| {
+        YAML_TRUE.contains(&workflow.file().text()[range.start()..range.end()].trim())
+    })
 }
 
 fn outcome_is_read(workflow: &WorkflowFacts, job: &JobFact, step: &StepFact) -> bool {
