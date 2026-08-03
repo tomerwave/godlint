@@ -30,6 +30,13 @@ speaks about.
   found no changed files, skipped the checks, and printed that every check passed. Staged, unstaged and
   untracked paths all count now, and the changelog check consequently fails locally at the point the
   entry is missing rather than in CI.
+- `ci/no-silenced-failure` reports `continue-on-error: True` and `TRUE`, not only the lowercase
+  spelling. YAML's core schema calls all three true and GitHub honours each, so a capital letter
+  silenced a step and the rule said nothing — a false negative in the one rule whose whole job is
+  noticing a check that cannot fail. `yes`, `on` and a quoted `"true"` stay silent: they are not
+  booleans in the core schema, and reporting them would rest on a guess about GitHub's coercion that
+  cannot be checked without a network. Found by probing the built binary while reviewing the rule,
+  not by reading it.
 
 ## [0.5.0] - 2026-08-01
 

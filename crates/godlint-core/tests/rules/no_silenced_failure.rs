@@ -30,6 +30,30 @@ fn script(run: &str) -> String {
 }
 
 #[test]
+fn every_yaml_spelling_of_true_silences_a_step() {
+    for spelling in ["true", "True", "TRUE"] {
+        let reported = findings(
+            &step(&format!("        continue-on-error: {spelling}\n")),
+            Severity::Error,
+        );
+
+        assert_eq!(reported.len(), 1, "continue-on-error: {spelling}");
+    }
+}
+
+#[test]
+fn a_value_yaml_does_not_read_as_true_leaves_a_step_alone() {
+    for spelling in ["false", "False", "FALSE", "yes", "on", "tRuE", "\"true\""] {
+        let reported = findings(
+            &step(&format!("        continue-on-error: {spelling}\n")),
+            Severity::Error,
+        );
+
+        assert!(reported.is_empty(), "continue-on-error: {spelling}");
+    }
+}
+
+#[test]
 fn an_unconsumed_step_continuing_on_error_is_a_warning() {
     let reported = findings(&step("        continue-on-error: true\n"), Severity::Error);
 

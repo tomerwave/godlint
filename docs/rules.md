@@ -227,7 +227,14 @@ expression anywhere in the same job reads `steps.<id>.outcome` or `steps.<id>.co
 `${{ }}` values and the implicit expression in an unbraced `if:` both count. That is observable soft
 failure rather than discarded failure. The search does not cross the job body, because a step
 outcome is not available from another job. Expression-valued and false `continue-on-error` settings
-remain literal facts and are silent because the rule only decides the exact `true` value.
+remain literal facts and are silent.
+
+The value is read as YAML reads it, so `true`, `True` and `TRUE` are all reported — those are the
+three spellings YAML's core schema calls true, and GitHub honours each of them. Matching only the
+lowercase form let a capital letter silence a step with nothing said about it. Anything outside that
+set stays silent, including `yes`, `on` and a quoted `"true"`: they are not booleans in YAML's core
+schema, and reporting a value on the guess that GitHub coerces it anyway would be a false positive
+resting on an assumption this rule cannot check without a network.
 
 Job outcomes have no same-workflow expression equivalent, so a literal job-level setting cannot
 prove its own intent. It is reported at warning, and excluding that workflow is the escape hatch for
