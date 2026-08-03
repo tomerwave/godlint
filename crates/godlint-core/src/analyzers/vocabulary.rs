@@ -139,3 +139,47 @@ fn first_statement(block: Node<'_>) -> Option<Node<'_>> {
         .named_children(&mut cursor)
         .find(|child| !child.is_extra())
 }
+
+pub(crate) fn logical_operator(node: Node<'_>) -> Option<&'static str> {
+    if node.kind() != "binary_expression" {
+        return None;
+    }
+
+    match node.child_by_field_name("operator")?.kind() {
+        "&&" => Some("&&"),
+        "||" => Some("||"),
+        _ => None,
+    }
+}
+
+pub(crate) fn opens_operator_sequence(node: Node<'_>) -> bool {
+    let Some(operator) = logical_operator(node) else {
+        return false;
+    };
+
+    node.parent()
+        .and_then(logical_operator)
+        .is_none_or(|enclosing| enclosing != operator)
+}
+
+pub(crate) fn is_else_if(node: Node<'_>) -> bool {
+    node.parent()
+        .is_some_and(|parent| parent.kind() == "else_clause")
+}
+
+pub(crate) fn prefixed_comment(
+    node: Node<'_>,
+    source: &str,
+    prefixes: &[(&str, CommentKind)],
+) -> Option<CommentKind> {
+    if !node.is_extra() {
+        return None;
+    }
+
+    let text = source.get(node.byte_range())?;
+
+    prefixes
+        .iter()
+        .find(|(prefix, _)| text.starts_with(prefix))
+        .map(|(_, kind)| *kind)
+}

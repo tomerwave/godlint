@@ -28,8 +28,10 @@ impl ImportRule for ForbiddenDependency {
             .iter()
             .find(|entry| entry.name == package)?;
 
-        (!catalogue::matches(import.source(), &forbidden.allow_in)).then(|| Violation::ForbiddenDependency {
-            package: package.to_owned(),
+        (!catalogue::matches(import.source(), &forbidden.allow_in)).then(|| {
+            Violation::ForbiddenDependency {
+                package: package.to_owned(),
+            }
         })
     }
 }

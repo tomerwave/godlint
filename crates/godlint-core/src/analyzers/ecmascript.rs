@@ -2,7 +2,7 @@ use tree_sitter::Node;
 
 use super::vocabulary::{
     Argument, Assertion, Callee, Cognition, Condition, ErrorHandler, Focus, TestDeclaration,
-    Vocabulary, argument_operands, literal_value, plain_path,
+    Vocabulary, argument_operands, is_else_if, literal_value, opens_operator_sequence, plain_path,
 };
 use crate::facts::CommentKind;
 
@@ -119,38 +119,11 @@ fn cognition(node: Node<'_>) -> Option<Cognition> {
     }
 }
 
-fn is_else_if(node: Node<'_>) -> bool {
-    node.parent()
-        .is_some_and(|parent| parent.kind() == "else_clause")
-}
-
 fn holds_an_if(node: Node<'_>) -> bool {
     let mut cursor = node.walk();
 
     node.named_children(&mut cursor)
         .any(|child| child.kind() == "if_statement")
-}
-
-fn logical_operator(node: Node<'_>) -> Option<&'static str> {
-    if node.kind() != "binary_expression" {
-        return None;
-    }
-
-    match node.child_by_field_name("operator")?.kind() {
-        "&&" => Some("&&"),
-        "||" => Some("||"),
-        _ => None,
-    }
-}
-
-fn opens_operator_sequence(node: Node<'_>) -> bool {
-    let Some(operator) = logical_operator(node) else {
-        return false;
-    };
-
-    node.parent()
-        .and_then(logical_operator)
-        .is_none_or(|enclosing| enclosing != operator)
 }
 
 fn count_condition_operators(node: Node<'_>) -> u32 {
@@ -360,16 +333,7 @@ const COMMENT_PREFIXES: [(&str, CommentKind); 4] = [
 ];
 
 fn comment_kind(node: Node<'_>, source: &str) -> Option<CommentKind> {
-    if !node.is_extra() {
-        return None;
-    }
-
-    let text = source.get(node.byte_range())?;
-
-    COMMENT_PREFIXES
-        .iter()
-        .find(|(prefix, _)| text.starts_with(prefix))
-        .map(|(_, kind)| *kind)
+    super::vocabulary::prefixed_comment(node, source, &COMMENT_PREFIXES)
 }
 
 fn has_implicit_tail_return(node: Node<'_>) -> bool {

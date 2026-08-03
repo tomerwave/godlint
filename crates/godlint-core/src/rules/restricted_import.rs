@@ -26,8 +26,10 @@ impl ImportRule for RestrictedImport {
     fn check(import: &ImportFact, configuration: &Self::Configuration) -> Option<Violation> {
         let restriction = restriction(import, &configuration.modules)?;
 
-        (!catalogue::matches(import.source(), &restriction.allow_in)).then(|| Violation::RestrictedImport {
-            module: import.module().to_owned(),
+        (!catalogue::matches(import.source(), &restriction.allow_in)).then(|| {
+            Violation::RestrictedImport {
+                module: import.module().to_owned(),
+            }
         })
     }
 }
