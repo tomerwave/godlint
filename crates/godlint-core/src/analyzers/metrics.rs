@@ -93,12 +93,12 @@ pub(super) fn measure(function: Node<'_>, vocabulary: &Vocabulary) -> Measured {
         decisions: DecisionPoints::new(totals.decisions),
         cognitive: CognitiveScore::new(totals.cognitive),
         returns: ReturnPaths::new(totals.returns + implicit),
-        statements: StatementCount::new(counted_statements(body, totals.statements, vocabulary)),
+        statements: StatementCount::new(statements_of_body(body, totals.statements, vocabulary)),
         depth: BlockDepth::new(totals.depth),
     }
 }
 
-fn counted_statements(body: Option<Node<'_>>, inside_body: u32, vocabulary: &Vocabulary) -> u32 {
+fn statements_of_body(body: Option<Node<'_>>, inside_body: u32, vocabulary: &Vocabulary) -> u32 {
     let Some(body) = body else {
         return 0;
     };

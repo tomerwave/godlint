@@ -17,6 +17,10 @@ speaks about.
   a 2,104-file tree, `godlint check` goes from 1.61s to 1.50s, and the output is byte-identical over
   3,712 findings. Every rule's `allow-in` and `test-paths` matching takes the same path, so it is
   faster too. A pattern holding `*` or `?` still goes through the matcher unchanged.
+- `validate-pull-request.py` refuses a changelog that names a release twice, lists a category twice,
+  or holds an entry under no category. A conflict resolution that keeps both sides leaves a second
+  `## [Unreleased]` behind; it renders, and it passed every other check, which is how two of them
+  reached `main` in one night of rebases. The section they damaged is now one heading per category.
 - `validate-pull-request.py` refuses a tracked file carrying a merge-conflict marker. `git rebase
   --continue` accepts a staged file whose conflict was never resolved, so a botched resolution lands
   as a commit that looks deliberate — which is exactly what happened while rebasing this branch, and
@@ -80,14 +84,12 @@ speaks about.
   `.yaml` was scanned by Godlint and invisible to the gate; and "every mutation exclusion needs a
   reason" counted comment lines against exclusion lines, which passed one exclusion with a five-line
   essay beside four with none. Each exclusion is now paired with the line above it.
-## [Unreleased]
 - The lists `recommended@1` enforces by default are pinned by tests. Nothing asserted them: every
   test passed its own markers, test paths and helpers, so deleting `XXX` from the marker defaults —
   which silently stops `policy/todo-requires-reference` asking for a reference on an `XXX:` comment
   in every repository using the suite — passed all 1,860 checks. This repository writes no comments
   in Rust, so its own dogfooding could not notice either. Found when a one-line pull request proposed
   exactly that change under a title claiming to add a marker.
-## [Unreleased]
 - `maintainability/function-nesting` no longer charges a function for the blocks inside a closure it
   returns. A curried `a => b => { … }` reported the *outer* function's depth as the inner closure's,
   while `decision-complexity`, `cognitive-complexity`, `return-count` and `function-statements` all
