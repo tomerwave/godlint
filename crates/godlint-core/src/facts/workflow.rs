@@ -297,7 +297,7 @@ impl ExpressionFact {
     }
 
     pub fn body(&self) -> &str {
-        self.file.text()[self.range.start() + 3..self.range.end() - 2].trim()
+        unbraced(self.file.slice(self.range))
     }
 
     pub fn context(&self) -> &str {
@@ -332,8 +332,16 @@ impl CredentialFact {
     }
 }
 
+pub(crate) fn unbraced(interpolation: &str) -> &str {
+    interpolation
+        .strip_prefix("${{")
+        .and_then(|body| body.strip_suffix("}}"))
+        .unwrap_or(interpolation)
+        .trim()
+}
+
 fn text(file: &TextFile, range: SourceRange) -> &str {
-    file.text()[range.start()..range.end()].trim_matches(QUOTES)
+    file.slice(range).trim_matches(QUOTES)
 }
 
 fn is_commit(version: &str) -> bool {

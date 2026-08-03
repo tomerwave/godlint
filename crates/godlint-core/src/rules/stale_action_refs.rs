@@ -89,9 +89,7 @@ fn trailing_label<'a>(workflow: &'a WorkflowFacts, action: &ActionFact) -> Optio
         action.range().end() <= comment.start()
             && workflow.file().line(action.range().end()) == workflow.file().line(comment.start())
     })?;
-    let label = workflow.file().text()[range.start()..range.end()]
-        .trim_start_matches('#')
-        .trim();
+    let label = workflow.file().slice(*range).trim_start_matches('#').trim();
 
     (!label.is_empty()).then_some(label)
 }

@@ -80,9 +80,7 @@ fn step_violations(workflow: &WorkflowFacts) -> Vec<(SourceRange, Violation)> {
 }
 
 fn literal_true(workflow: &WorkflowFacts, range: Option<SourceRange>) -> Option<SourceRange> {
-    range.filter(|range| {
-        YAML_TRUE.contains(&workflow.file().text()[range.start()..range.end()].trim())
-    })
+    range.filter(|range| YAML_TRUE.contains(&workflow.file().slice(*range).trim()))
 }
 
 fn outcome_is_read(workflow: &WorkflowFacts, job: &JobFact, step: &StepFact) -> bool {
@@ -120,7 +118,9 @@ fn expression_is_in_job(expression: &ExpressionFact, job: &JobFact) -> bool {
 }
 
 fn swallowed_script(workflow: &WorkflowFacts, range: SourceRange) -> Option<Violation> {
-    let script = workflow.file().text()[range.start()..range.end()]
+    let script = workflow
+        .file()
+        .slice(range)
         .trim_end()
         .trim_end_matches(['"', '\''])
         .trim_end();

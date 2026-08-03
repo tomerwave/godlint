@@ -15,10 +15,7 @@ pub(crate) fn expressions_in_condition(
         .collect::<Vec<_>>();
 
     if expressions.is_empty() {
-        vec![(
-            condition,
-            &workflow.file().text()[condition.start()..condition.end()],
-        )]
+        vec![(condition, workflow.file().slice(condition))]
     } else {
         expressions
     }
