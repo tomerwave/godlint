@@ -2,7 +2,11 @@ version: 1
 
 fail-on: error
 
+# Every entry here names why it is here. The dogfooding policy forbids a silent global exclusion,
+# and an exclusion is the widest instrument this configuration has: it drops a path from the scan
+# for every rule at once, so what it hides is invisible to `godlint check` by construction.
 exclude:
+  # Not this repository's code. Build output, caches and installed dependencies.
   - .git
   - .mypy_cache
   - .next
@@ -15,8 +19,18 @@ exclude:
   - node_modules
   - target
   - vendor
+
+  # Trees that exist in order to contain violations. These are the inputs the rule tests assert
+  # against, so scanning them would report each fixture's deliberate finding against Godlint.
   - crates/godlint-cli/tests/fixtures
   - .github/fixtures
+
+  # The gate scripts and the package wrappers. 78 of the 127 findings in these two paths are
+  # `style/no-comments`, on Python and JavaScript whose comments explain policy to a reader, and
+  # that rule takes a severity and nothing else — so there is no way to say "not in these paths"
+  # short of removing the paths. That missing per-path control is what makes this an exclusion
+  # rather than two lines of rule configuration, and it costs 21 findings that are real debt.
+  # docs/dogfooding.md itemises both, so the cost is written where it can be argued with.
   - scripts
   - packaging
 
