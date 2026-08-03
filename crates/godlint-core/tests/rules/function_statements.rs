@@ -98,3 +98,13 @@ fn accepts_a_function_at_its_limit() {
         .is_empty()
     );
 }
+
+#[test]
+fn a_block_in_a_parameter_is_not_a_statement_of_the_function() {
+    let counted = count(
+        "src/parameter.rs",
+        "fn example(value: [u8; { let first = 1; let second = 2; first + second }]) {\n    run(value);\n}",
+    );
+
+    assert_eq!(counted, 1);
+}

@@ -496,6 +496,8 @@ fn function_fact(
         .and_then(|name| text.get(name.byte_range()))
         .map(str::to_owned);
 
+    let measured = metrics::measure(node, vocabulary);
+
     FunctionFact::new(
         source.clone(),
         name,
@@ -503,11 +505,11 @@ fn function_fact(
             range,
             body_range,
             parameter_count: metrics::parameter_count(node, text, vocabulary),
-            decision_points: metrics::decision_points(node, vocabulary),
-            cognitive_score: metrics::cognitive_score(node, vocabulary),
-            return_paths: metrics::return_paths(node, vocabulary),
-            statement_count: metrics::statement_count(node, vocabulary),
-            block_depth: metrics::block_depth(node, vocabulary),
+            decision_points: measured.decisions,
+            cognitive_score: measured.cognitive,
+            return_paths: measured.returns,
+            statement_count: measured.statements,
+            block_depth: measured.depth,
             body_is_empty: metrics::body_is_empty(node, text, vocabulary),
             is_abstract: (vocabulary.is_abstract)(node, text),
         },

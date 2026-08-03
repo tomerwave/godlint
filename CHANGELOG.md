@@ -17,6 +17,10 @@ speaks about.
   a 2,104-file tree, `godlint check` goes from 1.61s to 1.50s, and the output is byte-identical over
   3,712 findings. Every rule's `allow-in` and `test-paths` matching takes the same path, so it is
   faster too. A pattern holding `*` or `?` still goes through the matcher unchanged.
+- `validate-pull-request.py` refuses a changelog that names a release twice, lists a category twice,
+  or holds an entry under no category. A conflict resolution that keeps both sides leaves a second
+  `## [Unreleased]` behind; it renders, and it passed every other check, which is how two of them
+  reached `main` in one night of rebases. The section they damaged is now one heading per category.
 - `validate-pull-request.py` refuses a tracked file carrying a merge-conflict marker. `git rebase
   --continue` accepts a staged file whose conflict was never resolved, so a botched resolution lands
   as a commit that looks deliberate — which is exactly what happened while rebasing this branch, and
@@ -44,6 +48,13 @@ speaks about.
   counted it, so the two metrics disagreed about whether a refutable binding is a decision; a
   `let Some(value) = option else { return; }` now costs 1 at the top level and 3 inside an `if`.
   Nothing in this repository crosses the threshold of 15 as a result.
+- Every function's metrics come from one walk of its syntax tree instead of five. Decision points,
+  cognitive score, return paths, statement count and block depth each recursed the same subtree
+  separately, re-reading every node's kind each time; on a 10,160-file tree that was 29% of the whole
+  run, more than parsing. One traversal carries the nesting level, block depth and else position that
+  the five walks each tracked alone. Measured on a 2,104-file tree, `godlint check` goes from 1.53s to
+  1.27s, with identical output over 16,896 findings when every metric's limit is set to 1 so each
+  function reports all five of its measured values — with the single deliberate exception below.
 
 ### Fixed
 
@@ -73,17 +84,20 @@ speaks about.
   `.yaml` was scanned by Godlint and invisible to the gate; and "every mutation exclusion needs a
   reason" counted comment lines against exclusion lines, which passed one exclusion with a five-line
   essay beside four with none. Each exclusion is now paired with the line above it.
-
-## [Unreleased]
-
-### Fixed
-
 - The lists `recommended@1` enforces by default are pinned by tests. Nothing asserted them: every
   test passed its own markers, test paths and helpers, so deleting `XXX` from the marker defaults —
   which silently stops `policy/todo-requires-reference` asking for a reference on an `XXX:` comment
   in every repository using the suite — passed all 1,860 checks. This repository writes no comments
   in Rust, so its own dogfooding could not notice either. Found when a one-line pull request proposed
   exactly that change under a title claiming to add a marker.
+- `maintainability/function-nesting` no longer charges a function for the blocks inside a closure it
+  returns. A curried `a => b => { … }` reported the *outer* function's depth as the inner closure's,
+  while `decision-complexity`, `cognitive-complexity`, `return-count` and `function-statements` all
+  reported the outer function as empty — so one metric contradicted the other four and the rule
+  reference, which says a closure's own complexity belongs to the closure. The inner closure still
+  gets its own finding at its own depth. Found by review of the walk consolidation, which made the
+  inconsistency visible; across 453,807 functions in a 26,404-file corpus this changes 127 functions
+  in 51 files, all of them curried, and none in this repository.
 
 ## [0.5.0] - 2026-08-01
 

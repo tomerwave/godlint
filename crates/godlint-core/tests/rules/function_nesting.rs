@@ -3,7 +3,7 @@ use godlint_core::{
     rules::{Metric, Rule, Violation, function_nesting::FunctionNesting},
 };
 
-use super::support::{function, function_limits};
+use super::support::{function, function_limits, nth_function};
 
 fn configuration(max_depth: u32) -> FunctionNestingRule {
     FunctionNestingRule {
@@ -208,4 +208,34 @@ fn a_braceless_else_holding_a_loop_still_nests() {
         "the loop is the else itself rather than a block inside it, and it still opens a level \
          — only an else-if is the same decision continued"
     );
+}
+
+#[test]
+fn a_curried_function_nests_in_the_closure_that_holds_the_blocks() {
+    let source = "const curried = a => b => {\n    if (a) {\n        if (b) {\n            return 1;\n        }\n    }\n    return 0;\n};\n";
+
+    assert_eq!(
+        nth_function("src/curried.ts", source, 0)
+            .1
+            .block_depth()
+            .value(),
+        0
+    );
+    assert_eq!(
+        nth_function("src/curried.ts", source, 1)
+            .1
+            .block_depth()
+            .value(),
+        2
+    );
+}
+
+#[test]
+fn a_block_in_a_parameter_does_not_nest_the_function() {
+    let depth = depth(
+        "src/parameter.rs",
+        "fn example(value: [u8; { if SIZE > 0 { 1 } else { 2 } }]) {\n    run(value);\n}",
+    );
+
+    assert_eq!(depth, 0);
 }

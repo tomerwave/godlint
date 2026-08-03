@@ -44,162 +44,141 @@ fn is_receiver(parameter: Node<'_>, source: &str, vocabulary: &Vocabulary) -> bo
     (vocabulary.is_receiver)(parameter.kind(), text.trim())
 }
 
-pub(super) fn decision_points(function: Node<'_>, vocabulary: &Vocabulary) -> DecisionPoints {
-    let is_decision = vocabulary.is_decision;
-
-    DecisionPoints::new(count_own_nodes(function, vocabulary, |node| {
-        node.is_named() && is_decision(node)
-    }))
+pub(super) struct Measured {
+    pub decisions: DecisionPoints,
+    pub cognitive: CognitiveScore,
+    pub returns: ReturnPaths,
+    pub statements: StatementCount,
+    pub depth: BlockDepth,
 }
 
-pub(super) fn cognitive_score(function: Node<'_>, vocabulary: &Vocabulary) -> CognitiveScore {
+#[derive(Clone, Copy)]
+struct Place {
+    nesting: u32,
+    depth: u32,
+    in_else: bool,
+    in_body: bool,
+}
+
+#[derive(Default)]
+struct Totals {
+    decisions: u32,
+    cognitive: u32,
+    returns: u32,
+    statements: u32,
+    depth: u32,
+}
+
+pub(super) fn measure(function: Node<'_>, vocabulary: &Vocabulary) -> Measured {
+    let body = function.child_by_field_name("body");
+    let mut totals = Totals::default();
     let mut cursor = function.walk();
 
-    CognitiveScore::new(
-        function
-            .children(&mut cursor)
-            .map(|child| cognition_of(child, 0, vocabulary))
-            .sum(),
-    )
-}
-
-fn cognition_of(node: Node<'_>, nesting: u32, vocabulary: &Vocabulary) -> u32 {
-    if is_function(node, vocabulary) {
-        return 0;
+    for child in function.children(&mut cursor) {
+        totals.absorb(
+            child,
+            Place {
+                nesting: 0,
+                depth: 0,
+                in_else: false,
+                in_body: body == Some(child),
+            },
+            vocabulary,
+        );
     }
 
-    let class = (vocabulary.cognition)(node);
-    let own = match class {
-        Some(Cognition::Structural) => 1 + nesting,
-        Some(Cognition::Hybrid | Cognition::Fundamental) => 1,
-        None => 0,
-    };
-    let inner = match class {
-        Some(Cognition::Structural | Cognition::Hybrid) => nesting + 1,
-        Some(Cognition::Fundamental) | None => nesting,
-    };
-    let mut alternatives = node.walk();
-    let alternatives: Vec<Node<'_>> = node
-        .children_by_field_name("alternative", &mut alternatives)
-        .collect();
-    let mut cursor = node.walk();
-
-    own + node
-        .children(&mut cursor)
-        .map(|child| {
-            let at = if alternatives.contains(&child) {
-                nesting
-            } else {
-                inner
-            };
-
-            cognition_of(child, at, vocabulary)
-        })
-        .sum::<u32>()
-}
-
-pub(super) fn return_paths(function: Node<'_>, vocabulary: &Vocabulary) -> ReturnPaths {
-    let is_return = vocabulary.is_return;
-    let explicit = count_own_nodes(function, vocabulary, |node| matches(node, is_return));
     let implicit = u32::from((vocabulary.has_implicit_tail_return)(function));
 
-    ReturnPaths::new(explicit + implicit)
-}
-
-fn count_own_nodes(
-    function: Node<'_>,
-    vocabulary: &Vocabulary,
-    predicate: impl Fn(Node<'_>) -> bool + Copy,
-) -> u32 {
-    let mut cursor = function.walk();
-
-    function
-        .children(&mut cursor)
-        .map(|child| count_nodes_in(child, vocabulary, predicate))
-        .sum()
-}
-
-fn count_nodes_in(
-    node: Node<'_>,
-    vocabulary: &Vocabulary,
-    predicate: impl Fn(Node<'_>) -> bool + Copy,
-) -> u32 {
-    if is_function(node, vocabulary) {
-        return 0;
+    Measured {
+        decisions: DecisionPoints::new(totals.decisions),
+        cognitive: CognitiveScore::new(totals.cognitive),
+        returns: ReturnPaths::new(totals.returns + implicit),
+        statements: StatementCount::new(statements_of_body(body, totals.statements, vocabulary)),
+        depth: BlockDepth::new(totals.depth),
     }
-
-    let mut cursor = node.walk();
-
-    u32::from(predicate(node))
-        + node
-            .children(&mut cursor)
-            .map(|child| count_nodes_in(child, vocabulary, predicate))
-            .sum::<u32>()
 }
 
-pub(super) fn statement_count(function: Node<'_>, vocabulary: &Vocabulary) -> StatementCount {
-    let Some(body) = function.child_by_field_name("body") else {
-        return StatementCount::new(0);
+fn statements_of_body(body: Option<Node<'_>>, inside_body: u32, vocabulary: &Vocabulary) -> u32 {
+    let Some(body) = body else {
+        return 0;
     };
 
-    if !(vocabulary.is_block)(body.kind()) {
-        return StatementCount::new(1);
+    if (vocabulary.is_block)(body.kind()) {
+        inside_body
+    } else {
+        1
     }
-
-    StatementCount::new(count_block_statements(body, vocabulary))
 }
 
-fn count_block_statements(block: Node<'_>, vocabulary: &Vocabulary) -> u32 {
-    let mut cursor = block.walk();
-
-    block
-        .named_children(&mut cursor)
-        .filter(|statement| !statement.is_extra())
-        .map(|statement| 1 + count_nested_statements(statement, vocabulary))
-        .sum()
-}
-
-fn count_nested_statements(node: Node<'_>, vocabulary: &Vocabulary) -> u32 {
-    if is_function(node, vocabulary) {
-        return 0;
-    }
-
-    if matches(node, vocabulary.is_block) {
-        return count_block_statements(node, vocabulary);
-    }
-
-    let mut cursor = node.walk();
-
-    node.children(&mut cursor)
-        .map(|child| count_nested_statements(child, vocabulary))
-        .sum()
-}
-
-pub(super) fn block_depth(function: Node<'_>, vocabulary: &Vocabulary) -> BlockDepth {
-    let Some(body) = function.child_by_field_name("body") else {
-        return BlockDepth::new(0);
-    };
-
-    BlockDepth::new(deepest_block(body, 0, false, vocabulary))
-}
-
-fn deepest_block(node: Node<'_>, depth: u32, in_else: bool, vocabulary: &Vocabulary) -> u32 {
-    let mut cursor = node.walk();
-    let alternative = node.child_by_field_name("alternative");
-    let mut deepest = depth;
-
-    for child in node.children(&mut cursor) {
-        if is_function(child, vocabulary) {
-            continue;
+impl Totals {
+    fn absorb(&mut self, node: Node<'_>, place: Place, vocabulary: &Vocabulary) {
+        if is_function(node, vocabulary) {
+            return;
         }
 
-        let child_depth = depth + u32::from(child_opens_block(child, in_else, vocabulary));
-        let child_in_else = alternative == Some(child);
+        let class = (vocabulary.cognition)(node);
+        let (own, inner) = cognition_weights(class, place.nesting);
 
-        deepest = deepest.max(deepest_block(child, child_depth, child_in_else, vocabulary));
+        self.decisions += u32::from(node.is_named() && (vocabulary.is_decision)(node));
+        self.returns += u32::from(matches(node, vocabulary.is_return));
+        self.cognitive += own;
+
+        if place.in_body {
+            self.depth = self.depth.max(place.depth);
+
+            if matches(node, vocabulary.is_block) {
+                self.statements += declared_statements(node);
+            }
+        }
+
+        self.descend(node, place, inner, vocabulary);
     }
 
-    deepest
+    fn descend(&mut self, node: Node<'_>, place: Place, inner: u32, vocabulary: &Vocabulary) {
+        let mut alternatives = node.walk();
+        let alternatives: Vec<Node<'_>> = node
+            .children_by_field_name("alternative", &mut alternatives)
+            .collect();
+        let alternative = node.child_by_field_name("alternative");
+        let mut cursor = node.walk();
+
+        for child in node.children(&mut cursor) {
+            self.absorb(
+                child,
+                Place {
+                    nesting: if alternatives.contains(&child) {
+                        place.nesting
+                    } else {
+                        inner
+                    },
+                    depth: place.depth
+                        + u32::from(child_opens_block(child, place.in_else, vocabulary)),
+                    in_else: alternative == Some(child),
+                    in_body: place.in_body,
+                },
+                vocabulary,
+            );
+        }
+    }
+}
+
+fn cognition_weights(class: Option<Cognition>, nesting: u32) -> (u32, u32) {
+    match class {
+        Some(Cognition::Structural) => (1 + nesting, nesting + 1),
+        Some(Cognition::Hybrid) => (1, nesting + 1),
+        Some(Cognition::Fundamental) => (1, nesting),
+        None => (0, nesting),
+    }
+}
+
+fn declared_statements(block: Node<'_>) -> u32 {
+    let mut cursor = block.walk();
+    let declared = block
+        .named_children(&mut cursor)
+        .filter(|statement| !statement.is_extra())
+        .count();
+
+    u32::try_from(declared).unwrap_or(u32::MAX)
 }
 
 fn child_opens_block(child: Node<'_>, in_else: bool, vocabulary: &Vocabulary) -> bool {

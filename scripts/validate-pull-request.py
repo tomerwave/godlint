@@ -472,6 +472,46 @@ def check_mutation_scope(report: Report) -> None:
         )
 
 
+def check_changelog_shape(report: Report) -> None:
+    """One heading per release, one per category, and no entry outside a category.
+
+    A resolution that keeps both sides of a conflict can leave a second `## [Unreleased]`
+    behind, or an entry under no `###` at all. Both render, both pass every other check, and
+    both were merged during one night of rebases before this looked for them.
+    """
+
+    releases: list[str] = []
+    categories: dict[str, list[str]] = {}
+    release = ""
+    category = ""
+
+    for number, line in enumerate(read(CHANGELOG).splitlines(), start=1):
+        if line.startswith("## "):
+            release, category = line[3:].strip(), ""
+            releases.append(release)
+        elif line.startswith("### "):
+            category = line[4:].strip()
+            categories.setdefault(release, []).append(category)
+        elif line.startswith("- ") and release:
+            report.check(
+                bool(category),
+                f"{CHANGELOG}: line {number} is an entry under no category in {release}",
+            )
+
+    report.check(
+        len(releases) == len(set(releases)),
+        f"{CHANGELOG}: a release heading appears more than once: "
+        f"{sorted({name for name in releases if releases.count(name) > 1})}",
+    )
+
+    for name, listed in categories.items():
+        report.check(
+            len(listed) == len(set(listed)),
+            f"{CHANGELOG}: {name} lists a category more than once: "
+            f"{sorted({one for one in listed if listed.count(one) > 1})}",
+        )
+
+
 def check_conflict_markers(report: Report) -> None:
     """No tracked file carries a merge-conflict marker.
 
@@ -668,6 +708,7 @@ def main() -> int:
     check_mutation_config(report)
     check_mutation_coverage(report)
     check_mutation_scope(report)
+    check_changelog_shape(report)
     check_conflict_markers(report)
     check_workflows(report)
     check_documentation_links(report)
