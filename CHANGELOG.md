@@ -7,6 +7,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 change the `godlint-core` API; the command line and the configuration schema are what the version
 speaks about.
 
+## [Unreleased]
+
+### Fixed
+
+- `validate-pull-request.py`'s change-scoped checks see the working tree, not only what is committed.
+  They read `git diff <release line>...HEAD`, so a local run before the commit — which is most of them —
+  found no changed files, skipped the checks, and printed that every check passed. Staged, unstaged and
+  untracked paths all count now, and the changelog check consequently fails locally at the point the
+  entry is missing rather than in CI.
+
 ## [0.5.0] - 2026-08-01
 
 ### Added
