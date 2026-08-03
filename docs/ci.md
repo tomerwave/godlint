@@ -57,10 +57,10 @@ every rule, so the shape of the work is still visible.
 | `findings` | How many findings were reported. |
 | `status` | The status `godlint check` exited with. |
 
-A composite action withholds its outputs when it fails, so all three are readable only from a run that
-passed. To act on a failing count, set `fail-on: off` in the configuration and decide in a later step.
-A step that has to know **why** a failing run failed reads `$RUNNER_TEMP/godlint-status.txt`, which the
-action writes before it fails and GitHub therefore cannot withhold:
+To act on a count without failing the job, set `fail-on: off` in the configuration and decide in a
+later step. A step that has to know **whether and why** the check failed reads
+`$RUNNER_TEMP/godlint-status.txt`, which the action writes before anything in it can fail, so it is
+there whatever the action's own outcome is:
 
 | Status | Meaning |
 | --- | --- |

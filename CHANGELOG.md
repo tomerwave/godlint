@@ -12,11 +12,13 @@ speaks about.
 ### Changed
 
 - The action writes the status `godlint check` exited with to `$RUNNER_TEMP/godlint-status.txt`, so a
-  following step can tell findings from a run that could not finish. A composite action's outputs are
-  withheld when it fails, which is precisely when that distinction is wanted, so the `status` output
-  was readable only from runs that did not need it — and it was undocumented, which is why nothing
-  noticed. This repository's own drift gate needed it and asked an error message instead: it decided
-  whether the release could read the configuration by matching the sentence `Configuration is
+  following step can tell findings from a run that could not finish. The action already published
+  that status as an output, but never for a run with findings — see the step-abort fixed below — and
+  the output was undocumented, which is part of why nothing noticed. A file written before anything
+  can fail is readable whatever the action's outcome, which is the reasoning already recorded above
+  the annotations file it now sits beside. This repository's own drift gate needed the status and
+  asked an error message for it instead: it decided whether the release could read the configuration
+  by matching the sentence `Configuration is
   invalid`. The binary being matched is a *past* release, so no test in this repository could hold
   that wording still, and rewording it would have silently reclassified an unreadable configuration
   as drift. The gate now reads the status, and when the status says the check did not finish it asks
@@ -115,6 +117,18 @@ speaks about.
 
 ### Fixed
 
+- The action's job summary appears when there are findings, which is the only time it was ever for.
+  GitHub invokes a `shell: bash` step as `bash -e`, and a script's own `set -uo pipefail` cannot undo
+  the `-e` it was invoked with, so the step ended at `godlint check | tee` the moment the check
+  reported anything — before writing the findings count, before writing the status, and before the
+  two steps after it, which a composite action skips once one fails. So `summary`, whose whole reason
+  for existing is that GitHub renders only so many annotations and a first adoption produces
+  hundreds, ran only against trees that had nothing to summarise, where it printed `No findings.`
+  The `findings` and `status` outputs were empty for the same reason, and `docs/ci.md` explained that
+  with the wrong cause — a composite action withholding outputs — which is why the real one went
+  unexamined for as long as it did. Found by adding an assertion to the `dirty` workflow job, which
+  had asserted the action fails but not why: the failure it proved all along was the step aborting,
+  which looks the same from outside as findings failing the run.
 - A blank `helpers` or `test-paths` entry for `testing/no-test-helper-in-production` is rejected as
   invalid configuration. The two were broken differently: `helpers: [""]` matched the empty segments
   that splitting a Rust `::` path on one colon produced and reported `crate::tests::helper` with the
