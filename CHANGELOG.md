@@ -148,7 +148,10 @@ speaks about.
   them one at a time, and `FunctionFact`, `JobFact` and `StepFact` each re-declared their `Details`
   struct in full and copied every field. `TestFact` and `AssertionFact` already did the right thing,
   so the file was arguing with itself. 76 lines shorter, and adding an eleventh fact kind is one edit
-  rather than three that have to agree.
+  rather than three that have to agree. Nothing a user can observe means the command line: a
+  `godlint-core` consumer printing one of these four types with `{:?}` now sees the fields nested one
+  level deeper, under a name that is private to the crate. `Debug` is not a stability surface and no
+  reporter, test or snapshot in this repository reads it, but it is not literally unchanged.
 
 - Nothing a user can observe: twenty-one rule configuration structs are declared by two macros
   instead of by hand. Thirteen were exactly `{ severity }` and eight exactly `{ severity, allow-in }`,
