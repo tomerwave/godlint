@@ -311,7 +311,7 @@ pub(crate) fn default_reference_prefixes() -> Vec<String> {
 }
 
 pub(crate) fn default_markers() -> Vec<String> {
-    vec!["TODO".into(), "FIXME".into(), "HACK".into(), "XXX".into()]
+    vec!["TODO".into(), "FIXME".into(), "HACK".into(), ]
 }
 
 pub(crate) fn default_configuration_paths() -> Vec<String> {
