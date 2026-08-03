@@ -4,7 +4,6 @@ set -euo pipefail
 
 annotations="$RUNNER_TEMP/godlint-annotations.txt"
 accepted_drift_file="${ACCEPTED_DRIFT_FILE:-.github/accepted-drift.md}"
-version="$(godlint --version | cut -d' ' -f2)"
 drift_pattern='^- `([a-z0-9-]+/[a-z0-9-]+)` — (relaxed rule|fixed false positive): ([^[:space:]].*)$'
 declared_rules=()
 declared_kinds=()
@@ -39,23 +38,27 @@ if ! [[ "$STATUS" =~ ^[0-9]+$ ]]; then
   exit 1
 fi
 
-status="$STATUS"
+# Asked once the status is known to exist, so a release that never ran is reported by the guard
+# above rather than by `command not found` on this line.
+version="$(godlint --version | cut -d' ' -f2)"
 
 # The step's own conclusion answers the one question the status cannot: whether the action failed
 # for a reason that is not Godlint's verdict, such as a step after the check failing. Then the
-# status is Godlint's and honest while the failure is the action's own.
-if [ "$OUTCOME" = "failure" ] && [ "$status" = "0" ]; then
+# status is Godlint's and honest while the failure is the action's own. No step in the action can
+# reach this today — the check exits 0 whatever it found, the summary is off here, and the step
+# that fails does so only on a non-zero status — so this guards a future step, not a current one.
+if [ "$OUTCOME" = "failure" ] && [ "$STATUS" = "0" ]; then
   echo "::error::The action failed while Godlint exited 0, so the failure is in the action rather than in this tree."
   exit 1
 fi
 
-if [ "$status" = "0" ]; then
+if [ "$STATUS" = "0" ]; then
   echo "Godlint $version reports nothing against this tree."
   report_all_declarations_unused
   exit 0
 fi
 
-if [ "$status" != "1" ]; then
+if [ "$STATUS" != "1" ]; then
   # Whether the configuration is why is asked of the release itself, because `config validate`
   # answers it with an exit status. Reading it out of an error message would tie this gate to the
   # wording a *past* release chose, which no test in this repository can hold still.
@@ -63,10 +66,16 @@ if [ "$status" != "1" ]; then
     {
       echo "The released Godlint $version could not check this tree, and the configuration is not why."
       echo
-      echo "It exited $status, which is neither agreement nor findings, so this run establishes"
+      echo "It exited $STATUS, which is neither agreement nor findings, so this run establishes"
       echo "nothing about drift in either direction: a file it could not parse or a path it would"
       echo "not accept leaves part of the tree unchecked, so whatever it did report is a partial"
-      echo "answer. That is a failure to fix here, not drift to declare."
+      echo "answer. That is a failure to fix here, not drift to declare, and neither drift label"
+      echo "nor an accepted-drift declaration can pass it — both answer findings, and this is not"
+      echo "findings."
+      echo
+      echo "One case is neither a mistake nor drift: this pull request adds source the released"
+      echo "grammar cannot parse yet. Nothing here can wave that through, so exclude the file"
+      echo "until the next release ships a grammar that reads it."
     } | tee -a "$GITHUB_STEP_SUMMARY"
     exit 1
   fi

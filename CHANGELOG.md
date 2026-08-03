@@ -126,7 +126,9 @@ speaks about.
   it does not — and a wrong explanation is why the real one went unexamined this long. Found by
   asserting in the `dirty` workflow job that the action fails *with findings*, where it had asserted
   only that it fails: an aborting step and findings failing a run look identical from outside, so the
-  failure that job proved all along was the abort.
+  failure that job proved all along was the abort. Turning `-e` off covers the `tee` that writes the
+  annotations as well, so its status is now checked rather than assumed — a half-written annotations
+  file would otherwise have every count and every later step describing a shorter run than happened.
 - A blank `helpers` or `test-paths` entry for `testing/no-test-helper-in-production` is rejected as
   invalid configuration. The two were broken differently: `helpers: [""]` matched the empty segments
   that splitting a Rust `::` path on one colon produced and reported `crate::tests::helper` with the

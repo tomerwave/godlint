@@ -9,12 +9,25 @@ mkdir -p "$temporary/bin" "$temporary/runner"
 
 # The stub answers the two questions the gate asks a release: which version it is, and whether it
 # can read the configuration. CONFIGURATION_READS says which answer `config validate` gives.
+#
+# It matches whole command lines and rejects anything else with status 2, as the real binary does
+# for an unknown command. A stub that matched only the first word would let the gate ask a question
+# no release understands: the unknown-command status is 2, which the gate reads as an unreadable
+# configuration, so the mistake would turn every exit 2 into a silent pass.
 cat > "$temporary/bin/godlint" <<'EOF'
 #!/usr/bin/env bash
-if [ "${1:-}" = "config" ]; then
-  exit "$([ "${CONFIGURATION_READS:-true}" = "true" ] && echo 0 || echo 2)"
-fi
-echo "godlint 0.3.0"
+case "$*" in
+  "config validate")
+    exit "$([ "${CONFIGURATION_READS:-true}" = "true" ] && echo 0 || echo 2)"
+    ;;
+  "--version")
+    echo "godlint 0.3.0"
+    ;;
+  *)
+    echo "Unknown command or arguments: $*" >&2
+    exit 2
+    ;;
+esac
 EOF
 chmod +x "$temporary/bin/godlint"
 
@@ -82,6 +95,21 @@ if run_explanation "" false false "" true \
   exit 1
 fi
 grep -q '^::error::No exit status from the released Godlint' "$temporary/no-status.out"
+
+# The same case with no binary to ask, which is what an action that failed to install leaves behind.
+# The message written for it has to survive not being able to run `godlint --version` first.
+if env PATH="/usr/bin:/bin" RUNNER_TEMP="$temporary/runner" \
+  GITHUB_STEP_SUMMARY="$temporary/summary" ACCEPTED_DRIFT_FILE="$temporary/accepted-drift.md" \
+  OUTCOME=failure STATUS="" FIXES_FALSE_POSITIVE=false RELAXES_A_RULE=false \
+  scripts/explain-released-agreement.sh > "$temporary/no-binary.out" 2>&1; then
+  echo "a missing released binary must fail" >&2
+  exit 1
+fi
+grep -q '^::error::No exit status from the released Godlint' "$temporary/no-binary.out"
+if grep -q 'command not found' "$temporary/no-binary.out"; then
+  echo "the gate must report the missing status, not die probing the version" >&2
+  exit 1
+fi
 
 # Godlint agreed and the action failed anyway, so the failure is the action's own.
 if run_explanation 0 false false "" true failure \

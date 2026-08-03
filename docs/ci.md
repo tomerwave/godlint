@@ -57,9 +57,11 @@ every rule, so the shape of the work is still visible.
 | `findings` | How many findings were reported. |
 | `status` | The status `godlint check` exited with. |
 
-All three are readable from a later step even when the action fails, which is the run that has
-something to say. To act on a count without failing the job at all, set `fail-on: off` in the
-configuration and decide afterwards.
+A later step can read all three even when the action fails, which is the run that has something to
+say — with one limit worth knowing: an output survives only if the step that set it ran. The action
+stops at its first failing step, so a failed install leaves all three empty rather than zero. To act
+on a count without failing the job at all, set `fail-on: off` in the configuration and decide
+afterwards.
 
 `status` is what a step reads to know **why** a run failed rather than only that it did:
 

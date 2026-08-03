@@ -136,14 +136,23 @@ runs:
         output="$RUNNER_TEMP/godlint-annotations.txt"
 
         # A failing check is the expected case here, not an error to abort on: its status is the
-        # whole point of the step. GitHub invokes this shell with -e, which the script's own set
-        # cannot undo, so without turning it off the step ended at the pipeline below and never
-        # reached a single line after it.
+        # whole point of the step. GitHub invokes this shell with -e, which a script's own `set -o`
+        # line cannot undo — only turning the flag off does — so without this the step ended at the
+        # pipeline below and never reached a single line after it.
         set +e
         # shellcheck disable=SC2086
         godlint check --format github $PATHS 2>&1 | tee "$output"
         status=${PIPESTATUS[0]}
+        written=${PIPESTATUS[1]}
         set -e
+
+        # Turning -e off covers tee as well, so its status is checked rather than assumed. A partial
+        # annotations file is worse than no file: every count below it, and every step that reads
+        # it, would describe a shorter run than the one that happened.
+        if [ "$written" != "0" ]; then
+          echo "godlint-action: could not write the annotations to $output" >&2
+          exit 1
+        fi
 
         findings="$(grep -c '^::' "$output" || true)"
         echo "findings=$findings" >> "$GITHUB_OUTPUT"
