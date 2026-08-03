@@ -11,6 +11,16 @@ speaks about.
 
 ### Changed
 
+- Deciding that a path is not excluded no longer allocates. `glob::segment_matches` built two
+  `Vec<char>`s and a table per segment comparison before comparing anything, including for the
+  literal patterns every `exclude:` list is made of — `target`, `node_modules`, `.venv`. Measured on
+  a 2,104-file tree, `godlint check` goes from 1.61s to 1.50s, and the output is byte-identical over
+  3,712 findings. Every rule's `allow-in` and `test-paths` matching takes the same path, so it is
+  faster too. A pattern holding `*` or `?` still goes through the matcher unchanged.
+- `validate-pull-request.py` refuses a tracked file carrying a merge-conflict marker. `git rebase
+  --continue` accepts a staged file whose conflict was never resolved, so a botched resolution lands
+  as a commit that looks deliberate — which is exactly what happened while rebasing this branch, and
+  all 1046 checks passed over a changelog full of `<<<<<<<`.
 - `maintainability/cognitive-complexity` counts a Rust `let … else` as a branch, weighted by the
   nesting it sits at, the way every other branching form is counted. `decision-complexity` already
   counted it, so the two metrics disagreed about whether a refutable binding is a decision; a

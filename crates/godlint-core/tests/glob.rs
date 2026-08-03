@@ -10,6 +10,16 @@ fn matches_a_bare_name_against_any_segment() {
 }
 
 #[test]
+fn compares_a_segment_holding_no_wildcard_exactly() {
+    assert!(matches("node_modules", "a/node_modules/b.js"));
+    assert!(!matches("node_module", "a/node_modules/b.js"));
+    assert!(!matches("node_modules", "a/node_modulesx/b.js"));
+    assert!(matches("", ""));
+    assert!(matches("dist/main.js", "dist/main.js"));
+    assert!(!matches("dist/main.js", "dist/main.jsx"));
+}
+
+#[test]
 fn matches_a_wildcard_within_a_segment() {
     assert!(matches("*.py", "src/example.py"));
     assert!(!matches("*.py", "src/example.rs"));
