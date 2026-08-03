@@ -21,10 +21,47 @@ if [ -f "$accepted_drift_file" ]; then
   done < "$accepted_drift_file"
 fi
 
-report_all_declarations_unused() {
+reported_rules=()
+reported_count=0
+
+# A declaration says: the released binary reports this rule, and here is why that is accepted. Once
+# a release ships that no longer reports it, the declaration is not merely untidy — it stands ready
+# to accept the *next* drift in that rule, silently, which is the one thing this gate exists to
+# catch. So a declaration the release did not use is an error wherever the release actually judged
+# the tree, and the fix is to delete the line.
+stale_declarations() {
+  local stale=0
+  local index reported used
+
+  if [ "$declared_count" -eq 0 ]; then
+    return 0
+  fi
+
+  for index in "${!declared_rules[@]}"; do
+    used=false
+    if [ "$reported_count" -gt 0 ]; then
+      for reported in "${reported_rules[@]}"; do
+        if [ "${declared_rules[$index]}" = "$reported" ]; then
+          used=true
+          break
+        fi
+      done
+    fi
+    if [ "$used" = "false" ]; then
+      echo "::error::Stale declaration in $accepted_drift_file: ${declared_rules[$index]} is declared as a ${declared_kinds[$index]}, and Godlint $version does not report it. Delete the line — while it stands, the next real drift in that rule passes this check unremarked."
+      stale=1
+    fi
+  done
+
+  return "$stale"
+}
+
+# The other caller. Here the release never judged the tree, so a declaration is untested rather than
+# stale, and saying otherwise would fail every pull request that adds a configuration key.
+note_declarations_left_untested() {
   if [ "$declared_count" -gt 0 ]; then
     for rule in "${declared_rules[@]}"; do
-      echo "::notice::Unused declaration in $accepted_drift_file: $rule was not reported by the released binary."
+      echo "::notice::Declaration not exercised in $accepted_drift_file: $rule, because the released binary reported nothing either way."
     done
   fi
 }
@@ -54,7 +91,7 @@ fi
 
 if [ "$STATUS" = "0" ]; then
   echo "Godlint $version reports nothing against this tree."
-  report_all_declarations_unused
+  stale_declarations || exit 1
   exit 0
 fi
 
@@ -99,14 +136,12 @@ if [ "$STATUS" != "1" ]; then
     echo "Adding a *rule* does not land here: a release ignores a rule key it does not"
     echo "know, with a notice, so the configuration still reads."
   } | tee -a "$GITHUB_STEP_SUMMARY"
-  report_all_declarations_unused
+  note_declarations_left_untested
   exit 0
 fi
 
 count="$(grep -c '^::' "$annotations" 2>/dev/null || true)"
 count="${count:-0}"
-reported_rules=()
-reported_count=0
 unparseable_finding=false
 
 while IFS= read -r line; do
@@ -189,40 +224,31 @@ if [ "$reported_count" -gt 0 ]; then
   done
 fi
 
-if [ "$declared_count" -gt 0 ]; then
-  for index in "${!declared_rules[@]}"; do
-    declaration_used=false
-    if [ "$reported_count" -gt 0 ]; then
-      for reported_rule in "${reported_rules[@]}"; do
-        if [ "${declared_rules[$index]}" = "$reported_rule" ]; then
-          declaration_used=true
-          break
-        fi
-      done
-    fi
-    if [ "$declaration_used" = "false" ]; then
-      echo "::notice::Unused declaration in $accepted_drift_file: ${declared_rules[$index]} was not reported by the released binary."
-    fi
-  done
-fi
+stale=0
+stale_declarations || stale=1
 
 if [ "$unparseable_finding" = "true" ]; then
   undeclared_rules[$undeclared_count]="<unparseable rule id>"
   undeclared_count=$((undeclared_count + 1))
 fi
 
-if [ "$undeclared_count" -eq 0 ] && [ "$reported_count" -gt 0 ]; then
-  exit 0
-fi
+# A stale declaration bars every exit 0 below, because it is a statement about the drift file rather
+# than about this pull request, and nothing this pull request carries should excuse it. It does not
+# short-circuit them: an undeclared finding is reported too, so a run with both says both.
+if [ "$stale" = "0" ]; then
+  if [ "$undeclared_count" -eq 0 ] && [ "$reported_count" -gt 0 ]; then
+    exit 0
+  fi
 
-if [ "$FIXES_FALSE_POSITIVE" = "true" ]; then
-  echo "::notice::Declared: this pull request fixes a false positive, so the released binary still reports what the fix removed."
-  exit 0
-fi
+  if [ "$FIXES_FALSE_POSITIVE" = "true" ]; then
+    echo "::notice::Declared: this pull request fixes a false positive, so the released binary still reports what the fix removed."
+    exit 0
+  fi
 
-if [ "$RELAXES_A_RULE" = "true" ]; then
-  echo "::notice::Declared: this pull request relaxes a rule, so the released binary still enforces the stricter form."
-  exit 0
+  if [ "$RELAXES_A_RULE" = "true" ]; then
+    echo "::notice::Declared: this pull request relaxes a rule, so the released binary still enforces the stricter form."
+    exit 0
+  fi
 fi
 
 if [ "$undeclared_count" -gt 0 ]; then

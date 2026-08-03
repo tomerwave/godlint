@@ -11,6 +11,23 @@ speaks about.
 
 ### Changed
 
+- A declaration in `.github/accepted-drift.md` that the released binary does not report fails the
+  released-agreement check instead of printing a notice nobody reads. `docs/releasing.md` said the
+  quiet part out loud — "deleting it is remembered rather than enforced" — and remembering is not a
+  gate. What makes it worth failing is what a declaration is: it stands ready to accept disagreement
+  in one named rule, so a line left behind after the drift it described is resolved will silently
+  accept the *next* drift in that rule, which is the one case this check exists to catch. A stale
+  declaration is not untidiness, it is an exemption nobody is watching. The pressure lands where the
+  release process already expected it: the first pull request after a release either deletes the file
+  or goes red naming each line to remove.
+
+  Two things look like a stale declaration and are not, and getting this wrong would have been worse
+  than the notice. When the release cannot read this repository's configuration it reported nothing
+  about any rule, so every declaration looks unused — failing there would fail every pull request
+  that adds a configuration key, for declarations that are perfectly good. Those stay notices, now
+  worded as unexercised rather than unused, and a release that stopped early is not evidence either.
+  A stale declaration also does not short-circuit the undeclared-finding report: a run with both says
+  both, which a first attempt at this got wrong by exiting early, and the test caught.
 - The drift gate reads the status the released binary exited with instead of matching a sentence in
   its output. It decided whether the release could read the configuration by grepping for
   `Configuration is invalid`, and the binary being grepped is a *past* release — so no test in this

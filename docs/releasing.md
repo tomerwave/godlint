@@ -17,8 +17,22 @@ Prefer this file to the `relaxes-a-rule` and `fixes-false-positive` labels: a la
 temporary declaration that dies with its pull request, while the file names each rule precisely,
 survives the merge, and keeps `main` honest.
 
-A stale declaration is currently reported as a notice rather than a failure, so deleting it is
-remembered rather than enforced.
+Deleting it is enforced rather than remembered. Once the new binary is published it no longer
+reports the rules the file names, and a declaration the released binary does not report **fails** the
+released-agreement check — on every pull request, until the line is deleted. That is the intended
+pressure and it is worth knowing before it arrives: the first pull request after a release either
+deletes the file or goes red naming each line to remove.
+
+The reason it fails rather than notices is what a declaration is for. It stands ready to accept
+disagreement in one named rule, so a line left behind after the drift it described is resolved will
+silently accept the *next* drift in that rule — the one case this check exists to catch. A stale
+declaration is not untidiness, it is an exemption nobody is watching.
+
+Two situations look like a stale declaration and are not, so neither fails. A release that cannot
+read this repository's configuration reported nothing about any rule, so its declarations are
+unexercised rather than stale, and they are reported as notices — otherwise every pull request adding
+a configuration key would fail on declarations that are perfectly good. And a release that stopped
+before it could finish is not evidence either way.
 
 The release notes are every category in the version's section except `Internal`, which is where a
 change nothing a user can observe belongs — `check-release.py` drops it, so an entry recording that a

@@ -165,10 +165,36 @@ if run_explanation 1 false false "$finding" > "$temporary/wrong-declaration.out"
   exit 1
 fi
 grep -q '^::error::Undeclared rules reported by released Godlint: maintainability/function-size$' "$temporary/wrong-declaration.out"
-grep -q 'Unused declaration.*ci/no-monolithic-job was not reported' "$temporary/wrong-declaration.out"
+grep -q '^::error::Stale declaration.*ci/no-monolithic-job is declared as a relaxed rule' "$temporary/wrong-declaration.out"
 
-run_explanation 0 false false "" > "$temporary/unused-declaration.out"
-grep -q 'Unused declaration.*ci/no-monolithic-job was not reported' "$temporary/unused-declaration.out"
+# The release ran and reported nothing, so the declaration is not merely unexercised: the drift it
+# accepts no longer happens, and while the line stands the next drift in that rule passes unremarked.
+if run_explanation 0 false false "" > "$temporary/stale-on-clean.out" 2>&1; then
+  echo "a declaration the release does not report must fail once the release reports nothing" >&2
+  exit 1
+fi
+grep -q '^::error::Stale declaration.*ci/no-monolithic-job' "$temporary/stale-on-clean.out"
+
+# A stale declaration is about the drift file, not about this pull request, so a drift label must not
+# excuse it — and the label path is the one that would otherwise exit 0 first.
+if run_explanation 1 true false "$finding" > "$temporary/stale-with-label.out" 2>&1; then
+  echo "a drift label must not excuse a stale declaration" >&2
+  exit 1
+fi
+grep -q '^::error::Stale declaration.*ci/no-monolithic-job' "$temporary/stale-with-label.out"
+# Both facts, not the first one only.
+grep -q '^::error::Undeclared rules reported by released Godlint: maintainability/function-size$' "$temporary/stale-with-label.out"
+
+# The trap this change had to avoid. The release could not read the configuration, so it reported
+# nothing about any rule — every declaration looks unused, and failing here would fail every pull
+# request that adds a configuration key.
+run_explanation 2 false false 'Configuration is invalid: godlint.yaml: unknown field' false \
+  > "$temporary/untested-declaration.out"
+grep -q '^::notice::Declaration not exercised.*ci/no-monolithic-job' "$temporary/untested-declaration.out"
+if grep -q 'Stale declaration' "$temporary/untested-declaration.out"; then
+  echo "a release that judged nothing cannot make a declaration stale" >&2
+  exit 1
+fi
 
 unparseable_finding='::error file=src/main.rs,line=1::too large'
 if run_explanation 1 false false "$unparseable_finding" > "$temporary/unparseable.out" 2>&1; then
