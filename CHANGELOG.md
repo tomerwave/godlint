@@ -24,10 +24,12 @@ speaks about.
   read, parse and fact collection are independent per file and share nothing mutable — 85% of the run
   on one core. Chunks are merged in chunk order, so the facts arrive in the same order they did
   sequentially and the output does not depend on how the work was divided. Measured on a 2,104-file
-  tree with ten cores: 1,244ms to 467ms, and eight consecutive runs are byte-identical. A tree small
-  enough that threads would cost more than they save stays sequential — one worker per 32 files, so
-  nothing below 64 spawns a second thread — and `available_parallelism` already reports 1 on a
-  single-core runner, which is what a small CI runner gets.
+  tree with ten cores: 1,244ms to 467ms, and eight consecutive runs are byte-identical. A tree of 32
+  files or fewer stays sequential, and a second thread appears at 33 — measured at that boundary, the
+  difference is inside the noise either way, because a run of that size is dominated by the 69ms it
+  takes to start and read the configuration. The win is 2.66× on a large repository and nothing at all
+  on a small one. Where a machine reports one core, `available_parallelism` returns 1 and the
+  sequential path is taken.
 
 - Deciding that a path is not excluded no longer allocates. `glob::segment_matches` built two
   `Vec<char>`s and a table per segment comparison before comparing anything, including for the

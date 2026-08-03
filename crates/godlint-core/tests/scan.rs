@@ -164,7 +164,8 @@ fn wide_repository(count: usize) -> Repository {
             &format!("export const value{index} = {index};\n"),
         );
     }
-    repository.write("src/torn.ts", "export const value = ;\n");
+    repository.write("src/aaa-torn.ts", "export const value = ;\n");
+    repository.write("src/zzz-torn.ts", "export const value = ;\n");
     repository.write(
         ".github/workflows/one.yml",
         "name: One\non: [push]\njobs: {}\n",
@@ -185,12 +186,21 @@ fn a_tree_wide_enough_to_split_across_workers_keeps_its_order() {
     let mut expected = scanned.clone();
     expected.sort();
 
-    assert_eq!(report.facts.len(), count + 1);
+    assert_eq!(report.facts.len(), count + 2);
     assert_eq!(report.workflows.len(), 1);
     assert_eq!(
         scanned, expected,
         "facts must come back in path order however the work was divided"
     );
-    assert_eq!(report.issues.len(), 1);
-    assert!(report.issues[0].path.ends_with("torn.ts"));
+    let torn: Vec<String> = report
+        .issues
+        .iter()
+        .map(|issue| issue.path.display().to_string())
+        .collect();
+
+    assert_eq!(
+        torn,
+        vec!["src/aaa-torn.ts".to_owned(), "src/zzz-torn.ts".to_owned()],
+        "issues from files in different chunks keep their order"
+    );
 }
