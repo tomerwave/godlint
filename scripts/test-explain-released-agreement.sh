@@ -185,6 +185,52 @@ grep -q '^::error::Stale declaration.*ci/no-monolithic-job' "$temporary/stale-wi
 # Both facts, not the first one only.
 grep -q '^::error::Undeclared rules reported by released Godlint: maintainability/function-size$' "$temporary/stale-with-label.out"
 
+# Two declarations of different kinds, both stale, because every case above has exactly one: with one
+# line nothing distinguishes reporting each from reporting the first, or naming each kind from naming
+# the first kind. An author with three stale lines must learn all three at once.
+printf '%s\n' \
+  '# Accepted released drift' \
+  '' \
+  '- `ci/no-monolithic-job` — relaxed rule: the corpus said the old threshold was wrong.' \
+  '- `security/no-weak-hash` — fixed false positive: it read a digest name it should not have.' \
+  > "$temporary/accepted-drift.md"
+if run_explanation 1 false false "$finding" > "$temporary/two-stale.out" 2>&1; then
+  echo "two stale declarations must fail" >&2
+  exit 1
+fi
+grep -q '^::error::Stale declaration.*ci/no-monolithic-job is declared as a relaxed rule' "$temporary/two-stale.out"
+grep -q '^::error::Stale declaration.*security/no-weak-hash is declared as a fixed false positive' "$temporary/two-stale.out"
+
+# A rule id the gate could not parse might be the declared rule itself, so this run is no evidence
+# that the declaration is spent. Telling the author to delete a live exemption is worse than silence.
+unreadable_finding='::error file=src/main.rs,line=1::too large'
+if run_explanation 1 false false "$unreadable_finding" > "$temporary/unreadable-record.out" 2>&1; then
+  echo "an unparseable finding must still fail" >&2
+  exit 1
+fi
+if grep -q 'Stale declaration' "$temporary/unreadable-record.out"; then
+  echo "a finding whose rule id could not be read cannot make a declaration stale" >&2
+  exit 1
+fi
+grep -q '^::notice::Declarations not examined' "$temporary/unreadable-record.out"
+
+# The release said findings and the annotations hold none. That is not a record of nothing, it is no
+# record, so it cannot retire a declaration either — and it must still fail, because the two disagree.
+if run_explanation 1 false false "" > "$temporary/empty-record.out" 2>&1; then
+  echo "a status of 1 with no readable findings must fail" >&2
+  exit 1
+fi
+if grep -q 'Stale declaration' "$temporary/empty-record.out"; then
+  echo "an empty findings record cannot make a declaration stale" >&2
+  exit 1
+fi
+
+printf '%s\n' \
+  '# Accepted released drift' \
+  '' \
+  '- `ci/no-monolithic-job` — relaxed rule: the corpus said the old threshold was wrong.' \
+  > "$temporary/accepted-drift.md"
+
 # The trap this change had to avoid. The release could not read the configuration, so it reported
 # nothing about any rule — every declaration looks unused, and failing here would fail every pull
 # request that adds a configuration key.

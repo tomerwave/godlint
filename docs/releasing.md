@@ -28,11 +28,29 @@ disagreement in one named rule, so a line left behind after the drift it describ
 silently accept the *next* drift in that rule — the one case this check exists to catch. A stale
 declaration is not untidiness, it is an exemption nobody is watching.
 
-Two situations look like a stale declaration and are not, so neither fails. A release that cannot
-read this repository's configuration reported nothing about any rule, so its declarations are
-unexercised rather than stale, and they are reported as notices — otherwise every pull request adding
-a configuration key would fail on declarations that are perfectly good. And a release that stopped
-before it could finish is not evidence either way.
+Three situations look like a stale declaration and are not. None of them is reported as stale, which
+is not the same as none of them failing:
+
+- **The release cannot read this repository's configuration.** It reported nothing about any rule, so
+  its declarations are unexercised rather than spent, and they are reported as notices. The check
+  passes — otherwise every pull request adding a configuration key would fail on declarations that
+  are perfectly good.
+- **The release stopped before it could finish.** The check fails, for its own reason and with its own
+  message, and says nothing about declarations at all. A partial scan is not evidence about a rule it
+  may never have reached.
+- **The release reported findings this gate could not read as a list of rules** — a rule id it could
+  not parse, or an annotations file with nothing in it. The unreadable finding may *be* the declared
+  rule, so the declarations are reported as not examined. The check fails, because a release claiming
+  findings that cannot be read is a problem of its own.
+
+**A known limitation.** The released-agreement job runs on Linux, macOS and Windows, and each runner
+judges the file against its own findings. So drift on one platform only cannot be declared: the
+declaration is used on the runner that reports the rule and stale on the two that do not, which now
+fails there instead of printing a notice. It has not come up: the only declaration this file has ever
+carried was a raised `ci/no-monolithic-job` threshold, which every platform reports alike. The
+alternative is a declaration any platform can leave unexamined, which is the accountability the file
+exists to provide — so if it does come up, the answer is a declaration that names the platform, not a
+quieter check.
 
 The release notes are every category in the version's section except `Internal`, which is where a
 change nothing a user can observe belongs — `check-release.py` drops it, so an entry recording that a

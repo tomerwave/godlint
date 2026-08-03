@@ -21,13 +21,18 @@ speaks about.
   release process already expected it: the first pull request after a release either deletes the file
   or goes red naming each line to remove.
 
-  Two things look like a stale declaration and are not, and getting this wrong would have been worse
-  than the notice. When the release cannot read this repository's configuration it reported nothing
-  about any rule, so every declaration looks unused — failing there would fail every pull request
-  that adds a configuration key, for declarations that are perfectly good. Those stay notices, now
-  worded as unexercised rather than unused, and a release that stopped early is not evidence either.
-  A stale declaration also does not short-circuit the undeclared-finding report: a run with both says
-  both, which a first attempt at this got wrong by exiting early, and the test caught.
+  Three things look like a stale declaration and are not, and calling any of them stale would have
+  been worse than the notice it replaces, because the instruction is *delete the line*. Staleness
+  reads "not among the rules the release reported", so it is only sound where that list is the whole
+  list. It is not when the release could not read this repository's configuration — it reported
+  nothing about any rule, so failing there would fail every pull request that adds a configuration
+  key, for declarations that are perfectly good. It is not when a finding's rule id could not be
+  parsed, because the unreadable one may *be* the declared rule. And it is not when the release
+  claimed findings and the annotations hold none, which is no record rather than a record of nothing.
+  The first passes with a notice; the other two fail for their own reasons and say nothing about
+  declarations. A stale declaration also does not short-circuit the undeclared-finding report: a run
+  with both says both, and names every stale line with its own kind rather than the first — the first
+  attempt got the short-circuit wrong and the suite caught it, and review caught the other two.
 - The drift gate reads the status the released binary exited with instead of matching a sentence in
   its output. It decided whether the release could read the configuration by grepping for
   `Configuration is invalid`, and the binary being grepped is a *past* release — so no test in this

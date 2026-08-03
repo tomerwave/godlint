@@ -225,7 +225,16 @@ if [ "$reported_count" -gt 0 ]; then
 fi
 
 stale=0
-stale_declarations || stale=1
+
+# Staleness reads "not among the rules the release reported", so it is only sound where that list is
+# the whole list. A finding whose rule id could not be parsed might *be* the declared rule, and a
+# status of 1 with nothing readable in the annotations is no record at all — in either case the honest
+# answer is that this run cannot decide, not that the exemption should be deleted.
+if [ "$unparseable_finding" = "false" ] && [ "$reported_count" -gt 0 ]; then
+  stale_declarations || stale=1
+elif [ "$declared_count" -gt 0 ]; then
+  echo "::notice::Declarations not examined in $accepted_drift_file: the released binary reported findings this gate could not read as a complete list of rules, so whether a declaration is still needed is not decided here."
+fi
 
 if [ "$unparseable_finding" = "true" ]; then
   undeclared_rules[$undeclared_count]="<unparseable rule id>"
