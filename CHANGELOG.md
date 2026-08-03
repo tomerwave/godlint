@@ -11,6 +11,16 @@ speaks about.
 
 ### Changed
 
+- Suppression matching is grouped by file instead of comparing every finding with every suppression.
+  `apply` scanned the whole suppression list for each finding and `policy/unused-suppression` scanned
+  the whole finding list for each suppression, so the cost grew with the *product* of two
+  repository-sized numbers — the only step in the pipeline that did — and nearly every comparison
+  established that two unrelated files are not the same file. On 3,000 files carrying 2,000
+  suppressions `godlint check` goes from 468ms to 339ms; doubling that corpus takes the pairwise path
+  to 1,093ms and the grouped path to 616ms, so the gap widens as a repository grows. Grouping cannot
+  change which suppression matches: `covers` already required the paths to be equal, and `Ord` on a
+  path agrees with `==` on it, so the map admits and rejects exactly the pairs the scan did.
+
 - Deciding that a path is not excluded no longer allocates. `glob::segment_matches` built two
   `Vec<char>`s and a table per segment comparison before comparing anything, including for the
   literal patterns every `exclude:` list is made of — `target`, `node_modules`, `.venv`. Measured on

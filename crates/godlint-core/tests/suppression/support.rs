@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
 use godlint_core::{
-    analyzers::SourceFacts, analyzers::analyze, config::Config, date::Date, rules::evaluate,
-    source::SourceFile, suppression::Suppression, suppression::collect,
+    analyzers::SourceFacts, analyzers::analyze, config::Config, date::Date, rules::Finding,
+    rules::evaluate, source::SourceFile, suppression::Suppression, suppression::collect,
 };
 
 pub(super) fn facts(path: &str, source: &str) -> SourceFacts {
@@ -24,6 +24,12 @@ pub(super) fn only(path: &str, source: &str) -> Suppression {
     found.remove(0)
 }
 
+pub(super) fn findings_in(path: &str, source: &str, body: &str) -> Vec<Finding> {
+    let facts = facts(path, source);
+
+    evaluate(std::slice::from_ref(&facts), &[], &config(body), today())
+}
+
 pub(super) fn config(body: &str) -> Config {
     yaml_serde::from_str(body).unwrap_or_else(|error| panic!("reads configuration: {error}"))
 }
@@ -34,6 +40,25 @@ pub(super) fn surviving(path: &str, source: &str, body: &str) -> Vec<(usize, usi
     evaluate(std::slice::from_ref(&facts), &[], &config(body), today())
         .iter()
         .map(|finding| (finding.line, finding.column))
+        .collect()
+}
+
+pub(super) fn across_files(
+    first: (&str, &str),
+    second: (&str, &str),
+    body: &str,
+) -> Vec<(String, usize, usize)> {
+    let facts = [facts(first.0, first.1), facts(second.0, second.1)];
+
+    evaluate(&facts, &[], &config(body), today())
+        .iter()
+        .map(|finding| {
+            (
+                finding.path.display().to_string(),
+                finding.line,
+                finding.column,
+            )
+        })
         .collect()
 }
 

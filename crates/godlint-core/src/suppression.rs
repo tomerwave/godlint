@@ -1,4 +1,7 @@
-use std::collections::BTreeSet;
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    path::Path,
+};
 
 use crate::{
     analyzers::SourceFacts,
@@ -180,14 +183,29 @@ fn quotes_open(kind: CommentKind, opens: bool) -> bool {
 }
 
 pub fn apply(findings: Vec<Finding>, suppressions: &[Suppression]) -> Vec<Finding> {
+    let by_file = grouped_by_path(suppressions);
+
     findings
         .into_iter()
         .filter(|finding| {
-            !suppressions
-                .iter()
-                .any(|suppression| suppression.covers(finding))
+            by_file
+                .get(finding.path.as_path())
+                .is_none_or(|listed| !listed.iter().any(|suppression| suppression.covers(finding)))
         })
         .collect()
+}
+
+fn grouped_by_path(suppressions: &[Suppression]) -> BTreeMap<&Path, Vec<&Suppression>> {
+    let mut grouped: BTreeMap<&Path, Vec<&Suppression>> = BTreeMap::new();
+
+    for suppression in suppressions {
+        grouped
+            .entry(suppression.source.path())
+            .or_default()
+            .push(suppression);
+    }
+
+    grouped
 }
 
 fn directive_lines(facts: &SourceFacts) -> BTreeSet<usize> {
