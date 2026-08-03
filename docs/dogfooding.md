@@ -45,7 +45,8 @@ So 106 of the 127 are the rules meeting code they were not written for, and **21
 The reason this is an exclusion rather than three lines of rule configuration is a gap in the
 product. `logging/no-production-log` and `architecture/restricted-call` both take `allow-in` path
 globs, so those 28 could be declared per rule and stay enforced everywhere else. `style/no-comments`
-takes a severity and nothing else — with 78 findings it decides the outcome on its own, and there is
+takes a severity and an `allow-doc-comments` toggle, and neither of those is a path. With 78
+findings it decides the outcome on its own, and there is
 no way to spell "not in these paths" for it short of removing the paths. Giving that rule `allow-in`
 would let this exclusion shrink to the two directories' real debt, and would serve any repository
 that wants prose-free product code and commented build scripts.

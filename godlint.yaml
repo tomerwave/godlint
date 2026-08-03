@@ -27,10 +27,11 @@ exclude:
 
   # The gate scripts and the package wrappers. 78 of the 127 findings in these two paths are
   # `style/no-comments`, on Python and JavaScript whose comments explain policy to a reader, and
-  # that rule takes a severity and nothing else — so there is no way to say "not in these paths"
-  # short of removing the paths. That missing per-path control is what makes this an exclusion
-  # rather than two lines of rule configuration, and it costs 21 findings that are real debt.
-  # docs/dogfooding.md itemises both, so the cost is written where it can be argued with.
+  # that rule is configured by a severity and a doc-comment toggle — neither of which is a path, so
+  # there is no way to say "not in these paths" short of removing the paths. That missing per-path
+  # control is what makes this an exclusion rather than two lines of rule configuration, and it
+  # costs 21 findings that are real debt. docs/dogfooding.md itemises both, so the cost is written
+  # where it can be argued with.
   - scripts
   - packaging
 
