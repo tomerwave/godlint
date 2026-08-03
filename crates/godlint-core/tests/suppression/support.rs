@@ -37,6 +37,25 @@ pub(super) fn surviving(path: &str, source: &str, body: &str) -> Vec<(usize, usi
         .collect()
 }
 
+pub(super) fn across_files(
+    first: (&str, &str),
+    second: (&str, &str),
+    body: &str,
+) -> Vec<(String, usize, usize)> {
+    let facts = [facts(first.0, first.1), facts(second.0, second.1)];
+
+    evaluate(&facts, &[], &config(body), today())
+        .iter()
+        .map(|finding| {
+            (
+                finding.path.display().to_string(),
+                finding.line,
+                finding.column,
+            )
+        })
+        .collect()
+}
+
 pub(super) const EMPTY_FUNCTION: &str =
     "version: 1\nrules:\n  maintainability/empty-function:\n    severity: error\n";
 

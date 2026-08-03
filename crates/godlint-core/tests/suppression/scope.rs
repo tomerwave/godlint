@@ -1,4 +1,4 @@
-use super::support::{EMPTY_FUNCTION, surviving};
+use super::support::{EMPTY_FUNCTION, across_files, surviving};
 
 #[test]
 fn an_enclosing_directive_resolves_to_the_innermost_function() {
@@ -139,5 +139,35 @@ fn an_enclosing_directive_cannot_reach_a_file_level_finding() {
         surviving("src/example.rs", source, body).len(),
         1,
         "a file-level finding spans the whole file, so no declaration encloses it"
+    );
+}
+
+#[test]
+fn a_directive_covers_only_the_file_that_holds_it() {
+    let directive = "// godlint-ignore-next-line maintainability/empty-function -- a stub\n";
+    let stub = "fn example() {}\n";
+
+    assert_eq!(
+        surviving("src/plain.rs", stub, EMPTY_FUNCTION),
+        vec![(1, 1)],
+        "without a directive the empty function is reported"
+    );
+    assert_eq!(
+        surviving(
+            "src/covered.rs",
+            &format!("{directive}{stub}"),
+            EMPTY_FUNCTION
+        ),
+        Vec::new(),
+        "the directive covers the function beneath it"
+    );
+    assert_eq!(
+        across_files(
+            ("src/covered.rs", &format!("{directive}{stub}")),
+            ("src/other.rs", stub),
+            EMPTY_FUNCTION
+        ),
+        vec![("src/other.rs".to_owned(), 1, 1)],
+        "a directive in one file leaves an identical function in another file reported"
     );
 }
