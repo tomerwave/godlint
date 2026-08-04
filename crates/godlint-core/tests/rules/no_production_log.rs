@@ -67,3 +67,56 @@ fn can_disable_the_rule() {
 
     assert!(violations("src/example.js", "console.log(value);", configuration).is_empty());
 }
+
+const ONLY_IN_SOURCE: &str = concat!(
+    "version: 1\nrules:\n  logging/no-production-log:\n    severity: error\n",
+    "    only-in:\n",
+    "      - \"src/**\"\n",
+);
+
+const ONLY_IN_SOURCE_BUT_NOT_GENERATED: &str = concat!(
+    "version: 1\nrules:\n  logging/no-production-log:\n    severity: error\n",
+    "    only-in:\n",
+    "      - \"src/**\"\n",
+    "    allow-in:\n",
+    "      - \"src/generated/**\"\n",
+);
+
+#[test]
+fn only_in_reports_inside_the_paths_the_rule_is_about() {
+    assert_eq!(
+        violations("src/server.js", "console.log(value);", ONLY_IN_SOURCE).len(),
+        1
+    );
+}
+
+#[test]
+fn only_in_says_nothing_outside_them() {
+    assert!(
+        violations("scripts/release.js", "console.log(value);", ONLY_IN_SOURCE).is_empty(),
+        "a rule about production logging has nothing to say about a build script, and without \
+         only-in the alternative is excluding that path from every rule at once"
+    );
+}
+
+#[test]
+fn allow_in_carves_an_exception_out_of_only_in() {
+    assert_eq!(
+        violations(
+            "src/server.js",
+            "console.log(value);",
+            ONLY_IN_SOURCE_BUT_NOT_GENERATED
+        )
+        .len(),
+        1
+    );
+    assert!(
+        violations(
+            "src/generated/client.js",
+            "console.log(value);",
+            ONLY_IN_SOURCE_BUT_NOT_GENERATED
+        )
+        .is_empty(),
+        "the narrower of the two decides, so an exception inside only-in still silences the rule"
+    );
+}

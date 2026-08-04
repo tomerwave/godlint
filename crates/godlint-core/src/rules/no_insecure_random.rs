@@ -4,7 +4,7 @@ use crate::{
     facts::CallFact,
     rules::{
         CallRule, Finding, Rule, Violation,
-        catalogue::{GENERATORS, matches, spelled},
+        catalogue::{GENERATORS, spelled},
         evaluate_call_rule, when_configured,
     },
     source::Language,
@@ -23,11 +23,12 @@ impl Rule for NoInsecureRandom {
 }
 
 impl CallRule for NoInsecureRandom {
-    fn check(call: &CallFact, configuration: &Self::Configuration) -> Option<Violation> {
+    fn check(call: &CallFact, _configuration: &Self::Configuration) -> Option<Violation> {
         let name = spelled(call);
         let source = call.source();
 
-        (GENERATORS.speaks(source.language(), &name) && !matches(source, &configuration.allow_in))
+        GENERATORS
+            .speaks(source.language(), &name)
             .then(|| Violation::InsecureRandom {
                 callee: name.clone(),
                 secure: secure_generator(source.language()).to_owned(),

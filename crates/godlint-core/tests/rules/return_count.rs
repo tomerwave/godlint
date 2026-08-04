@@ -8,6 +8,8 @@ use super::support::{function, function_limits};
 fn configuration(max_returns: u32) -> ReturnCountRule {
     ReturnCountRule {
         severity: Severity::Error,
+        only_in: Vec::new(),
+        allow_in: Vec::new(),
         max_returns,
     }
 }

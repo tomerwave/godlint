@@ -21,6 +21,7 @@ fn workflow(body: &str) -> WorkflowFacts {
 fn configuration(max_steps: u32) -> NoMonolithicJobRule {
     NoMonolithicJobRule {
         severity: Severity::Error,
+        only_in: Vec::new(),
         max_steps,
         allow_in: Vec::new(),
     }
@@ -108,6 +109,7 @@ fn allow_in_globs_exempt_only_matching_workflow_paths() {
     let checked = workflow_at(".github/workflows/ci.yml", body);
     let configuration = NoMonolithicJobRule {
         severity: Severity::Error,
+        only_in: Vec::new(),
         max_steps: 1,
         allow_in: vec!["**/release.yml".to_owned()],
     };
@@ -122,6 +124,7 @@ fn the_rule_is_silent_when_it_is_switched_off() {
     let facts = workflow("jobs:\n  build:\n    steps: [{run: one}, {run: two}]\n");
     let configuration = NoMonolithicJobRule {
         severity: Severity::Off,
+        only_in: Vec::new(),
         max_steps: 1,
         allow_in: Vec::new(),
     };

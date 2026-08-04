@@ -8,6 +8,8 @@ use super::support::comment_violations;
 fn configuration(allow_doc_comments: bool) -> NoCommentsRule {
     NoCommentsRule {
         severity: Severity::Error,
+        only_in: Vec::new(),
+        allow_in: Vec::new(),
         allow_doc_comments,
     }
 }

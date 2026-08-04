@@ -2,7 +2,7 @@ use std::{collections::BTreeMap, fs, path::Path};
 
 use serde::{Deserialize, de::IgnoredAny};
 
-use crate::suites;
+use crate::{glob, suites};
 
 mod error;
 mod rules;
@@ -154,6 +154,30 @@ impl Rules {
 
 const fn default_fail_on() -> Severity {
     Severity::Error
+}
+#[derive(Clone, Copy, Debug)]
+pub struct Scope<'a> {
+    only_in: &'a [String],
+    allow_in: &'a [String],
+}
+
+impl<'a> Scope<'a> {
+    pub fn of(configuration: &'a impl Scoped) -> Self {
+        Self {
+            only_in: configuration.only_in(),
+            allow_in: configuration.allow_in(),
+        }
+    }
+    pub fn covers(&self, path: &str) -> bool {
+        let within = self.only_in.is_empty()
+            || glob::matches_any(self.only_in.iter().map(String::as_str), path);
+
+        within && !glob::matches_any(self.allow_in.iter().map(String::as_str), path)
+    }
+}
+pub trait Scoped {
+    fn only_in(&self) -> &[String];
+    fn allow_in(&self) -> &[String];
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd)]

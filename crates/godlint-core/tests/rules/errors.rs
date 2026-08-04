@@ -16,6 +16,8 @@ use super::support::{comment_violations, facts, limit, suppressions};
 fn line_limit(severity: Severity) -> LineLimitRule {
     LineLimitRule {
         severity,
+        only_in: Vec::new(),
+        allow_in: Vec::new(),
         max_lines: limit(1),
         skip_blank_lines: true,
         skip_comments: true,
@@ -27,6 +29,8 @@ fn a_function_rule_set_to_off_reports_nothing() {
     let source = facts("src/example.rs", "fn empty() {}");
     let configuration = EmptyFunctionRule {
         severity: Severity::Off,
+        only_in: Vec::new(),
+        allow_in: Vec::new(),
         allow_names: Vec::new(),
     };
 
@@ -54,6 +58,8 @@ fn a_comment_rule_set_to_off_reports_nothing() {
     let source = facts("src/example.rs", "// aside\nfn a() {}\n");
     let configuration = NoCommentsRule {
         severity: Severity::Off,
+        only_in: Vec::new(),
+        allow_in: Vec::new(),
         allow_doc_comments: false,
     };
 
@@ -71,6 +77,8 @@ fn a_suppression_rule_set_to_off_reports_nothing() {
     );
     let configuration = AccountableSuppressionRule {
         severity: Severity::Off,
+        only_in: Vec::new(),
+        allow_in: Vec::new(),
         require_owner: true,
         require_expiry: true,
     };
@@ -87,6 +95,8 @@ fn a_suppression_rule_set_to_off_reports_nothing() {
 fn a_reference_prefix_followed_by_no_digit_is_not_a_reference() {
     let configuration = TodoRequiresReferenceRule {
         severity: Severity::Error,
+        only_in: Vec::new(),
+        allow_in: Vec::new(),
         markers: vec!["TODO".into()],
         reference_prefixes: vec!["#".into()],
     };

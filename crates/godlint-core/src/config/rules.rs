@@ -2,12 +2,16 @@ use std::num::NonZeroU32;
 
 use serde::Deserialize;
 
-use crate::config::Severity;
+use crate::config::{Scoped, Severity};
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct AccountableSuppressionRule {
     pub severity: Severity,
+    #[serde(default, rename = "only-in")]
+    pub only_in: Vec<String>,
+    #[serde(default, rename = "allow-in")]
+    pub allow_in: Vec<String>,
     #[serde(default, rename = "require-owner")]
     pub require_owner: bool,
     #[serde(default, rename = "require-expiry")]
@@ -18,6 +22,10 @@ pub struct AccountableSuppressionRule {
 #[serde(deny_unknown_fields)]
 pub struct RestrictedCallRule {
     pub severity: Severity,
+    #[serde(default, rename = "only-in")]
+    pub only_in: Vec<String>,
+    #[serde(default, rename = "allow-in")]
+    pub allow_in: Vec<String>,
     #[serde(default)]
     pub calls: Vec<RestrictedCall>,
 }
@@ -34,6 +42,10 @@ pub struct RestrictedCall {
 #[serde(deny_unknown_fields)]
 pub struct RestrictedImportRule {
     pub severity: Severity,
+    #[serde(default, rename = "only-in")]
+    pub only_in: Vec<String>,
+    #[serde(default, rename = "allow-in")]
+    pub allow_in: Vec<String>,
     #[serde(default)]
     pub modules: Vec<RestrictedImport>,
 }
@@ -42,6 +54,10 @@ pub struct RestrictedImportRule {
 #[serde(deny_unknown_fields)]
 pub struct FilenameCaseRule {
     pub severity: Severity,
+    #[serde(default, rename = "only-in")]
+    pub only_in: Vec<String>,
+    #[serde(default, rename = "allow-in")]
+    pub allow_in: Vec<String>,
     #[serde(default)]
     pub scopes: Vec<NamingScope>,
     #[serde(default)]
@@ -79,6 +95,10 @@ impl NamingCase {
 #[serde(deny_unknown_fields)]
 pub struct ForbiddenDependencyRule {
     pub severity: Severity,
+    #[serde(default, rename = "only-in")]
+    pub only_in: Vec<String>,
+    #[serde(default, rename = "allow-in")]
+    pub allow_in: Vec<String>,
     #[serde(default)]
     pub packages: Vec<ForbiddenDependency>,
 }
@@ -95,6 +115,10 @@ pub struct ForbiddenDependency {
 #[serde(deny_unknown_fields)]
 pub struct DependencyBoundaryRule {
     pub severity: Severity,
+    #[serde(default, rename = "only-in")]
+    pub only_in: Vec<String>,
+    #[serde(default, rename = "allow-in")]
+    pub allow_in: Vec<String>,
     #[serde(default)]
     pub layers: Vec<Layer>,
 }
@@ -103,6 +127,10 @@ pub struct DependencyBoundaryRule {
 #[serde(deny_unknown_fields)]
 pub struct ModuleIndependenceRule {
     pub severity: Severity,
+    #[serde(default, rename = "only-in")]
+    pub only_in: Vec<String>,
+    #[serde(default, rename = "allow-in")]
+    pub allow_in: Vec<String>,
     #[serde(default)]
     pub sets: Vec<IndependentSet>,
 }
@@ -137,6 +165,9 @@ pub struct RestrictedImport {
 #[serde(deny_unknown_fields)]
 pub struct DirectEnvironmentReadRule {
     pub severity: Severity,
+    #[serde(default, rename = "only-in")]
+    pub only_in: Vec<String>,
+
     #[serde(default = "default_configuration_paths", rename = "allow-in")]
     pub allow_in: Vec<String>,
 }
@@ -145,6 +176,10 @@ pub struct DirectEnvironmentReadRule {
 #[serde(deny_unknown_fields)]
 pub struct AssertionRequiredRule {
     pub severity: Severity,
+    #[serde(default, rename = "only-in")]
+    pub only_in: Vec<String>,
+    #[serde(default, rename = "allow-in")]
+    pub allow_in: Vec<String>,
     #[serde(default, rename = "extra-assertions")]
     pub extra_assertions: Vec<String>,
 }
@@ -153,6 +188,10 @@ pub struct AssertionRequiredRule {
 #[serde(deny_unknown_fields)]
 pub struct NoTestHelperInProductionRule {
     pub severity: Severity,
+    #[serde(default, rename = "only-in")]
+    pub only_in: Vec<String>,
+    #[serde(default, rename = "allow-in")]
+    pub allow_in: Vec<String>,
     #[serde(default = "default_test_paths", rename = "test-paths")]
     pub test_paths: Vec<String>,
     #[serde(default = "default_test_helpers")]
@@ -163,6 +202,10 @@ pub struct NoTestHelperInProductionRule {
 #[serde(deny_unknown_fields)]
 pub struct NoInternalImportRule {
     pub severity: Severity,
+    #[serde(default, rename = "only-in")]
+    pub only_in: Vec<String>,
+    #[serde(default, rename = "allow-in")]
+    pub allow_in: Vec<String>,
     #[serde(default)]
     pub allow: Vec<String>,
 }
@@ -171,6 +214,9 @@ pub struct NoInternalImportRule {
 #[serde(deny_unknown_fields)]
 pub struct NoNetworkInUnitTestRule {
     pub severity: Severity,
+    #[serde(default, rename = "only-in")]
+    pub only_in: Vec<String>,
+
     #[serde(default, rename = "unit-paths")]
     pub unit_paths: Vec<String>,
     #[serde(default, rename = "allow-in")]
@@ -181,6 +227,10 @@ pub struct NoNetworkInUnitTestRule {
 #[serde(deny_unknown_fields)]
 pub struct ExplicitWorkflowPermissionsRule {
     pub severity: Severity,
+    #[serde(default, rename = "only-in")]
+    pub only_in: Vec<String>,
+    #[serde(default, rename = "allow-in")]
+    pub allow_in: Vec<String>,
     #[serde(default, rename = "require-per-job")]
     pub require_per_job: bool,
 }
@@ -189,6 +239,10 @@ pub struct ExplicitWorkflowPermissionsRule {
 #[serde(deny_unknown_fields)]
 pub struct PinThirdPartyActionsRule {
     pub severity: Severity,
+    #[serde(default, rename = "only-in")]
+    pub only_in: Vec<String>,
+    #[serde(default, rename = "allow-in")]
+    pub allow_in: Vec<String>,
     #[serde(default = "default_trusted_owners", rename = "trusted-owners")]
     pub trusted_owners: Vec<String>,
 }
@@ -197,6 +251,10 @@ pub struct PinThirdPartyActionsRule {
 #[serde(deny_unknown_fields)]
 pub struct BotConditionsRule {
     pub severity: Severity,
+    #[serde(default, rename = "only-in")]
+    pub only_in: Vec<String>,
+    #[serde(default, rename = "allow-in")]
+    pub allow_in: Vec<String>,
     #[serde(default = "default_bots")]
     pub bots: Vec<String>,
 }
@@ -205,6 +263,10 @@ pub struct BotConditionsRule {
 #[serde(deny_unknown_fields)]
 pub struct LineLimitRule {
     pub severity: Severity,
+    #[serde(default, rename = "only-in")]
+    pub only_in: Vec<String>,
+    #[serde(default, rename = "allow-in")]
+    pub allow_in: Vec<String>,
     #[serde(rename = "max-lines")]
     pub max_lines: NonZeroU32,
     #[serde(default = "enabled", rename = "skip-blank-lines")]
@@ -213,57 +275,70 @@ pub struct LineLimitRule {
     pub skip_comments: bool,
 }
 
-macro_rules! severity_only_rules {
+macro_rules! scoped_rules {
     ($($name:ident),+ $(,)?) => {
         $(
             #[derive(Debug, Deserialize)]
             #[serde(deny_unknown_fields)]
             pub struct $name {
                 pub severity: Severity,
-            }
-        )+
-    };
-}
-
-macro_rules! allow_in_rules {
-    ($($name:ident),+ $(,)?) => {
-        $(
-            #[derive(Debug, Deserialize)]
-            #[serde(deny_unknown_fields)]
-            pub struct $name {
-                pub severity: Severity,
+                #[serde(default, rename = "only-in")]
+                pub only_in: Vec<String>,
                 #[serde(default, rename = "allow-in")]
                 pub allow_in: Vec<String>,
             }
+
+            impl Scoped for $name {
+                fn only_in(&self) -> &[String] {
+                    &self.only_in
+                }
+
+                fn allow_in(&self) -> &[String] {
+                    &self.allow_in
+                }
+            }
         )+
     };
 }
 
-severity_only_rules! {
+macro_rules! scoped {
+    ($($name:ident),+ $(,)?) => {
+        $(
+            impl Scoped for $name {
+                fn only_in(&self) -> &[String] {
+                    &self.only_in
+                }
+
+                fn allow_in(&self) -> &[String] {
+                    &self.allow_in
+                }
+            }
+        )+
+    };
+}
+
+scoped_rules! {
     EmptyErrorHandlerRule,
     ExplicitTimerDelayRule,
     HardcodedContainerCredentialsRule,
     NoDynamicExecutionRule,
     NoEmptyTestRule,
     NoFocusedTestRule,
-    NoSilencedFailureRule,
-    NoSkippedTestRule,
-    NoSleepInTestRule,
-    NoWorkflowCommentsRule,
-    OverprovisionedSecretsRule,
-    UnredactedSecretsRule,
-    UnusedSuppressionRule,
-}
-
-allow_in_rules! {
     NoInsecureRandomRule,
     NoProductionLogRule,
     NoRandomnessWithoutSeedRule,
     NoShellCommandRule,
+    NoSilencedFailureRule,
+    NoSkippedTestRule,
+    NoSleepInTestRule,
     NoWeakHashRule,
+    NoWorkflowCommentsRule,
+    OverprovisionedSecretsRule,
     SecretsInheritRule,
     StaleActionRefsRule,
     TemplateInjectionRule,
+    UnredactedSecretsRule,
+    UnusedSuppressionRule,
 }
 
 macro_rules! count_limit_rules {
@@ -273,6 +348,10 @@ macro_rules! count_limit_rules {
             #[serde(deny_unknown_fields)]
             pub struct $name {
                 pub severity: Severity,
+                #[serde(default, rename = "only-in")]
+                pub only_in: Vec<String>,
+                #[serde(default, rename = "allow-in")]
+                pub allow_in: Vec<String>,
                 #[serde(rename = $key)]
                 pub $field: u32,
             }
@@ -280,6 +359,16 @@ macro_rules! count_limit_rules {
             impl $name {
                 pub fn limit(&self) -> u32 {
                     self.$field
+                }
+            }
+
+            impl Scoped for $name {
+                fn only_in(&self) -> &[String] {
+                    &self.only_in
+                }
+
+                fn allow_in(&self) -> &[String] {
+                    &self.allow_in
                 }
             }
         )+
@@ -300,6 +389,9 @@ count_limit_rules! {
 #[serde(deny_unknown_fields)]
 pub struct NoMonolithicJobRule {
     pub severity: Severity,
+    #[serde(default, rename = "only-in")]
+    pub only_in: Vec<String>,
+
     #[serde(rename = "max-steps")]
     pub max_steps: u32,
     #[serde(default, rename = "allow-in")]
@@ -316,6 +408,10 @@ impl NoMonolithicJobRule {
 #[serde(deny_unknown_fields)]
 pub struct EmptyFunctionRule {
     pub severity: Severity,
+    #[serde(default, rename = "only-in")]
+    pub only_in: Vec<String>,
+    #[serde(default, rename = "allow-in")]
+    pub allow_in: Vec<String>,
     #[serde(default, rename = "allow-names")]
     pub allow_names: Vec<String>,
 }
@@ -324,6 +420,10 @@ pub struct EmptyFunctionRule {
 #[serde(deny_unknown_fields)]
 pub struct NoCommentsRule {
     pub severity: Severity,
+    #[serde(default, rename = "only-in")]
+    pub only_in: Vec<String>,
+    #[serde(default, rename = "allow-in")]
+    pub allow_in: Vec<String>,
     #[serde(default = "enabled", rename = "allow-doc-comments")]
     pub allow_doc_comments: bool,
 }
@@ -332,6 +432,10 @@ pub struct NoCommentsRule {
 #[serde(deny_unknown_fields)]
 pub struct TodoRequiresReferenceRule {
     pub severity: Severity,
+    #[serde(default, rename = "only-in")]
+    pub only_in: Vec<String>,
+    #[serde(default, rename = "allow-in")]
+    pub allow_in: Vec<String>,
     #[serde(default = "default_markers")]
     pub markers: Vec<String>,
     #[serde(default = "default_reference_prefixes", rename = "reference-prefixes")]
@@ -389,4 +493,27 @@ pub(crate) fn default_configuration_paths() -> Vec<String> {
 
 const fn enabled() -> bool {
     true
+}
+
+scoped! {
+    AccountableSuppressionRule,
+    AssertionRequiredRule,
+    BotConditionsRule,
+    DependencyBoundaryRule,
+    DirectEnvironmentReadRule,
+    EmptyFunctionRule,
+    ExplicitWorkflowPermissionsRule,
+    FilenameCaseRule,
+    ForbiddenDependencyRule,
+    LineLimitRule,
+    ModuleIndependenceRule,
+    NoCommentsRule,
+    NoInternalImportRule,
+    NoMonolithicJobRule,
+    NoNetworkInUnitTestRule,
+    NoTestHelperInProductionRule,
+    PinThirdPartyActionsRule,
+    RestrictedCallRule,
+    RestrictedImportRule,
+    TodoRequiresReferenceRule,
 }

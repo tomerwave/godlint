@@ -15,6 +15,8 @@ const TODAY: &str = "2026-07-28";
 fn configuration(require_owner: bool, require_expiry: bool) -> AccountableSuppressionRule {
     AccountableSuppressionRule {
         severity: Severity::Error,
+        only_in: Vec::new(),
+        allow_in: Vec::new(),
         require_owner,
         require_expiry,
     }

@@ -71,6 +71,7 @@ fixture_tests! {
     parameter_count => "parameter-count",
     receiver_parameters => "receiver-parameters",
     return_count => "return-count",
+    rule_scope => "rule-scope",
     restricted_call => "restricted-call",
     restricted_call_clean => "restricted-call-clean",
     no_dynamic_execution => "no-dynamic-execution",

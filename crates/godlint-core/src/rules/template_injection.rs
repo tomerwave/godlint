@@ -1,7 +1,6 @@
 use crate::{
     analyzers::workflow::WorkflowFacts,
     config::{Config, Severity, TemplateInjectionRule},
-    glob,
     rules::{
         Finding, Languages, Rule, Violation, WorkflowRule, evaluate_workflow_rule, when_configured,
     },
@@ -50,15 +49,8 @@ impl Rule for TemplateInjection {
 impl WorkflowRule for TemplateInjection {
     fn check(
         workflow: &WorkflowFacts,
-        configuration: &Self::Configuration,
+        _configuration: &Self::Configuration,
     ) -> Vec<(SourceRange, Violation)> {
-        if glob::matches_any(
-            configuration.allow_in.iter().map(String::as_str),
-            workflow.file().path_text(),
-        ) {
-            return Vec::new();
-        }
-
         workflow
             .expressions()
             .iter()

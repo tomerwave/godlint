@@ -2,9 +2,8 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::{
     analyzers::workflow::WorkflowFacts,
-    config::{Config, Severity, StaleActionRefsRule},
+    config::{Config, Scope, Severity, StaleActionRefsRule},
     facts::ActionFact,
-    glob,
     rules::{Finding, Languages, Reporting, Rule, Violation, report, when_configured},
 };
 
@@ -61,14 +60,11 @@ fn collect<'a>(
     workflows: &'a [WorkflowFacts],
     configuration: &StaleActionRefsRule,
 ) -> Vec<Occurrence<'a>> {
+    let scope = Scope::of(configuration);
+
     workflows
         .iter()
-        .filter(|workflow| {
-            !glob::matches_any(
-                configuration.allow_in.iter().map(String::as_str),
-                workflow.file().path_text(),
-            )
-        })
+        .filter(|workflow| scope.covers(workflow.file().path_text()))
         .flat_map(|workflow| {
             workflow
                 .actions()

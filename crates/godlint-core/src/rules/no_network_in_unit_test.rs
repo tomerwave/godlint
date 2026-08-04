@@ -66,10 +66,8 @@ impl CallInTestRule for NoNetworkInUnitTest {
         let name = spelled(call);
         let source = call.source();
 
-        (matches(source, &configuration.unit_paths)
-            && !matches(source, &configuration.allow_in)
-            && CLIENTS.speaks(source.language(), &name))
-        .then_some(Violation::NetworkInUnitTest { callee: name })
+        (matches(source, &configuration.unit_paths) && CLIENTS.speaks(source.language(), &name))
+            .then_some(Violation::NetworkInUnitTest { callee: name })
     }
 }
 

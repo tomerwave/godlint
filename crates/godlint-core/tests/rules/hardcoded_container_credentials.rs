@@ -21,6 +21,8 @@ fn violations(body: &str) -> Vec<Violation> {
     let facts = workflow(body);
     let configuration = HardcodedContainerCredentialsRule {
         severity: Severity::Error,
+        only_in: Vec::new(),
+        allow_in: Vec::new(),
     };
 
     evaluate_workflow_rule::<HardcodedContainerCredentials>(
@@ -126,6 +128,8 @@ fn the_rule_is_silent_when_it_is_switched_off() {
     ));
     let configuration = HardcodedContainerCredentialsRule {
         severity: Severity::Off,
+        only_in: Vec::new(),
+        allow_in: Vec::new(),
     };
 
     assert!(

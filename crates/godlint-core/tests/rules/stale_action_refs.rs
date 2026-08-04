@@ -21,6 +21,18 @@ fn step(used: &str) -> String {
     format!("jobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: {used}\n")
 }
 
+fn scoped_config(severity: &str, key: &str, paths: &[&str]) -> Config {
+    let listed = paths
+        .iter()
+        .map(|path| format!("      - \"{path}\"\n"))
+        .collect::<String>();
+    let source = format!(
+        "version: 1\nrules:\n  ci/stale-action-refs:\n    severity: {severity}\n    {key}:\n{listed}"
+    );
+
+    yaml_serde::from_str(&source).unwrap_or_else(|error| panic!("reads config: {error}"))
+}
+
 fn config(severity: &str, allow_in: &[&str]) -> Config {
     let paths = if allow_in.is_empty() {
         " []\n".to_owned()
@@ -234,6 +246,25 @@ fn allow_in_removes_a_workflow_from_reporting_and_repository_evidence() {
     let configuration = config("error", &["**/legacy.yml"]);
 
     assert!(stale_action_refs::evaluate(&[allowed, checked], &configuration).is_empty());
+}
+
+#[test]
+fn only_in_removes_a_workflow_from_reporting_and_repository_evidence() {
+    let outside = workflow_at(
+        ".github/workflows/legacy.yml",
+        &step(&format!("actions/checkout@{SHA_A} # v3")),
+    );
+    let inside = workflow_at(
+        ".github/workflows/ci.yml",
+        &step(&format!("actions/checkout@{SHA_A} # v4")),
+    );
+    let configuration = scoped_config("error", "only-in", &["**/ci.yml"]);
+
+    assert!(
+        stale_action_refs::evaluate(&[outside, inside], &configuration).is_empty(),
+        "a workflow outside only-in must not supply half a contradiction: the finding would land \
+         on the file that is in scope, caused by the file that is not"
+    );
 }
 
 #[test]

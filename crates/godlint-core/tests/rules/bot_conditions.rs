@@ -18,6 +18,8 @@ fn violations(body: &str, bots: &[&str]) -> Vec<Violation> {
     let facts = workflow(body);
     let configuration = BotConditionsRule {
         severity: Severity::Error,
+        only_in: Vec::new(),
+        allow_in: Vec::new(),
         bots: bots.iter().map(|bot| (*bot).to_owned()).collect(),
     };
 
@@ -302,6 +304,8 @@ fn the_rule_is_silent_when_it_is_switched_off() {
     ));
     let configuration = BotConditionsRule {
         severity: Severity::Off,
+        only_in: Vec::new(),
+        allow_in: Vec::new(),
         bots: vec!["dependabot[bot]".to_owned()],
     };
 

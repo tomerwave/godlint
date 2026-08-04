@@ -15,7 +15,11 @@ fn workflow(body: &str) -> WorkflowFacts {
 
 fn findings(body: &str, severity: Severity) -> Vec<Finding> {
     let facts = workflow(body);
-    let configuration = NoSilencedFailureRule { severity };
+    let configuration = NoSilencedFailureRule {
+        severity,
+        only_in: Vec::new(),
+        allow_in: Vec::new(),
+    };
     evaluate_workflow_rule::<NoSilencedFailure>(std::slice::from_ref(&facts), &configuration)
 }
 

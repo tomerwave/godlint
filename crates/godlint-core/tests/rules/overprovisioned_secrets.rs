@@ -15,7 +15,11 @@ fn workflow(body: &str) -> WorkflowFacts {
 
 fn findings(body: &str, severity: Severity) -> Vec<Violation> {
     let facts = workflow(body);
-    let configuration = OverprovisionedSecretsRule { severity };
+    let configuration = OverprovisionedSecretsRule {
+        severity,
+        only_in: Vec::new(),
+        allow_in: Vec::new(),
+    };
     evaluate_workflow_rule::<OverprovisionedSecrets>(std::slice::from_ref(&facts), &configuration)
         .into_iter()
         .map(|finding| finding.violation)
