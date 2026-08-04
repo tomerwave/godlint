@@ -61,6 +61,48 @@ speaks about.
 
 ### Changed
 
+- `policy/unused-suppression` reports a directive that silences nothing whatever the reason, where it
+  previously excused a rule set to `off`. Three things can make a directive dead — the finding was
+  fixed, the rule is `off`, or the rule is scoped away from that path by `only-in` or `allow-in` — and
+  the rule reported the first and third while treating the second as dormant. That split was not a
+  policy, it was two answers to one question: `off` was excused deliberately so a gradual adoption
+  would not turn the inactive parts of a policy into failures, and scope arrived later, took the
+  opposite answer, and nobody reconciled them.
+
+  Reported in all three now, because a dormant exemption and a dead one are indistinguishable from
+  outside, and only one is harmless. A directive nobody is watching silences a real finding the day
+  the severity or the scope changes, un-reviewed — the same reasoning that made a stale drift
+  declaration fail rather than notice. The gradual-adoption cost is real and now written down in
+  `docs/suppressions.md` along with the way to pay it: this rule takes a severity like any other, so
+  `warning` covers a cleanup in progress.
+
+  A fourth case belongs in that list and was missing from the first draft of this entry: a rule the
+  configuration never mentions at all never runs, so a directive naming it is as dead as one for a
+  rule set to `off`. Reported too, and tested.
+
+- `policy/unused-suppression` cannot switch itself off. `severity: off` is now rejected as invalid
+  configuration, and so are `only-in` and `allow-in` on that rule — scoping a rule to nothing is
+  switching it off by another name, and `only-in`/`allow-in` reached every rule two releases ago,
+  which quietly gave the one rule meant to be undefeatable two new ways to be defeated. A rule able
+  to retire itself could retire every exemption it audits. `warning` is still accepted and is how to
+  absorb a cleanup without failing the build.
+
+  Scope of that claim, because a wider one would be false: it is the rule's own configuration that
+  cannot retire it. A top-level `exclude` still drops a path from the scan for every rule including
+  this one — Godlint's own `godlint.yaml` relies on it, and doing so hides nineteen dead directives in
+  the fixture trees on purpose — and so does naming paths on the command line. And the check lives in
+  configuration validation, which runs when the CLI loads a file, so a `godlint-core` consumer
+  deserialising a `Config` directly is not bound by it. Making the shape unrepresentable rather than
+  rejected is the version that would bind both, and is its own change.
+
+  The message it prints changed with it, because the old one became false the moment the rule stopped
+  requiring the target to be enabled: `Suppression does not silence an enabled finding; remove it or
+  narrow the rule` said *enabled* when enablement is no longer the criterion, and offered *narrow the
+  rule* as a remedy that does not exist when the rule is off everywhere. It now reads `Suppression
+  silences nothing; remove it, or restore the rule it names to this path.` — a statement that is true
+  in all four cases, and advice that does not tell a reader to delete a reviewed exemption they may
+  want when the rule returns.
+
 - A declaration in `.github/accepted-drift.md` that the released binary does not report fails the
   released-agreement check instead of printing a notice nobody reads. `docs/releasing.md` said the
   quiet part out loud — "deleting it is remembered rather than enforced" — and remembering is not a

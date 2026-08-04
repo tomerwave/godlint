@@ -196,11 +196,53 @@ work whether or not `policy/accountable-suppression` is configured. That is a
 configuration choice like any severity, and the rule is enabled in Godlint's own
 `godlint.yaml` and belongs in any suite that promotes rules to blocking.
 
-`policy/unused-suppression` reports a directive that names an enabled, suppressible rule
-but does not silence any finding. It is how exceptions disappear once the code is fixed.
-A directive for an off rule is dormant, not unused: enabling a rule gradually must not
-turn the inactive parts of a policy into failures. Like
+`policy/unused-suppression` reports a directive that names a suppressible rule but does not
+silence any finding. It is how exceptions disappear once the code is fixed. Like
 `policy/accountable-suppression`, this rule cannot be suppressed.
+
+**It does not matter why the directive silences nothing.** Four things can leave it silencing
+nothing and all four are reported: the finding was fixed, the rule is `off`, the rule is scoped
+away from that path by `only-in` or `allow-in`, or the configuration never mentions the rule at
+all.
+
+Those are the four this rule reports, not the four that exist. A directive naming no rule, or
+naming a rule that does not exist, also silences nothing — `policy/unused-suppression` needs a
+suppressible rule to reason about and cannot see either. `policy/accountable-suppression`
+reports both, as a directive that cannot account for itself.
+
+**This rule cannot switch itself off, and cannot be suppressed.** `severity: off` is
+rejected as invalid configuration, and so are `only-in` and `allow-in` on it, because
+scoping a rule to nothing switches it off by another name. A rule able to retire itself
+could retire every exemption it audits. `warning` is accepted and is the way to keep it
+reporting without failing the build, which is how to absorb the one-time cleanup below.
+
+What that does **not** claim is that no configuration can narrow it. A top-level `exclude`
+still drops a path from the scan for every rule including this one, and so does naming
+paths on the command line. Godlint's own `godlint.yaml` relies on it: the fixture trees are
+excluded, and doing so hides nineteen dead directives that exist on purpose. The line is
+between a rule retiring itself and a repository deciding what to scan at all — the second
+is visible in one place and applies to everything, which is the property that makes it
+accountable.
+
+The cost is real. A repository adopting a rule gradually, or scoping one into `src/**`, sees
+every directive left behind elsewhere reported at once, and that is one-time per switch-off
+rather than once overall. On a 6,177-file tree, switching off a single rule that 400
+directives name took the count from 88 to 256.
+
+There is a counter-argument worth stating, because a reader who knows the rest of this
+document will reach it. `policy/accountable-suppression` already requires an owner and an
+expiry, and it reports a lapsed expiry even when the target rule is `off` — so a dormant
+directive already surfaces for review on its own schedule, with its owner named. On that
+reading the window this rule closes is narrow: between a rule returning and the next check
+run. Godlint reports anyway, for two reasons. A dormant exemption and a dead one are
+indistinguishable from outside, and only one is harmless. And an expiry answers *when* the
+exemption was last reviewed, not *whether it still does anything* — those are different
+questions, and only the second one notices that the code moved on.
+
+What the report does **not** mean is "delete this". For a rule scoped away from a path,
+deletion loses nothing. For a rule that is `off` and may return, the directive carries an
+owner, an expiry and a justification — a reviewed decision worth keeping. The message says
+so: *remove it, or restore the rule it names to this path.*
 
 Because expiry compares against the current date, `godlint check` is time-dependent by
 design. It is the only such input, it is passed in explicitly rather than read inside a

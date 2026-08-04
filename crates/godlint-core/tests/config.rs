@@ -409,3 +409,27 @@ fn rejects_a_restricted_call_listed_twice() {
         "{message}"
     );
 }
+
+#[test]
+fn refuses_to_switch_off_the_rule_that_reports_dead_suppressions() {
+    let result = load("version: 1\nrules:\n  policy/unused-suppression:\n    severity: off\n");
+
+    assert!(
+        matches!(result, Err(ConfigError::UnusedSuppressionDefeated)),
+        "a safety net the audited configuration can remove is not one"
+    );
+}
+
+#[test]
+fn refuses_to_scope_the_rule_that_reports_dead_suppressions() {
+    for setting in ["only-in", "allow-in"] {
+        let result = load(&format!(
+            "version: 1\nrules:\n  policy/unused-suppression:\n    severity: error\n    {setting}: [\"**\"]\n"
+        ));
+
+        assert!(
+            matches!(result, Err(ConfigError::UnusedSuppressionDefeated)),
+            "{setting} must not narrow it either: scoping it to nothing switches it off by another name"
+        );
+    }
+}

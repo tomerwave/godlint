@@ -2,10 +2,7 @@ use std::{collections::BTreeMap, path::Path};
 
 use crate::{
     config::{Config, Severity, UnusedSuppressionRule},
-    rules::{
-        Finding, Reporting, Rule, Violation, configured_severity, is_suppressible_rule,
-        when_configured,
-    },
+    rules::{Finding, Reporting, Rule, Violation, is_suppressible_rule, when_configured},
     suppression::Suppression,
 };
 
@@ -38,7 +35,7 @@ pub fn evaluate(
                         .get(suppression.source().path())
                         .map_or(&[][..], Vec::as_slice);
 
-                    is_unused(suppression, listed, config)
+                    is_unused(suppression, listed)
                 })
                 .map(|suppression| {
                     (
@@ -64,12 +61,13 @@ fn grouped_by_path(findings: &[Finding]) -> BTreeMap<&Path, Vec<&Finding>> {
     grouped
 }
 
-fn is_unused(suppression: &Suppression, findings: &[&Finding], config: &Config) -> bool {
-    let has_enabled_rule = suppression.rules().iter().any(|rule_id| {
-        is_suppressible_rule(rule_id) && configured_severity(config, rule_id) != Severity::Off
-    });
+fn is_unused(suppression: &Suppression, findings: &[&Finding]) -> bool {
+    let names_a_suppressible_rule = suppression
+        .rules()
+        .iter()
+        .any(|rule_id| is_suppressible_rule(rule_id));
 
     suppression.resolves()
-        && has_enabled_rule
+        && names_a_suppressible_rule
         && !findings.iter().any(|finding| suppression.covers(finding))
 }
