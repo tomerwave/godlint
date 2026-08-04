@@ -55,14 +55,17 @@ fn accepts_a_directive_that_silences_an_enabled_finding() {
 }
 
 #[test]
-fn treats_a_directive_for_a_disabled_rule_as_dormant() {
-    assert!(
+fn reports_a_directive_for_a_rule_that_is_switched_off() {
+    assert_eq!(
         findings(
             "// godlint-ignore-next-line maintainability/empty-function -- dormant\nfn example() {\n    work();\n}\n",
             "off",
             "error",
         )
-        .is_empty()
+        .len(),
+        1,
+        "a directive that silences nothing is reported however the rule stopped applying: the \
+         alternative is an exemption that springs back to life, un-reviewed, when the rule returns"
     );
 }
 

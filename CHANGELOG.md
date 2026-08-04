@@ -61,6 +61,24 @@ speaks about.
 
 ### Changed
 
+- `policy/unused-suppression` reports a directive that silences nothing whatever the reason, where it
+  previously excused a rule set to `off`. Three things can make a directive dead — the finding was
+  fixed, the rule is `off`, or the rule is scoped away from that path by `only-in` or `allow-in` — and
+  the rule reported the first and third while treating the second as dormant. That split was not a
+  policy, it was two answers to one question: `off` was excused deliberately so a gradual adoption
+  would not turn the inactive parts of a policy into failures, and scope arrived later, took the
+  opposite answer, and nobody reconciled them.
+
+  Reported in all three now, because a dormant exemption and a dead one are indistinguishable from
+  outside, and only one is harmless. A directive nobody is watching silences a real finding the day
+  the severity or the scope changes, un-reviewed — the same reasoning that made a stale drift
+  declaration fail rather than notice. The gradual-adoption cost is real and now written down in
+  `docs/suppressions.md` along with the way to pay it: this rule takes a severity like any other, so
+  `warning` covers a cleanup in progress.
+
+  One test changed from asserting silence to asserting a finding, which is the whole behavioural
+  surface of the change.
+
 - A declaration in `.github/accepted-drift.md` that the released binary does not report fails the
   released-agreement check instead of printing a notice nobody reads. `docs/releasing.md` said the
   quiet part out loud — "deleting it is remembered rather than enforced" — and remembering is not a

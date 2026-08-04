@@ -196,11 +196,22 @@ work whether or not `policy/accountable-suppression` is configured. That is a
 configuration choice like any severity, and the rule is enabled in Godlint's own
 `godlint.yaml` and belongs in any suite that promotes rules to blocking.
 
-`policy/unused-suppression` reports a directive that names an enabled, suppressible rule
-but does not silence any finding. It is how exceptions disappear once the code is fixed.
-A directive for an off rule is dormant, not unused: enabling a rule gradually must not
-turn the inactive parts of a policy into failures. Like
+`policy/unused-suppression` reports a directive that names a suppressible rule but does not
+silence any finding. It is how exceptions disappear once the code is fixed. Like
 `policy/accountable-suppression`, this rule cannot be suppressed.
+
+**It does not matter why the directive silences nothing.** The finding may have been fixed,
+the rule may be `off`, or the rule may be scoped away from that path by `only-in` or
+`allow-in`. All three are reported, because the alternative is an exemption that springs
+back to life un-reviewed when the rule returns — a directive nobody is watching will
+silence a real finding the day the severity or the scope changes, and nothing will say so.
+
+The cost is real and worth stating: a repository adopting a rule gradually, or scoping one
+into `src/**`, will see every directive left behind elsewhere reported at once. That is a
+one-time cleanup rather than a permanent tax, and `policy/unused-suppression` takes a
+severity like any other rule — `warning` while the cleanup happens, `error` once it is
+done. Godlint chose this over silence because a dormant exemption and a dead one look
+identical from the outside, and only one of them is harmless.
 
 Because expiry compares against the current date, `godlint check` is time-dependent by
 design. It is the only such input, it is passed in explicitly rather than read inside a
