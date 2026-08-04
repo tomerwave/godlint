@@ -289,8 +289,9 @@ row in the policy mapping below.
 `policy/unused-suppression` is shipped. It reports a directive that names a suppressible
 rule and silences no finding, whatever the reason — the finding was fixed, the rule is
 `off`, the rule is scoped away from that path, or the rule is not configured at all. It
-cannot be switched off or scoped away itself, because a safety net that can be removed by
-the configuration it audits is not one.
+cannot switch itself off — `severity: off`, `only-in` and `allow-in` are rejected on it —
+because a rule able to retire itself could retire every exemption it audits. A top-level
+`exclude` still applies, as it does to every rule.
 
 ### Phase 3 — Calls and organization policy
 

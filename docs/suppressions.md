@@ -201,15 +201,28 @@ silence any finding. It is how exceptions disappear once the code is fixed. Like
 `policy/accountable-suppression`, this rule cannot be suppressed.
 
 **It does not matter why the directive silences nothing.** Four things can leave it silencing
-nothing: the finding was fixed, the rule is `off`, the rule is scoped away from that path by
-`only-in` or `allow-in`, or the configuration never mentions the rule at all. All four are
-reported.
+nothing and all four are reported: the finding was fixed, the rule is `off`, the rule is scoped
+away from that path by `only-in` or `allow-in`, or the configuration never mentions the rule at
+all.
 
-**This rule cannot be switched off, scoped, or suppressed.** `severity: off` is rejected as
-invalid configuration, and so are `only-in` and `allow-in` on it, because scoping it to
-nothing switches it off by another name. A safety net that the configuration it audits can
-remove is not one. `warning` is accepted and is the way to keep it reporting without
-failing the build — which is how to absorb the one-time cleanup below.
+Those are the four this rule reports, not the four that exist. A directive naming no rule, or
+naming a rule that does not exist, also silences nothing — `policy/unused-suppression` needs a
+suppressible rule to reason about and cannot see either. `policy/accountable-suppression`
+reports both, as a directive that cannot account for itself.
+
+**This rule cannot switch itself off, and cannot be suppressed.** `severity: off` is
+rejected as invalid configuration, and so are `only-in` and `allow-in` on it, because
+scoping a rule to nothing switches it off by another name. A rule able to retire itself
+could retire every exemption it audits. `warning` is accepted and is the way to keep it
+reporting without failing the build, which is how to absorb the one-time cleanup below.
+
+What that does **not** claim is that no configuration can narrow it. A top-level `exclude`
+still drops a path from the scan for every rule including this one, and so does naming
+paths on the command line. Godlint's own `godlint.yaml` relies on it: the fixture trees are
+excluded, and doing so hides nineteen dead directives that exist on purpose. The line is
+between a rule retiring itself and a repository deciding what to scan at all — the second
+is visible in one place and applies to everything, which is the property that makes it
+accountable.
 
 The cost is real. A repository adopting a rule gradually, or scoping one into `src/**`, sees
 every directive left behind elsewhere reported at once, and that is one-time per switch-off

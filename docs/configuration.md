@@ -122,7 +122,7 @@ rules:
   maintainability/file-size:
     severity: warning      # reported, does not fail
   style/no-comments:
-    severity: off          # declined
+    severity: off          # declined (every rule but policy/unused-suppression)
 ```
 
 Every rule takes three settings: `severity`, and the two that say which files it applies to.
@@ -132,6 +132,13 @@ Every rule takes three settings: `severity`, and the two that say which files it
 | `severity` | required | `off`, `info`, `warning` or `error`. |
 | `only-in` | every file | Glob patterns the rule is *about*. Empty means every file. |
 | `allow-in` | nothing | Glob patterns exempted, including inside `only-in`. |
+
+**One rule takes only `severity`, and not `off`.** `policy/unused-suppression` reports the
+suppression comments that silence nothing, so a configuration able to retire it could retire every
+exemption it audits. `severity: off`, `only-in` and `allow-in` are rejected on it as invalid
+configuration; `warning` is accepted and is how to keep it reporting without failing the build. A
+top-level `exclude` still applies to it, as it does to every rule. See
+[inline suppression](suppressions.md).
 
 `only-in` exists because many rules are inherently scoped. "No logging in production code" has
 nothing to say about a build script, and "no sleeps in tests" has nothing to say outside them.

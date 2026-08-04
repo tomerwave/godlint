@@ -112,3 +112,32 @@ fn reports_a_directive_for_a_rule_the_configuration_never_mentions() {
          one for a rule set to off — the fourth way a directive can silence nothing"
     );
 }
+
+#[test]
+fn a_directive_naming_both_a_dead_rule_and_an_unsuppressible_one_is_reported_twice() {
+    let source = SourceFile::new(
+        PathBuf::from("src/example.rs"),
+        "// godlint-ignore-next-line maintainability/empty-function,policy/unused-suppression -- x\nfn example() {}\n".into(),
+    )
+    .unwrap_or_else(|error| panic!("creates source file: {error}"));
+    let facts = analyze(&source).unwrap_or_else(|error| panic!("analyzes source: {error}"));
+    let config = yaml_serde::from_str(
+        "version: 1\nrules:\n  maintainability/empty-function:\n    severity: off\n  policy/accountable-suppression:\n    severity: error\n  policy/unused-suppression:\n    severity: error\n",
+    )
+    .unwrap_or_else(|error| panic!("reads configuration: {error}"));
+    let today = Date::parse(TODAY).unwrap_or_else(|error| panic!("parses {TODAY}: {error}"));
+    let reported = evaluate(&[facts], &[], &config, today);
+
+    assert_eq!(
+        reported.len(),
+        2,
+        "one comment earns two findings, and both are wanted: it names a rule that cannot be \
+         suppressed at all, and separately it silences nothing — the second is only reachable \
+         because a dead rule shares the line"
+    );
+
+    let rules: Vec<&str> = reported.iter().map(|finding| finding.rule_id).collect();
+
+    assert!(rules.contains(&"policy/accountable-suppression"));
+    assert!(rules.contains(&"policy/unused-suppression"));
+}

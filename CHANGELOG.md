@@ -80,12 +80,20 @@ speaks about.
   configuration never mentions at all never runs, so a directive naming it is as dead as one for a
   rule set to `off`. Reported too, and tested.
 
-- `policy/unused-suppression` cannot be switched off, scoped, or suppressed. `severity: off` is now
-  rejected as invalid configuration, and so are `only-in` and `allow-in` on that rule — scoping it to
-  nothing is switching it off by another name, and `only-in`/`allow-in` reached every rule two
-  releases ago, which quietly gave the one rule that was meant to be undefeatable two new ways to be
-  defeated. A safety net the audited configuration can remove is not one. `warning` is still accepted
-  and is how to absorb a cleanup without failing the build.
+- `policy/unused-suppression` cannot switch itself off. `severity: off` is now rejected as invalid
+  configuration, and so are `only-in` and `allow-in` on that rule — scoping a rule to nothing is
+  switching it off by another name, and `only-in`/`allow-in` reached every rule two releases ago,
+  which quietly gave the one rule meant to be undefeatable two new ways to be defeated. A rule able
+  to retire itself could retire every exemption it audits. `warning` is still accepted and is how to
+  absorb a cleanup without failing the build.
+
+  Scope of that claim, because a wider one would be false: it is the rule's own configuration that
+  cannot retire it. A top-level `exclude` still drops a path from the scan for every rule including
+  this one — Godlint's own `godlint.yaml` relies on it, and doing so hides nineteen dead directives in
+  the fixture trees on purpose — and so does naming paths on the command line. And the check lives in
+  configuration validation, which runs when the CLI loads a file, so a `godlint-core` consumer
+  deserialising a `Config` directly is not bound by it. Making the shape unrepresentable rather than
+  rejected is the version that would bind both, and is its own change.
 
   The message it prints changed with it, because the old one became false the moment the rule stopped
   requiring the target to be enabled: `Suppression does not silence an enabled finding; remove it or

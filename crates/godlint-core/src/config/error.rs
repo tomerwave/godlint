@@ -54,10 +54,11 @@ pub enum ConfigError {
     },
 }
 
-const UNUSED_SUPPRESSION_ALWAYS_ON: &str = "policy/unused-suppression cannot be switched off or \
-scoped to a subset of paths: it reports the suppressions that silence nothing, so a configuration \
-able to remove it could retire every exemption it audits. Set warning rather than off to keep it \
-reporting without failing the build.";
+const UNUSED_SUPPRESSION_ALWAYS_ON: &str = "policy/unused-suppression cannot switch itself off: \
+severity off, only-in and allow-in are rejected on this rule, because it reports the suppressions \
+that silence nothing and a rule able to retire itself could retire every exemption it audits. Set \
+warning rather than off to keep it reporting without failing the build. Excluding a path still \
+takes it out of the scan, as it does for every rule.";
 
 const COMPLEXITY_AT_LEAST_ONE: &str =
     "maintainability/decision-complexity max-complexity must be at least 1";
