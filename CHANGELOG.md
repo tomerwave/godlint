@@ -44,7 +44,15 @@ speaks about.
   `only-in` is the setting whose purpose is to point a rule *at* something. The fixture that already
   demands five findings now sets `only-in` as well, so those five expectations pin the positive
   direction and the same block pins the interaction — `allow-in` still carves `allowed.yml` out of an
-  `only-in` that includes it.
+  `only-in` that includes it. Its three-pattern list is load-bearing for a second reason found while
+  reviewing it: it is the only multi-pattern `only-in` anywhere in the suite, so it is the only thing
+  pinning that `only-in` matches as a disjunction over every pattern rather than checking the first.
+  A fourth shape came out of the same review — no test had a non-empty `only-in`, a file outside it,
+  *and* findings expected from the files inside, so narrowing that must still report was unpinned and
+  a guard written at the wrong granularity silenced the rule whenever anything was out of scope. Two
+  workflows in scope contradicting each other, one outside, now pin it. Four directions each for
+  `only-in` and `allow-in`: reports inside, silent outside, the interaction between them, and the
+  evidence path separately from the reporting path.
 
   One sharp edge, documented rather than fixed: `only-in` narrows, so a pattern matching nothing
   leaves a rule with nowhere to apply and it reports nothing, anywhere, without saying so. A typo in
