@@ -27,10 +27,10 @@ ones this repository happens to produce: `Config::excludes()` falls back to the 
 when `exclude` is empty, so naming any path at all means naming all twelve.
 
 Two more are the fixture trees that exist in order to contain violations. Scanning
-`crates/godlint-cli/tests/fixtures` and `.github/fixtures` reports 465 findings, each one a
-fixture's deliberate violation attributed to Godlint. This is the entry closest to what the policy
-literally prohibits — `tests` — and the reason it is allowed is that the alternative is a rule
-suite that reports its own test data.
+`crates/godlint-cli/tests/fixtures` and `.github/fixtures` reports 467 findings, 465 and 2,
+each one a fixture's deliberate violation attributed to Godlint. This is the entry closest to
+what the policy literally prohibits — `tests` — and the reason it is allowed is that the
+alternative is a rule suite that reports its own test data.
 
 `scripts` and `packaging` are the two that matter, because they are this repository's own code, and
 `packaging/npm/shim.js` is more than that: it ships to every npm user. Scanning both reports **131

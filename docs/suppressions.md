@@ -219,8 +219,8 @@ reporting without failing the build, which is how to absorb the one-time cleanup
 What that does **not** claim is that no configuration can narrow it. A top-level `exclude`
 still drops a path from the scan for every rule including this one, and so does naming
 paths on the command line. Godlint's own `godlint.yaml` relies on it: the CLI fixture tree
-is excluded, and doing so hides 27 dead directives that exist on purpose — delete that one
-line from `godlint.yaml` and run `check` from the repository root to see them. The line is
+is excluded, and doing so hides 19 dead directives that exist on purpose — delete that one
+line from `godlint.yaml` and count `error[policy/unused-suppression]` to see them. The line is
 between a rule retiring itself and a repository deciding what to scan at all — the second
 is visible in one place and applies to everything, which is the property that makes it
 accountable.
