@@ -219,11 +219,12 @@ reporting without failing the build, which is how to absorb the one-time cleanup
 What that does **not** claim is that no configuration can narrow it. A top-level `exclude`
 still drops a path from the scan for every rule including this one, and so does naming
 paths on the command line. Godlint's own `godlint.yaml` relies on it: the CLI fixture tree
-is excluded, and doing so hides 19 dead directives that exist on purpose — delete that one
-line from `godlint.yaml` and count `error[policy/unused-suppression]` to see them. The line is
-between a rule retiring itself and a repository deciding what to scan at all — the second
-is visible in one place and applies to everything, which is the property that makes it
-accountable.
+is excluded, and doing so hides 19 dead directives that exist on purpose. To see them,
+delete that one line and count `[policy/unused-suppression]` — with the brackets, and
+without a severity, since the severity is configurable and the rule's own name appears
+inside another rule's message. The line is between a rule retiring itself and a repository
+deciding what to scan at all: the second is visible in one place and applies to everything,
+which is the property that makes it accountable.
 
 The cost is real. A repository adopting a rule gradually, or scoping one into `src/**`, sees
 every directive left behind elsewhere reported at once, and that is one-time per switch-off
