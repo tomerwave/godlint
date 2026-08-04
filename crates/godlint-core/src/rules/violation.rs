@@ -169,7 +169,7 @@ const PRODUCTION_LOG: &str =
     "logs from production code; route it through the project's logger or an approved path.";
 
 const UNUSED_SUPPRESSION: &str =
-    "Suppression does not silence an enabled finding; remove it or narrow the rule.";
+    "Suppression silences nothing; remove it, or restore the rule it names to this path.";
 
 const UNVERIFIED_HASH: &str = concat!(
     "takes its algorithm from a value Godlint cannot read; name the algorithm inline, ",

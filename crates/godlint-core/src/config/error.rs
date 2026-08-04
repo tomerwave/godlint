@@ -16,6 +16,7 @@ pub enum ConfigError {
         version: u8,
     },
     InvalidComplexityLimit,
+    UnusedSuppressionDefeated,
     InvalidTodoMarkers,
     InvalidTodoReferencePrefixes,
     UnknownSuite {
@@ -52,6 +53,11 @@ pub enum ConfigError {
         pattern: String,
     },
 }
+
+const UNUSED_SUPPRESSION_ALWAYS_ON: &str = "policy/unused-suppression cannot be switched off or \
+scoped to a subset of paths: it reports the suppressions that silence nothing, so a configuration \
+able to remove it could retire every exemption it audits. Set warning rather than off to keep it \
+reporting without failing the build.";
 
 const COMPLEXITY_AT_LEAST_ONE: &str =
     "maintainability/decision-complexity max-complexity must be at least 1";
@@ -99,6 +105,7 @@ impl fmt::Display for ConfigError {
                 write!(formatter, "exclude pattern must not be blank: {pattern:?}")
             }
             Self::InvalidComplexityLimit => formatter.write_str(COMPLEXITY_AT_LEAST_ONE),
+            Self::UnusedSuppressionDefeated => formatter.write_str(UNUSED_SUPPRESSION_ALWAYS_ON),
             Self::InvalidTodoMarkers => formatter.write_str(TODO_MARKERS_REQUIRED),
             Self::InvalidTodoReferencePrefixes => formatter.write_str(TODO_PREFIXES_REQUIRED),
             Self::InvalidRestrictedCallName => formatter.write_str(CALL_NAME_REQUIRED),
@@ -138,6 +145,7 @@ impl Error for ConfigError {
             Self::Read { source, .. } => Some(source),
             Self::Parse { source, .. } => Some(source),
             Self::UnsupportedVersion { .. }
+            | Self::UnusedSuppressionDefeated
             | Self::InvalidComplexityLimit
             | Self::InvalidTodoMarkers
             | Self::InvalidTodoReferencePrefixes

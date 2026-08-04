@@ -76,8 +76,24 @@ speaks about.
   `docs/suppressions.md` along with the way to pay it: this rule takes a severity like any other, so
   `warning` covers a cleanup in progress.
 
-  One test changed from asserting silence to asserting a finding, which is the whole behavioural
-  surface of the change.
+  A fourth case belongs in that list and was missing from the first draft of this entry: a rule the
+  configuration never mentions at all never runs, so a directive naming it is as dead as one for a
+  rule set to `off`. Reported too, and tested.
+
+- `policy/unused-suppression` cannot be switched off, scoped, or suppressed. `severity: off` is now
+  rejected as invalid configuration, and so are `only-in` and `allow-in` on that rule — scoping it to
+  nothing is switching it off by another name, and `only-in`/`allow-in` reached every rule two
+  releases ago, which quietly gave the one rule that was meant to be undefeatable two new ways to be
+  defeated. A safety net the audited configuration can remove is not one. `warning` is still accepted
+  and is how to absorb a cleanup without failing the build.
+
+  The message it prints changed with it, because the old one became false the moment the rule stopped
+  requiring the target to be enabled: `Suppression does not silence an enabled finding; remove it or
+  narrow the rule` said *enabled* when enablement is no longer the criterion, and offered *narrow the
+  rule* as a remedy that does not exist when the rule is off everywhere. It now reads `Suppression
+  silences nothing; remove it, or restore the rule it names to this path.` — a statement that is true
+  in all four cases, and advice that does not tell a reader to delete a reviewed exemption they may
+  want when the rule returns.
 
 - A declaration in `.github/accepted-drift.md` that the released binary does not report fails the
   released-agreement check instead of printing a notice nobody reads. `docs/releasing.md` said the

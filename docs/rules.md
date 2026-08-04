@@ -138,7 +138,7 @@ this condition's operator count.
 | --- | --- |
 | `policy/todo-requires-reference` | A TODO-style marker with no issue reference |
 | `policy/accountable-suppression` | A suppression that cannot account for itself |
-| `policy/unused-suppression` | A suppression that no longer silences an enabled finding |
+| `policy/unused-suppression` | A suppression that silences nothing |
 
 Neither policy rule about suppressions can itself be suppressed. See
 [inline suppression](suppressions.md).

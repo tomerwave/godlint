@@ -286,9 +286,11 @@ yet. It also unblocks the fourth fixture class that
 [the testing strategy](testing.md) previously had to defer, and the accountable-exception
 row in the policy mapping below.
 
-`policy/unused-suppression` is shipped. It reports a directive that names an enabled,
-suppressible rule but silences no finding. A directive for a disabled rule is dormant,
-not unused, so projects can adopt a rule gradually without manufacturing exception debt.
+`policy/unused-suppression` is shipped. It reports a directive that names a suppressible
+rule and silences no finding, whatever the reason — the finding was fixed, the rule is
+`off`, the rule is scoped away from that path, or the rule is not configured at all. It
+cannot be switched off or scoped away itself, because a safety net that can be removed by
+the configuration it audits is not one.
 
 ### Phase 3 — Calls and organization policy
 

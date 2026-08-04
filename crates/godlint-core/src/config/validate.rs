@@ -5,7 +5,7 @@ const MODULE_INDEPENDENCE: &str = "architecture/module-independence member";
 
 use crate::config::{
     Config, ConfigError, ForbiddenDependency, IndependentSet, Layer, RestrictedCall,
-    RestrictedImport,
+    RestrictedImport, Severity,
 };
 
 impl Config {
@@ -25,9 +25,25 @@ impl Config {
             Self::validate_empty_function_rule,
             Self::validate_direct_environment_read_rule,
             Self::validate_no_test_helper_rule,
+            Self::validate_unused_suppression_rule,
         ]
         .iter()
         .try_for_each(|check| check(self))
+    }
+
+    fn validate_unused_suppression_rule(&self) -> Result<(), ConfigError> {
+        let Some(rule) = self.rules.unused_suppression.as_ref() else {
+            return Ok(());
+        };
+
+        let defeated =
+            rule.severity == Severity::Off || !rule.only_in.is_empty() || !rule.allow_in.is_empty();
+
+        if defeated {
+            return Err(ConfigError::UnusedSuppressionDefeated);
+        }
+
+        Ok(())
     }
 
     fn validate_version(&self) -> Result<(), ConfigError> {

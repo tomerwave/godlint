@@ -70,13 +70,45 @@ fn reports_a_directive_for_a_rule_that_is_switched_off() {
 }
 
 #[test]
-fn stays_silent_when_disabled() {
-    assert!(
+fn reports_a_directive_that_would_spring_back_when_the_rule_returns() {
+    assert_eq!(
         findings(
-            "// godlint-ignore-next-line maintainability/empty-function -- obsolete\nfn example() {\n    work();\n}\n",
-            "error",
+            "// godlint-ignore-next-line maintainability/empty-function -- dormant\nfn example() {}\n",
             "off",
+            "error",
         )
-        .is_empty()
+        .len(),
+        1,
+        "this is the case the change is about: the body really is empty, so the directive silences \
+         a real finding the moment the rule is switched back on, un-reviewed unless reported now"
+    );
+}
+
+fn findings_without_the_rule_configured(source: &str) -> Vec<Violation> {
+    let source = SourceFile::new(PathBuf::from("src/example.rs"), source.into())
+        .unwrap_or_else(|error| panic!("creates source file: {error}"));
+    let facts = analyze(&source).unwrap_or_else(|error| panic!("analyzes source: {error}"));
+    let config = yaml_serde::from_str(
+        "version: 1\nrules:\n  policy/unused-suppression:\n    severity: error\n",
+    )
+    .unwrap_or_else(|error| panic!("reads configuration: {error}"));
+    let today = Date::parse(TODAY).unwrap_or_else(|error| panic!("parses {TODAY}: {error}"));
+
+    evaluate(&[facts], &[], &config, today)
+        .into_iter()
+        .map(|finding| finding.violation)
+        .collect()
+}
+
+#[test]
+fn reports_a_directive_for_a_rule_the_configuration_never_mentions() {
+    assert_eq!(
+        findings_without_the_rule_configured(
+            "// godlint-ignore-next-line maintainability/empty-function -- copied\nfn example() {}\n"
+        )
+        .len(),
+        1,
+        "a rule absent from the configuration never runs, so a directive naming it is as dead as \
+         one for a rule set to off — the fourth way a directive can silence nothing"
     );
 }

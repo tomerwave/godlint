@@ -200,18 +200,36 @@ configuration choice like any severity, and the rule is enabled in Godlint's own
 silence any finding. It is how exceptions disappear once the code is fixed. Like
 `policy/accountable-suppression`, this rule cannot be suppressed.
 
-**It does not matter why the directive silences nothing.** The finding may have been fixed,
-the rule may be `off`, or the rule may be scoped away from that path by `only-in` or
-`allow-in`. All three are reported, because the alternative is an exemption that springs
-back to life un-reviewed when the rule returns — a directive nobody is watching will
-silence a real finding the day the severity or the scope changes, and nothing will say so.
+**It does not matter why the directive silences nothing.** Four things can leave it silencing
+nothing: the finding was fixed, the rule is `off`, the rule is scoped away from that path by
+`only-in` or `allow-in`, or the configuration never mentions the rule at all. All four are
+reported.
 
-The cost is real and worth stating: a repository adopting a rule gradually, or scoping one
-into `src/**`, will see every directive left behind elsewhere reported at once. That is a
-one-time cleanup rather than a permanent tax, and `policy/unused-suppression` takes a
-severity like any other rule — `warning` while the cleanup happens, `error` once it is
-done. Godlint chose this over silence because a dormant exemption and a dead one look
-identical from the outside, and only one of them is harmless.
+**This rule cannot be switched off, scoped, or suppressed.** `severity: off` is rejected as
+invalid configuration, and so are `only-in` and `allow-in` on it, because scoping it to
+nothing switches it off by another name. A safety net that the configuration it audits can
+remove is not one. `warning` is accepted and is the way to keep it reporting without
+failing the build — which is how to absorb the one-time cleanup below.
+
+The cost is real. A repository adopting a rule gradually, or scoping one into `src/**`, sees
+every directive left behind elsewhere reported at once, and that is one-time per switch-off
+rather than once overall. On a 6,177-file tree, switching off a single rule that 400
+directives name took the count from 88 to 256.
+
+There is a counter-argument worth stating, because a reader who knows the rest of this
+document will reach it. `policy/accountable-suppression` already requires an owner and an
+expiry, and it reports a lapsed expiry even when the target rule is `off` — so a dormant
+directive already surfaces for review on its own schedule, with its owner named. On that
+reading the window this rule closes is narrow: between a rule returning and the next check
+run. Godlint reports anyway, for two reasons. A dormant exemption and a dead one are
+indistinguishable from outside, and only one is harmless. And an expiry answers *when* the
+exemption was last reviewed, not *whether it still does anything* — those are different
+questions, and only the second one notices that the code moved on.
+
+What the report does **not** mean is "delete this". For a rule scoped away from a path,
+deletion loses nothing. For a rule that is `off` and may return, the directive carries an
+owner, an expiry and a justification — a reviewed decision worth keeping. The message says
+so: *remove it, or restore the rule it names to this path.*
 
 Because expiry compares against the current date, `godlint check` is time-dependent by
 design. It is the only such input, it is passed in explicitly rather than read inside a
