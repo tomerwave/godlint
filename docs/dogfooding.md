@@ -61,27 +61,34 @@ reader should check whether they have drifted.
 | `maintainability/decision-complexity` | 3 |
 | `maintainability/parameter-count` | 1 |
 
-## Why this is an exclusion and not rule configuration
+## This exclusion is debt now, not a missing mechanism
 
-`logging/no-production-log` takes rule-level `allow-in` path globs, and
-`architecture/restricted-call` takes them per call entry, with the built-in catalogue treated as
-additive — so those 28 findings could be declared per rule and every other path would stay enforced.
-Measured by writing it: that configuration is about a dozen lines and takes the 131 findings to
-103, removing exactly those 28 and nothing else. A dozen lines is not an exclusion.
+It used to be a mechanism gap. `style/no-comments` took a severity and `allow-doc-comments`, neither
+of which is a path, so with 82 of the 131 findings coming from that one rule there was no way to say
+"not in these two directories" short of removing them from the scan. That is no longer true: every
+rule takes `only-in` and `allow-in`. The exclusion survives for a different reason now, and the
+distinction matters, because *cannot* and *have not* call for different things.
 
-`style/no-comments` is the one that decides it. Its two settings are a severity and
-`allow-doc-comments`, and neither is a path. Nor is there a way around it elsewhere: the top-level
-configuration is `version`, `fail-on`, `exclude`, `suites` and `rules` with unknown keys rejected,
-so
-there is no `overrides` block; a suite is an opaque name with no options; and a nested
-`scripts/godlint.yaml` is never read, because discovery descends into a directory unless it is the
-root of a git repository. With 78 findings the rule decides the outcome by itself, and the only ways
-to silence it here are removing the paths or writing 78 inline suppressions.
+Replacing it takes about a dozen lines — `allow-in` on `style/no-comments` and
+`logging/no-production-log`, and per-call `allow-in` on `architecture/restricted-call`, whose
+built-in catalogue is additive so declaring `calls` does not clobber the other dialects. Measured by
+writing it out and running `check`:
 
-Giving `style/no-comments` an `allow-in` would shrink this exclusion to the 5 and the 16 in the
-last two tables, and
-leave every other rule enforced on both directories. It would also serve any repository that wants
-prose-free product code and commented build scripts, which is not an unusual thing to want.
+| configuration | findings in `scripts` and `packaging` |
+| --- | ---: |
+| the two paths excluded, as today | 0, none of them visible |
+| the two paths scanned, nothing configured | 131 |
+| `allow-in` on `style/no-comments` alone | 49 |
+| `allow-in` on all three by-design rules | **21** |
+
+Those 21 are exactly the debt itemised above — 5 `architecture/filename-case` and 16 maintainability
+findings — which is the arithmetic working out, not a coincidence.
+
+So un-excluding is no longer blocked on the product. It is blocked on 21 findings that would fail the
+build, and each of them wants a different answer: the filename-case five are an interface change that
+touches four workflows and nineteen other files, and the sixteen are real complexity in the gate
+scripts. Neither is tidying, both are reviewable on their own, and until one of them happens the
+exclusion is a deliberate deferral rather than a limitation.
 
 ## Planned, not yet policy
 
