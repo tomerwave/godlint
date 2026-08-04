@@ -22,8 +22,8 @@ exclude:
   - vendor
 
   # Trees that exist in order to contain violations. These are the inputs the rule tests assert
-  # against: scanning them reports 465 findings, every one a fixture's deliberate violation
-  # attributed to Godlint.
+  # against: scanning them reports 467 findings — 465 in the CLI tree and 2 in the workflow
+  # fixtures — every one a fixture's deliberate violation attributed to Godlint.
   - crates/godlint-cli/tests/fixtures
   - .github/fixtures
 

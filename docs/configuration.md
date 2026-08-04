@@ -125,7 +125,7 @@ rules:
     severity: off          # declined (every rule but policy/unused-suppression)
 ```
 
-Every rule takes three settings: `severity`, and the two that say which files it applies to.
+Rules take three settings: `severity`, and the two that say which files it applies to.
 
 | Setting | Default | Meaning |
 | --- | --- | --- |

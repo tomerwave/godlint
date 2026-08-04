@@ -27,10 +27,11 @@ ones this repository happens to produce: `Config::excludes()` falls back to the 
 when `exclude` is empty, so naming any path at all means naming all twelve.
 
 Two more are the fixture trees that exist in order to contain violations. Scanning
-`crates/godlint-cli/tests/fixtures` and `.github/fixtures` reports 465 findings, each one a
-fixture's deliberate violation attributed to Godlint. This is the entry closest to what the policy
-literally prohibits — `tests` — and the reason it is allowed is that the alternative is a rule
-suite that reports its own test data.
+`crates/godlint-cli/tests/fixtures` and `.github/fixtures` reports 467 findings — 465 in the
+CLI tree and 2 in the workflow fixtures — each one a fixture's deliberate violation
+attributed to Godlint. This is the entry closest to what the policy literally prohibits —
+`tests` — and the reason it is allowed is that the alternative is a rule suite that reports
+its own test data.
 
 `scripts` and `packaging` are the two that matter, because they are this repository's own code, and
 `packaging/npm/shim.js` is more than that: it ships to every npm user. Scanning both reports **131
@@ -66,7 +67,7 @@ reader should check whether they have drifted.
 It used to be a mechanism gap. `style/no-comments` took a severity and `allow-doc-comments`,
 neither of which is a path, so with 82 of the 131 findings coming from that one rule the only ways
 to say "not in these two directories" were removing them from the scan or writing 82 inline
-suppressions. That is no longer true: every rule takes `only-in` and `allow-in`. The exclusion
+suppressions. That is no longer true: rules take `only-in` and `allow-in`. The exclusion
 survives for a different reason now, and the distinction matters, because *cannot* and *have not*
 call for different things.
 
