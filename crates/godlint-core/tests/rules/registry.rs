@@ -156,7 +156,11 @@ fn the_suggestion_stops_where_a_guess_starts() {
 fn every_rule_takes_the_paths_it_applies_to() {
     let all: Vec<&str> = rule_ids().collect();
 
-    assert!(all.len() > 1, "the registry lists nothing to check");
+    assert!(
+        all.len() > 1,
+        "the registry lists fewer than two rules, so the sweep below proves nothing; that every \
+         registered rule is enabled is pinned by recommended_enables_every_rule_at_error"
+    );
 
     for identifier in &all {
         assert_eq!(

@@ -151,6 +151,16 @@ rules:
 That reports `src/server.js`, says nothing about `src/generated/client.js`, and says nothing about
 `scripts/build.js` — while every other rule still applies to all three.
 
+**A pattern that matches nothing silences the rule.** `only-in` narrows, so an `only-in` naming a
+path that does not exist leaves the rule with nowhere to apply and it reports nothing, anywhere,
+without saying so. This is the opposite of `exclude` and `allow-in`, where a pattern matching nothing
+changes nothing — so a typo in those is harmless and a typo here is not. A misspelled *key* is caught
+(`onlyin` fails validation naming the fields it expected); a misspelled *path* is not.
+
+A suppression comment for a rule that `only-in` or `allow-in` has removed from that path is reported
+by `policy/unused-suppression`, because from where it stands the rule silences nothing there. Scoping
+a rule into `src/**` therefore reports the suppressions left behind in the rest of the tree.
+
 Two rules read paths for a second purpose beyond scope. `testing/no-network-in-unit-test` takes
 `unit-paths`, which is what the rule is *for* rather than an exemption, and
 `testing/no-test-helper-in-production` takes `test-paths` to decide which tree a helper lives in.

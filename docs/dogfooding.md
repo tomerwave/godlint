@@ -33,14 +33,16 @@ literally prohibits — `tests` — and the reason it is allowed is that the alt
 suite that reports its own test data.
 
 `scripts` and `packaging` are the two that matter, because they are this repository's own code, and
-`packaging/npm/shim.js` is more than that: it ships to every npm user. Scanning both reports
-**127 findings**.
+`packaging/npm/shim.js` is more than that: it ships to every npm user. Scanning both reports **131
+findings** — measured by deleting those two lines from `godlint.yaml` and running
+`cargo run --release -- check .`, which is how every number below was arrived at and how the next
+reader should check whether they have drifted.
 
-**106 are rules meeting code they were not written for.**
+**110 are rules meeting code they were not written for.**
 
 | Rule | Findings | Why it fires |
 | --- | ---: | --- |
-| `style/no-comments` | 78 | Python and JavaScript that explains policy. 56 are ordinary comments and 22 are docstrings — the second group reachable by `allow-doc-comments`, which the `recommended@1` suite deliberately sets to `false`. |
+| `style/no-comments` | 82 | Python and JavaScript that explains policy. 60 are ordinary comments and 22 are docstrings — the second group reachable by `allow-doc-comments`, which the `recommended@1` suite deliberately sets to `false`. |
 | `logging/no-production-log` | 21 | A gate script's `print` is its interface, not logging. |
 | `architecture/restricted-call` | 7 | `sys.exit` and `process.exit`, in files whose job is to exit. |
 
@@ -64,17 +66,20 @@ suite that reports its own test data.
 `logging/no-production-log` takes rule-level `allow-in` path globs, and
 `architecture/restricted-call` takes them per call entry, with the built-in catalogue treated as
 additive — so those 28 findings could be declared per rule and every other path would stay enforced.
-Measured by writing it: that configuration is about a dozen lines and takes the 127 findings to 99, removing exactly those 28 and nothing else. A dozen lines is not an exclusion.
+Measured by writing it: that configuration is about a dozen lines and takes the 131 findings to
+103, removing exactly those 28 and nothing else. A dozen lines is not an exclusion.
 
 `style/no-comments` is the one that decides it. Its two settings are a severity and
 `allow-doc-comments`, and neither is a path. Nor is there a way around it elsewhere: the top-level
-configuration is `version`, `fail-on`, `exclude`, `suites` and `rules` with unknown keys rejected, so
+configuration is `version`, `fail-on`, `exclude`, `suites` and `rules` with unknown keys rejected,
+so
 there is no `overrides` block; a suite is an opaque name with no options; and a nested
 `scripts/godlint.yaml` is never read, because discovery descends into a directory unless it is the
 root of a git repository. With 78 findings the rule decides the outcome by itself, and the only ways
 to silence it here are removing the paths or writing 78 inline suppressions.
 
-Giving `style/no-comments` an `allow-in` would shrink this exclusion to the 5 and the 16 in the last two tables, and
+Giving `style/no-comments` an `allow-in` would shrink this exclusion to the 5 and the 16 in the
+last two tables, and
 leave every other rule enforced on both directories. It would also serve any repository that wants
 prose-free product code and commented build scripts, which is not an unusual thing to want.
 

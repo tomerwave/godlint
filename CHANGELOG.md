@@ -17,7 +17,8 @@ speaks about.
   "this rule does not belong here" was `exclude`, which drops a path for **every** rule at once: one
   misplaced rule cost you every other rule in that directory. This repository is the evidence, having
   excluded `scripts` and `packaging` wholesale to silence one rule, hiding 21 unrelated findings to do
-  it.
+  it. This change does not lift that exclusion — `style/no-comments` is what decides it, and giving
+  that rule `only-in` is now possible but is its own argument.
 
   The narrower setting decides, so `allow-in` carves exceptions out of `only-in`, and both empty means
   every file, which is what a rule naming no paths wants.
@@ -35,7 +36,14 @@ speaks about.
   still produces a finding in the file that was not excluded, caused by the one that was. Its own test
   said so in its name, `allow_in_removes_a_workflow_from_reporting_and_repository_evidence`, and it
   failed the moment the central check replaced its own. A rule whose verdict depends on more than the
-  file it reports in must scope its evidence.
+  file it reports in must scope its evidence. Review found the other half of that untested — evidence
+  honouring `allow-in` while ignoring `only-in` passed all 881 tests — so the mirror case is pinned
+  too.
+
+  One sharp edge, documented rather than fixed: `only-in` narrows, so a pattern matching nothing
+  leaves a rule with nowhere to apply and it reports nothing, anywhere, without saying so. A typo in
+  `exclude` or `allow-in` fails safe because a pattern matching nothing changes nothing; a typo here
+  fails open. A misspelled key is still caught by validation, only a misspelled path is not.
 
 ### Changed
 

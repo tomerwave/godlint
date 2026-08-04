@@ -33,8 +33,10 @@ expected: read it here.
 
 Language adapters retain native AST and parser details. They emit a small shared fact
 model that rules consume without a universal AST. `FunctionFact`, `CommentFact`, `CallFact`,
-`AccessFact`, `ErrorHandlerFact`, `ImportFact`, and `TestFact` exist today. `CallFact` records a direct callee path, a
-source range, argument count, and whether the call site was a macro invocation; `AccessFact` does the same
+`AccessFact`, `ErrorHandlerFact`, `ImportFact`, and `TestFact` exist today. `CallFact` records a
+direct callee path, a
+source range, argument count, and whether the call site was a macro invocation; `AccessFact` does
+the same
 for direct member access. Neither resolves aliases, types, or dynamically computed
 properties.
 
@@ -45,7 +47,8 @@ spellings denote the same path is a per-language judgement and belongs to the la
 module: `process?.env` and `process.env` are one read, so JavaScript and TypeScript
 normalize optional member access before answering, while Rust and Python have no such form
 and answer with the plain spelling. Deciding this in the shared extractor would have put
-one language's punctuation in code that must not know any. The argument count excludes comments: a grammar reports them as named nodes
+one language's punctuation in code that must not know any. The argument count excludes comments: a
+grammar reports them as named nodes
 inside the argument list, so counting named children alone would read
 `setTimeout(work /*, 100 */)` as a call that passes two arguments.
 
@@ -85,76 +88,107 @@ described in the [rule roadmap](rule-roadmap.md).
 `TestFact` records that a declaration is a test: its range, its name, the marker that made it one,
 and whether that marker carried focus or skipping. What counts as a test is a framework question
 rather than a language one, and the three conventions have nothing structurally in common, so each
-language module answers it. Rust reads the attributes preceding a function, which are siblings rather
+language module answers it. Rust reads the attributes preceding a function, which are siblings
+rather
 than children and which stack, so `#[test]` and `#[ignore]` in either order describe the same test.
 Python reads a `test_` prefix or a `pytest.mark` decorator, taking the callee when the decorator is
 called so `@pytest.mark.parametrize('x', [1])` reports the marker and not its arguments. JavaScript
-and TypeScript read a call to a runner and its member, so `it.only` and `describe.skip` carry focus in
+and TypeScript read a call to a runner and its member, so `it.only` and `describe.skip` carry
+focus in
 the name.
 
-The fact stops at syntax, which is narrower than the proposal it came from. That asked for the marker
+The fact stops at syntax, which is narrower than the proposal it came from. That asked for the
+marker
 *or the path* that made something a test, and for framework names to be configurable. An analyzer
 sees neither: it is handed one file and no configuration, and adding either would make fact
-extraction depend on policy. A rule has both, so a rule that wants to treat everything under `tests/`
+extraction depend on policy. A rule has both, so a rule that wants to treat everything under
+`tests/`
 as a test combines this fact with a path glob, the way the call rules already combine a callee with
 `allow-in`.
 
 Nothing about a test's contents is stored. The seven rules waiting on this ask whether a test is
-empty, whether it branches, and whether it sleeps or reaches the network — all of which are questions
+empty, whether it branches, and whether it sleeps or reaches the network — all of which are
+questions
 about other facts falling inside the test's range, which `TestFact::contains` answers. Copying a
 body's statistics into the fact would duplicate what `FunctionFact` already measured.
 
-A call fact carries two ranges. `range` locates the callee, which is where a finding points, and `extent`
-spans the whole call expression. The second exists because some findings are a *shape* rather than a name:
+A call fact carries two ranges. `range` locates the callee, which is where a finding points, and
+`extent`
+spans the whole call expression. The second exists because some findings are a *shape* rather than
+a name:
 `testing/no-sleep-in-test` recognises JavaScript's commonest test sleep as a timer nested inside a
 `Promise`, and nesting is a question about extents. A callee range cannot answer it — the callee of
 `setTimeout` sits outside the callee of `Promise`, not inside it.
 `AssertionFact` records an assertion's range, its spelled name, whether it was a macro, and how many
-operands it took. Which calls count is a framework question, so each language module answers it the way
+operands it took. Which calls count is a framework question, so each language module answers it
+the way
 it answers what a test is, and each answers a different shape of question. Python has assertion
 *syntax*: `assert value == 1` is a statement, not a call, so no call fact would ever have seen it.
 Rust's assertions are macros, which the six-name list matches exactly. JavaScript has neither — an
-assertion is `expect`, a type assertion such as `expectTypeOf` or `assertType`, or the `assert` module —
-so the fact reads the callee. Type assertions are in that list because a typed suite may have no other
+assertion is `expect`, a type assertion such as `expectTypeOf` or `assertType`, or the `assert`
+module —
+so the fact reads the callee. Type assertions are in that list because a typed suite may have no
+other
 kind: measured against zod, they account for most of what its tests assert.
 
 A JavaScript assertion's range spans the whole chain — `expect(total).toBe(100)`, not just
-`expect(total)` — while its operand count still belongs to the `expect` call. The two differ because the
-matcher is what the assertion actually checks: without the wider range, `expect(total).toBe(100)` and
-`expect(total).toBeGreaterThan(50)` have identical text, and `no-duplicate-assertion` reports the second
-as a repeat of the first. The climb stops as soon as the assertion is no longer in the callee or object
+`expect(total)` — while its operand count still belongs to the `expect` call. The two differ
+because the
+matcher is what the assertion actually checks: without the wider range, `expect(total).toBe(100)`
+and
+`expect(total).toBeGreaterThan(50)` have identical text, and `no-duplicate-assertion` reports the
+second
+as a repeat of the first. The climb stops as soon as the assertion is no longer in the callee or
+object
 position, so an assertion passed as an argument does not swallow the call it is passed to.
 
 Two choices in that matching are deliberate. The names are explicit sets rather than an `assert`
 prefix, because a prefix silently claims a domain helper called `assert_invariant`, and #90 rejected
-that before the code was written; a test asserts exactly that. And `expect(value).toBe(1)` produces one
-assertion rather than two: the matcher is a second call on the same chain, and counting it would double
+that before the code was written; a test asserts exactly that. And `expect(value).toBe(1)`
+produces one
+assertion rather than two: the matcher is a second call on the same chain, and counting it would
+double
 every count that `assertion-required` is meant to read.
 
-Rust has one assertion that is not a call at all: `#[should_panic]`. The attribute *is* the assertion,
-so the fact records it, named `should_panic` with no operands. Its range is the function's rather than
-the attribute's, because the attribute precedes the function and would otherwise fall outside the test
-that owns it, and every rule asking "does this test assert" works by range containment. Without this,
+Rust has one assertion that is not a call at all: `#[should_panic]`. The attribute *is* the
+assertion,
+so the fact records it, named `should_panic` with no operands. Its range is the function's rather
+than
+the attribute's, because the attribute precedes the function and would otherwise fall outside the
+test
+that owns it, and every rule asking "does this test assert" works by range containment. Without
+this,
 `assertion-required` reports every `should_panic` test in every Rust repository.
 
-`operands` counts what the assertion was given, so a Rust `assert!(value, "explains")` is two. Reaching
-that number in Rust means counting commas in a `token_tree`, because tree-sitter does not parse a macro's
-arguments, and every part of that count was wrong before it was right. Commas inside a nested tree belong
-to that tree. A trailing comma is punctuation. And a comma between *type* arguments separates nothing:
-`assert_eq!(HashMap::<String, u32>::new(), m)` takes two operands, not three. Type arguments are found by
+`operands` counts what the assertion was given, so a Rust `assert!(value, "explains")` is two.
+Reaching
+that number in Rust means counting commas in a `token_tree`, because tree-sitter does not parse a
+macro's
+arguments, and every part of that count was wrong before it was right. Commas inside a nested tree
+belong
+to that tree. A trailing comma is punctuation. And a comma between *type* arguments separates
+nothing:
+`assert_eq!(HashMap::<String, u32>::new(), m)` takes two operands, not three. Type arguments are
+found by
 the turbofish, because in expression position generics need one — a bare `<` is a comparison, and
-swallowing everything after it would lose the message in `assert!(a < b, "explains")`. tree-sitter spells
-`>>` as a single token, which closes two levels and is also the shift operator, so it saturates rather
+swallowing everything after it would lose the message in `assert!(a < b, "explains")`. tree-sitter
+spells
+`>>` as a single token, which closes two levels and is also the shift operator, so it saturates
+rather
 than underflows. Each of those four is pinned by a test.
 
-Three boundaries are deliberate and none is a defect, but none was obvious either. A path-qualified macro
+Three boundaries are deliberate and none is a defect, but none was obvious either. A
+path-qualified macro
 is not an assertion: `static_assertions::assert_eq!` is a compile-time check rather than a test
 assertion, and the cost is that `core::assert_eq!` is missed too. `should`-style JavaScript —
-`x.should.equal(1)` — is not recorded, because the assertion is a property access rather than a call.
-Neither is `raises(...)` reached through `from pytest import raises`; that is the same alias limit the
+`x.should.equal(1)` — is not recorded, because the assertion is a property access rather than a
+call.
+Neither is `raises(...)` reached through `from pytest import raises`; that is the same alias limit
+the
 call rules document. All three want either a name list a repository can extend or import resolution.
 
-The fact deliberately does not record whether an operand *was* the message. That takes a per-name arity
+The fact deliberately does not record whether an operand *was* the message. That takes a per-name
+arity
 table for three ecosystems — `assert.equal(a, b, msg)` puts it third and `chai.expect(value, msg)`
 second, while Jest's `expect` has no message argument at all — and a wrong table would make
 `assertion-message-required` demand a message where the framework has none. The rule that needs it
@@ -171,7 +205,8 @@ Ranges use byte offsets internally and derive one-based line and Unicode-scalar-
 positions only at reporting boundaries.
 
 A range is built by the file it indexes and by nothing else: `SourceFile::range` is the only
-constructor that takes offsets, and it rejects an offset past the end, an offset off a UTF-8 boundary, and a
+constructor that takes offsets, and it rejects an offset past the end, an offset off a UTF-8
+boundary, and a
 start after its end. A `SourceRange` that exists is therefore a range that has already been
 checked, so locating one cannot fail, and no fact needs to re-validate what its type already
 records. That is what makes rule evaluation infallible — the single error a rule could once
@@ -180,8 +215,10 @@ still has to be handled by every caller.
 
 `TextFile::slice` follows from that guarantee rather than hedging against it. It indexes the text
 directly, so a range built by a different file panics instead of yielding a plausible answer. The
-alternative — returning an empty string — would turn a broken proof into a rule that quietly declines
-to fire, and a linter that silently misses a finding is worse than one that crashes and says why. This
+alternative — returning an empty string — would turn a broken proof into a rule that quietly
+declines
+to fire, and a linter that silently misses a finding is worse than one that crashes and says why.
+This
 is the same contract `str` itself offers for a bad index, so a caller outside this crate meets the
 behaviour it already expects.
 
@@ -239,15 +276,20 @@ parser type crosses into rules, findings, or reporters.
 
 ### Workflows are read, not grepped
 
-A GitHub Actions workflow is policy in the same repository, and two of the things that go wrong there
-are unambiguous: an unpinned third-party action is arbitrary code execution against the CI token, and a
+A GitHub Actions workflow is policy in the same repository, and two of the things that go wrong
+there
+are unambiguous: an unpinned third-party action is arbitrary code execution against the CI token,
+and a
 workflow with no `permissions` block inherits more than it needs. Neither is visible in source, so
-`.github/workflows/*.yml` is read as well — by `tree-sitter-yaml`, through `analyzers::workflow`, into
+`.github/workflows/*.yml` is read as well — by `tree-sitter-yaml`, through `analyzers::workflow`,
+into
 `WorkflowFacts`.
 
-The grammar is the point rather than a preference. This repository's own validator greps workflows for
+The grammar is the point rather than a preference. This repository's own validator greps workflows
+for
 `permissions:`, and a grep cannot tell a key from a comment, a string, or a step called
-`name: uses: something`. The facts distinguish them because the parser does, and a finding can name a
+`name: uses: something`. The facts distinguish them because the parser does, and a finding can
+name a
 line and a column because a node has a byte range. `analyzers::workflow` is a fixture in
 `crates/godlint-core/tests/workflows.rs` writing all three of those shapes and expecting silence.
 
@@ -258,26 +300,35 @@ let rules ask whether a command is long, a credential is literal, a job depends 
 an expression reads a sensitive context without teaching a rule YAML grammar names.
 
 Expressions are scanned only inside scalar value nodes. Scanning the file text would turn an example
-inside a YAML comment into executable policy, while walking scalar values also retains expressions in
-quoted and block values. An expression records its whole range, trimmed body and leading context path.
-The whole context path is lowercased for case-insensitive matching, while the body remains as written
+inside a YAML comment into executable policy, while walking scalar values also retains expressions
+in
+quoted and block values. An expression records its whole range, trimmed body and leading context
+path.
+The whole context path is lowercased for case-insensitive matching, while the body remains as
+written
 for display. A leading function call is not a context path and retains its whole body for a rule to
 search.
 
 An expression does not store whether it came from `run`, `if` or `with`. Step values and expressions
 already have ranges, so a rule intersects them to answer that question. Keeping the site out of the
-expression fact avoids duplicating the YAML ancestry and lets the same expression serve rules that care
+expression fact avoids duplicating the YAML ancestry and lets the same expression serve rules that
+care
 about a step, a job body, or the whole workflow.
 
-A workflow is not source, and the split is in the type rather than in a convention. `TextFile` owns what
+A workflow is not source, and the split is in the type rather than in a convention. `TextFile`
+owns what
 a path and a byte offset mean — position derivation, range validation, repository-relative paths —
-and `SourceFile` is a `TextFile` that has a `Language`. A workflow has a `TextFile` and no language, so
-no source rule can be handed one by accident, and the position arithmetic behind every finding exists
+and `SourceFile` is a `TextFile` that has a `Language`. A workflow has a `TextFile` and no
+language, so
+no source rule can be handed one by accident, and the position arithmetic behind every finding
+exists
 once.
 
 Discovery and the byte limit are shared: a workflow is found by the same walk, skipped by the same
-`exclude` globs, and refused by the same maximum size as any other file. `Workflow::names` is the only
-place that decides what counts — a YAML file directly inside a `.github/workflows` directory, which is
+`exclude` globs, and refused by the same maximum size as any other file. `Workflow::names` is the
+only
+place that decides what counts — a YAML file directly inside a `.github/workflows` directory,
+which is
 what GitHub itself will run.
 
 ### Which languages a rule covers
@@ -374,7 +425,8 @@ Functions, calls, accesses and imports share one driver. Each asks the same ques
 different fact slice — does this item violate a policy, and over what range — so `Ranged` names the
 one thing they have in common and `collect_ranged` walks the slice, honours the severity
 gate, and turns a violation into a finding exactly once. `rules::reference` keeps the
-`CallRule`, `AccessRule` and `ImportRule` traits, so a reference rule declares what it looks for and the
+`CallRule`, `AccessRule` and `ImportRule` traits, so a reference rule declares what it looks for
+and the
 driver reads its identity and severity. That is what stops a rule naming another rule's
 identifier or ignoring the severity gate, and a rule that consumes both slices, as the
 environment-read rule does, gets consistent ordering for free.
@@ -393,11 +445,13 @@ lazy, a rule set to `off` still walks nothing.
 so the shared driver costs no allocation on the path that walks every function in a
 repository.
 
-A finding's severity is the rule's configured severity, capped by what the violation itself claims to
+A finding's severity is the rule's configured severity, capped by what the violation itself claims
+to
 know. `Violation::cap` answers that, and the single place a finding is built applies it, so no rule
 carries its own severity logic. The cap can only lower: the configured severity is a ceiling a
 repository sets, and a rule that could raise it would make configuration advisory. The default is
-certain — one catch-all arm rather than an entry per variant, because a violation is normally an answer
+certain — one catch-all arm rather than an entry per variant, because a violation is normally an
+answer
 rather than a question, and thirty arms restating that would be noise. `UnverifiedHash` is the one
 exception today: `crypto.createHash(algorithm)` is a call worth mentioning and not a call worth
 failing, since the value might be SHA-256.
@@ -461,9 +515,10 @@ can answer which paths its rule applies to.
 
 The check itself happens in `rules::report`, the one function that turns a violation into
 a `Finding`. That placement is the reason this is uniform rather than fifty honest
-attempts: a rule cannot forget to consult its own scope, because it never consults it. Ten
-rules previously carried their own `allow-in` check and no longer do, and the same globs
-are matched against the same `path_text`, so behaviour is unchanged where it existed.
+attempts: a rule cannot forget to consult its own scope, because it never consults it. Eleven
+rules carried their own `allow-in` check: ten no longer do, and the eleventh is the
+exception below. The same globs are matched against the same `path_text`, so behaviour is
+unchanged where it existed.
 
 `ci/stale-action-refs` is the exception and worth stating, because it shows what the
 central check cannot do. Its finding is a contradiction *between* files — one commit
@@ -557,14 +612,18 @@ something odd. The machine-readable formats escape the same characters as JSON `
 sequences, which keeps a document parseable and a consumer that prints it raw safe.
 A file the grammar only partly understands is scanned rather than refused. Every node whose subtree
 parsed is judged; a node containing an error is skipped, and the position is reported so the reader
-knows part of the file went unjudged. Skipping the subtree rather than the file is what keeps this from
+knows part of the file went unjudged. Skipping the subtree rather than the file is what keeps this
+from
 becoming a source of false findings: a function whose body failed to parse would otherwise read as
 empty, and a rule would report something the author never wrote.
 
 The cost of the previous behaviour was measured on a real repository rather than guessed at.
-`tree-sitter-typescript` does not implement variance annotations on type parameters, which TypeScript
-added in 4.7, so `interface A<in T>` produces one error node. Four files in Zod contain that syntax; all
-of their 905 functions parse cleanly, and refusing the file discarded every one of them along with 1726
+`tree-sitter-typescript` does not implement variance annotations on type parameters, which
+TypeScript
+added in 4.7, so `interface A<in T>` produces one error node. Four files in Zod contain that
+syntax; all
+of their 905 functions parse cleanly, and refusing the file discarded every one of them along with
+1726
 findings. Nothing in the output said so, because a lost file leaves no trace in a findings count.
 
 Discovery draws the same line by where a path came from. A path the user named on the
