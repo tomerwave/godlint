@@ -29,12 +29,12 @@ exclude:
 
   # The gate scripts and the package wrappers, which are this repository's own code — and
   # packaging/npm/shim.js ships to npm users, so it is product code. Scanning both reports 131
-  # findings, and 110 of them are rules meeting code they were not written for: 82 `style/no-comments`
-  # on Python and JavaScript that explains policy, 21 `logging/no-production-log` where a gate
-  # script's `print` is its interface, and 7 `architecture/restricted-call` on files whose job is to
-  # exit. Every one of those three can now be declared per rule with `allow-in`, which was not true
-  # when this exclusion was written, so what keeps it here is the remaining 21 — real findings that
-  # would fail the build and each want their own change. docs/dogfooding.md itemises all of them and
+  # findings, of which 110 are rules meeting code they were not written for: 82 style/no-comments
+  # on Python and JavaScript that explains policy, 21 logging/no-production-log where a script's
+  # print is its interface, and 7 architecture/restricted-call on files whose job is to exit.
+  # Each of those three can now be declared per rule with allow-in, which was not true when this
+  # exclusion was written, so what keeps it here is the remaining 21: real findings that would
+  # fail the build, each wanting its own change. docs/dogfooding.md itemises all of them and
   # records what replacing this exclusion costs.
   - scripts
   - packaging

@@ -63,11 +63,12 @@ reader should check whether they have drifted.
 
 ## This exclusion is debt now, not a missing mechanism
 
-It used to be a mechanism gap. `style/no-comments` took a severity and `allow-doc-comments`, neither
-of which is a path, so with 82 of the 131 findings coming from that one rule there was no way to say
-"not in these two directories" short of removing them from the scan. That is no longer true: every
-rule takes `only-in` and `allow-in`. The exclusion survives for a different reason now, and the
-distinction matters, because *cannot* and *have not* call for different things.
+It used to be a mechanism gap. `style/no-comments` took a severity and `allow-doc-comments`,
+neither of which is a path, so with 82 of the 131 findings coming from that one rule the only ways
+to say "not in these two directories" were removing them from the scan or writing 82 inline
+suppressions. That is no longer true: every rule takes `only-in` and `allow-in`. The exclusion
+survives for a different reason now, and the distinction matters, because *cannot* and *have not*
+call for different things.
 
 Replacing it takes about a dozen lines — `allow-in` on `style/no-comments` and
 `logging/no-production-log`, and per-call `allow-in` on `architecture/restricted-call`, whose
@@ -81,14 +82,15 @@ writing it out and running `check`:
 | `allow-in` on `style/no-comments` alone | 49 |
 | `allow-in` on all three by-design rules | **21** |
 
-Those 21 are exactly the debt itemised above — 5 `architecture/filename-case` and 16 maintainability
-findings — which is the arithmetic working out, not a coincidence.
+Those 21 are exactly the debt itemised above — 5 `architecture/filename-case` and 16
+maintainability findings — which is the arithmetic working out, not a coincidence.
 
-So un-excluding is no longer blocked on the product. It is blocked on 21 findings that would fail the
-build, and each of them wants a different answer: the filename-case five are an interface change that
-touches four workflows and nineteen other files, and the sixteen are real complexity in the gate
-scripts. Neither is tidying, both are reviewable on their own, and until one of them happens the
-exclusion is a deliberate deferral rather than a limitation.
+So un-excluding is no longer blocked on the product. It is blocked on 21 findings that would fail
+the build, and each wants a different answer: the filename-case five are an interface change
+touching four workflows and nineteen other files, thirteen of the sixteen are real complexity in
+the gate scripts, and three are in the package wrappers. None of it is tidying, all of it is
+reviewable on its own, and until some of it happens the exclusion is a deliberate deferral rather
+than a limitation.
 
 ## Planned, not yet policy
 
