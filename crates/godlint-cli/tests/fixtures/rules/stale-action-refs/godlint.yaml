@@ -6,5 +6,9 @@ exclude:
 rules:
   ci/stale-action-refs:
     severity: error
+    only-in:
+      - "**/ci.yml"
+      - "**/release.yml"
+      - "**/allowed.yml"
     allow-in:
       - "**/allowed.yml"

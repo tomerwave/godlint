@@ -268,6 +268,40 @@ fn only_in_removes_a_workflow_from_reporting_and_repository_evidence() {
 }
 
 #[test]
+fn only_in_still_reports_the_contradictions_inside_it() {
+    let inside_one = workflow_at(
+        ".github/workflows/ci.yml",
+        &step(&format!("actions/checkout@{SHA_A} # v4")),
+    );
+    let inside_two = workflow_at(
+        ".github/workflows/release.yml",
+        &step(&format!("actions/checkout@{SHA_A} # v3")),
+    );
+    let outside = workflow_at(
+        ".github/workflows/legacy.yml",
+        &step(&format!("actions/checkout@{SHA_A} # v2")),
+    );
+    let configuration = scoped_config("error", "only-in", &["**/ci.yml", "**/release.yml"]);
+    let found = stale_action_refs::evaluate(&[inside_one, inside_two, outside], &configuration);
+
+    assert_eq!(
+        found.len(),
+        2,
+        "narrowing a rule to two files must still report the contradiction between them; a guard \
+         written at the wrong granularity silences the rule the moment anything is out of scope"
+    );
+
+    for finding in &found {
+        let message = finding.message();
+
+        assert!(
+            !message.contains("v2"),
+            "the out-of-scope workflow must not supply evidence: {message}"
+        );
+    }
+}
+
+#[test]
 fn mutable_local_and_container_references_are_outside_the_rule() {
     let body = concat!(
         "jobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n",
