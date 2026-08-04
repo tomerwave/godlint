@@ -11,6 +11,8 @@ use super::support::{function, rule_violations};
 fn configuration(allow_names: &[&str]) -> EmptyFunctionRule {
     EmptyFunctionRule {
         severity: Severity::Error,
+        only_in: Vec::new(),
+        allow_in: Vec::new(),
         allow_names: allow_names.iter().map(|name| (*name).into()).collect(),
     }
 }

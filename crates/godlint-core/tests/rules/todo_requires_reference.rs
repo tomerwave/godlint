@@ -8,6 +8,8 @@ use super::support::{comment_violations, facts};
 fn configuration(markers: &[&str], prefixes: &[&str]) -> TodoRequiresReferenceRule {
     TodoRequiresReferenceRule {
         severity: Severity::Error,
+        only_in: Vec::new(),
+        allow_in: Vec::new(),
         markers: markers.iter().map(|marker| (*marker).into()).collect(),
         reference_prefixes: prefixes.iter().map(|prefix| (*prefix).into()).collect(),
     }

@@ -8,6 +8,8 @@ use super::support::{function, function_limits};
 fn configuration(max_statements: u32) -> FunctionStatementsRule {
     FunctionStatementsRule {
         severity: Severity::Error,
+        only_in: Vec::new(),
+        allow_in: Vec::new(),
         max_statements,
     }
 }

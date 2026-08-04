@@ -2,7 +2,7 @@ use std::{fmt, path::PathBuf};
 
 use crate::{
     analyzers::{SourceFacts, workflow::WorkflowFacts},
-    config::{Config, Severity},
+    config::{Config, Scope, Scoped, Severity},
     date::Date,
     facts::{CommentFact, FunctionFact},
     source::{SourceFile, SourceRange, TextFile},
@@ -124,7 +124,7 @@ pub trait Rule {
 
     const LANGUAGES: Languages = Languages::EVERY_LANGUAGE;
 
-    type Configuration;
+    type Configuration: Scoped;
 
     fn severity(configuration: &Self::Configuration) -> Severity;
 }
@@ -228,7 +228,7 @@ pub fn evaluate_function_limit_rule<R: FunctionLimitRule>(
 }
 
 pub(crate) fn report<'a>(
-    reporting: Reporting,
+    reporting: Reporting<'_>,
     reported: impl IntoIterator<Item = (&'a TextFile, SourceRange, Violation)>,
 ) -> Vec<Finding> {
     if reporting.severity == Severity::Off {
@@ -237,13 +237,14 @@ pub(crate) fn report<'a>(
 
     reported
         .into_iter()
+        .filter(|(file, _, _)| reporting.scope.covers(file.path_text()))
         .map(|(file, range, violation)| finding(file, range, reporting, violation))
         .collect()
 }
 
 pub(crate) fn collect_findings<'facts, T: 'facts, I>(
     facts: &'facts [SourceFacts],
-    reporting: Reporting,
+    reporting: Reporting<'_>,
     items: impl Fn(&'facts SourceFacts) -> &'facts [T],
     check: impl Fn(&'facts T, &'facts SourceFacts) -> I,
 ) -> Vec<Finding>
@@ -276,7 +277,7 @@ impl Ranged for FunctionFact {
 
 pub(crate) fn collect_ranged<'facts, R: Ranged + 'facts>(
     facts: &'facts [SourceFacts],
-    reporting: Reporting,
+    reporting: Reporting<'_>,
     items: impl Fn(&'facts SourceFacts) -> &'facts [R],
     check: impl Fn(&'facts R, &'facts SourceFacts) -> Option<Violation>,
 ) -> Vec<Finding> {
@@ -300,7 +301,7 @@ pub fn evaluate_file_limit_rule<R: FileLimitRule>(
 
 fn evaluate_files(
     facts: &[SourceFacts],
-    reporting: Reporting,
+    reporting: Reporting<'_>,
     check: impl Fn(&SourceFacts) -> Option<Violation>,
 ) -> Vec<Finding> {
     report(
@@ -336,16 +337,18 @@ pub fn evaluate_comment_rule<R: CommentRule>(
 }
 
 #[derive(Clone, Copy)]
-pub struct Reporting {
+pub struct Reporting<'a> {
     pub severity: Severity,
     pub rule_id: &'static str,
+    scope: Scope<'a>,
 }
 
-impl Reporting {
-    pub fn of<R: Rule>(configuration: &R::Configuration) -> Self {
+impl<'a> Reporting<'a> {
+    pub fn of<R: Rule>(configuration: &'a R::Configuration) -> Self {
         Self {
             severity: R::severity(configuration),
             rule_id: R::ID,
+            scope: Scope::of(configuration),
         }
     }
 }
@@ -353,7 +356,7 @@ impl Reporting {
 fn finding(
     file: &TextFile,
     range: SourceRange,
-    reporting: Reporting,
+    reporting: Reporting<'_>,
     violation: Violation,
 ) -> Finding {
     let location = file.location(range);

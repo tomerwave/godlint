@@ -16,6 +16,15 @@ fn severity_of(rule_id: &str, enabled: &str) -> Severity {
     configured_severity(&config(&body), rule_id)
 }
 
+fn scoped_severity_of(rule_id: &str) -> Severity {
+    let body = format!(
+        "version: 1\nrules:\n  {rule_id}:\n    severity: error\n    only-in: [\"src/**\"]\n    allow-in: [\"src/legacy/**\"]\n{}",
+        limits(rule_id)
+    );
+
+    configured_severity(&config(&body), rule_id)
+}
+
 fn limits(rule_id: &str) -> String {
     let key = match rule_id {
         "maintainability/function-size" | "maintainability/file-size" => "max-lines",
@@ -141,4 +150,20 @@ fn the_suggestion_stops_where_a_guess_starts() {
         None,
         "four at the front is four: a deletion counted one too cheaply hides here and nowhere else"
     );
+}
+
+#[test]
+fn every_rule_takes_the_paths_it_applies_to() {
+    let all: Vec<&str> = rule_ids().collect();
+
+    assert!(all.len() > 1, "the registry lists nothing to check");
+
+    for identifier in &all {
+        assert_eq!(
+            scoped_severity_of(identifier),
+            Severity::Error,
+            "{identifier} does not accept only-in and allow-in, so it cannot be scoped to a path \
+             and a repository wanting it in one directory has to exclude the others from every rule"
+        );
+    }
 }

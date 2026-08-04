@@ -1,7 +1,6 @@
 use crate::{
     analyzers::workflow::WorkflowFacts,
     config::{Config, NoMonolithicJobRule, Severity},
-    glob,
     rules::{
         Finding, Languages, Metric, Rule, Violation, WorkflowRule, evaluate_workflow_rule,
         when_configured,
@@ -28,13 +27,6 @@ impl WorkflowRule for NoMonolithicJob {
         workflow: &WorkflowFacts,
         configuration: &Self::Configuration,
     ) -> Vec<(SourceRange, Violation)> {
-        if glob::matches_any(
-            configuration.allow_in.iter().map(String::as_str),
-            workflow.file().path_text(),
-        ) {
-            return Vec::new();
-        }
-
         let max = configuration.limit();
 
         workflow

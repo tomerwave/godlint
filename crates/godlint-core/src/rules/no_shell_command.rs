@@ -4,7 +4,7 @@ use crate::{
     facts::CallFact,
     rules::{
         Finding, Reporting, Rule, Violation,
-        catalogue::{Catalogue, matches, spelled},
+        catalogue::{Catalogue, spelled},
         collect_ranged, when_configured,
     },
     source::{Dialect, Language},
@@ -67,21 +67,9 @@ pub fn evaluate(facts: &[SourceFacts], config: &Config) -> Vec<Finding> {
             facts,
             Reporting::of::<NoShellCommand>(rule),
             SourceFacts::calls,
-            |call, source| check(call, source, rule),
+            |call, source| shell_of(call, source).map(|shell| Violation::ShellCommand { shell }),
         )
     })
-}
-
-fn check(
-    call: &CallFact,
-    facts: &SourceFacts,
-    configuration: &NoShellCommandRule,
-) -> Option<Violation> {
-    if matches(call.source(), &configuration.allow_in) {
-        return None;
-    }
-
-    shell_of(call, facts).map(|shell| Violation::ShellCommand { shell })
 }
 
 fn shell_of(call: &CallFact, facts: &SourceFacts) -> Option<String> {

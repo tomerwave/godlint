@@ -1,0 +1,9 @@
+version: 1
+
+rules:
+  logging/no-production-log:
+    severity: error
+    only-in:
+      - src/**
+    allow-in:
+      - src/generated/**

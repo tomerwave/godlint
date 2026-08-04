@@ -8,6 +8,8 @@ use super::support::{function, function_limits, nth_function};
 fn configuration(max_depth: u32) -> FunctionNestingRule {
     FunctionNestingRule {
         severity: Severity::Error,
+        only_in: Vec::new(),
+        allow_in: Vec::new(),
         max_depth,
     }
 }

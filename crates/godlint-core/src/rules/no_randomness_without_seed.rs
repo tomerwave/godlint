@@ -4,7 +4,7 @@ use crate::{
     facts::CallFact,
     rules::{
         CallInTestRule, Finding, Rule, Violation,
-        catalogue::{Catalogue, GENERATORS, matches, spelled},
+        catalogue::{Catalogue, GENERATORS, spelled},
         evaluate_call_in_test_rule, when_configured,
     },
     source::{Dialect, Language},
@@ -45,17 +45,16 @@ impl CallInTestRule for NoRandomnessWithoutSeed {
     fn check(
         call: &CallFact,
         facts: &SourceFacts,
-        configuration: &Self::Configuration,
+        _configuration: &Self::Configuration,
     ) -> Option<Violation> {
         let name = spelled(call);
         let source = call.source();
 
-        (GENERATORS.speaks(source.language(), &name)
-            && !matches(source, &configuration.allow_in)
-            && !seeds_its_generator(facts))
-        .then(|| Violation::UnseededRandom {
-            callee: name,
-            remedy: remedy(source.language()).to_owned(),
+        (GENERATORS.speaks(source.language(), &name) && !seeds_its_generator(facts)).then(|| {
+            Violation::UnseededRandom {
+                callee: name,
+                remedy: remedy(source.language()).to_owned(),
+            }
         })
     }
 }

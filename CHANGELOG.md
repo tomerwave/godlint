@@ -9,6 +9,34 @@ speaks about.
 
 ## [Unreleased]
 
+### Added
+
+- Every rule takes `only-in` and `allow-in`: the paths it applies to, and the exemptions inside them.
+  `allow-in` existed on eleven of fifty rules, each implementing it itself, and `only-in` did not exist
+  at all — so a rule that is inherently about one part of a tree could not say so. The only way to say
+  "this rule does not belong here" was `exclude`, which drops a path for **every** rule at once: one
+  misplaced rule cost you every other rule in that directory. This repository is the evidence, having
+  excluded `scripts` and `packaging` wholesale to silence one rule, hiding 21 unrelated findings to do
+  it.
+
+  The narrower setting decides, so `allow-in` carves exceptions out of `only-in`, and both empty means
+  every file, which is what a rule naming no paths wants.
+
+  It is one implementation rather than fifty because the check sits in `rules::report`, the single
+  function that turns a violation into a finding. A rule cannot forget to honour its own scope, because
+  no rule consults it. The eleven hand-written `allow-in` checks are gone, matching the same globs
+  against the same path as before. `Rule::Configuration` now requires `Scoped`, so a new rule does not
+  compile until its configuration can say where its rule applies — the property is held by the compiler
+  rather than by a checklist.
+
+  One rule needed more than that, and it is the interesting one. `ci/stale-action-refs` reports a
+  contradiction *between* files: one commit labelled `# v3` in one workflow and `# v4` in another. Scope
+  there has to gate what the rule *reads*, not only what it reports — otherwise excluding a workflow
+  still produces a finding in the file that was not excluded, caused by the one that was. Its own test
+  said so in its name, `allow_in_removes_a_workflow_from_reporting_and_repository_evidence`, and it
+  failed the moment the central check replaced its own. A rule whose verdict depends on more than the
+  file it reports in must scope its evidence.
+
 ### Changed
 
 - A declaration in `.github/accepted-drift.md` that the released binary does not report fails the

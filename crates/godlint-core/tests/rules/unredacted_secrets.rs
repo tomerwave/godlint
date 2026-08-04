@@ -17,7 +17,11 @@ fn violations(script: &str, severity: Severity) -> Vec<Violation> {
     let body =
         format!("jobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n      - run: {script}\n");
     let facts = workflow(&body);
-    let configuration = UnredactedSecretsRule { severity };
+    let configuration = UnredactedSecretsRule {
+        severity,
+        only_in: Vec::new(),
+        allow_in: Vec::new(),
+    };
     evaluate_workflow_rule::<UnredactedSecrets>(std::slice::from_ref(&facts), &configuration)
         .into_iter()
         .map(|finding| finding.violation)
@@ -119,6 +123,8 @@ fn a_secret_in_environment_and_a_sink_in_run_are_silent() {
     ));
     let configuration = UnredactedSecretsRule {
         severity: Severity::Error,
+        only_in: Vec::new(),
+        allow_in: Vec::new(),
     };
 
     assert!(

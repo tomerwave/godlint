@@ -8,6 +8,8 @@ use super::support::{function, function_limits};
 fn configuration(max_complexity: u32) -> DecisionComplexityRule {
     DecisionComplexityRule {
         severity: Severity::Error,
+        only_in: Vec::new(),
+        allow_in: Vec::new(),
         max_complexity,
     }
 }

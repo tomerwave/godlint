@@ -21,6 +21,7 @@ fn workflow(body: &str) -> WorkflowFacts {
 fn configuration(allow_in: &[&str]) -> TemplateInjectionRule {
     TemplateInjectionRule {
         severity: Severity::Error,
+        only_in: Vec::new(),
         allow_in: allow_in.iter().map(|path| (*path).to_owned()).collect(),
     }
 }
@@ -38,6 +39,7 @@ fn severities(body: &str, severity: Severity) -> Vec<Severity> {
     let facts = workflow(body);
     let configuration = TemplateInjectionRule {
         severity,
+        only_in: Vec::new(),
         allow_in: Vec::new(),
     };
 
@@ -294,6 +296,7 @@ fn the_rule_is_silent_when_it_is_switched_off() {
     let facts = workflow(&run("echo ${{ github.event.issue.title }}"));
     let configuration = TemplateInjectionRule {
         severity: Severity::Off,
+        only_in: Vec::new(),
         allow_in: Vec::new(),
     };
 

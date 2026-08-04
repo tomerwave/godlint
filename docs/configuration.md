@@ -125,8 +125,38 @@ rules:
     severity: off          # declined
 ```
 
-Every rule takes `severity`. Beyond that each takes the settings its measurement needs, named after
-what they mean:
+Every rule takes three settings: `severity`, and the two that say which files it applies to.
+
+| Setting | Default | Meaning |
+| --- | --- | --- |
+| `severity` | required | `off`, `info`, `warning` or `error`. |
+| `only-in` | every file | Glob patterns the rule is *about*. Empty means every file. |
+| `allow-in` | nothing | Glob patterns exempted, including inside `only-in`. |
+
+`only-in` exists because many rules are inherently scoped. "No logging in production code" has
+nothing to say about a build script, and "no sleeps in tests" has nothing to say outside them.
+Without it the only way to say so is `exclude`, which drops the path for **every** rule at once — so
+one rule that does not belong somewhere costs you every other rule there too.
+
+The narrower of the two decides, so `allow-in` carves exceptions out of `only-in`:
+
+```yaml
+rules:
+  logging/no-production-log:
+    severity: error
+    only-in: [src/**]
+    allow-in: [src/generated/**]
+```
+
+That reports `src/server.js`, says nothing about `src/generated/client.js`, and says nothing about
+`scripts/build.js` — while every other rule still applies to all three.
+
+Two rules read paths for a second purpose beyond scope. `testing/no-network-in-unit-test` takes
+`unit-paths`, which is what the rule is *for* rather than an exemption, and
+`testing/no-test-helper-in-production` takes `test-paths` to decide which tree a helper lives in.
+Both still take `only-in` and `allow-in` like every other rule.
+
+Beyond those three, each rule takes the settings its measurement needs, named after what they mean:
 
 ```yaml
 rules:
@@ -174,3 +204,8 @@ before relying on one; an alias escapes them, and a shadowing local binding is r
 than names. `unit-paths` declares which directories hold unit tests, and the rule reports nothing until
 it is set, because whether a test is a unit test is a property of the repository. `allow-in` then carves
 exemptions back out of those paths.
+
+`ci/stale-action-refs` scopes what it *reads*, not only what it reports, and it is the one rule where
+that distinction is visible. It reports one commit labelled two ways across different workflow files,
+so a file outside its scope must not supply half of a contradiction — otherwise excluding a workflow
+would still produce a finding elsewhere, caused by the file you excluded.

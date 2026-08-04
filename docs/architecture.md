@@ -454,6 +454,25 @@ value tracking no fact model here provides.
 
 ## Configuration
 
+Every rule configuration implements `Scoped`, which is how `only-in` and `allow-in` reach
+all fifty without fifty implementations. `Rule::Configuration` requires the trait, so a
+new rule cannot be unscopable by omission — it will not compile until its configuration
+can answer which paths its rule applies to.
+
+The check itself happens in `rules::report`, the one function that turns a violation into
+a `Finding`. That placement is the reason this is uniform rather than fifty honest
+attempts: a rule cannot forget to consult its own scope, because it never consults it. Ten
+rules previously carried their own `allow-in` check and no longer do, and the same globs
+are matched against the same `path_text`, so behaviour is unchanged where it existed.
+
+`ci/stale-action-refs` is the exception and worth stating, because it shows what the
+central check cannot do. Its finding is a contradiction *between* files — one commit
+labelled two ways — so it filters its evidence by the same `Scope` before reading it. If
+scope only removed findings, an excluded workflow would still supply half a contradiction
+and the finding would land on the file that was not excluded, caused by the file that was.
+A rule whose verdict depends on more than the file it reports in has to scope what it
+reads, not only what it says.
+
 Two rules share `LineLimitRule` because `function-size` and `file-size` ask the same
 question of different ranges. The rules whose whole configuration is a severity and one
 ceiling are generated from one declaration, since each needs its own YAML key and cannot

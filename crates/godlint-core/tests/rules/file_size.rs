@@ -8,6 +8,8 @@ use super::support::{file_limits, limit};
 fn configuration(max_lines: u32, skip_blank_lines: bool, skip_comments: bool) -> LineLimitRule {
     LineLimitRule {
         severity: Severity::Error,
+        only_in: Vec::new(),
+        allow_in: Vec::new(),
         max_lines: limit(max_lines),
         skip_blank_lines,
         skip_comments,

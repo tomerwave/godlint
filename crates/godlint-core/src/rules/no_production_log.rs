@@ -4,7 +4,7 @@ use crate::{
     facts::CallFact,
     rules::{
         CallRule, Finding, Rule, Violation,
-        catalogue::{Catalogue, matches, spelled},
+        catalogue::{Catalogue, spelled},
         evaluate_call_rule, when_configured,
     },
     source::Dialect,
@@ -33,11 +33,12 @@ impl Rule for NoProductionLog {
 }
 
 impl CallRule for NoProductionLog {
-    fn check(call: &CallFact, configuration: &Self::Configuration) -> Option<Violation> {
+    fn check(call: &CallFact, _configuration: &Self::Configuration) -> Option<Violation> {
         let name = spelled(call);
         let source = call.source();
 
-        (LOGGERS.speaks(source.language(), &name) && !matches(source, &configuration.allow_in))
+        LOGGERS
+            .speaks(source.language(), &name)
             .then(|| Violation::ProductionLog {
                 callee: name.clone(),
             })

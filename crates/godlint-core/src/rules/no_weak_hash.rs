@@ -4,7 +4,7 @@ use crate::{
     facts::CallFact,
     rules::{
         CallRule, Finding, Rule, Violation,
-        catalogue::{Catalogue, matches, spelled},
+        catalogue::{Catalogue, spelled},
         evaluate_call_rule, when_configured,
     },
     source::{Dialect, Language},
@@ -47,13 +47,7 @@ impl Rule for NoWeakHash {
 }
 
 impl CallRule for NoWeakHash {
-    fn check(call: &CallFact, configuration: &Self::Configuration) -> Option<Violation> {
-        let source = call.source();
-
-        if matches(source, &configuration.allow_in) {
-            return None;
-        }
-
+    fn check(call: &CallFact, _configuration: &Self::Configuration) -> Option<Violation> {
         hash_violation(call, spelled(call))
     }
 }

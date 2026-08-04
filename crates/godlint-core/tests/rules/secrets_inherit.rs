@@ -20,6 +20,7 @@ fn workflow(body: &str) -> WorkflowFacts {
 fn configuration(severity: Severity, allow_in: &[&str]) -> SecretsInheritRule {
     SecretsInheritRule {
         severity,
+        only_in: Vec::new(),
         allow_in: allow_in.iter().map(|path| (*path).to_owned()).collect(),
     }
 }

@@ -27,6 +27,8 @@ fn steps(uses: &[&str]) -> String {
 fn configuration(trusted: &[&str]) -> PinThirdPartyActionsRule {
     PinThirdPartyActionsRule {
         severity: Severity::Error,
+        only_in: Vec::new(),
+        allow_in: Vec::new(),
         trusted_owners: trusted.iter().map(|owner| (*owner).to_owned()).collect(),
     }
 }
@@ -159,6 +161,8 @@ fn the_rule_is_silent_when_it_is_switched_off() {
     let facts = workflow(&steps(&["vendor/setup@v3"]));
     let configuration = PinThirdPartyActionsRule {
         severity: Severity::Off,
+        only_in: Vec::new(),
+        allow_in: Vec::new(),
         trusted_owners: Vec::new(),
     };
 

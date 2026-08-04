@@ -17,6 +17,8 @@ fn workflow(body: &str) -> WorkflowFacts {
 fn configuration(max_lines: u32) -> LineLimitRule {
     LineLimitRule {
         severity: Severity::Error,
+        only_in: Vec::new(),
+        allow_in: Vec::new(),
         max_lines: NonZeroU32::new(max_lines).unwrap_or_else(|| panic!("limit must be positive")),
         skip_blank_lines: true,
         skip_comments: true,
@@ -94,6 +96,8 @@ fn configured_physical_lines_can_include_blanks_and_comments() {
     ));
     let configuration = LineLimitRule {
         severity: Severity::Error,
+        only_in: Vec::new(),
+        allow_in: Vec::new(),
         max_lines: NonZeroU32::new(1).expect("one is positive"),
         skip_blank_lines: false,
         skip_comments: false,
