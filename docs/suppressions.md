@@ -225,8 +225,7 @@ without a severity. The brackets matter because the fixture directories are name
 the rules, so an unbracketed search matches other rules' findings by their *path*; the
 severity is left out because it is configurable. The line is between a rule retiring itself
 and a repository deciding what to scan at all: the second is visible in one place and
-applies to everything,
-which is the property that makes it accountable.
+applies to everything, which is the property that makes it accountable.
 
 The cost is real. A repository adopting a rule gradually, or scoping one into `src/**`, sees
 every directive left behind elsewhere reported at once, and that is one-time per switch-off
