@@ -17,8 +17,9 @@ speaks about.
   "this rule does not belong here" was `exclude`, which drops a path for **every** rule at once: one
   misplaced rule cost you every other rule in that directory. This repository is the evidence, having
   excluded `scripts` and `packaging` wholesale to silence one rule, hiding 21 unrelated findings to do
-  it. This change does not lift that exclusion — `style/no-comments` is what decides it, and giving
-  that rule `only-in` is now possible but is its own argument.
+  it. This change does not lift that exclusion, and it does remove the reason for it: every one of
+  those rules can now be declared per path, so what keeps the two directories out of the scan is the
+  21 findings underneath, each wanting its own change.
 
   The narrower setting decides, so `allow-in` carves exceptions out of `only-in`, and both empty means
   every file, which is what a rule naming no paths wants.

@@ -28,14 +28,14 @@ exclude:
   - .github/fixtures
 
   # The gate scripts and the package wrappers, which are this repository's own code — and
-  # packaging/npm/shim.js ships to npm users, so it is product code. Scanning both reports 127
-  # findings, and 78 of them are `style/no-comments` on Python and JavaScript that explains policy.
-  # That rule's two settings are a severity and `allow-doc-comments`, neither of which is a path,
-  # and nothing else in the configuration can scope a rule to a directory — so the only ways to
-  # silence it here are removing the paths or writing 78 inline suppressions. That missing per-path
-  # control is what makes this an exclusion instead of rule configuration, and the price is the 21
-  # findings it hides along with the 106 it is for. docs/dogfooding.md itemises all of them, so the
-  # cost is written where it can be argued with.
+  # packaging/npm/shim.js ships to npm users, so it is product code. Scanning both reports 131
+  # findings, of which 110 are rules meeting code they were not written for: 82 style/no-comments
+  # on Python and JavaScript that explains policy, 21 logging/no-production-log where a script's
+  # print is its interface, and 7 architecture/restricted-call on files whose job is to exit.
+  # Each of those three can now be declared per rule with allow-in, which was not true when this
+  # exclusion was written, so what keeps it here is the remaining 21: real findings that would
+  # fail the build, each wanting its own change. docs/dogfooding.md itemises all of them and
+  # records what replacing this exclusion costs.
   - scripts
   - packaging
 
