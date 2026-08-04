@@ -38,7 +38,13 @@ speaks about.
   failed the moment the central check replaced its own. A rule whose verdict depends on more than the
   file it reports in must scope its evidence. Review found the other half of that untested — evidence
   honouring `allow-in` while ignoring `only-in` passed all 881 tests — so the mirror case is pinned
-  too.
+  too — in both directions. Review then found a third shape: both scope tests assert that nothing is
+  reported, so an evidence filter that *over*-drops was unpinned, and dropping every workflow the
+  moment `only-in` is non-empty passed all 882 tests. That is the worse failure of the two, because
+  `only-in` is the setting whose purpose is to point a rule *at* something. The fixture that already
+  demands five findings now sets `only-in` as well, so those five expectations pin the positive
+  direction and the same block pins the interaction — `allow-in` still carves `allowed.yml` out of an
+  `only-in` that includes it.
 
   One sharp edge, documented rather than fixed: `only-in` narrows, so a pattern matching nothing
   leaves a rule with nowhere to apply and it reports nothing, anywhere, without saying so. A typo in
