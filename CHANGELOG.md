@@ -7,7 +7,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 change the `godlint-core` API; the command line and the configuration schema are what the version
 speaks about.
 
-## [Unreleased]
+## [0.6.0] - 2026-08-04
 
 ### Added
 
@@ -152,21 +152,6 @@ speaks about.
   drift job the moment nothing did. `docs/ci.md` documents the `status` output, which existed
   undocumented, and what each status means.
 
-- Nothing a user can observe: the per-language module separator is defined once. Two rules kept their
-  own copy — one returning a `char`, so Rust's `::` was halved to `:`, and one that used `/` for every
-  language except Python, so a Rust path was a single segment. Neither was observable: splitting
-  `crate::tests::helper` on one colon still yields `tests` between two empty segments, and the rule
-  whose separator was wrong for Rust returns before consulting it, because `is_own` treats every Rust
-  module as the file's own. That is why both survived. They now call `rules::module_path`, which has
-  been right all along.
-- Nothing a user can observe: `TextFile` hands out the text a range covers, so a rule no longer indexes
-  into the file itself. Four rules and two fact accessors sliced `file.text()` with raw offsets, which
-  is the position math `TextFile` exists to own. Two of them also did arithmetic on those offsets to
-  strip an expression's braces; the scanner guarantees the shape that makes the arithmetic safe, so
-  this is not a fix for a live underflow, it is one fewer place that depends on the guarantee.
-  `slice` indexes directly, so a range built by another file panics rather than returning a plausible
-  empty string — a rule that quietly declines to fire is worse than a crash, and `docs/architecture.md`
-  now records that reasoning where the range guarantee is stated.
 - `validate-pull-request.py` asks for a changelog entry when any shipped source file changes, rather
   than when one of five hand-listed paths does. What the old list omitted decided the policy:
   `config/rules.rs` holds every default threshold, so **raising one — the most user-visible change
@@ -306,6 +291,21 @@ speaks about.
 
 ### Internal
 
+- Nothing a user can observe: the per-language module separator is defined once. Two rules kept their
+  own copy — one returning a `char`, so Rust's `::` was halved to `:`, and one that used `/` for every
+  language except Python, so a Rust path was a single segment. Neither was observable: splitting
+  `crate::tests::helper` on one colon still yields `tests` between two empty segments, and the rule
+  whose separator was wrong for Rust returns before consulting it, because `is_own` treats every Rust
+  module as the file's own. That is why both survived. They now call `rules::module_path`, which has
+  been right all along.
+- Nothing a user can observe: `TextFile` hands out the text a range covers, so a rule no longer indexes
+  into the file itself. Four rules and two fact accessors sliced `file.text()` with raw offsets, which
+  is the position math `TextFile` exists to own. Two of them also did arithmetic on those offsets to
+  strip an expression's braces; the scanner guarantees the shape that makes the arithmetic safe, so
+  this is not a fix for a live underflow, it is one fewer place that depends on the guarantee.
+  `slice` indexes directly, so a range built by another file panics rather than returning a plausible
+  empty string — a rule that quietly declines to fire is worse than a crash, and `docs/architecture.md`
+  now records that reasoning where the range guarantee is stated.
 - Nothing a user can observe: a fact stores the details it was built from instead of copying them
   across field by field. `SourceFacts` re-declared all ten of `Collected`'s vectors and then moved
   them one at a time, and `FunctionFact`, `JobFact` and `StepFact` each re-declared their `Details`
