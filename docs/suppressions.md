@@ -221,9 +221,11 @@ still drops a path from the scan for every rule including this one, and so does 
 paths on the command line. Godlint's own `godlint.yaml` relies on it: the CLI fixture tree
 is excluded, and doing so hides 19 dead directives that exist on purpose. To see them,
 delete that one line and count `[policy/unused-suppression]` — with the brackets, and
-without a severity, since the severity is configurable and the rule's own name appears
-inside another rule's message. The line is between a rule retiring itself and a repository
-deciding what to scan at all: the second is visible in one place and applies to everything,
+without a severity. The brackets matter because the fixture directories are named after
+the rules, so an unbracketed search matches other rules' findings by their *path*; the
+severity is left out because it is configurable. The line is between a rule retiring itself
+and a repository deciding what to scan at all: the second is visible in one place and
+applies to everything,
 which is the property that makes it accountable.
 
 The cost is real. A repository adopting a rule gradually, or scoping one into `src/**`, sees

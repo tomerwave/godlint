@@ -11,7 +11,7 @@ speaks about.
 
 ### Added
 
-- Every rule takes `only-in` and `allow-in`: the paths it applies to, and the exemptions inside them.
+- Rules take `only-in` and `allow-in`: the paths a rule applies to, and the exemptions inside them.
   `allow-in` existed on eleven of fifty rules, each implementing it itself, and `only-in` did not exist
   at all — so a rule that is inherently about one part of a tree could not say so. The only way to say
   "this rule does not belong here" was `exclude`, which drops a path for **every** rule at once: one
@@ -90,8 +90,8 @@ speaks about.
 
   Scope of that claim, because a wider one would be false: it is the rule's own configuration that
   cannot retire it. A top-level `exclude` still drops a path from the scan for every rule including
-  this one — Godlint's own `godlint.yaml` relies on it, and doing so hides nineteen dead directives in
-  the fixture trees on purpose — and so does naming paths on the command line. And the check lives in
+  this one — Godlint's own `godlint.yaml` relies on it, and doing so hides 19 dead directives in the
+  CLI fixture tree on purpose — and so does naming paths on the command line. And the check lives in
   configuration validation, which runs when the CLI loads a file, so a `godlint-core` consumer
   deserialising a `Config` directly is not bound by it. Making the shape unrepresentable rather than
   rejected is the version that would bind both, and is its own change.
