@@ -20,6 +20,8 @@ target
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 .omx/
+docs/superpowers/
+.worktrees/
 
 # Python bytecode from scripts/
 __pycache__/

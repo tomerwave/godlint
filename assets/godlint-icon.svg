@@ -1,20 +1,4 @@
-<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="1024" height="1024" fill="#FFFFFF"/>
-
-  <!-- Outer broken ring -->
-  <path d="M236 360C278 247 380 164 500 150" stroke="#232831" stroke-width="46" stroke-linecap="butt"/>
-  <path d="M524 150C644 164 746 247 788 360" stroke="#232831" stroke-width="46" stroke-linecap="butt"/>
-  <path d="M788 664C746 777 644 860 524 874" stroke="#232831" stroke-width="46" stroke-linecap="butt"/>
-  <path d="M500 874C380 860 278 777 236 664" stroke="#232831" stroke-width="46" stroke-linecap="butt"/>
-
-  <!-- Top and bottom markers -->
-  <rect x="489" y="118" width="46" height="112" rx="2" fill="#232831"/>
-  <rect x="489" y="794" width="46" height="112" rx="2" fill="#232831"/>
-
-  <!-- Code brackets -->
-  <path d="M406 347L250 500C241 509 241 523 250 532L406 685" stroke="#232831" stroke-width="72" stroke-linecap="square" stroke-linejoin="miter"/>
-  <path d="M618 347L774 500C783 509 783 523 774 532L618 685" stroke="#232831" stroke-width="72" stroke-linecap="square" stroke-linejoin="miter"/>
-
-  <!-- Check mark: smaller and pulled inward for more padding -->
-  <path d="M458 518L518 578L608 488" stroke="#4A86C5" stroke-width="44" stroke-linecap="square" stroke-linejoin="miter"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1254 1254" role="img">
+  <path fill="#2C333B" fill-rule="evenodd" d="M 842 476 L 840 477 L 840 481 L 943 611 L 939 620 L 837 747 L 838 750 L 898 750 L 1018 620 L 1023 612 L 900 478 L 895 476 Z M 467 475 L 461 477 L 340 611 L 340 615 L 462 749 L 525 750 L 526 747 L 421 616 L 422 608 L 526 479 L 525 475 Z M 606 209 L 573 212 L 534 219 L 492 231 L 457 245 L 427 260 L 387 285 L 352 313 L 317 348 L 290 382 L 271 411 L 251 449 L 236 486 L 226 519 L 219 552 L 214 593 L 213 634 L 217 682 L 224 720 L 239 769 L 252 799 L 272 836 L 298 874 L 319 899 L 350 930 L 385 958 L 412 976 L 451 997 L 484 1011 L 525 1024 L 558 1031 L 594 1035 L 630 1036 L 680 1031 L 730 1019 L 770 1004 L 798 990 L 827 972 L 868 939 L 910 894 L 945 844 L 961 815 L 967 799 L 890 799 L 864 840 L 837 870 L 817 885 L 805 891 L 774 899 L 741 898 L 705 887 L 673 870 L 613 831 L 586 818 L 554 808 L 528 804 L 490 804 L 461 808 L 408 823 L 367 841 L 363 841 L 357 835 L 338 808 L 312 758 L 293 699 L 285 644 L 285 603 L 287 581 L 298 528 L 309 496 L 328 456 L 350 421 L 364 403 L 401 365 L 442 334 L 483 312 L 533 294 L 587 284 L 659 284 L 691 289 L 729 299 L 758 310 L 790 326 L 818 344 L 842 363 L 848 361 L 894 310 L 891 304 L 847 272 L 805 249 L 772 235 L 731 222 L 687 213 L 645 209 Z M 424 897 L 430 892 L 458 878 L 496 866 L 517 863 L 558 864 L 588 871 L 609 879 L 678 916 L 706 928 L 736 936 L 738 940 L 728 946 L 704 955 L 667 964 L 644 967 L 584 966 L 537 957 L 494 942 L 445 916 L 429 905 L 424 900 Z"/>
+  <path fill="#708276" fill-rule="evenodd" d="M 470 900 L 473 904 L 501 918 L 554 936 L 600 943 L 642 943 L 664 940 L 664 938 L 612 908 L 589 897 L 563 889 L 548 887 L 509 888 L 488 893 Z M 790 505 L 783 505 L 775 510 L 734 548 L 669 621 L 622 680 L 618 680 L 574 638 L 556 625 L 550 626 L 524 652 L 523 661 L 625 782 L 632 781 L 663 735 L 722 655 L 760 607 L 817 541 L 817 532 Z"/>
 </svg>

@@ -5,6 +5,7 @@ pub mod discovery;
 pub mod facts;
 pub mod glob;
 pub mod paths;
+pub mod repository;
 pub mod rules;
 pub mod scan;
 pub mod source;

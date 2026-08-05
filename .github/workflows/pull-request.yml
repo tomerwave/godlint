@@ -22,9 +22,6 @@ jobs:
       - name: Check repository invariants
         run: python3 scripts/validate-pull-request.py
 
-      - name: Test the branch-name check
-        run: scripts/test-check-branch-name.sh
-
       - name: Test the released-agreement explanation
         run: scripts/test-explain-released-agreement.sh
 
@@ -37,16 +34,3 @@ jobs:
           git fetch --no-tags origin "${{ github.event.repository.default_branch }}"
           python3 scripts/validate-pull-request.py \
             --release-line "origin/${{ github.event.repository.default_branch }}"
-
-  branch-name:
-    name: Check the branch name
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Require a conventional prefix
-        env:
-          BRANCH: ${{ github.head_ref }}
-        run: scripts/check-branch-name.sh

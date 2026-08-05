@@ -133,6 +133,17 @@ Rules take three settings: `severity`, and the two that say which files it appli
 | `only-in` | every file | Glob patterns the rule is *about*. Empty means every file. |
 | `allow-in` | nothing | Glob patterns exempted, including inside `only-in`. |
 
+`git/branch-naming` is repository policy rather than file policy. It also takes `types`, which replaces
+the conventional branch types, and `allow`, a list of whole-branch glob patterns for automation:
+
+```yaml
+rules:
+  git/branch-naming:
+    severity: error
+    types: [feat, fix, docs]
+    allow: [dependabot/**]
+```
+
 **One rule takes only `severity`, and not `off`.** `policy/unused-suppression` reports the
 suppression comments that silence nothing, so a configuration able to retire it could retire every
 exemption it audits. `severity: off`, `only-in` and `allow-in` are rejected on it as invalid

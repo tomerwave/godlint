@@ -1,6 +1,6 @@
 # Rule reference
 
-Fifty rules are implemented. Every one has an identifier of the form `family/name`, which is
+Fifty-one rules are implemented. Every one has an identifier of the form `family/name`, which is
 what a configuration entry and a suppression directive both name. [The rule roadmap](rule-roadmap.md)
 records the families still to come, and the reasoning behind each threshold `recommended@1` sets.
 [Language support](#language-support) records which languages each rule covers.
@@ -11,63 +11,63 @@ A rule sees a *dialect* rather than a language: TypeScript is read by the JavaSc
 rule covers one of them without the other. Three dialects are analysed, and `✓` means the rule is
 enforced there.
 
-| Rule | JS/TS | Python | Rust | Workflow |
-| --- | --- | --- | --- | --- |
-| `architecture/dependency-boundary` | ✓ | ✓ | ✓ | — |
-| `architecture/filename-case` | ✓ | ✓ | ✓ | — |
-| `architecture/module-independence` | ✓ | ✓ | ✓ | — |
-| `architecture/no-internal-import` | ✓ | ✓ | — | — |
-| `architecture/restricted-call` | ✓ | ✓ | ✓ | — |
-| `architecture/restricted-import` | ✓ | ✓ | ✓ | — |
-| `ci/bot-conditions` | — | — | — | ✓ |
-| `ci/explicit-workflow-permissions` | — | — | — | ✓ |
-| `ci/hardcoded-container-credentials` | — | — | — | ✓ |
-| `ci/no-comments` | — | — | — | ✓ |
-| `ci/no-inline-script` | — | — | — | ✓ |
-| `ci/no-monolithic-job` | — | — | — | ✓ |
-| `ci/no-silenced-failure` | — | — | — | ✓ |
-| `ci/overprovisioned-secrets` | — | — | — | ✓ |
-| `ci/pin-third-party-actions` | — | — | — | ✓ |
-| `ci/secrets-inherit` | — | — | — | ✓ |
-| `ci/stale-action-refs` | — | — | — | ✓ |
-| `ci/template-injection` | — | — | — | ✓ |
-| `ci/unredacted-secrets` | — | — | — | ✓ |
-| `logging/no-production-log` | ✓ | ✓ | ✓ | — |
-| `maintainability/cognitive-complexity` | ✓ | ✓ | ✓ | — |
-| `maintainability/condition-complexity` | ✓ | ✓ | ✓ | — |
-| `maintainability/decision-complexity` | ✓ | ✓ | ✓ | — |
-| `maintainability/empty-function` | ✓ | ✓ | ✓ | — |
-| `maintainability/file-size` | ✓ | ✓ | ✓ | — |
-| `maintainability/function-nesting` | ✓ | ✓ | ✓ | — |
-| `maintainability/function-size` | ✓ | ✓ | ✓ | — |
-| `maintainability/function-statements` | ✓ | ✓ | ✓ | — |
-| `maintainability/parameter-count` | ✓ | ✓ | ✓ | — |
-| `maintainability/return-count` | ✓ | ✓ | ✓ | — |
-| `policy/accountable-suppression` | ✓ | ✓ | ✓ | — |
-| `policy/todo-requires-reference` | ✓ | ✓ | ✓ | — |
-| `policy/unused-suppression` | ✓ | ✓ | ✓ | — |
-| `reliability/empty-error-handler` | ✓ | ✓ | — | — |
-| `reliability/explicit-timer-delay` | ✓ | — | — | — |
-| `security/direct-environment-read` | ✓ | ✓ | ✓ | — |
-| `security/forbidden-dependency` | ✓ | ✓ | ✓ | — |
-| `security/no-dynamic-execution` | ✓ | ✓ | — | — |
-| `security/no-insecure-random` | ✓ | ✓ | ✓ | — |
-| `security/no-shell-command` | ✓ | ✓ | ✓ | — |
-| `security/no-weak-hash` | ✓ | ✓ | ✓ | — |
-| `style/no-comments` | ✓ | ✓ | ✓ | — |
-| `testing/assertion-required` | ✓ | ✓ | ✓ | — |
-| `testing/no-empty-test` | ✓ | ✓ | ✓ | — |
-| `testing/no-focused-test` | ✓ | — | — | — |
-| `testing/no-network-in-unit-test` | ✓ | ✓ | ✓ | — |
-| `testing/no-randomness-without-seed` | ✓ | ✓ | ✓ | — |
-| `testing/no-skipped-test` | ✓ | ✓ | ✓ | — |
-| `testing/no-sleep-in-test` | ✓ | ✓ | ✓ | — |
-| `testing/no-test-helper-in-production` | ✓ | ✓ | ✓ | — |
+| Rule | JS/TS | Python | Rust | Workflow | Repository |
+| --- | --- | --- | --- | --- | --- |
+| `architecture/dependency-boundary` | ✓ | ✓ | ✓ | — | — |
+| `architecture/filename-case` | ✓ | ✓ | ✓ | — | — |
+| `architecture/module-independence` | ✓ | ✓ | ✓ | — | — |
+| `architecture/no-internal-import` | ✓ | ✓ | — | — | — |
+| `architecture/restricted-call` | ✓ | ✓ | ✓ | — | — |
+| `architecture/restricted-import` | ✓ | ✓ | ✓ | — | — |
+| `ci/bot-conditions` | — | — | — | ✓ | — |
+| `ci/explicit-workflow-permissions` | — | — | — | ✓ | — |
+| `ci/hardcoded-container-credentials` | — | — | — | ✓ | — |
+| `ci/no-comments` | — | — | — | ✓ | — |
+| `ci/no-inline-script` | — | — | — | ✓ | — |
+| `ci/no-monolithic-job` | — | — | — | ✓ | — |
+| `ci/no-silenced-failure` | — | — | — | ✓ | — |
+| `ci/overprovisioned-secrets` | — | — | — | ✓ | — |
+| `ci/pin-third-party-actions` | — | — | — | ✓ | — |
+| `ci/secrets-inherit` | — | — | — | ✓ | — |
+| `ci/stale-action-refs` | — | — | — | ✓ | — |
+| `ci/template-injection` | — | — | — | ✓ | — |
+| `ci/unredacted-secrets` | — | — | — | ✓ | — |
+| `git/branch-naming` | — | — | — | — | ✓ |
+| `logging/no-production-log` | ✓ | ✓ | ✓ | — | — |
+| `maintainability/cognitive-complexity` | ✓ | ✓ | ✓ | — | — |
+| `maintainability/condition-complexity` | ✓ | ✓ | ✓ | — | — |
+| `maintainability/decision-complexity` | ✓ | ✓ | ✓ | — | — |
+| `maintainability/empty-function` | ✓ | ✓ | ✓ | — | — |
+| `maintainability/file-size` | ✓ | ✓ | ✓ | — | — |
+| `maintainability/function-nesting` | ✓ | ✓ | ✓ | — | — |
+| `maintainability/function-size` | ✓ | ✓ | ✓ | — | — |
+| `maintainability/function-statements` | ✓ | ✓ | ✓ | — | — |
+| `maintainability/parameter-count` | ✓ | ✓ | ✓ | — | — |
+| `maintainability/return-count` | ✓ | ✓ | ✓ | — | — |
+| `policy/accountable-suppression` | ✓ | ✓ | ✓ | — | — |
+| `policy/todo-requires-reference` | ✓ | ✓ | ✓ | — | — |
+| `policy/unused-suppression` | ✓ | ✓ | ✓ | — | — |
+| `reliability/empty-error-handler` | ✓ | ✓ | — | — | — |
+| `reliability/explicit-timer-delay` | ✓ | — | — | — | — |
+| `security/direct-environment-read` | ✓ | ✓ | ✓ | — | — |
+| `security/forbidden-dependency` | ✓ | ✓ | ✓ | — | — |
+| `security/no-dynamic-execution` | ✓ | ✓ | — | — | — |
+| `security/no-insecure-random` | ✓ | ✓ | ✓ | — | — |
+| `security/no-shell-command` | ✓ | ✓ | ✓ | — | — |
+| `security/no-weak-hash` | ✓ | ✓ | ✓ | — | — |
+| `style/no-comments` | ✓ | ✓ | ✓ | — | — |
+| `testing/assertion-required` | ✓ | ✓ | ✓ | — | — |
+| `testing/no-empty-test` | ✓ | ✓ | ✓ | — | — |
+| `testing/no-focused-test` | ✓ | — | — | — | — |
+| `testing/no-network-in-unit-test` | ✓ | ✓ | ✓ | — | — |
+| `testing/no-randomness-without-seed` | ✓ | ✓ | ✓ | — | — |
+| `testing/no-skipped-test` | ✓ | ✓ | ✓ | — | — |
+| `testing/no-sleep-in-test` | ✓ | ✓ | ✓ | — | — |
+| `testing/no-test-helper-in-production` | ✓ | ✓ | ✓ | — | — |
 
-The `Workflow` column is GitHub Actions YAML rather than a programming language, and it is in the same
-table because it answers the same question: *does this rule read that?* No rule reads both. A workflow
-has no functions and no imports, and source has no jobs and no `uses:` references, so every source rule
-is absent from the `Workflow` column and every `ci/` rule is absent from the other three.
+The `Workflow` and `Repository` columns are subjects rather than programming languages. A workflow has
+no functions or imports; repository facts have neither source nor workflow syntax. Every rule reads one
+subject, so a `ci/` rule reads workflows and a `git/` rule reads repository metadata.
 `a_rule_reads_workflows_or_source_and_never_both` in `crates/godlint-core/tests/languages.rs` holds the
 two apart.
 
@@ -642,6 +642,19 @@ members' dependencies on each other, not everyone else's.
 TypeScript, and `snake_case` for Rust and Python. A framework route filename beginning with `[name]`,
 `[...name]` or `[[...name]]` is exempt, because Astro and Next.js require those dynamic-route segments
 as written; malformed bracketed names remain subject to the configured convention.
+
+## Git
+
+| Rule | What it reports |
+| --- | --- |
+| `git/branch-naming` | A branch that lacks an allowed type and lowercase description |
+
+`git/branch-naming` uses `GITHUB_HEAD_REF` for pull requests and otherwise asks the current repository
+for its checked-out branch. Detached checkouts and the repository's default branch are silent. The default
+types are `feat`, `fix`, `perf`, `docs`, `chore`, `refactor`, `style`, `build`, `revert`, `test`, `ci` and
+`release`; a description must start lowercase or numeric and may contain lowercase letters, numbers,
+periods, underscores, hyphens and further slashes. `types` replaces that list, while `allow` accepts
+glob patterns for automation branches such as `dependabot/**`.
 
 ## What a function means
 

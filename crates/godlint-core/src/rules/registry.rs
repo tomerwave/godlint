@@ -3,10 +3,11 @@ use crate::{
     rules::{
         Languages, Rule, accountable_suppression::AccountableSuppression,
         assertion_required::AssertionRequired, bot_conditions::BotConditions,
-        cognitive_complexity::CognitiveComplexity, condition_complexity::ConditionComplexity,
-        decision_complexity::DecisionComplexity, dependency_boundary::DependencyBoundary,
-        direct_environment_read::DirectEnvironmentRead, empty_error_handler::EmptyErrorHandler,
-        empty_function::EmptyFunction, explicit_timer_delay::ExplicitTimerDelay,
+        branch_naming::BranchNaming, cognitive_complexity::CognitiveComplexity,
+        condition_complexity::ConditionComplexity, decision_complexity::DecisionComplexity,
+        dependency_boundary::DependencyBoundary, direct_environment_read::DirectEnvironmentRead,
+        empty_error_handler::EmptyErrorHandler, empty_function::EmptyFunction,
+        explicit_timer_delay::ExplicitTimerDelay,
         explicit_workflow_permissions::ExplicitWorkflowPermissions, file_size::FileSize,
         filename_case::FilenameCase, forbidden_dependency::ForbiddenDependency,
         function_nesting::FunctionNesting, function_size::FunctionSize,
@@ -97,6 +98,7 @@ registrations! {
     ForbiddenDependency => forbidden_dependency, true;
     ModuleIndependence => module_independence, true;
     FilenameCase => filename_case, true;
+    BranchNaming => branch_naming, false;
     ExplicitWorkflowPermissions => explicit_workflow_permissions, true;
     PinThirdPartyActions => pin_third_party_actions, true;
     StaleActionRefs => stale_action_refs, true;

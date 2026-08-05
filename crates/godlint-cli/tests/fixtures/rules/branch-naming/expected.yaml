@@ -1,0 +1,3 @@
+exit-code: 1
+stdout: |
+  <branch>:1:1: error[git/branch-naming] Feat/Uppercase is not a permitted branch name; use one of feat, fix, perf, docs, chore, refactor, style, build, revert, test, ci, release followed by a lowercase slug.

@@ -179,12 +179,9 @@ reports that it changes no Rust source and passes. Both uses of the commit-pinne
 
 The change-scoped checks need the release line, so shallow history is not enough.
 
-A branch name is the first thing a reader of the history sees, so it carries the kind of change.
-GitHub's own branch-name rule is not available on this plan, so the check lives here: it cannot refuse
-the push, but it does refuse the merge. `release` is not a Conventional Commits type. It is allowed
-because a version bump is not honestly any of them — `chore/` says it is housekeeping when it is the
-one branch that publishes — and because naming it plainly is worth more in the history than
-conforming.
+A branch name is the first thing a reader of the history sees, so `git/branch-naming` runs inside the
+normal Godlint quality gate. It cannot refuse the push, but it does refuse the merge. `release` is not a
+Conventional Commits type; it is allowed because a version bump is not honestly any of the others.
 
 ### Real-world corpus (`real-world.yml`)
 

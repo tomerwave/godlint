@@ -3,7 +3,8 @@ use std::path::PathBuf;
 use godlint_core::{
     analyzers::analyze,
     date::Date,
-    rules::{Rule, Violation, evaluate, unused_suppression::UnusedSuppression},
+    repository::RepositoryFacts,
+    rules::{Evaluation, Rule, Violation, evaluate, unused_suppression::UnusedSuppression},
     source::SourceFile,
 };
 
@@ -23,10 +24,18 @@ fn findings(
     .unwrap_or_else(|error| panic!("reads configuration: {error}"));
     let today = Date::parse(TODAY).unwrap_or_else(|error| panic!("parses {TODAY}: {error}"));
 
-    evaluate(&[facts], &[], &config, today)
-        .into_iter()
-        .map(|finding| finding.violation)
-        .collect()
+    evaluate(
+        Evaluation {
+            facts: &[facts],
+            workflows: &[],
+            repository: &RepositoryFacts::default(),
+        },
+        &config,
+        today,
+    )
+    .into_iter()
+    .map(|finding| finding.violation)
+    .collect()
 }
 
 #[test]
@@ -94,10 +103,18 @@ fn findings_without_the_rule_configured(source: &str) -> Vec<Violation> {
     .unwrap_or_else(|error| panic!("reads configuration: {error}"));
     let today = Date::parse(TODAY).unwrap_or_else(|error| panic!("parses {TODAY}: {error}"));
 
-    evaluate(&[facts], &[], &config, today)
-        .into_iter()
-        .map(|finding| finding.violation)
-        .collect()
+    evaluate(
+        Evaluation {
+            facts: &[facts],
+            workflows: &[],
+            repository: &RepositoryFacts::default(),
+        },
+        &config,
+        today,
+    )
+    .into_iter()
+    .map(|finding| finding.violation)
+    .collect()
 }
 
 #[test]
@@ -126,7 +143,15 @@ fn a_directive_naming_both_a_dead_rule_and_an_unsuppressible_one_is_reported_twi
     )
     .unwrap_or_else(|error| panic!("reads configuration: {error}"));
     let today = Date::parse(TODAY).unwrap_or_else(|error| panic!("parses {TODAY}: {error}"));
-    let reported = evaluate(&[facts], &[], &config, today);
+    let reported = evaluate(
+        Evaluation {
+            facts: &[facts],
+            workflows: &[],
+            repository: &RepositoryFacts::default(),
+        },
+        &config,
+        today,
+    );
 
     assert_eq!(
         reported.len(),

@@ -99,6 +99,8 @@ fixture_tests! {
     dependency_boundary => "dependency-boundary",
     filename_case => "filename-case",
     filename_case_clean => "filename-case-clean",
+    branch_naming => "branch-naming",
+    branch_naming_clean => "branch-naming-clean",
     forbidden_dependency => "forbidden-dependency",
     forbidden_dependency_clean => "forbidden-dependency-clean",
     dependency_boundary_clean => "dependency-boundary-clean",
@@ -242,9 +244,15 @@ fn expected_result(fixture: &Path) -> ExpectedResult {
 }
 
 fn run(fixture: &Path) -> Output {
-    Command::new(env!("CARGO_BIN_EXE_godlint"))
-        .current_dir(fixture)
-        .args(["check", "."])
+    let mut command = Command::new(env!("CARGO_BIN_EXE_godlint"));
+    command.current_dir(fixture).args(["check", "."]);
+    command.env_remove("GITHUB_HEAD_REF");
+
+    if let Ok(branch) = fs::read_to_string(fixture.join("branch.txt")) {
+        command.env("GITHUB_HEAD_REF", branch.trim());
+    }
+
+    command
         .output()
         .unwrap_or_else(|error| panic!("runs godlint: {error}"))
 }
