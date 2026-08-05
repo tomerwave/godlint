@@ -7,7 +7,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 change the `godlint-core` API; the command line and the configuration schema are what the version
 speaks about.
 
-## [Unreleased]
+## [0.6.2] - 2026-08-05
 
 ### Fixed
 
