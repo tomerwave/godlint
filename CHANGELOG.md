@@ -7,6 +7,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 change the `godlint-core` API; the command line and the configuration schema are what the version
 speaks about.
 
+## [0.6.1] - 2026-08-05
+
+### Fixed
+
+- `architecture/filename-case` now ignores framework-required dynamic route filenames beginning with
+  `[name]`, `[...name]` or `[[...name]]`. Astro and Next.js use those segments as routing syntax, so
+  renaming them changes the route rather than correcting a convention. Malformed bracketed names remain
+  findings.
+
 ## [0.6.0] - 2026-08-04
 
 ### Added

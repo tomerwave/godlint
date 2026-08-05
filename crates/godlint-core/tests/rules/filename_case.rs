@@ -132,6 +132,34 @@ fn a_compound_extension_is_not_part_of_the_name() {
 }
 
 #[test]
+fn framework_dynamic_route_segments_are_exempt_from_filename_conventions() {
+    for path in [
+        "src/pages/[slug].ts",
+        "src/pages/[...slug].ts",
+        "src/pages/[[...slug]].ts",
+        "src/pages/[...slug].md.ts",
+    ] {
+        assert!(
+            violations(path, ENABLED).is_empty(),
+            "{path} is a framework-required route filename"
+        );
+    }
+
+    for path in [
+        "src/pages/[].ts",
+        "src/pages/[...].ts",
+        "src/pages/[[slug]].ts",
+        "src/pages/[slug]value.ts",
+    ] {
+        assert_eq!(
+            violations(path, ENABLED).len(),
+            1,
+            "{path} is not a framework route filename"
+        );
+    }
+}
+
+#[test]
 fn an_allowed_path_is_exempt() {
     let configuration = concat!(
         "version: 1\n",
