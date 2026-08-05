@@ -22,7 +22,7 @@ impl Rule for FilenameCase {
 
 impl FileRule for FilenameCase {
     fn check(source: &SourceFile, configuration: &Self::Configuration) -> Option<Violation> {
-        if catalogue::matches(source, &configuration.allow) {
+        if catalogue::matches(source, &configuration.allow) || is_framework_route_file(source) {
             return None;
         }
 
@@ -72,6 +72,28 @@ fn stem(source: &SourceFile) -> Option<String> {
 
 fn file_name(source: &SourceFile) -> &str {
     module_path::last_segment(source.path_text(), '/')
+}
+
+fn is_framework_route_file(source: &SourceFile) -> bool {
+    let name = file_name(source);
+
+    dynamic_route_prefix(name, "[[...", "]]")
+        || dynamic_route_prefix(name, "[...", "]")
+        || dynamic_route_prefix(name, "[", "]")
+}
+
+fn dynamic_route_prefix(name: &str, prefix: &str, close: &str) -> bool {
+    name.strip_prefix(prefix)
+        .and_then(|rest| {
+            rest.find(close)
+                .map(|index| (&rest[..index], &rest[index + close.len()..]))
+        })
+        .is_some_and(|(parameter, suffix)| {
+            !parameter.is_empty()
+                && !parameter.starts_with("...")
+                && !parameter.contains(['[', ']'])
+                && suffix.starts_with('.')
+        })
 }
 
 fn follows(name: &str, case: NamingCase) -> bool {

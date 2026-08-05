@@ -639,7 +639,9 @@ set importing a member, and a member importing anything the set does not name. T
 members' dependencies on each other, not everyone else's.
 
 `filename-case` expects `PascalCase` for `.tsx` and `.jsx`, `kebab-case` for other JavaScript and
-TypeScript, and `snake_case` for Rust and Python.
+TypeScript, and `snake_case` for Rust and Python. A framework route filename beginning with `[name]`,
+`[...name]` or `[[...name]]` is exempt, because Astro and Next.js require those dynamic-route segments
+as written; malformed bracketed names remain subject to the configured convention.
 
 ## What a function means
 
