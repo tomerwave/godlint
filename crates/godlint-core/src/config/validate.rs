@@ -21,6 +21,7 @@ impl Config {
             Self::validate_module_independence_rule,
             Self::validate_forbidden_dependency_rule,
             Self::validate_filename_case_rule,
+            Self::validate_branch_naming_rule,
             Self::validate_no_production_log_rule,
             Self::validate_empty_function_rule,
             Self::validate_direct_environment_read_rule,
@@ -206,6 +207,18 @@ impl Config {
             }),
             None => Ok(()),
         }
+    }
+
+    fn validate_branch_naming_rule(&self) -> Result<(), ConfigError> {
+        let Some(rule) = &self.rules.branch_naming else {
+            return Ok(());
+        };
+
+        if rule.types.is_empty() || any_blank(&rule.types) || any_blank(&rule.allow) {
+            return Err(ConfigError::InvalidBranchNaming);
+        }
+
+        Ok(())
     }
 
     fn validate_no_production_log_rule(&self) -> Result<(), ConfigError> {

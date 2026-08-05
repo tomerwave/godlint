@@ -21,6 +21,7 @@ examine_globs = [
     "crates/godlint-core/src/facts.rs",
     "crates/godlint-core/src/facts/**/*.rs",
     "crates/godlint-core/src/rules/**/*.rs",
+    "crates/godlint-cli/src/config.rs",
     "crates/godlint-core/src/suppression.rs",
 ]
 

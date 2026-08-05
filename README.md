@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/godlint-icon.svg" width="168" alt="Godlint logo: code brackets and a V mark inside a broken circle">
+  <img src="assets/godlint-icon.svg" width="168" alt="Godlint logo: code brackets and a check mark inside a circular mark">
 </p>
 
 <h1 align="center">Godlint</h1>

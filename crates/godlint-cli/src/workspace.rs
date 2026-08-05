@@ -3,15 +3,21 @@ use std::path::{Path, PathBuf};
 use godlint_core::{
     config::Config,
     paths,
+    repository::RepositoryFacts,
     scan::{ScanReport, scan},
+    source::TextFile,
 };
 
 use crate::report;
+
+#[path = "config.rs"]
+mod branch;
 
 const CONFIG_NAME: &str = "godlint.yaml";
 
 pub struct Workspace {
     pub config: Config,
+    pub repository: RepositoryFacts,
     root: PathBuf,
     scan_paths: Vec<PathBuf>,
 }
@@ -29,6 +35,7 @@ impl Workspace {
 
         Ok(Self {
             config,
+            repository: repository(&located.root)?,
             root: located.root,
             scan_paths: located.scan_paths,
         })
@@ -131,4 +138,15 @@ fn scan_path(root: &Path, path: &Path) -> Result<PathBuf, String> {
     }
 
     Ok(path.to_path_buf())
+}
+
+fn repository(root: &Path) -> Result<RepositoryFacts, String> {
+    let branch = branch::resolve(root)
+        .map(|name| {
+            TextFile::new(PathBuf::from("<branch>"), name)
+                .map_err(|error| format!("Unable to capture the repository branch: {error}"))
+        })
+        .transpose()?;
+
+    Ok(RepositoryFacts::new(branch))
 }

@@ -66,6 +66,20 @@ pub struct FilenameCaseRule {
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
+pub struct BranchNamingRule {
+    pub severity: Severity,
+    #[serde(default, rename = "only-in")]
+    pub only_in: Vec<String>,
+    #[serde(default, rename = "allow-in")]
+    pub allow_in: Vec<String>,
+    #[serde(default = "default_branch_types")]
+    pub types: Vec<String>,
+    #[serde(default)]
+    pub allow: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct NamingScope {
     pub paths: Vec<String>,
     pub case: NamingCase,
@@ -479,6 +493,23 @@ pub(crate) fn default_trusted_owners() -> Vec<String> {
     vec!["actions".into(), "github".into()]
 }
 
+pub(crate) fn default_branch_types() -> Vec<String> {
+    vec![
+        "feat".into(),
+        "fix".into(),
+        "perf".into(),
+        "docs".into(),
+        "chore".into(),
+        "refactor".into(),
+        "style".into(),
+        "build".into(),
+        "revert".into(),
+        "test".into(),
+        "ci".into(),
+        "release".into(),
+    ]
+}
+
 pub(crate) fn default_bots() -> Vec<String> {
     vec![
         "dependabot[bot]".into(),
@@ -499,6 +530,7 @@ scoped! {
     AccountableSuppressionRule,
     AssertionRequiredRule,
     BotConditionsRule,
+    BranchNamingRule,
     DependencyBoundaryRule,
     DirectEnvironmentReadRule,
     EmptyFunctionRule,

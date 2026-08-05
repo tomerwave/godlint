@@ -23,6 +23,7 @@ pub enum Dialect {
     Python,
     Rust,
     Workflow,
+    Repository,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -117,7 +118,13 @@ fn names_a_workflow_directory(text: &str) -> bool {
 }
 
 impl Dialect {
-    pub const EVERY: [Self; 4] = [Self::JavaScript, Self::Python, Self::Rust, Self::Workflow];
+    pub const EVERY: [Self; 5] = [
+        Self::JavaScript,
+        Self::Python,
+        Self::Rust,
+        Self::Workflow,
+        Self::Repository,
+    ];
 
     pub fn label(self) -> &'static str {
         match self {
@@ -125,6 +132,7 @@ impl Dialect {
             Self::Python => "Python",
             Self::Rust => "Rust",
             Self::Workflow => "Workflow",
+            Self::Repository => "Repository",
         }
     }
 }

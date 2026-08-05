@@ -63,6 +63,23 @@ fn accepts_the_empty_function_rule() {
 }
 
 #[test]
+fn accepts_branch_naming_customization() {
+    let result = load(
+        "version: 1\nrules:\n  git/branch-naming:\n    severity: error\n    types: [feature]\n    allow: [dependabot/**]\n",
+    );
+
+    assert!(result.is_ok());
+}
+
+#[test]
+fn rejects_an_empty_branch_naming_type_list() {
+    let result =
+        load("version: 1\nrules:\n  git/branch-naming:\n    severity: error\n    types: []\n");
+
+    assert!(matches!(result, Err(ConfigError::InvalidBranchNaming)));
+}
+
+#[test]
 fn accepts_the_unused_suppression_rule() {
     let configuration = "version: 1\nrules:\n  policy/unused-suppression:\n    severity: error\n";
 

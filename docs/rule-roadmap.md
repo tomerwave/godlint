@@ -448,6 +448,7 @@ each appears in the list.
 | `architecture/no-cycle` | Planned | Repository graph | High | Report the complete cycle edge chain |
 | `security/forbidden-dependency` | Shipped | Package/import mapping | High | Block dependencies by explicit policy |
 | `architecture/filename-case` | Shipped | Repository path fact | Medium | Support scoped case conventions and generated-file exceptions |
+| `git/branch-naming` | Shipped | Repository branch fact | High | `types`, automation `allow` globs |
 
 `architecture/filename-case` reads no syntax at all — a path is the whole input — which makes it
 the one rule that behaves identically in every language.

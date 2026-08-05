@@ -5,6 +5,7 @@ use crate::{
     config::{Config, Scope, Scoped, Severity},
     date::Date,
     facts::{CommentFact, FunctionFact},
+    repository::RepositoryFacts,
     source::{SourceFile, SourceRange, TextFile},
     suppression::{self, Suppression},
 };
@@ -12,6 +13,7 @@ use crate::{
 pub mod accountable_suppression;
 pub mod assertion_required;
 pub mod bot_conditions;
+pub mod branch_naming;
 mod catalogue;
 pub mod cognitive_complexity;
 pub mod condition_complexity;
@@ -117,6 +119,12 @@ impl Finding {
     pub fn message(&self) -> String {
         self.violation.to_string()
     }
+}
+
+pub struct Evaluation<'a> {
+    pub facts: &'a [SourceFacts],
+    pub workflows: &'a [WorkflowFacts],
+    pub repository: &'a RepositoryFacts,
 }
 
 pub trait Rule {
@@ -375,6 +383,8 @@ type Evaluator = fn(&[SourceFacts], &Config) -> Vec<Finding>;
 
 type WorkflowEvaluator = fn(&[WorkflowFacts], &Config) -> Vec<Finding>;
 
+type RepositoryEvaluator = fn(&RepositoryFacts, &Config) -> Vec<Finding>;
+
 const WORKFLOW_EVALUATORS: &[WorkflowEvaluator] = &[
     bot_conditions::evaluate,
     overprovisioned_secrets::evaluate,
@@ -390,6 +400,8 @@ const WORKFLOW_EVALUATORS: &[WorkflowEvaluator] = &[
     no_silenced_failure::evaluate,
     unredacted_secrets::evaluate,
 ];
+
+const REPOSITORY_EVALUATORS: &[RepositoryEvaluator] = &[branch_naming::evaluate];
 
 const EVALUATORS: &[Evaluator] = &[
     function_size::evaluate,
@@ -429,21 +441,20 @@ const EVALUATORS: &[Evaluator] = &[
     filename_case::evaluate,
 ];
 
-pub fn evaluate(
-    facts: &[SourceFacts],
-    workflows: &[WorkflowFacts],
-    config: &Config,
-    today: Date,
-) -> Vec<Finding> {
-    let suppressions = suppression::collect(facts);
+pub fn evaluate(input: Evaluation<'_>, config: &Config, today: Date) -> Vec<Finding> {
+    let suppressions = suppression::collect(input.facts);
     let mut findings = Vec::new();
 
     for evaluate_rule in EVALUATORS {
-        findings.extend(evaluate_rule(facts, config));
+        findings.extend(evaluate_rule(input.facts, config));
     }
 
     for evaluate_rule in WORKFLOW_EVALUATORS {
-        findings.extend(evaluate_rule(workflows, config));
+        findings.extend(evaluate_rule(input.workflows, config));
+    }
+
+    for evaluate_rule in REPOSITORY_EVALUATORS {
+        findings.extend(evaluate_rule(input.repository, config));
     }
 
     let unused_suppressions = unused_suppression::evaluate(&suppressions, &findings, config);

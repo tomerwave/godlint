@@ -139,6 +139,10 @@ pub enum Violation {
         name: String,
         case: String,
     },
+    InvalidBranchName {
+        name: String,
+        types: Vec<String>,
+    },
 }
 
 impl Violation {
@@ -356,6 +360,7 @@ impl fmt::Display for Violation {
             Self::DirectEnvironmentRead { target } => environment(formatter, target),
             Self::TimerWithoutDelay { callee } => write!(formatter, "{callee} {TIMER_DELAY}"),
             Self::FilenameCase { name, case } => filename_case(formatter, name, case),
+            Self::InvalidBranchName { name, types } => branch_name(formatter, name, types),
             Self::ForbiddenDependency { package } => forbidden(formatter, package),
             Self::CrossedBoundary { from, to } => crossed_boundary(formatter, from, to),
             Self::BrokeIndependence { set, from, to } => independent(formatter, set, from, to),
@@ -433,6 +438,18 @@ fn overprovisioned_secrets(formatter: &mut fmt::Formatter<'_>, setting: &str) ->
 
 fn filename_case(formatter: &mut fmt::Formatter<'_>, name: &str, case: &str) -> fmt::Result {
     write!(formatter, "{name} is not {case}; rename the file to match.")
+}
+
+fn branch_name(formatter: &mut fmt::Formatter<'_>, name: &str, types: &[String]) -> fmt::Result {
+    write!(
+        formatter,
+        "{name} is not a permitted branch name; use one of {} followed by a lowercase slug.",
+        types
+            .iter()
+            .map(String::as_str)
+            .collect::<Vec<_>>()
+            .join(", ")
+    )
 }
 
 fn forbidden(formatter: &mut fmt::Formatter<'_>, package: &str) -> fmt::Result {

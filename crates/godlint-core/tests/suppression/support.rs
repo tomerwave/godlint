@@ -1,8 +1,15 @@
 use std::path::PathBuf;
 
 use godlint_core::{
-    analyzers::SourceFacts, analyzers::analyze, config::Config, date::Date, rules::Finding,
-    rules::evaluate, source::SourceFile, suppression::Suppression, suppression::collect,
+    analyzers::SourceFacts,
+    analyzers::analyze,
+    config::Config,
+    date::Date,
+    repository::RepositoryFacts,
+    rules::{Evaluation, Finding, evaluate},
+    source::SourceFile,
+    suppression::Suppression,
+    suppression::collect,
 };
 
 pub(super) fn facts(path: &str, source: &str) -> SourceFacts {
@@ -27,7 +34,15 @@ pub(super) fn only(path: &str, source: &str) -> Suppression {
 pub(super) fn findings_in(path: &str, source: &str, body: &str) -> Vec<Finding> {
     let facts = facts(path, source);
 
-    evaluate(std::slice::from_ref(&facts), &[], &config(body), today())
+    evaluate(
+        Evaluation {
+            facts: std::slice::from_ref(&facts),
+            workflows: &[],
+            repository: &RepositoryFacts::default(),
+        },
+        &config(body),
+        today(),
+    )
 }
 
 pub(super) fn config(body: &str) -> Config {
@@ -37,10 +52,18 @@ pub(super) fn config(body: &str) -> Config {
 pub(super) fn surviving(path: &str, source: &str, body: &str) -> Vec<(usize, usize)> {
     let facts = facts(path, source);
 
-    evaluate(std::slice::from_ref(&facts), &[], &config(body), today())
-        .iter()
-        .map(|finding| (finding.line, finding.column))
-        .collect()
+    evaluate(
+        Evaluation {
+            facts: std::slice::from_ref(&facts),
+            workflows: &[],
+            repository: &RepositoryFacts::default(),
+        },
+        &config(body),
+        today(),
+    )
+    .iter()
+    .map(|finding| (finding.line, finding.column))
+    .collect()
 }
 
 pub(super) fn across_files(
@@ -50,16 +73,24 @@ pub(super) fn across_files(
 ) -> Vec<(String, usize, usize)> {
     let facts = [facts(first.0, first.1), facts(second.0, second.1)];
 
-    evaluate(&facts, &[], &config(body), today())
-        .iter()
-        .map(|finding| {
-            (
-                finding.path.display().to_string(),
-                finding.line,
-                finding.column,
-            )
-        })
-        .collect()
+    evaluate(
+        Evaluation {
+            facts: &facts,
+            workflows: &[],
+            repository: &RepositoryFacts::default(),
+        },
+        &config(body),
+        today(),
+    )
+    .iter()
+    .map(|finding| {
+        (
+            finding.path.display().to_string(),
+            finding.line,
+            finding.column,
+        )
+    })
+    .collect()
 }
 
 pub(super) const EMPTY_FUNCTION: &str =

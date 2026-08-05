@@ -1,21 +1,22 @@
 use std::num::NonZeroU32;
 
 use crate::config::{
-    AccountableSuppressionRule, AssertionRequiredRule, BotConditionsRule, CognitiveComplexityRule,
-    ConditionComplexityRule, DecisionComplexityRule, DependencyBoundaryRule,
-    DirectEnvironmentReadRule, EmptyErrorHandlerRule, EmptyFunctionRule, ExplicitTimerDelayRule,
-    ExplicitWorkflowPermissionsRule, FilenameCaseRule, ForbiddenDependencyRule,
-    FunctionNestingRule, FunctionStatementsRule, HardcodedContainerCredentialsRule, LineLimitRule,
-    ModuleIndependenceRule, NoCommentsRule, NoDynamicExecutionRule, NoEmptyTestRule,
-    NoFocusedTestRule, NoInsecureRandomRule, NoInternalImportRule, NoMonolithicJobRule,
-    NoNetworkInUnitTestRule, NoProductionLogRule, NoRandomnessWithoutSeedRule, NoShellCommandRule,
-    NoSilencedFailureRule, NoSkippedTestRule, NoSleepInTestRule, NoTestHelperInProductionRule,
-    NoWeakHashRule, NoWorkflowCommentsRule, OverprovisionedSecretsRule, ParameterCountRule,
-    PinThirdPartyActionsRule, RestrictedCallRule, RestrictedImportRule, ReturnCountRule, Rules,
-    SecretsInheritRule, Severity, StaleActionRefsRule, TemplateInjectionRule,
-    TodoRequiresReferenceRule, UnredactedSecretsRule, UnusedSuppressionRule, default_bots,
-    default_configuration_paths, default_markers, default_reference_prefixes, default_test_helpers,
-    default_test_paths, default_trusted_owners,
+    AccountableSuppressionRule, AssertionRequiredRule, BotConditionsRule, BranchNamingRule,
+    CognitiveComplexityRule, ConditionComplexityRule, DecisionComplexityRule,
+    DependencyBoundaryRule, DirectEnvironmentReadRule, EmptyErrorHandlerRule, EmptyFunctionRule,
+    ExplicitTimerDelayRule, ExplicitWorkflowPermissionsRule, FilenameCaseRule,
+    ForbiddenDependencyRule, FunctionNestingRule, FunctionStatementsRule,
+    HardcodedContainerCredentialsRule, LineLimitRule, ModuleIndependenceRule, NoCommentsRule,
+    NoDynamicExecutionRule, NoEmptyTestRule, NoFocusedTestRule, NoInsecureRandomRule,
+    NoInternalImportRule, NoMonolithicJobRule, NoNetworkInUnitTestRule, NoProductionLogRule,
+    NoRandomnessWithoutSeedRule, NoShellCommandRule, NoSilencedFailureRule, NoSkippedTestRule,
+    NoSleepInTestRule, NoTestHelperInProductionRule, NoWeakHashRule, NoWorkflowCommentsRule,
+    OverprovisionedSecretsRule, ParameterCountRule, PinThirdPartyActionsRule, RestrictedCallRule,
+    RestrictedImportRule, ReturnCountRule, Rules, SecretsInheritRule, Severity,
+    StaleActionRefsRule, TemplateInjectionRule, TodoRequiresReferenceRule, UnredactedSecretsRule,
+    UnusedSuppressionRule, default_bots, default_branch_types, default_configuration_paths,
+    default_markers, default_reference_prefixes, default_test_helpers, default_test_paths,
+    default_trusted_owners,
 };
 
 pub const RECOMMENDED: &str = "recommended@1";
@@ -50,7 +51,18 @@ fn recommended(rules: &mut Rules) {
     reliability(rules);
     logging(rules);
     testing(rules);
+    git_policy(rules);
     continuous_integration(rules);
+}
+
+fn git_policy(rules: &mut Rules) {
+    rules.branch_naming.get_or_insert_with(|| BranchNamingRule {
+        severity: Severity::Error,
+        only_in: Vec::new(),
+        allow_in: Vec::new(),
+        types: default_branch_types(),
+        allow: Vec::new(),
+    });
 }
 
 fn continuous_integration(rules: &mut Rules) {

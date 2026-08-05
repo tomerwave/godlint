@@ -6,6 +6,9 @@ mod support;
 #[path = "rules/bot_conditions.rs"]
 mod bot_conditions;
 
+#[path = "rules/branch_naming.rs"]
+mod branch_naming;
+
 #[path = "rules/accountable_suppression.rs"]
 mod accountable_suppression;
 

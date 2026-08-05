@@ -7,6 +7,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 change the `godlint-core` API; the command line and the configuration schema are what the version
 speaks about.
 
+## [Unreleased]
+
+### Added
+
+- `git/branch-naming` checks pull-request branches through `GITHUB_HEAD_REF` and local checked-out
+  branches through Git. It replaces Godlint's bespoke branch-name script and separate pull-request job,
+  runs in `recommended@1`, and allows repositories to replace the accepted types or admit automation
+  branch patterns.
+
 ## [0.6.2] - 2026-08-05
 
 ### Fixed

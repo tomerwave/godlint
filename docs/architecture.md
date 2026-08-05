@@ -509,7 +509,7 @@ value tracking no fact model here provides.
 ## Configuration
 
 Every rule configuration implements `Scoped`, which is how `only-in` and `allow-in` reach
-all fifty without fifty implementations. `Rule::Configuration` requires the trait, so a
+all fifty-one without fifty-one implementations. `Rule::Configuration` requires the trait, so a
 new rule cannot be unscopable by omission — it will not compile until its configuration
 can answer which paths its rule applies to.
 
@@ -527,6 +527,11 @@ scope only removed findings, an excluded workflow would still supply half a cont
 and the finding would land on the file that was not excluded, caused by the file that was.
 A rule whose verdict depends on more than the file it reports in has to scope what it
 reads, not only what it says.
+
+Repository metadata is a third subject alongside source and workflows. The CLI resolves the branch from
+`GITHUB_HEAD_REF` before consulting the local Git checkout, then hands core a `RepositoryFacts` value.
+The rule sees only the resolved branch text, which keeps process and environment access out of core and
+makes the rule deterministic under a fixture.
 
 Two rules share `LineLimitRule` because `function-size` and `file-size` ask the same
 question of different ranges. The rules whose whole configuration is a severity and one

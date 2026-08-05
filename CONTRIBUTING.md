@@ -51,8 +51,7 @@ description — `feat/import-fact`. The accepted types are `feat`, `fix`, `perf`
 `refactor`, `test`, `build`, `ci`, `chore`, `revert` and `release`. The last is not a Conventional
 Commits type; it is accepted because a version bump is not honestly any of the others, and `release/0.3.0`
 says what the branch is for more clearly than `chore/` would. Further slashes are allowed. A required check
-enforces this; it cannot refuse the push, only the merge, because GitHub's own branch-name rule is not
-available on this repository's plan.
+Godlint enforces this in the normal quality gate; it cannot refuse the push, only the merge.
 
 Pick the template that matches the change by appending `?template=new-rule.md` or
 `?template=infrastructure.md` to the pull request URL: `new-rule` for adding or changing a rule,

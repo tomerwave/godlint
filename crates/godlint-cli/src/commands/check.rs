@@ -3,7 +3,7 @@ use std::process::ExitCode;
 use godlint_core::{
     config::Severity,
     date::Date,
-    rules::{Finding, evaluate},
+    rules::{Evaluation, Finding, evaluate},
     scan::ScanReport,
 };
 
@@ -41,7 +41,15 @@ fn run_check(arguments: &[String]) -> Result<ExitCode, String> {
     let workspace = Workspace::prepare(&paths)?;
     let report = workspace.scan()?;
     let today = Date::today().ok_or_else(|| "Unable to determine the current date.".to_owned())?;
-    let findings = evaluate(&report.facts, &report.workflows, &workspace.config, today);
+    let findings = evaluate(
+        Evaluation {
+            facts: &report.facts,
+            workflows: &report.workflows,
+            repository: &workspace.repository,
+        },
+        &workspace.config,
+        today,
+    );
 
     Ok(report_outcome(
         format,

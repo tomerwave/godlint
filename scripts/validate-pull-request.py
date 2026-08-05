@@ -60,6 +60,7 @@ UNMUTATED = {
     "crates/godlint-core/src/config/rules.rs": "#245: configuration parsing",
     "crates/godlint-core/src/config/validate.rs": "#245: configuration validation",
     "crates/godlint-core/src/config/error.rs": "#245: shapes the message a rejected configuration prints",
+    "crates/godlint-core/src/repository.rs": "holds repository metadata; the rule and CLI fixtures exercise its only state",
     "crates/godlint-cli/src/report.rs": "#245: decides the JSON, SARIF and annotation shapes three gates parse",
     "crates/godlint-cli/src/workspace.rs": "#245: holds the message the released-agreement gate greps for",
     "crates/godlint-cli/src/commands/check.rs": "#245: decides the exit code CI branches on",
@@ -241,7 +242,7 @@ ANALYSED = "✓"
 
 # The columns the matrix must carry, in order, so that no other table in the document can
 # be read as the matrix.
-DIALECT_COLUMNS = ("JS/TS", "Python", "Rust", "Workflow")
+DIALECT_COLUMNS = ("JS/TS", "Python", "Rust", "Workflow", "Repository")
 
 REPORTED = re.compile(r"^\s*(\S+?):\d+:\d+: \w+\[([a-z-]+/[a-z-]+)\]")
 
@@ -287,7 +288,7 @@ def reported_dialects() -> dict[str, set[str]]:
                 continue
 
             path, identifier = match.groups()
-            dialect = DIALECTS.get(path.rsplit(".", 1)[-1])
+            dialect = "Repository" if path == "<branch>" else DIALECTS.get(path.rsplit(".", 1)[-1])
             if dialect is not None:
                 evidence.setdefault(identifier, set()).add(dialect)
 

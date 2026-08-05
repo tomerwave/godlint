@@ -52,6 +52,7 @@ pub enum ConfigError {
     InvalidExclude {
         pattern: String,
     },
+    InvalidBranchNaming,
 }
 
 const UNUSED_SUPPRESSION_ALWAYS_ON: &str = "policy/unused-suppression cannot switch itself off: \
@@ -105,6 +106,9 @@ impl fmt::Display for ConfigError {
             Self::InvalidExclude { pattern } => {
                 write!(formatter, "exclude pattern must not be blank: {pattern:?}")
             }
+            Self::InvalidBranchNaming => formatter.write_str(
+                "git/branch-naming types must not be empty or blank, and allow entries must not be blank",
+            ),
             Self::InvalidComplexityLimit => formatter.write_str(COMPLEXITY_AT_LEAST_ONE),
             Self::UnusedSuppressionDefeated => formatter.write_str(UNUSED_SUPPRESSION_ALWAYS_ON),
             Self::InvalidTodoMarkers => formatter.write_str(TODO_MARKERS_REQUIRED),
@@ -163,6 +167,7 @@ impl Error for ConfigError {
             | Self::DuplicateLayerName { .. }
             | Self::BlankAllowIn { .. }
             | Self::InvalidExclude { .. } => None,
+            Self::InvalidBranchNaming => None,
         }
     }
 }
