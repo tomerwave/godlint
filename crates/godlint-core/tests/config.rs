@@ -1,6 +1,6 @@
 #![allow(clippy::expect_used, clippy::unwrap_used)]
 
-use godlint_core::config::{Config, ConfigError};
+use godlint_core::config::{Config, ConfigError, DEFAULT_EXCLUDES};
 
 #[path = "support/temporary.rs"]
 mod temporary;
@@ -20,6 +20,19 @@ fn accepts_the_function_size_rule() {
     );
 
     assert!(result.is_ok());
+}
+
+#[test]
+fn configured_excludes_extend_defaults_without_duplicates() {
+    let config = load("version: 1\nexclude:\n  - dist\n  - generated/**\n")
+        .unwrap_or_else(|error| panic!("loads: {error}"));
+    let expected = DEFAULT_EXCLUDES
+        .iter()
+        .map(|exclude| (*exclude).to_owned())
+        .chain(["generated/**".to_owned()])
+        .collect::<Vec<_>>();
+
+    assert_eq!(config.excludes(), expected);
 }
 
 #[test]

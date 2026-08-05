@@ -7,6 +7,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 change the `godlint-core` API; the command line and the configuration schema are what the version
 speaks about.
 
+## [Unreleased]
+
+### Fixed
+
+- Project `exclude` patterns now extend Godlint's built-in exclusions instead of replacing them.
+  Adding a repository-specific exclusion therefore continues to skip dependency directories, caches,
+  and generated output by default.
+
 ## [0.6.1] - 2026-08-05
 
 ### Fixed

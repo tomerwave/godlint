@@ -218,7 +218,7 @@ requiring a new parser capability.
 
 The eleven supported extensions are `.rs`; `.py` and `.pyi`; `.js`, `.jsx`, `.mjs`, and
 `.cjs`; and `.ts`, `.tsx`, `.mts`, and `.cts`. Scanning skips the paths in the top-level
-`exclude` list, which replaces the built-in defaults when set. Findings below the
+`exclude` list in addition to the built-in defaults. Findings below the
 top-level `fail-on` severity are reported without failing `godlint check`, which is the
 mechanism the confidence ladder depends on: a medium-confidence rule can be adopted as a
 warning and observed before it blocks anyone.
