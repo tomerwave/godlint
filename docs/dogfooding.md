@@ -22,9 +22,8 @@ what it hid. That is what the policy above means by no *silent* global exclusion
 `godlint.yaml` names its reason, and the two that hold back findings are itemised here — measured by
 scanning with them removed, not asserted.
 
-Most entries are build output, caches or installed dependencies. They cannot be shortened to the
-ones this repository happens to produce: `Config::excludes()` falls back to the built-in list only
-when `exclude` is empty, so naming any path at all means naming all twelve.
+Build output, caches and installed dependencies use Godlint's built-in exclusions. The configured
+entries below are repository-specific paths whose reasons must remain visible.
 
 Two more are the fixture trees that exist in order to contain violations. Scanning
 `crates/godlint-cli/tests/fixtures` and `.github/fixtures` reports 467 findings — 465 in the

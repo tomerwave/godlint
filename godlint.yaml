@@ -6,21 +6,6 @@ fail-on: error
 # and an exclusion is the widest instrument this configuration has: it drops a path from the scan
 # for every rule at once, so what it hides is invisible to `godlint check` by construction.
 exclude:
-  # Not this repository's code. Build output, caches and installed dependencies. All twelve are
-  # named because naming any path replaces the built-in list rather than adding to it.
-  - .git
-  - .mypy_cache
-  - .next
-  - .tox
-  - .venv
-  - __pycache__
-  - build
-  - coverage
-  - dist
-  - node_modules
-  - target
-  - vendor
-
   # Trees that exist in order to contain violations. These are the inputs the rule tests assert
   # against: scanning them reports 467 findings — 465 in the CLI tree and 2 in the workflow
   # fixtures — every one a fixture's deliberate violation attributed to Godlint.

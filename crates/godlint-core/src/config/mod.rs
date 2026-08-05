@@ -209,11 +209,17 @@ impl Config {
     }
 
     pub fn excludes(&self) -> Vec<String> {
-        if self.exclude.is_empty() {
-            return DEFAULT_EXCLUDES.iter().map(|name| (*name).into()).collect();
-        }
+        DEFAULT_EXCLUDES
+            .iter()
+            .copied()
+            .chain(self.exclude.iter().map(String::as_str))
+            .fold(Vec::new(), |mut excludes, exclude| {
+                if !excludes.iter().any(|existing| existing == exclude) {
+                    excludes.push(exclude.to_owned());
+                }
 
-        self.exclude.clone()
+                excludes
+            })
     }
 
     fn expand_suites(&mut self) -> Result<(), ConfigError> {
