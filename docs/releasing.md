@@ -78,6 +78,9 @@ The workflow runs in stages, and the order is the point:
 3. **publish, npm, pypi** — the three registries, in parallel.
 4. **announce** — creates or edits the GitHub release, attaches every archive, asserts the count
    attached matches the count built, and moves the floating `v1` tag.
+5. **homebrew** — renders the Homebrew formula from the two macOS archive checksums and updates the
+   official [`tomerwave/homebrew-tap`](https://github.com/tomerwave/homebrew-tap) only after the
+   release exists.
 
 The GitHub release is published **last, only after all three registries have succeeded.** A release
 that exists while a registry failed is the worst of the failure modes: it is what the action resolves
@@ -98,6 +101,11 @@ Each registry is reached with the least durable credential it accepts:
   it can be configured; every release after that is tokenless.
 - **PyPI** uses trusted publishing too, and accepts it for a project that does not exist yet, so no
   PyPI token is ever needed.
+- **Homebrew** uses an `HOMEBREW_TAP_SSH_KEY` deploy key held by the `homebrew-tap` environment. The
+  key writes only the tap repository, not this repository or any other one. The job validates both
+  macOS checksums before it changes `Formula/godlint.rb`; if it fails, the prior formula stays in
+  place and the release workflow records the recovery work. Retry the job after fixing that failure;
+  never move or recreate the immutable release tag.
 
 ## Tags
 

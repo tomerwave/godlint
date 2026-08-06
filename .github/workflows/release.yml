@@ -274,3 +274,52 @@ jobs:
           fi
 
           echo "$major now points at $SHA"
+
+  homebrew:
+    name: Update the Homebrew tap
+    needs: announce
+    runs-on: ubuntu-latest
+    environment: homebrew-tap
+
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: godlint-*
+          path: artifacts
+          merge-multiple: true
+
+      - name: Render the formula from the release archives
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          python3 packaging/tests/test_build_homebrew_formula.py
+          python3 packaging/build_homebrew_formula.py "${TAG#v}" --assets artifacts --out Formula/godlint.rb
+
+      - uses: actions/checkout@v4
+        with:
+          repository: tomerwave/homebrew-tap
+          path: tap
+          ssh-key: ${{ secrets.HOMEBREW_TAP_SSH_KEY }}
+
+      - name: Copy and validate the formula
+        run: |
+          install -m 644 Formula/godlint.rb tap/Formula/godlint.rb
+          git -C tap diff --check
+
+      - name: Commit the formula when it changed
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          git -C tap diff --quiet -- Formula/godlint.rb && { echo "Homebrew formula already names ${TAG#v}"; exit 0; }
+          git -C tap config user.name "github-actions[bot]"
+          git -C tap config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C tap add Formula/godlint.rb
+          git -C tap commit -m "brew: update godlint to ${TAG#v}"
+          git -C tap push origin HEAD:main

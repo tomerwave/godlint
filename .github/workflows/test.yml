@@ -20,3 +20,5 @@ jobs:
       - run: rustup toolchain install 1.97.1 --profile minimal
 
       - run: cargo +1.97.1 test --workspace
+
+      - run: python3 packaging/tests/test_build_homebrew_formula.py

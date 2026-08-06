@@ -7,6 +7,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 change the `godlint-core` API; the command line and the configuration schema are what the version
 speaks about.
 
+## [Unreleased]
+
+### Added
+
+- Homebrew users can install Godlint with `brew install tomerwave/tap/godlint`. Releases update the
+  formula from the verified macOS archives after publishing their GitHub release.
+
 ## [0.7.0] - 2026-08-05
 
 ### Added
