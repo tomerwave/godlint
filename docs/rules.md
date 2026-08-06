@@ -223,9 +223,9 @@ context. A reference to one member, including `${{ secrets.NPM_TOKEN }}` and
 silent, as is writing a non-secret value to either file. The rule cannot see a secret laundered
 through a variable in an earlier step; that would require data flow the workflow facts do not have.
 
-`ci/untrusted-github-env` reports each attacker-influenced expression in a `run:` script that also
+`ci/untrusted-github-env` reports each attacker-influenced expression in a shell command that also
 writes to `$GITHUB_ENV` or `$GITHUB_PATH`. Those files change the environment of later steps, so an
-attacker-controlled line can create or replace a variable or add a directory to `PATH`. It is
+attacker-controlled command can create or replace a variable or add a directory to `PATH`. It is
 complementary to `ci/template-injection`: that rule protects the current shell script, while this
 one protects later steps. The rule sees direct expressions only; binding an untrusted expression in
 `env:` and then writing that variable to a shared environment file requires data flow it does not

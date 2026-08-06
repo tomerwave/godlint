@@ -10,3 +10,5 @@ jobs:
       - run: 'echo "TITLE=${{ github.event.pull_request.title }}" >> "$GITHUB_ENV"'
       - run: |
           echo "${{ github.event.issue.body }}" >> "$GITHUB_PATH"
+      - run: 'echo "TITLE=${{ github.event.issue.body }}" >> "${GITHUB_ENV}"'
+      - run: 'echo "${{ github.event.pull_request.body }}" >> "${GITHUB_PATH}"'

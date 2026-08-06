@@ -3,5 +3,7 @@ exit-code: 1
 stdout: |
   .github/workflows/ci.yml:10:27: error[ci/untrusted-github-env] "github.event.pull_request.title" is attacker-influenced and this script writes to GITHUB_ENV or GITHUB_PATH, so later steps can inherit a changed value; do not write it to a shared environment file.
   .github/workflows/ci.yml:12:17: error[ci/untrusted-github-env] "github.event.issue.body" is attacker-influenced and this script writes to GITHUB_ENV or GITHUB_PATH, so later steps can inherit a changed value; do not write it to a shared environment file.
+  .github/workflows/ci.yml:13:27: error[ci/untrusted-github-env] "github.event.issue.body" is attacker-influenced and this script writes to GITHUB_ENV or GITHUB_PATH, so later steps can inherit a changed value; do not write it to a shared environment file.
+  .github/workflows/ci.yml:14:21: error[ci/untrusted-github-env] "github.event.pull_request.body" is attacker-influenced and this script writes to GITHUB_ENV or GITHUB_PATH, so later steps can inherit a changed value; do not write it to a shared environment file.
 
 stderr: ""

@@ -49,6 +49,26 @@ fn attacker_controlled_value_written_to_github_path_is_reported() {
 }
 
 #[test]
+fn braced_github_env_expansion_is_reported() {
+    assert_eq!(
+        violations("echo TITLE=${{ github.event.issue.body }} >> ${GITHUB_ENV}"),
+        vec![Violation::UntrustedGithubEnv {
+            expression: "github.event.issue.body".to_owned(),
+        }]
+    );
+}
+
+#[test]
+fn braced_github_path_expansion_is_reported() {
+    assert_eq!(
+        violations("echo ${{ github.event.issue.body }} >> ${GITHUB_PATH}"),
+        vec![Violation::UntrustedGithubEnv {
+            expression: "github.event.issue.body".to_owned(),
+        }]
+    );
+}
+
+#[test]
 fn static_value_written_to_github_env_is_silent() {
     assert!(violations("echo TITLE=release >> $GITHUB_ENV").is_empty());
 }
@@ -56,6 +76,23 @@ fn static_value_written_to_github_env_is_silent() {
 #[test]
 fn attacker_controlled_value_without_a_shared_environment_write_is_silent() {
     assert!(violations("echo ${{ github.event.issue.body }}").is_empty());
+}
+
+#[test]
+fn an_attacker_value_and_a_static_sink_in_separate_commands_are_silent() {
+    assert!(
+        violations(
+            "|\n          echo ${{ github.event.issue.body }}\n          echo SAFE=1 >> $GITHUB_ENV"
+        )
+        .is_empty()
+    );
+}
+
+#[test]
+fn an_attacker_value_and_a_static_sink_after_a_command_separator_are_silent() {
+    assert!(
+        violations("echo ${{ github.event.issue.body }}; echo SAFE=1 >> $GITHUB_ENV").is_empty()
+    );
 }
 
 #[test]
