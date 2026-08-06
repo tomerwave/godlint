@@ -133,6 +133,8 @@ fixture_tests! {
     overprovisioned_secrets_clean => "overprovisioned-secrets-clean",
     unredacted_secrets => "unredacted-secrets",
     unredacted_secrets_clean => "unredacted-secrets-clean",
+    untrusted_github_env => "untrusted-github-env",
+    untrusted_github_env_clean => "untrusted-github-env-clean",
     pin_third_party_actions => "pin-third-party-actions",
     pin_third_party_actions_clean => "pin-third-party-actions-clean",
     rust_try_operator => "rust-try-operator",

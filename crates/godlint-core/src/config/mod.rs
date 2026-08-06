@@ -142,6 +142,8 @@ pub struct Rules {
     pub overprovisioned_secrets: Option<OverprovisionedSecretsRule>,
     #[serde(rename = "ci/unredacted-secrets")]
     pub unredacted_secrets: Option<UnredactedSecretsRule>,
+    #[serde(rename = "ci/untrusted-github-env")]
+    pub untrusted_github_env: Option<UntrustedGithubEnvRule>,
     #[serde(rename = "ci/no-silenced-failure")]
     pub no_silenced_failure: Option<NoSilencedFailureRule>,
     #[serde(flatten)]

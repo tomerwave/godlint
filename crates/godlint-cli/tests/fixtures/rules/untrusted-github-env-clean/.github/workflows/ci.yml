@@ -1,0 +1,11 @@
+name: CI
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - run: 'echo "TITLE=release" >> "$GITHUB_ENV"'
+      - run: 'echo "${{ github.event.issue.body }}"'

@@ -28,7 +28,7 @@ use crate::{
         return_count::ReturnCount, secrets_inherit::SecretsInherit,
         stale_action_refs::StaleActionRefs, template_injection::TemplateInjection,
         todo_requires_reference::TodoRequiresReference, unredacted_secrets::UnredactedSecrets,
-        unused_suppression::UnusedSuppression,
+        untrusted_github_env::UntrustedGithubEnv, unused_suppression::UnusedSuppression,
     },
 };
 
@@ -109,6 +109,7 @@ registrations! {
     SecretsInherit => secrets_inherit, true;
     OverprovisionedSecrets => overprovisioned_secrets, true;
     UnredactedSecrets => unredacted_secrets, true;
+    UntrustedGithubEnv => untrusted_github_env, true;
     NoSilencedFailure => no_silenced_failure, true;
     NoWorkflowComments => no_workflow_comments, true;
     HardcodedContainerCredentials => hardcoded_container_credentials, true;
