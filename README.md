@@ -107,6 +107,7 @@ Use the package manager already in your project:
 | uv | `uv add --dev godlint` |
 | pip | `pip install godlint` |
 | Cargo | `cargo install godlint-cli` |
+| Homebrew | `brew install tomerwave/tap/godlint` |
 
 Prebuilt binaries for Linux, macOS and Windows are available from the
 [latest release](https://github.com/tomerwave/godlint/releases/latest).
