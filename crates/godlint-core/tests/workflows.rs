@@ -368,7 +368,7 @@ fn assert_checkout_step(facts: &WorkflowFacts, checkout: &StepFact) {
 fn assert_command_step(facts: &WorkflowFacts, command: &StepFact) {
     assert_eq!(text(facts, command.range()), "run");
     assert_eq!(command.name(), None);
-    assert!(text(facts, command.run().unwrap()).contains("${{ github.actor }}"));
+    assert!(command.run().unwrap().contains("${{ github.actor }}"));
 }
 
 #[test]
@@ -471,9 +471,9 @@ fn expressions_are_ordered_scalar_ranges_with_matchable_contexts() {
         "${{ GitHub.ref == 'refs/heads/main' }}"
     );
     let condition = facts.steps()[0].condition().unwrap();
-    let run = facts.steps()[1].run().unwrap();
     assert!(condition.start() <= expressions[2].range().start());
     assert!(expressions[2].range().end() <= condition.end());
+    let run = facts.steps()[1].run_range().unwrap();
     assert!(run.start() <= expressions[5].range().start());
     assert!(expressions[5].range().end() <= run.end());
 }
@@ -552,10 +552,7 @@ fn empty_workflow_shapes_produce_empty_collections_without_parse_gaps() {
     assert!(no_steps.steps().is_empty());
     assert_eq!(run_only.steps()[0].name(), None);
     assert_eq!(text(&run_only, run_only.steps()[0].range()), "run");
-    assert_eq!(
-        text(&run_only, run_only.steps()[0].run().unwrap()),
-        "echo ok"
-    );
+    assert_eq!(run_only.steps()[0].run().unwrap(), "echo ok");
 }
 
 fn assert_empty_workflow(facts: &WorkflowFacts) {

@@ -16,6 +16,10 @@ pub(crate) fn separator(language: Language) -> &'static str {
     }
 }
 
+pub(crate) fn segments(module: &str, language: Language) -> impl Iterator<Item = &str> {
+    module.split(separator(language))
+}
+
 pub(crate) fn package(module: &str, language: Language) -> Option<&str> {
     match language {
         Language::JavaScript | Language::TypeScript => ecmascript_package(module),

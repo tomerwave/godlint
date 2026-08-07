@@ -34,6 +34,26 @@ pub struct StepFact {
     details: StepFactDetails,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct BooleanFact {
+    range: SourceRange,
+    value: bool,
+}
+
+impl BooleanFact {
+    pub(crate) fn new(range: SourceRange, value: bool) -> Self {
+        Self { range, value }
+    }
+
+    pub fn range(self) -> SourceRange {
+        self.range
+    }
+
+    pub fn value(self) -> bool {
+        self.value
+    }
+}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ExpressionFact {
     file: TextFile,
@@ -55,7 +75,7 @@ pub(crate) struct JobFactDetails {
     pub name: String,
     pub body: SourceRange,
     pub condition: Option<SourceRange>,
-    pub continue_on_error: Option<SourceRange>,
+    pub continue_on_error: Option<BooleanFact>,
     pub declares_permissions: bool,
     pub needs: Vec<Setting>,
     pub secrets: Option<Secrets>,
@@ -72,7 +92,7 @@ pub(crate) struct StepFactDetails {
     pub run: Option<SourceRange>,
     pub uses: Option<SourceRange>,
     pub condition: Option<SourceRange>,
-    pub continue_on_error: Option<SourceRange>,
+    pub continue_on_error: Option<BooleanFact>,
     pub inputs: Vec<Setting>,
     pub environment: Vec<Setting>,
 }
@@ -172,7 +192,7 @@ impl JobFact {
         self.details.condition
     }
 
-    pub fn continue_on_error(&self) -> Option<SourceRange> {
+    pub fn continue_on_error(&self) -> Option<BooleanFact> {
         self.details.continue_on_error
     }
 
@@ -218,7 +238,13 @@ impl StepFact {
         self.details.name.map(|range| text(&self.file, range))
     }
 
-    pub fn run(&self) -> Option<SourceRange> {
+    pub fn run(&self) -> Option<&str> {
+        self.details
+            .run
+            .map(|range| self.file.slice(range).trim_matches(['"', '\'']))
+    }
+
+    pub fn run_range(&self) -> Option<SourceRange> {
         self.details.run
     }
 
@@ -230,7 +256,7 @@ impl StepFact {
         self.details.condition
     }
 
-    pub fn continue_on_error(&self) -> Option<SourceRange> {
+    pub fn continue_on_error(&self) -> Option<BooleanFact> {
         self.details.continue_on_error
     }
 

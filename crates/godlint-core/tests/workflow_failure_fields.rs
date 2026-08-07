@@ -27,7 +27,7 @@ fn step_ids_and_continue_on_error_values_stay_literal() {
     let absent = &facts.steps()[1];
 
     assert_eq!(configured.id(), Some("probe"));
-    assert_eq!(&facts.file().text()[range.start()..range.end()], "false");
+    assert_eq!(facts.file().slice(range.range()), "false");
     assert_eq!(absent.id(), None);
     assert_eq!(absent.continue_on_error(), None);
 }
@@ -44,11 +44,6 @@ fn job_continue_on_error_values_stay_literal() {
         "    runs-on: ubuntu-latest\n",
         "    steps: []\n",
     ));
-    let range = facts.jobs()[0].continue_on_error().unwrap();
-
-    assert_eq!(
-        &facts.file().text()[range.start()..range.end()],
-        "${{ inputs.optional }}"
-    );
+    assert_eq!(facts.jobs()[0].continue_on_error(), None);
     assert_eq!(facts.jobs()[1].continue_on_error(), None);
 }
