@@ -19,6 +19,7 @@ pub mod cognitive_complexity;
 pub mod condition_complexity;
 pub mod decision_complexity;
 pub mod dependency_boundary;
+mod dialect;
 pub mod direct_environment_read;
 pub mod empty_error_handler;
 pub mod empty_function;
@@ -247,6 +248,7 @@ pub(crate) fn report<'a>(
 
     reported
         .into_iter()
+        .filter(|(file, _, _)| dialect::supports(reporting.languages, file))
         .filter(|(file, _, _)| reporting.scope.covers(file.path_text()))
         .map(|(file, range, violation)| finding(file, range, reporting, violation))
         .collect()
@@ -350,6 +352,7 @@ pub fn evaluate_comment_rule<R: CommentRule>(
 pub struct Reporting<'a> {
     pub severity: Severity,
     pub rule_id: &'static str,
+    languages: Languages,
     scope: Scope<'a>,
 }
 
@@ -358,6 +361,7 @@ impl<'a> Reporting<'a> {
         Self {
             severity: R::severity(configuration),
             rule_id: R::ID,
+            languages: R::LANGUAGES,
             scope: Scope::of(configuration),
         }
     }

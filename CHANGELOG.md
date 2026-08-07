@@ -18,6 +18,8 @@ speaks about.
 
 ### Fixed
 
+- Rules now enforce their declared language support at the reporting boundary, so a finding cannot
+  be emitted for a dialect marked as absent by `Rule::LANGUAGES`.
 - `Violation::cap` now requires every violation variant to choose its severity cap explicitly, so
   adding a new diagnostic cannot silently inherit the uncapped error default.
 
