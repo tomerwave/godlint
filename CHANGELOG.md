@@ -16,6 +16,11 @@ speaks about.
 - Homebrew users can install Godlint with `brew install tomerwave/tap/godlint`. Releases update the
   formula from the verified macOS archives after publishing their GitHub release.
 
+### Fixed
+
+- `Violation::cap` now requires every violation variant to choose its severity cap explicitly, so
+  adding a new diagnostic cannot silently inherit the uncapped error default.
+
 ## [0.7.0] - 2026-08-05
 
 ### Added
