@@ -115,8 +115,8 @@ def scan(binary: Path, tree: Path) -> dict:
 def compared(repository: dict, report: dict) -> list[str]:
     name = repository["name"]
     issues = report["issues"]
-    workflow_issues = [issue for issue in issues if is_workflow(issue["path"])]
-    source_issues = [issue for issue in issues if not is_workflow(issue["path"])]
+    workflow_issues = [issue for issue in issues if issue["dialect"] == "workflow"]
+    source_issues = [issue for issue in issues if issue["dialect"] == "source"]
     source_budget = repository["unreadable-budget"]
     workflow_budget = repository["workflow-unreadable-budget"]
 
@@ -131,16 +131,6 @@ def compared(repository: dict, report: dict) -> list[str]:
 
     return compare_budget(name, "source files", source_issues, source_budget) + compare_budget(
         name, "workflow files", workflow_issues, workflow_budget
-    )
-
-
-def is_workflow(path: str) -> bool:
-    parts = path.replace("\\", "/").split("/")
-
-    return (
-        len(parts) >= 3
-        and parts[-3:-1] == [".github", "workflows"]
-        and parts[-1].endswith((".yaml", ".yml"))
     )
 
 

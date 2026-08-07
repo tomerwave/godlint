@@ -33,7 +33,7 @@ impl WorkflowRule for NoInlineScript {
         workflow
             .steps()
             .iter()
-            .filter_map(|step| step.run())
+            .filter_map(|step| step.run_range())
             .filter_map(|range| {
                 let actual = effective_script_line_count(
                     workflow.file(),

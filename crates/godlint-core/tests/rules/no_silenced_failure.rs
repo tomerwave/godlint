@@ -35,7 +35,7 @@ fn script(run: &str) -> String {
 
 #[test]
 fn every_yaml_spelling_of_true_silences_a_step() {
-    for spelling in ["true", "True", "TRUE"] {
+    for spelling in ["true", "True", "TRUE", "tRuE"] {
         let reported = findings(
             &step(&format!("        continue-on-error: {spelling}\n")),
             Severity::Error,
@@ -47,7 +47,7 @@ fn every_yaml_spelling_of_true_silences_a_step() {
 
 #[test]
 fn a_value_yaml_does_not_read_as_true_leaves_a_step_alone() {
-    for spelling in ["false", "False", "FALSE", "yes", "on", "tRuE", "\"true\""] {
+    for spelling in ["false", "False", "FALSE", "yes", "on", "\"true\""] {
         let reported = findings(
             &step(&format!("        continue-on-error: {spelling}\n")),
             Severity::Error,

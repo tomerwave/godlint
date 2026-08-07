@@ -65,8 +65,7 @@ fn is_permitted(module: &str, configuration: &NoInternalImportRule) -> bool {
 }
 
 fn reached_past(module: &str, language: Language) -> Option<String> {
-    let reached: Vec<&str> = module
-        .split(module_path::separator(language))
+    let reached: Vec<&str> = module_path::segments(module, language)
         .skip(own_segments(module))
         .filter(|segment| is_marker(segment, language))
         .collect();

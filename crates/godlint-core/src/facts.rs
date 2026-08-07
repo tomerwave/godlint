@@ -5,7 +5,7 @@ use crate::source::{SourceFile, SourceRange, range_contains};
 pub mod workflow;
 
 pub use workflow::{
-    ActionFact, CredentialFact, ExpressionFact, JobFact, Secrets, Setting, StepFact,
+    ActionFact, BooleanFact, CredentialFact, ExpressionFact, JobFact, Secrets, Setting, StepFact,
 };
 
 macro_rules! function_metrics {

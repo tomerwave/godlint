@@ -47,12 +47,13 @@ fn commands_are_the_script_inside_each_yaml_scalar() {
             "jobs:\n  build:\n    steps:\n      - run: {scalar}\n"
         ));
         let run = facts.steps()[0].run().unwrap();
+        let range = facts.steps()[0].run_range().unwrap();
 
-        assert_eq!(
-            &facts.file().text()[run.start()..run.end()],
-            expected,
-            "{scalar:?}"
-        );
+        assert_eq!(run, expected, "{scalar:?}");
+        let ranged = scalar.strip_prefix(['\'', '"']).map_or(expected, |body| {
+            body.strip_suffix(['\'', '"']).unwrap_or(body)
+        });
+        assert_eq!(facts.file().slice(range), ranged, "{scalar:?} range");
     }
 }
 
