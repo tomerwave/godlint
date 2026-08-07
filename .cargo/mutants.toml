@@ -17,6 +17,9 @@
 # day the analyser was split into a directory, which is the same silent hole #88 records one
 # level up. `check_mutation_scope` now refuses a non-recursive glob.
 examine_globs = [
+    "crates/godlint-core/src/glob.rs",
+    "crates/godlint-core/src/date.rs",
+    "crates/godlint-core/src/paths.rs",
     "crates/godlint-core/src/analyzers/**/*.rs",
     "crates/godlint-core/src/facts.rs",
     "crates/godlint-core/src/facts/**/*.rs",

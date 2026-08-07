@@ -18,6 +18,8 @@ speaks about.
 
 ### Fixed
 
+- The mutation gate now examines path handling, exclusion matching, and suppression dates instead
+  of leaving those finding-affecting decisions in the unmutated list.
 - Rules now enforce their declared language support at the reporting boundary, so a finding cannot
   be emitted for a dialect marked as absent by `Rule::LANGUAGES`.
 - `Violation::cap` now requires every violation variant to choose its severity cap explicitly, so
