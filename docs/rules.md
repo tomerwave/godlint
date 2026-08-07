@@ -1,6 +1,6 @@
 # Rule reference
 
-Fifty-one rules are implemented. Every one has an identifier of the form `family/name`, which is
+Fifty-two rules are implemented. Every one has an identifier of the form `family/name`, which is
 what a configuration entry and a suppression directive both name. [The rule roadmap](rule-roadmap.md)
 records the families still to come, and the reasoning behind each threshold `recommended@1` sets.
 [Language support](#language-support) records which languages each rule covers.
@@ -32,6 +32,7 @@ enforced there.
 | `ci/stale-action-refs` | — | — | — | ✓ | — |
 | `ci/template-injection` | — | — | — | ✓ | — |
 | `ci/unredacted-secrets` | — | — | — | ✓ | — |
+| `ci/untrusted-github-env` | — | — | — | ✓ | — |
 | `git/branch-naming` | — | — | — | — | ✓ |
 | `logging/no-production-log` | ✓ | ✓ | ✓ | — | — |
 | `maintainability/cognitive-complexity` | ✓ | ✓ | ✓ | — | — |
@@ -203,6 +204,7 @@ have to decide what interpolation looks like inside an f-string.
 | `ci/no-monolithic-job` | A job exceeding its step limit |
 | `ci/secrets-inherit` | A reusable-workflow call passing every secret available to its job |
 | `ci/unredacted-secrets` | A script directly writing a secret expression to `GITHUB_ENV` or `GITHUB_OUTPUT` |
+| `ci/untrusted-github-env` | An attacker-influenced expression in a script that writes to `GITHUB_ENV` or `GITHUB_PATH` |
 | `ci/no-silenced-failure` | A step or job configured to stay green after failure, or a script that discards a failing exit status |
 
 
@@ -220,6 +222,14 @@ context. A reference to one member, including `${{ secrets.NPM_TOKEN }}` and
 `secrets.*` expression and a reference to `$GITHUB_ENV` or `$GITHUB_OUTPUT`. Merely using a secret is
 silent, as is writing a non-secret value to either file. The rule cannot see a secret laundered
 through a variable in an earlier step; that would require data flow the workflow facts do not have.
+
+`ci/untrusted-github-env` reports each attacker-influenced expression in a shell command that also
+writes to `$GITHUB_ENV` or `$GITHUB_PATH`. Those files change the environment of later steps, so an
+attacker-controlled command can create or replace a variable or add a directory to `PATH`. It is
+complementary to `ci/template-injection`: that rule protects the current shell script, while this
+one protects later steps. The rule sees direct expressions only; binding an untrusted expression in
+`env:` and then writing that variable to a shared environment file requires data flow it does not
+have and is not evidence that the write is safe.
 
 `ci/no-silenced-failure` reports a literal `continue-on-error: true` on a step or job and a `run:`
 script ending `|| true`, `; exit 0`, or `|| exit 0`. A step is silent when it has an `id` and an

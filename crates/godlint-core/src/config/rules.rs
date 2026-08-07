@@ -352,6 +352,7 @@ scoped_rules! {
     StaleActionRefsRule,
     TemplateInjectionRule,
     UnredactedSecretsRule,
+    UntrustedGithubEnvRule,
     UnusedSuppressionRule,
 }
 

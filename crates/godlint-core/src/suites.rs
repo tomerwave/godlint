@@ -14,9 +14,9 @@ use crate::config::{
     OverprovisionedSecretsRule, ParameterCountRule, PinThirdPartyActionsRule, RestrictedCallRule,
     RestrictedImportRule, ReturnCountRule, Rules, SecretsInheritRule, Severity,
     StaleActionRefsRule, TemplateInjectionRule, TodoRequiresReferenceRule, UnredactedSecretsRule,
-    UnusedSuppressionRule, default_bots, default_branch_types, default_configuration_paths,
-    default_markers, default_reference_prefixes, default_test_helpers, default_test_paths,
-    default_trusted_owners,
+    UntrustedGithubEnvRule, UnusedSuppressionRule, default_bots, default_branch_types,
+    default_configuration_paths, default_markers, default_reference_prefixes, default_test_helpers,
+    default_test_paths, default_trusted_owners,
 };
 
 pub const RECOMMENDED: &str = "recommended@1";
@@ -109,6 +109,7 @@ fn secrets_handed_over(rules: &mut Rules) {
 }
 
 fn secrets_left_readable(rules: &mut Rules) {
+    shared_environment_writes(rules);
     rules
         .unredacted_secrets
         .get_or_insert(UnredactedSecretsRule {
@@ -153,6 +154,16 @@ fn secrets_left_readable(rules: &mut Rules) {
             only_in: Vec::new(),
             allow_in: Vec::new(),
             trusted_owners: default_trusted_owners(),
+        });
+}
+
+fn shared_environment_writes(rules: &mut Rules) {
+    rules
+        .untrusted_github_env
+        .get_or_insert(UntrustedGithubEnvRule {
+            severity: Severity::Error,
+            only_in: Vec::new(),
+            allow_in: Vec::new(),
         });
 }
 

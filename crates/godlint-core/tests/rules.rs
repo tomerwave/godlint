@@ -131,6 +131,8 @@ mod overprovisioned_secrets;
 mod hardcoded_container_credentials;
 #[path = "rules/unredacted_secrets.rs"]
 mod unredacted_secrets;
+#[path = "rules/untrusted_github_env.rs"]
+mod untrusted_github_env;
 
 #[path = "rules/no_workflow_comments.rs"]
 mod no_workflow_comments;

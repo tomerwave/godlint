@@ -95,6 +95,9 @@ pub enum Violation {
         setting: String,
     },
     UnredactedSecret,
+    UntrustedGithubEnv {
+        expression: String,
+    },
     StepContinuesOnError,
     JobContinuesOnError,
     ScriptOrTrue,
@@ -313,6 +316,15 @@ fn template_injection(
     }
 }
 
+fn untrusted_github_env(formatter: &mut fmt::Formatter<'_>, expression: &str) -> fmt::Result {
+    write!(
+        formatter,
+        "\"{expression}\" is attacker-influenced and this script writes to GITHUB_ENV or \
+         GITHUB_PATH, so later steps can inherit a changed value; do not write it to a shared \
+         environment file."
+    )
+}
+
 fn bot(formatter: &mut fmt::Formatter<'_>, expression: &str) -> fmt::Result {
     write!(
         formatter,
@@ -385,6 +397,7 @@ impl fmt::Display for Violation {
             Self::InheritedSecrets { job } => inherited_secrets(formatter, job),
             Self::OverprovisionedSecrets { setting } => overprovisioned_secrets(formatter, setting),
             Self::UnredactedSecret => formatter.write_str(UNREDACTED_SECRET),
+            Self::UntrustedGithubEnv { expression } => untrusted_github_env(formatter, expression),
             Self::StepContinuesOnError => formatter.write_str(STEP_CONTINUES_ON_ERROR),
             Self::JobContinuesOnError => formatter.write_str(JOB_CONTINUES_ON_ERROR),
             Self::ScriptOrTrue => formatter.write_str(SCRIPT_OR_TRUE),

@@ -1,0 +1,8 @@
+version: 1
+
+exclude:
+  - .github/workflows/excluded.yml
+
+rules:
+  ci/untrusted-github-env:
+    severity: error

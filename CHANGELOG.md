@@ -11,6 +11,8 @@ speaks about.
 
 ### Added
 
+- `ci/untrusted-github-env` reports attacker-influenced expressions in scripts that write to
+  `$GITHUB_ENV` or `$GITHUB_PATH`, where later workflow steps can inherit a changed value.
 - Homebrew users can install Godlint with `brew install tomerwave/tap/godlint`. Releases update the
   formula from the verified macOS archives after publishing their GitHub release.
 

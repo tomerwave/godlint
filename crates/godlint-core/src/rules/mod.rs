@@ -78,8 +78,10 @@ pub mod stale_action_refs;
 pub mod template_injection;
 pub mod todo_requires_reference;
 pub mod unredacted_secrets;
+pub mod untrusted_github_env;
 pub mod unused_suppression;
 mod workflow_condition;
+mod workflow_expression;
 
 pub use languages::{Absence, Languages};
 pub use metric::Metric;
@@ -399,6 +401,7 @@ const WORKFLOW_EVALUATORS: &[WorkflowEvaluator] = &[
     no_monolithic_job::evaluate,
     no_silenced_failure::evaluate,
     unredacted_secrets::evaluate,
+    untrusted_github_env::evaluate,
 ];
 
 const REPOSITORY_EVALUATORS: &[RepositoryEvaluator] = &[branch_naming::evaluate];
