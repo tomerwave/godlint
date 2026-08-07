@@ -96,6 +96,19 @@ fn an_attacker_value_and_a_static_sink_after_a_command_separator_are_silent() {
 }
 
 #[test]
+fn shell_boolean_command_separators_do_not_cross_trigger() {
+    for separator in ["&&", "||"] {
+        assert!(
+            violations(&format!(
+                "echo ${{{{ github.event.issue.body }}}} {separator} echo SAFE=1 >> $GITHUB_ENV"
+            ))
+            .is_empty(),
+            "separator: {separator}"
+        );
+    }
+}
+
+#[test]
 fn the_message_explains_that_later_steps_inherit_the_value() {
     let message = violations("echo TITLE=${{ github.event.pull_request.title }} >> $GITHUB_ENV")[0]
         .to_string();
