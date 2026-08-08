@@ -7,9 +7,13 @@ on:
       - 'crates/godlint-core/src/facts.rs'
       - 'crates/godlint-core/src/facts/**'
       - 'crates/godlint-core/src/rules/**'
+      - 'crates/godlint-core/src/glob.rs'
+      - 'crates/godlint-core/src/date.rs'
+      - 'crates/godlint-core/src/paths.rs'
       - 'crates/godlint-cli/src/config.rs'
       - 'crates/godlint-core/src/suppression.rs'
       - '.cargo/mutants.toml'
+      - 'scripts/validate-pull-request.py'
   schedule:
     - cron: '0 4 * * 1'
   workflow_dispatch:

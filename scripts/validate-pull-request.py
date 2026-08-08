@@ -49,9 +49,6 @@ CRATES = Path("crates")
 # decision rather than nothing.
 UNMUTATED = {
     "crates/godlint-core/src/lib.rs": "declares modules and re-exports; no decision to mutate",
-    "crates/godlint-core/src/glob.rs": "#245, first in: decides whether an exclude pattern matches",
-    "crates/godlint-core/src/date.rs": "#245: decides whether a suppression has expired",
-    "crates/godlint-core/src/paths.rs": "#245: path handling underneath discovery",
     "crates/godlint-core/src/discovery.rs": "#245: decides which files are scanned",
     "crates/godlint-core/src/scan.rs": "#245: drives the scan",
     "crates/godlint-core/src/suites.rs": "#245: decides what recommended@1 enables, and at what severity",
