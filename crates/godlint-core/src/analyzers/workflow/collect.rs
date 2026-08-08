@@ -2,7 +2,10 @@ use tree_sitter::Node;
 
 use crate::{
     analyzers::AnalyzerError,
-    facts::{ActionFact, CredentialFact, ExpressionFact, JobFact, Secrets, Setting, StepFact},
+    facts::{
+        ActionFact, BooleanFact, CredentialFact, ExpressionFact, JobFact, Secrets, Setting,
+        StepFact,
+    },
     source::{SourceRange, TextFile},
 };
 
@@ -64,7 +67,7 @@ struct StepSites {
     run: Option<SourceRange>,
     uses: Option<SourceRange>,
     condition: Option<SourceRange>,
-    continue_on_error: Option<SourceRange>,
+    continue_on_error: Option<BooleanFact>,
 }
 
 struct StepSettings {
@@ -75,7 +78,7 @@ struct StepSettings {
 struct StepPolicySites {
     id: Option<SourceRange>,
     name: Option<SourceRange>,
-    continue_on_error: Option<SourceRange>,
+    continue_on_error: Option<BooleanFact>,
 }
 
 pub(super) fn jobs(
@@ -137,7 +140,7 @@ fn job_details(
         name: nodes.name.clone(),
         body,
         condition: optional_range(value_of(nodes.body, IF, file), file)?,
-        continue_on_error: optional_range(value_of(nodes.body, CONTINUE_ON_ERROR, file), file)?,
+        continue_on_error: boolean(value_of(nodes.body, CONTINUE_ON_ERROR, file), file)?,
         declares_permissions: declared(nodes.body, PERMISSIONS, file),
         needs: links.needs,
         secrets: links.secrets,
@@ -231,6 +234,7 @@ fn step_sites(
 }
 
 fn script_range(node: Node<'_>, file: &TextFile) -> Result<SourceRange, AnalyzerError> {
+    let scalar = &file.text()[node.byte_range()];
     let node = content(node).unwrap_or(node);
     let bytes = node.byte_range();
     let (start, end) = match node.kind() {
@@ -254,7 +258,7 @@ fn script_range(node: Node<'_>, file: &TextFile) -> Result<SourceRange, Analyzer
                 });
             (start, end.max(start))
         }
-        "double_quote_scalar" | "single_quote_scalar" => (bytes.start + 1, bytes.end - 1),
+        _ if scalar.trim().starts_with(['"', '\'']) => (bytes.start + 1, bytes.end - 1),
         _ => (bytes.start, bytes.end),
     };
 
@@ -272,7 +276,7 @@ fn step_policy_sites(
     Ok(StepPolicySites {
         id: optional_range(value_of(body, ID, file), file)?,
         name: optional_range(value_of(body, NAME, file), file)?,
-        continue_on_error: optional_range(value_of(body, CONTINUE_ON_ERROR, file), file)?,
+        continue_on_error: boolean(value_of(body, CONTINUE_ON_ERROR, file), file)?,
     })
 }
 
@@ -284,6 +288,25 @@ fn step_action_sites(
         optional_range(value_of(body, USES, file), file)?,
         optional_range(value_of(body, IF, file), file)?,
     ))
+}
+
+fn boolean(node: Option<Node<'_>>, file: &TextFile) -> Result<Option<BooleanFact>, AnalyzerError> {
+    let Some(node) = node else {
+        return Ok(None);
+    };
+    let raw = &file.text()[node.byte_range()];
+    if raw.trim().starts_with(['"', '\'']) {
+        return Ok(None);
+    }
+    let value = node_text(node, file);
+    let Some(value) = value
+        .eq_ignore_ascii_case("true")
+        .then_some(true)
+        .or_else(|| value.eq_ignore_ascii_case("false").then_some(false))
+    else {
+        return Ok(None);
+    };
+    Ok(Some(BooleanFact::new(range(node, file)?, value)))
 }
 
 fn step_settings(body: Option<Node<'_>>, file: &TextFile) -> Result<StepSettings, AnalyzerError> {

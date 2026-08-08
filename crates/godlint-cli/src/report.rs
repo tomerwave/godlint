@@ -5,6 +5,7 @@ use godlint_core::{
     config::{Config, Severity},
     rules::{Finding, closest_rule_id},
     scan::ScanReport,
+    source::{Language, Workflow},
 };
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -125,8 +126,9 @@ fn json(findings: &[Finding], report: &ScanReport) -> String {
         .iter()
         .map(|issue| {
             format!(
-                "{{\"path\":{},\"message\":{}}}",
+                "{{\"path\":{},\"dialect\":{},\"message\":{}}}",
                 quoted(&issue.path.display().to_string()),
+                quoted(issue_dialect(&issue.path)),
                 quoted(&issue.message)
             )
         })
@@ -138,6 +140,16 @@ fn json(findings: &[Finding], report: &ScanReport) -> String {
         reported.join(","),
         issues.join(",")
     )
+}
+
+fn issue_dialect(path: &Path) -> &'static str {
+    if Workflow::names(path) {
+        "workflow"
+    } else if Language::from_path(path).is_some() {
+        "source"
+    } else {
+        "other"
+    }
 }
 
 fn json_finding(finding: &Finding) -> String {

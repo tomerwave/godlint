@@ -33,7 +33,7 @@ impl WorkflowRule for UntrustedGithubEnv {
             .filter(|expression| is_attacker_influenced(expression.context()))
             .filter(|expression| {
                 workflow.steps().iter().any(|step| {
-                    step.run().is_some_and(|script| {
+                    step.run_range().is_some_and(|script| {
                         range_contains(script, expression.range())
                             && writes_shared_environment(
                                 step.file().text(),

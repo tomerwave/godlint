@@ -9,8 +9,6 @@ use crate::{
     source::{SourceRange, range_contains},
 };
 
-const YAML_TRUE: [&str; 3] = ["true", "True", "TRUE"];
-
 pub struct NoSilencedFailure;
 
 impl Rule for NoSilencedFailure {
@@ -47,8 +45,9 @@ fn job_violations(workflow: &WorkflowFacts) -> Vec<(SourceRange, Violation)> {
         .jobs()
         .iter()
         .filter_map(|job| {
-            literal_true(workflow, job.continue_on_error())
-                .map(|range| (range, Violation::JobContinuesOnError))
+            job.continue_on_error()
+                .filter(|value| value.value())
+                .map(|value| (value.range(), Violation::JobContinuesOnError))
         })
         .collect()
 }
@@ -63,24 +62,21 @@ fn step_violations(workflow: &WorkflowFacts) -> Vec<(SourceRange, Violation)> {
                 .iter()
                 .filter(|step| step.job() == job.name())
             {
-                if let Some(range) = literal_true(workflow, step.continue_on_error())
+                if let Some(value) = step.continue_on_error().filter(|value| value.value())
                     && !outcome_is_read(workflow, job, step)
                 {
-                    violations.push((range, Violation::StepContinuesOnError));
+                    violations.push((value.range(), Violation::StepContinuesOnError));
                 }
 
                 if let Some(script) = step.run()
-                    && let Some(violation) = swallowed_script(workflow, script)
+                    && let Some(range) = step.run_range()
+                    && let Some(violation) = swallowed_script(script)
                 {
-                    violations.push((script, violation));
+                    violations.push((range, violation));
                 }
             }
             violations
         })
-}
-
-fn literal_true(workflow: &WorkflowFacts, range: Option<SourceRange>) -> Option<SourceRange> {
-    range.filter(|range| YAML_TRUE.contains(&workflow.file().slice(*range).trim()))
 }
 
 fn outcome_is_read(workflow: &WorkflowFacts, job: &JobFact, step: &StepFact) -> bool {
@@ -117,13 +113,8 @@ fn expression_is_in_job(expression: &ExpressionFact, job: &JobFact) -> bool {
     range_contains(job.body(), expression.range())
 }
 
-fn swallowed_script(workflow: &WorkflowFacts, range: SourceRange) -> Option<Violation> {
-    let script = workflow
-        .file()
-        .slice(range)
-        .trim_end()
-        .trim_end_matches(['"', '\''])
-        .trim_end();
+fn swallowed_script(script: &str) -> Option<Violation> {
+    let script = script.trim_end();
 
     if script.ends_with("|| exit 0") {
         Some(Violation::ScriptExitsSuccessfully {

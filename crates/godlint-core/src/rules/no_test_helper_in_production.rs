@@ -62,8 +62,7 @@ fn names_a_test_tree(
     language: Language,
     configuration: &NoTestHelperInProductionRule,
 ) -> Option<String> {
-    module
-        .split(module_path::separator(language))
+    module_path::segments(module, language)
         .find(|segment| {
             configuration
                 .helpers

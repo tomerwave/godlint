@@ -29,7 +29,7 @@ impl WorkflowRule for UnredactedSecrets {
         workflow
             .steps()
             .iter()
-            .filter_map(|step| step.run().map(|script| (step, script)))
+            .filter_map(|step| step.run_range().map(|script| (step, script)))
             .filter(|(step, script)| writes_unmasked_target(step.file().text(), *script))
             .filter(|(_, script)| {
                 workflow.expressions().iter().any(|expression| {

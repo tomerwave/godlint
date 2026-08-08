@@ -37,7 +37,7 @@ impl WorkflowRule for TemplateInjection {
             })
             .filter(|expression| {
                 workflow.steps().iter().any(|step| {
-                    step.run()
+                    step.run_range()
                         .is_some_and(|script| range_contains(script, expression.0.range()))
                 })
             })
