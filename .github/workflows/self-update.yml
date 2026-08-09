@@ -1,0 +1,31 @@
+name: Self Update
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    name: Sync this repository to the latest godharness
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install the latest godharness
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download --repo tomerwave/godharness --pattern 'godharness-x86_64-unknown-linux-gnu.tar.gz' --dir /tmp/godharness-install --clobber
+          tar -xzf /tmp/godharness-install/godharness-x86_64-unknown-linux-gnu.tar.gz -C /tmp/godharness-install
+          sudo install -m 755 /tmp/godharness-install/godharness /usr/local/bin/godharness
+          godharness --version
+
+      - run: godharness update
+
+      - name: Commit if anything changed
+        run: scripts/commit-self-update.sh
