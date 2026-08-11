@@ -10,6 +10,8 @@ on:
       - 'crates/godlint-core/src/glob.rs'
       - 'crates/godlint-core/src/date.rs'
       - 'crates/godlint-core/src/paths.rs'
+      - 'crates/godlint-core/src/discovery.rs'
+      - 'crates/godlint-core/src/scan.rs'
       - 'crates/godlint-cli/src/config.rs'
       - 'crates/godlint-core/src/suppression.rs'
       - '.cargo/mutants.toml'

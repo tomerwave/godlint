@@ -2,7 +2,7 @@
 
 use std::path::Path;
 
-use godlint_core::scan::{MAX_SOURCE_BYTES, ScanReport, scan};
+use godlint_core::scan::{MAX_SOURCE_BYTES, ScanError, ScanReport, scan};
 
 #[path = "support/temporary.rs"]
 mod temporary;
@@ -89,6 +89,18 @@ fn a_file_at_the_limit_is_still_scanned() {
 }
 
 #[test]
+fn a_file_well_below_the_limit_is_not_rejected() {
+    let repository = Repository::new();
+
+    repository.write("mid.ts", &statements(2_000_000));
+
+    let report = repository.scan();
+
+    assert!(report.issues.is_empty(), "{:?}", report.issues);
+    assert_eq!(report.facts.len(), 1);
+}
+
+#[test]
 fn a_scan_collects_workflows_beside_the_source_it_finds() {
     let repository = Repository::new();
 
@@ -153,6 +165,81 @@ fn a_workflow_it_cannot_read_becomes_an_issue_rather_than_silence() {
         "a workflow that contributes nothing must leave a trace: {:?}",
         report.issues[0]
     );
+    assert!(!report.issues[0].message.contains("more place"));
+}
+
+#[test]
+fn a_missing_input_reports_the_discovery_error() {
+    let repository = Repository::new();
+    let missing = repository.directory.path().join("missing");
+
+    let error = scan(
+        repository.directory.path(),
+        std::slice::from_ref(&missing),
+        &[],
+    )
+    .expect_err("a missing input path must fail the scan");
+
+    assert!(matches!(error, ScanError::DiscoversFiles { .. }));
+    assert!(error.to_string().contains("unable to discover files"));
+    assert!(error.to_string().contains("missing"));
+    assert!(std::error::Error::source(&error).is_some());
+}
+
+#[test]
+fn a_file_outside_the_root_names_the_source_path_error() {
+    let repository = Repository::new();
+    let outside_directory = TemporaryDirectory::new("scan-outside");
+    let outside = outside_directory.write("outside.rs", "fn outside() {}\n");
+
+    let error = scan(
+        repository.directory.path(),
+        std::slice::from_ref(&outside),
+        &[],
+    )
+    .expect_err("a source outside the root must fail the scan");
+
+    assert!(matches!(error, ScanError::SourcePath { .. }));
+    assert!(
+        error
+            .to_string()
+            .contains("source file is outside scan root")
+    );
+    assert!(error.to_string().contains("outside.rs"));
+    assert!(std::error::Error::source(&error).is_none());
+}
+
+#[cfg(unix)]
+fn set_access(path: &Path, mode: u32) {
+    use std::os::unix::fs::PermissionsExt;
+
+    std::fs::set_permissions(path, std::fs::Permissions::from_mode(mode))
+        .unwrap_or_else(|error| panic!("sets directory permissions: {error}"));
+}
+
+#[cfg(unix)]
+#[test]
+fn an_unreadable_nested_directory_becomes_a_relative_scan_issue() {
+    let repository = Repository::new();
+    repository.write("readable.ts", "const value = 1;\n");
+    repository.write("denied/hidden.ts", "const value = 2;\n");
+
+    let denied = repository.directory.path().join("denied");
+    set_access(&denied, 0o000);
+
+    if std::fs::read_dir(&denied).is_ok() {
+        set_access(&denied, 0o700);
+        panic!("the test cannot prove degradation while the directory is readable");
+    }
+
+    let report = repository.scan();
+
+    set_access(&denied, 0o700);
+
+    assert_eq!(report.facts.len(), 1);
+    assert_eq!(report.issues.len(), 1);
+    assert_eq!(report.issues[0].path, Path::new("denied"));
+    assert!(report.issues[0].message.contains("unable to discover"));
 }
 
 fn wide_repository(count: usize) -> Repository {
