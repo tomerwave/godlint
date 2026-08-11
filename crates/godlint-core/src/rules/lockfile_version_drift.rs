@@ -24,12 +24,7 @@ pub fn evaluate(repository: &RepositoryFacts, config: &Config) -> Vec<Finding> {
                 (
                     fact.file(),
                     fact.range(),
-                    Violation::LockfileVersionDrift {
-                        package: fact.package().to_owned(),
-                        declared: fact.declared().to_owned(),
-                        locked: fact.locked().to_owned(),
-                        lockfile: fact.lockfile().display().to_string(),
-                    },
+                    Violation::DependencyPolicy { message: format!("{} declares version {} but {} records {}; regenerate and commit the lockfile.", fact.package(), fact.declared(), fact.lockfile().display(), fact.locked()) },
                 )
             }),
         )

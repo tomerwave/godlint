@@ -29,6 +29,7 @@ pub mod explicit_workflow_permissions;
 pub mod file_size;
 pub mod filename_case;
 pub mod forbidden_dependency;
+pub mod frozen_lockfile_install;
 pub mod function_nesting;
 pub mod function_size;
 pub mod function_statements;
@@ -403,6 +404,7 @@ const WORKFLOW_EVALUATORS: &[WorkflowEvaluator] = &[
     secrets_inherit::evaluate,
     template_injection::evaluate,
     no_inline_script::evaluate,
+    frozen_lockfile_install::evaluate,
     no_monolithic_job::evaluate,
     no_silenced_failure::evaluate,
     unredacted_secrets::evaluate,

@@ -146,11 +146,8 @@ pub enum Violation {
         name: String,
         types: Vec<String>,
     },
-    LockfileVersionDrift {
-        package: String,
-        declared: String,
-        locked: String,
-        lockfile: String,
+    DependencyPolicy {
+        message: String,
     },
 }
 
@@ -363,7 +360,7 @@ impl Violation {
             Self::SleepInTest { .. } | Self::UnseededRandom { .. } | Self::NetworkInUnitTest { .. } => Severity::Error,
             Self::RestrictedImport { .. } | Self::CrossedBoundary { .. } | Self::BrokeIndependence { .. } => Severity::Error,
             Self::ForbiddenDependency { .. } | Self::FilenameCase { .. } | Self::InvalidBranchName { .. } => Severity::Error,
-            Self::LockfileVersionDrift { .. } => Severity::Error,
+            Self::DependencyPolicy { .. } => Severity::Error,
         }
     }
 }
@@ -391,7 +388,7 @@ impl fmt::Display for Violation {
             Self::TimerWithoutDelay { callee } => write!(formatter, "{callee} {TIMER_DELAY}"),
             Self::FilenameCase { name, case } => filename_case(formatter, name, case),
             Self::InvalidBranchName { name, types } => branch_name(formatter, name, types),
-            Self::LockfileVersionDrift { package, declared, locked, lockfile } => write!(formatter, "{package} declares version {declared} but {lockfile} records {locked}; regenerate and commit the lockfile."),
+            Self::DependencyPolicy { message } => formatter.write_str(message),
             Self::ForbiddenDependency { package } => forbidden(formatter, package),
             Self::CrossedBoundary { from, to } => crossed_boundary(formatter, from, to),
             Self::BrokeIndependence { set, from, to } => independent(formatter, set, from, to),

@@ -24,6 +24,7 @@ enforced there.
 | `ci/hardcoded-container-credentials` | — | — | — | ✓ | — |
 | `ci/no-comments` | — | — | — | ✓ | — |
 | `ci/no-inline-script` | — | — | — | ✓ | — |
+| `ci/frozen-lockfile-install` | — | — | — | ✓ | — |
 | `ci/no-monolithic-job` | — | — | — | ✓ | — |
 | `ci/no-silenced-failure` | — | — | — | ✓ | — |
 | `ci/overprovisioned-secrets` | — | — | — | ✓ | — |
@@ -202,6 +203,7 @@ have to decide what interpolation looks like inside an f-string.
 | `ci/no-comments` | A comment in a workflow |
 | `ci/template-injection` | An attacker-influenced expression interpolated directly into a `run:` script |
 | `ci/no-inline-script` | A `run:` script exceeding its effective-line limit |
+| `ci/frozen-lockfile-install` | A known package-manager install, build, or test command that does not enforce the committed lockfile |
 | `ci/no-monolithic-job` | A job exceeding its step limit |
 | `ci/secrets-inherit` | A reusable-workflow call passing every secret available to its job |
 | `ci/unredacted-secrets` | A script directly writing a secret expression to `GITHUB_ENV` or `GITHUB_OUTPUT` |

@@ -136,6 +136,8 @@ pub struct Rules {
     pub bot_conditions: Option<BotConditionsRule>,
     #[serde(rename = "ci/no-inline-script")]
     pub no_inline_script: Option<LineLimitRule>,
+    #[serde(rename = "ci/frozen-lockfile-install")]
+    pub frozen_lockfile_install: Option<NoWorkflowCommentsRule>,
     #[serde(rename = "ci/no-monolithic-job")]
     pub no_monolithic_job: Option<NoMonolithicJobRule>,
     #[serde(rename = "ci/secrets-inherit")]
