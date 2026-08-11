@@ -18,6 +18,9 @@ speaks about.
 
 ### Fixed
 
+- The mutation gate now covers file discovery and scan orchestration, including unreadable-path
+  reporting, scan limits, and source-path diagnostics; worker-count mutants remain documented
+  equivalents because they change throughput without changing findings.
 - The mutation gate now examines path handling, exclusion matching, and suppression dates instead
   of leaving those finding-affecting decisions in the unmutated list.
 - Workflow facts now expose typed boolean policy values and unquoted run bodies, while JSON scan

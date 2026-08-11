@@ -20,6 +20,8 @@ examine_globs = [
     "crates/godlint-core/src/glob.rs",
     "crates/godlint-core/src/date.rs",
     "crates/godlint-core/src/paths.rs",
+    "crates/godlint-core/src/discovery.rs",
+    "crates/godlint-core/src/scan.rs",
     "crates/godlint-core/src/analyzers/**/*.rs",
     "crates/godlint-core/src/facts.rs",
     "crates/godlint-core/src/facts/**/*.rs",
@@ -45,6 +47,12 @@ timeout_multiplier = 5.0
 minimum_test_timeout = 300
 
 exclude_re = [
+    # Worker selection changes throughput, not report contents: zero still takes the sequential
+    # path, and the ordering and contents are covered by the scan tests.
+    "scan.rs.*replace workers -> usize with 0",
+    # Worker selection changes throughput, not report contents: one is already the sequential
+    # path, and the ordering and contents are covered by the scan tests.
+    "scan.rs.*replace workers -> usize with 1",
     # `is_conditional` exists because every language must fill the `Vocabulary` slot, and its only
     # consumer is `metrics::child_opens_block`, which asks it about a node that is already a nesting
     # kind sitting in an `else`. In Python that node is an `elif_clause` or an `else_clause`, neither

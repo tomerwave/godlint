@@ -1,6 +1,7 @@
 #![allow(clippy::expect_used, clippy::unwrap_used)]
 
 use std::{
+    error::Error,
     fs,
     path::{Path, PathBuf},
 };
@@ -129,7 +130,17 @@ fn reports_missing_input_paths() {
         },
     );
 
-    assert!(matches!(result, Err(DiscoveryError::ReadMetadata { .. })));
+    let Err(error) = result else {
+        panic!("a missing input path must be reported")
+    };
+    assert!(matches!(error, DiscoveryError::ReadMetadata { .. }));
+    assert_eq!(error.path(), path);
+
+    let reason = error.reason();
+    assert!(!reason.is_empty());
+    assert!(error.to_string().contains(path.to_string_lossy().as_ref()));
+    assert!(error.to_string().contains(&reason));
+    assert!(error.source().is_some());
 }
 
 fn defaults() -> Vec<String> {
