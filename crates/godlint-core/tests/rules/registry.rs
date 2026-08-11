@@ -37,7 +37,6 @@ fn limits(rule_id: &str) -> String {
         "maintainability/function-statements" => "max-statements",
         "ci/no-inline-script" => "max-lines",
         "ci/no-monolithic-job" => "max-steps",
-        "ci/frozen-lockfile-install" => "",
         _ => return String::new(),
     };
 
