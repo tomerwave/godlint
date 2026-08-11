@@ -129,6 +129,7 @@ mod tests {
             "cargo build --locked",
             "cargo test --locked",
             "uv sync --locked",
+            "npm install --global npm@latest",
         ] {
             assert!(missing_lockfile_flag(command).is_none(), "{command}");
         }
