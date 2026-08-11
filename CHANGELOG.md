@@ -7,6 +7,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 change the `godlint-core` API; the command line and the configuration schema are what the version
 speaks about.
 
+## [0.9.1] - 2026-08-11
+
+### Fixed
+
+- npm release publishing now uses a trusted-publishing-capable npm client.
+
 ## [0.9.0] - 2026-08-11
 
 ### Added
