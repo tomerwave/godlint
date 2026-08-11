@@ -1,0 +1,6 @@
+jobs:
+  build:
+    steps:
+      - run: npm ci
+      - run: cargo build --locked
+      - run: uv sync --locked

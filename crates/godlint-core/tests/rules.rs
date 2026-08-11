@@ -84,6 +84,8 @@ mod no_network_in_unit_test;
 #[path = "rules/no_randomness_without_seed.rs"]
 mod no_randomness_without_seed;
 
+#[path = "rules/frozen_lockfile_install.rs"]
+mod frozen_lockfile_install;
 #[path = "rules/no_inline_script.rs"]
 mod no_inline_script;
 #[path = "rules/no_internal_import.rs"]

@@ -1,5 +1,8 @@
 # Changelog
 
+- `ci/frozen-lockfile-install` reports known dependency install/build/test commands that do not
+  enforce their committed lockfile.
+
 All notable changes to Godlint will be documented here.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and

@@ -10,8 +10,8 @@ use crate::{
         explicit_timer_delay::ExplicitTimerDelay,
         explicit_workflow_permissions::ExplicitWorkflowPermissions, file_size::FileSize,
         filename_case::FilenameCase, forbidden_dependency::ForbiddenDependency,
-        function_nesting::FunctionNesting, function_size::FunctionSize,
-        function_statements::FunctionStatements,
+        frozen_lockfile_install::FrozenLockfileInstall, function_nesting::FunctionNesting,
+        function_size::FunctionSize, function_statements::FunctionStatements,
         hardcoded_container_credentials::HardcodedContainerCredentials,
         module_independence::ModuleIndependence, no_comments::NoComments,
         no_dynamic_execution::NoDynamicExecution, no_empty_test::NoEmptyTest,
@@ -105,6 +105,7 @@ registrations! {
     TemplateInjection => template_injection, true;
     BotConditions => bot_conditions, true;
     NoInlineScript => no_inline_script, true;
+    FrozenLockfileInstall => frozen_lockfile_install, true;
     NoMonolithicJob => no_monolithic_job, true;
     SecretsInherit => secrets_inherit, true;
     OverprovisionedSecrets => overprovisioned_secrets, true;

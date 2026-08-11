@@ -523,6 +523,7 @@ to a run step, which is what `ci/no-pull-request-target-checkout` would need.
 | `ci/unnecessary-job-dependency` | Rejected: not decidable from workflow syntax | `announce` needs `[publish, npm, pypi]` while downloading artifacts from `binaries` | None | `needs:` means both output consumption and success gating; syntax cannot distinguish them |
 | `ci/no-inline-script` | Shipped | Step fact | High | `max-lines`, 8 in `recommended@1` |
 | `ci/no-monolithic-job` | Shipped | Job fact | High | `max-steps`, 20 in `recommended@1` |
+| `ci/frozen-lockfile-install` | Shipped | Step fact | High | `allow-in` path globs; known ecosystem command patterns only |
 | `ci/require-concurrency-cancel` | Planned | Workflow fact | Medium | Which triggers must cancel in progress |
 | `ci/template-injection` | Shipped | Step and expression facts | High | `allow-in` path globs |
 | `ci/bot-conditions` | Shipped | Step, job and expression facts | High | `bots`, defaulting to three common identities |

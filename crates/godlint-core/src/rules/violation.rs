@@ -146,6 +146,10 @@ pub enum Violation {
         name: String,
         types: Vec<String>,
     },
+    FrozenLockfileInstall {
+        command: String,
+        remedy: String,
+    },
 }
 
 impl Violation {
@@ -357,6 +361,7 @@ impl Violation {
             Self::SleepInTest { .. } | Self::UnseededRandom { .. } | Self::NetworkInUnitTest { .. } => Severity::Error,
             Self::RestrictedImport { .. } | Self::CrossedBoundary { .. } | Self::BrokeIndependence { .. } => Severity::Error,
             Self::ForbiddenDependency { .. } | Self::FilenameCase { .. } | Self::InvalidBranchName { .. } => Severity::Error,
+            Self::FrozenLockfileInstall { .. } => Severity::Error,
         }
     }
 }
@@ -384,6 +389,7 @@ impl fmt::Display for Violation {
             Self::TimerWithoutDelay { callee } => write!(formatter, "{callee} {TIMER_DELAY}"),
             Self::FilenameCase { name, case } => filename_case(formatter, name, case),
             Self::InvalidBranchName { name, types } => branch_name(formatter, name, types),
+            Self::FrozenLockfileInstall { command, remedy } => write!(formatter, "This step uses {command} without pinning to the committed lockfile; use {remedy} instead."),
             Self::ForbiddenDependency { package } => forbidden(formatter, package),
             Self::CrossedBoundary { from, to } => crossed_boundary(formatter, from, to),
             Self::BrokeIndependence { set, from, to } => independent(formatter, set, from, to),
