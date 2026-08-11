@@ -67,6 +67,13 @@ fn git_policy(rules: &mut Rules) {
 
 fn continuous_integration(rules: &mut Rules) {
     workflow_shape(rules);
+    rules
+        .frozen_lockfile_install
+        .get_or_insert(NoWorkflowCommentsRule {
+            severity: Severity::Error,
+            only_in: Vec::new(),
+            allow_in: Vec::new(),
+        });
     workflow_secrets(rules);
     workflow_hygiene(rules);
 }

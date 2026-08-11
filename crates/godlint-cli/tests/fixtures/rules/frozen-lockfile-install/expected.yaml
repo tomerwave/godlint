@@ -1,0 +1,7 @@
+exit-code: 1
+
+stdout: |
+  .github/workflows/dependencies.yml:4:14: error[ci/frozen-lockfile-install] This step uses npm install without pinning to the committed lockfile; use npm ci instead.
+  .github/workflows/dependencies.yml:6:14: error[ci/frozen-lockfile-install] This step uses cargo build without pinning to the committed lockfile; use add --locked instead.
+
+stderr: ""
