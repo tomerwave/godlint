@@ -33,9 +33,11 @@ impl Workspace {
             eprintln!("{notice}");
         }
 
+        let excludes = config.excludes();
+
         Ok(Self {
             config,
-            repository: repository(&located.root)?,
+            repository: repository(&located.root, &excludes)?,
             root: located.root,
             scan_paths: located.scan_paths,
         })
@@ -140,7 +142,7 @@ fn scan_path(root: &Path, path: &Path) -> Result<PathBuf, String> {
     Ok(path.to_path_buf())
 }
 
-fn repository(root: &Path) -> Result<RepositoryFacts, String> {
+fn repository(root: &Path, excludes: &[String]) -> Result<RepositoryFacts, String> {
     let branch = branch::resolve(root)
         .map(|name| {
             TextFile::new(PathBuf::from("<branch>"), name)
@@ -148,8 +150,19 @@ fn repository(root: &Path) -> Result<RepositoryFacts, String> {
         })
         .transpose()?;
 
-    Ok(
-        RepositoryFacts::new(branch)
-            .with_version_drifts(RepositoryFacts::read_version_drifts(root)),
-    )
+    let drifts = RepositoryFacts::read_version_drifts(root)
+        .into_iter()
+        .filter(|fact| !excluded(excludes, fact.file().path_text()))
+        .collect();
+
+    Ok(RepositoryFacts::new(branch).with_version_drifts(drifts))
+}
+
+fn excluded(excludes: &[String], path: &str) -> bool {
+    excludes.iter().any(|pattern| {
+        godlint_core::glob::matches(pattern, path)
+            || path
+                .strip_prefix(pattern)
+                .is_some_and(|rest| rest.starts_with('/'))
+    })
 }
