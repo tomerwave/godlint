@@ -16,6 +16,11 @@ speaks about.
 ### Added
 
 - `reliability/network-timeout-required` reports supported Python network calls without an explicit timeout.
+- `reliability/no-control-flow-in-finally` rejects escaping control flow in cleanup blocks.
+- `reliability/redundant-catch-rethrow` rejects handlers that only rethrow.
+- `repository/no-committed-secret-file` rejects common credential and private-key filenames.
+- `style/no-commented-code` reports comments that look like disabled source code.
+- `maintainability/no-duplicate-string` reports repeated long string literals in a file.
 
 ## [0.9.0] - 2026-08-11
 

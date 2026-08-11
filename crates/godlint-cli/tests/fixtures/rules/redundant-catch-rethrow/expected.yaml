@@ -1,0 +1,5 @@
+exit-code: 1
+stdout: |
+  example.js:1:17: error[reliability/redundant-catch-rethrow] This handler only rethrows the caught error; remove it or add useful handling or context.
+  example.py:4:5: error[reliability/redundant-catch-rethrow] This handler only rethrows the caught error; remove it or add useful handling or context.
+stderr: ""

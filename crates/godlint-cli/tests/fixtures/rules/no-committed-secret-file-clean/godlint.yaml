@@ -1,0 +1,4 @@
+version: 1
+rules:
+  repository/no-committed-secret-file:
+    severity: error

@@ -5,6 +5,9 @@ use crate::{
     rules::{Metric, SuppressionDefect},
 };
 
+#[path = "violation_cap.rs"]
+mod violation_cap;
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Violation {
     Limit {
@@ -123,7 +126,16 @@ pub enum Violation {
     NetworkInUnitTest {
         callee: String,
     },
-    NetworkTimeoutMissing { callee: String },
+    NetworkTimeoutMissing {
+        callee: String,
+    },
+    NoControlFlowInFinally,
+    RedundantCatchRethrow,
+    CommittedSecretFile,
+    CommentedCode,
+    DuplicateString {
+        value: String,
+    },
     RestrictedImport {
         module: String,
     },
@@ -179,7 +191,15 @@ const RESTRICTED_IMPORT: &str =
 const PRODUCTION_LOG: &str =
     "logs from production code; route it through the project's logger or an approved path.";
 
-const NETWORK_TIMEOUT: &str = "has no explicit timeout; bound network calls so they cannot wait forever.";
+const NETWORK_TIMEOUT: &str =
+    "has no explicit timeout; bound network calls so they cannot wait forever.";
+const NO_CONTROL_FLOW_IN_FINALLY: &str = "A finally block contains escaping control flow; return, break, and continue can suppress errors or skip cleanup.";
+const REDUNDANT_CATCH_RETHROW: &str =
+    "This handler only rethrows the caught error; remove it or add useful handling or context.";
+const COMMITTED_SECRET_FILE: &str = "This filename commonly contains credentials or private keys; keep it out of version control and provide a safe example instead.";
+const COMMENTED_CODE: &str =
+    "This comment appears to be disabled source code; delete it or restore it as executable code.";
+const DUPLICATE_STRING: &str = "is repeated in this file; give the shared value a named constant.";
 
 const UNUSED_SUPPRESSION: &str =
     "Suppression silences nothing; remove it, or restore the rule it names to this path.";
@@ -340,34 +360,7 @@ fn bot(formatter: &mut fmt::Formatter<'_>, expression: &str) -> fmt::Result {
     )
 }
 
-impl Violation {
-    #[rustfmt::skip]
-    pub(crate) fn cap(&self) -> Severity {
-        match self {
-            Self::InternalImport { certain: false, .. } => Severity::Warning,
-            Self::UnlabelledActionPin { .. } | Self::StepContinuesOnError | Self::JobContinuesOnError => Severity::Warning,
-            Self::ScriptOrTrue | Self::MissingAssertion | Self::UnverifiedHash { .. } => Severity::Warning,
-            Self::TemplateInjection { certain: false, .. } => Severity::Warning,
-            Self::Limit { .. } | Self::EmptyBody | Self::EmptyErrorHandler => Severity::Error,
-            Self::MissingReference { .. } | Self::CommentNotPermitted | Self::WorkflowCommentNotPermitted => Severity::Error,
-            Self::UnaccountableSuppression { .. } | Self::UnusedSuppression | Self::RestrictedCall { .. } => Severity::Error,
-            Self::DynamicExecution { .. } | Self::DirectEnvironmentRead { .. } | Self::TimerWithoutDelay { .. } => Severity::Error,
-            Self::ProductionLog { .. } | Self::InsecureRandom { .. } | Self::WeakHash { .. } => Severity::Error,
-            Self::FocusedTest | Self::SkippedTest | Self::EmptyTest => Severity::Error,
-            Self::ShellCommand { .. } | Self::UndeclaredPermissions | Self::InheritedPermissions { .. } => Severity::Error,
-            Self::HardcodedContainerCredential { .. } | Self::MutableActionReference { .. } | Self::ContradictoryActionLabels { .. } => Severity::Error,
-            Self::ContradictoryActionPins { .. } | Self::TemplateInjection { certain: true, .. } | Self::AttackerInfluencedBotCondition { .. } => Severity::Error,
-            Self::InheritedSecrets { .. } | Self::OverprovisionedSecrets { .. } | Self::UnredactedSecret => Severity::Error,
-            Self::UntrustedGithubEnv { .. } => Severity::Error,
-            Self::ScriptExitsSuccessfully { .. } | Self::TestHelperInProduction { .. } | Self::InternalImport { certain: true, .. } => Severity::Error,
-            Self::SleepInTest { .. } | Self::UnseededRandom { .. } | Self::NetworkInUnitTest { .. } | Self::NetworkTimeoutMissing { .. } => Severity::Error,
-            Self::RestrictedImport { .. } | Self::CrossedBoundary { .. } | Self::BrokeIndependence { .. } => Severity::Error,
-            Self::ForbiddenDependency { .. } | Self::FilenameCase { .. } | Self::InvalidBranchName { .. } => Severity::Error,
-            Self::DependencyPolicy { .. } => Severity::Error,
-        }
-    }
-}
-
+#[rustfmt::skip]
 impl fmt::Display for Violation {
     #[rustfmt::skip]
     // godlint-ignore-next-line maintainability/function-size owner=tomer expires=2026-12-31 -- #208 will remove the size pressure without weakening exhaustiveness
@@ -427,6 +420,11 @@ impl fmt::Display for Violation {
             Self::UnseededRandom { callee, remedy } => unseeded(formatter, callee, remedy),
             Self::NetworkInUnitTest { callee } => network(formatter, callee),
             Self::NetworkTimeoutMissing { callee } => write!(formatter, "{callee} {NETWORK_TIMEOUT}"),
+            Self::NoControlFlowInFinally => formatter.write_str(NO_CONTROL_FLOW_IN_FINALLY),
+            Self::RedundantCatchRethrow => formatter.write_str(REDUNDANT_CATCH_RETHROW),
+            Self::CommittedSecretFile => formatter.write_str(COMMITTED_SECRET_FILE),
+            Self::CommentedCode => formatter.write_str(COMMENTED_CODE),
+            Self::DuplicateString { value } => write!(formatter, "\"{value}\" {DUPLICATE_STRING}"),
             Self::InsecureRandom { callee, secure } => insecure_random(formatter, callee, secure),
         }
     }

@@ -1,0 +1,4 @@
+exit-code: 1
+stdout: |
+  credentials.json:1:1: error[repository/no-committed-secret-file] This filename commonly contains credentials or private keys; keep it out of version control and provide a safe example instead.
+stderr: ""

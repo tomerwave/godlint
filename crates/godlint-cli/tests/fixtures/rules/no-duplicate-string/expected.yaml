@@ -1,0 +1,9 @@
+exit-code: 1
+stdout: |
+  example.js:1:15: error[maintainability/no-duplicate-string] "https://api.example.com/v1/very-long-resource" is repeated in this file; give the shared value a named constant.
+  example.js:2:16: error[maintainability/no-duplicate-string] "https://api.example.com/v1/very-long-resource" is repeated in this file; give the shared value a named constant.
+  example.py:1:9: error[maintainability/no-duplicate-string] "https://api.example.com/v1/very-long-resource" is repeated in this file; give the shared value a named constant.
+  example.py:2:10: error[maintainability/no-duplicate-string] "https://api.example.com/v1/very-long-resource" is repeated in this file; give the shared value a named constant.
+  example.rs:1:21: error[maintainability/no-duplicate-string] "https://api.example.com/v1/very-long-resource" is repeated in this file; give the shared value a named constant.
+  example.rs:2:22: error[maintainability/no-duplicate-string] "https://api.example.com/v1/very-long-resource" is repeated in this file; give the shared value a named constant.
+stderr: ""

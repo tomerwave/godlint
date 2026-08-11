@@ -1,0 +1,6 @@
+exit-code: 1
+stdout: |
+  example.js:1:1: error[style/no-commented-code] This comment appears to be disabled source code; delete it or restore it as executable code.
+  example.py:1:1: error[style/no-commented-code] This comment appears to be disabled source code; delete it or restore it as executable code.
+  example.rs:1:1: error[style/no-commented-code] This comment appears to be disabled source code; delete it or restore it as executable code.
+stderr: ""

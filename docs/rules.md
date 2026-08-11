@@ -36,6 +36,11 @@ enforced there.
 | `ci/untrusted-github-env` | — | — | — | ✓ | — |
 | `git/branch-naming` | — | — | — | — | ✓ |
 | `dependencies/lockfile-version-drift` | — | — | — | — | ✓ |
+| `repository/no-committed-secret-file` | — | — | — | — | ✓ |
+| `style/no-commented-code` | ✓ | ✓ | ✓ | — | — |
+| `maintainability/no-duplicate-string` | ✓ | ✓ | ✓ | — | — |
+| `reliability/no-control-flow-in-finally` | ✓ | ✓ | — | — | — |
+| `reliability/redundant-catch-rethrow` | ✓ | ✓ | — | — | — |
 | `logging/no-production-log` | ✓ | ✓ | ✓ | — | — |
 | `maintainability/cognitive-complexity` | ✓ | ✓ | ✓ | — | — |
 | `maintainability/condition-complexity` | ✓ | ✓ | ✓ | — | — |

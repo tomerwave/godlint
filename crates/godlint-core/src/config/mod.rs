@@ -102,6 +102,16 @@ pub struct Rules {
     pub no_network_in_unit_test: Option<NoNetworkInUnitTestRule>,
     #[serde(rename = "reliability/network-timeout-required")]
     pub network_timeout_required: Option<NetworkTimeoutRequiredRule>,
+    #[serde(rename = "reliability/no-control-flow-in-finally")]
+    pub no_control_flow_in_finally: Option<NoProductionLogRule>,
+    #[serde(rename = "reliability/redundant-catch-rethrow")]
+    pub redundant_catch_rethrow: Option<NoProductionLogRule>,
+    #[serde(rename = "repository/no-committed-secret-file")]
+    pub no_committed_secret_file: Option<NoProductionLogRule>,
+    #[serde(rename = "style/no-commented-code")]
+    pub no_commented_code: Option<NoProductionLogRule>,
+    #[serde(rename = "maintainability/no-duplicate-string")]
+    pub no_duplicate_string: Option<NoProductionLogRule>,
     #[serde(rename = "security/no-weak-hash")]
     pub no_weak_hash: Option<NoWeakHashRule>,
     #[serde(rename = "security/no-insecure-random")]

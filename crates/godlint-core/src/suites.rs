@@ -9,7 +9,7 @@ use crate::config::{
     HardcodedContainerCredentialsRule, LineLimitRule, LockfileVersionDriftRule,
     ModuleIndependenceRule, NoCommentsRule, NoDynamicExecutionRule, NoEmptyTestRule,
     NoFocusedTestRule, NoInsecureRandomRule, NoInternalImportRule, NoMonolithicJobRule,
-    NetworkTimeoutRequiredRule, NoNetworkInUnitTestRule, NoProductionLogRule, NoRandomnessWithoutSeedRule, NoShellCommandRule,
+    NoNetworkInUnitTestRule, NoProductionLogRule, NoRandomnessWithoutSeedRule, NoShellCommandRule,
     NoSilencedFailureRule, NoSkippedTestRule, NoSleepInTestRule, NoTestHelperInProductionRule,
     NoWeakHashRule, NoWorkflowCommentsRule, OverprovisionedSecretsRule, ParameterCountRule,
     PinThirdPartyActionsRule, RestrictedCallRule, RestrictedImportRule, ReturnCountRule, Rules,
@@ -65,6 +65,14 @@ fn dependencies(rules: &mut Rules) {
             only_in: Vec::new(),
             allow_in: Vec::new(),
         });
+}
+
+fn strict() -> NoProductionLogRule {
+    NoProductionLogRule {
+        severity: Severity::Error,
+        only_in: Vec::new(),
+        allow_in: Vec::new(),
+    }
 }
 
 fn git_policy(rules: &mut Rules) {
@@ -453,13 +461,9 @@ fn reliability(rules: &mut Rules) {
             only_in: Vec::new(),
             allow_in: Vec::new(),
         });
-    rules
-        .network_timeout_required
-        .get_or_insert(NetworkTimeoutRequiredRule {
-            severity: Severity::Error,
-            only_in: Vec::new(),
-            allow_in: Vec::new(),
-        });
+    rules.network_timeout_required.get_or_insert_with(strict);
+    rules.no_control_flow_in_finally.get_or_insert_with(strict);
+    rules.redundant_catch_rethrow.get_or_insert_with(strict);
 }
 
 fn testing(rules: &mut Rules) {

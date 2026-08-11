@@ -283,9 +283,10 @@ def reported_dialects() -> dict[str, set[str]]:
                 continue
 
             path, identifier = match.groups()
+            name = path.rsplit("/", 1)[-1]
             dialect = (
                 "Repository"
-                if path == "<branch>" or path.endswith(("Cargo.toml", "package.json", "pyproject.toml"))
+                if path == "<branch>" or name in {"Cargo.toml", "package.json", "pyproject.toml", ".env", ".env.local", ".env.production", "credentials.json", "gcloud_credentials.json", "application_default_credentials.json", "id_rsa", "id_dsa", "id_ecdsa", "id_ed25519"} or name.endswith((".pem", ".key", ".p12"))
                 else DIALECTS.get(path.rsplit(".", 1)[-1])
             )
             if dialect is not None:

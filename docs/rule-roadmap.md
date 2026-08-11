@@ -4,6 +4,10 @@ Godlint is the executable engineering constitution for repositories maintained b
 humans and coding agents. This roadmap prioritizes deterministic rules that preserve
 repository intent as code output scales.
 
+Shipped rules include `reliability/no-control-flow-in-finally`, `reliability/redundant-catch-rethrow`,
+`repository/no-committed-secret-file`, `style/no-commented-code`, and
+`maintainability/no-duplicate-string`.
+
 It should enforce decisions that need one organization-level policy across Rust,
 JavaScript/TypeScript, and Python. It should not reimplement formatters, compilers, or
 each language's general-purpose linter.

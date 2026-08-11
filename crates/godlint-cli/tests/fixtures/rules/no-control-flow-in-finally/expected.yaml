@@ -1,0 +1,5 @@
+exit-code: 1
+stdout: |
+  example.js:1:17: error[reliability/no-control-flow-in-finally] A finally block contains escaping control flow; return, break, and continue can suppress errors or skip cleanup.
+  example.py:4:5: error[reliability/no-control-flow-in-finally] A finally block contains escaping control flow; return, break, and continue can suppress errors or skip cleanup.
+stderr: ""

@@ -2,7 +2,11 @@ use crate::{
     analyzers::SourceFacts,
     config::{Config, NetworkTimeoutRequiredRule, Severity},
     facts::CallFact,
-    rules::{CallRule, Finding, Rule, Violation, catalogue::{Catalogue, spelled}, evaluate_call_rule, when_configured},
+    rules::{
+        Absence, CallRule, Finding, Languages, Rule, Violation,
+        catalogue::{Catalogue, spelled},
+        evaluate_call_rule, when_configured,
+    },
     source::Dialect,
 };
 
@@ -29,6 +33,12 @@ pub struct NetworkTimeoutRequired;
 
 impl Rule for NetworkTimeoutRequired {
     const ID: &'static str = "reliability/network-timeout-required";
+    const LANGUAGES: Languages = Languages::all_but(&[
+        (Dialect::JavaScript, Absence::NoSuchConstruct),
+        (Dialect::Rust, Absence::NoSuchConstruct),
+        (Dialect::Workflow, Absence::NoSuchConstruct),
+        (Dialect::Repository, Absence::NoSuchConstruct),
+    ]);
 
     type Configuration = NetworkTimeoutRequiredRule;
 

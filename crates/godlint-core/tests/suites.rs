@@ -40,7 +40,13 @@ fn a_bare_configuration_enforces_nothing() {
 #[test]
 fn recommended_enables_every_rule_at_error() {
     let config = recommended();
+    let opt_in = [
+        "repository/no-committed-secret-file",
+        "style/no-commented-code",
+        "maintainability/no-duplicate-string",
+    ];
     let off: Vec<&str> = rule_ids()
+        .filter(|id| !opt_in.contains(id))
         .filter(|id| configured_severity(&config, id) != Severity::Error)
         .collect();
 
