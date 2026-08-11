@@ -173,8 +173,12 @@ fn a_missing_input_reports_the_discovery_error() {
     let repository = Repository::new();
     let missing = repository.directory.path().join("missing");
 
-    let error = scan(repository.directory.path(), &[missing.clone()], &[])
-        .expect_err("a missing input path must fail the scan");
+    let error = scan(
+        repository.directory.path(),
+        std::slice::from_ref(&missing),
+        &[],
+    )
+    .expect_err("a missing input path must fail the scan");
 
     assert!(matches!(error, ScanError::DiscoversFiles { .. }));
     assert!(error.to_string().contains("unable to discover files"));
@@ -188,8 +192,12 @@ fn a_file_outside_the_root_names_the_source_path_error() {
     let outside_directory = TemporaryDirectory::new("scan-outside");
     let outside = outside_directory.write("outside.rs", "fn outside() {}\n");
 
-    let error = scan(repository.directory.path(), &[outside.clone()], &[])
-        .expect_err("a source outside the root must fail the scan");
+    let error = scan(
+        repository.directory.path(),
+        std::slice::from_ref(&outside),
+        &[],
+    )
+    .expect_err("a source outside the root must fail the scan");
 
     assert!(matches!(error, ScanError::SourcePath { .. }));
     assert!(
