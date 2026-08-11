@@ -154,8 +154,14 @@ fn repository(root: &Path, excludes: &[String]) -> Result<RepositoryFacts, Strin
         .into_iter()
         .filter(|fact| !excluded(excludes, fact.file().path_text()))
         .collect();
+    let secret_files = RepositoryFacts::read_secret_files(root)
+        .into_iter()
+        .filter(|file| !excluded(excludes, file.path_text()))
+        .collect();
 
-    Ok(RepositoryFacts::new(branch).with_version_drifts(drifts))
+    Ok(RepositoryFacts::new(branch)
+        .with_version_drifts(drifts)
+        .with_secret_files(secret_files))
 }
 
 fn excluded(excludes: &[String], path: &str) -> bool {

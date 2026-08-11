@@ -67,6 +67,14 @@ fn dependencies(rules: &mut Rules) {
         });
 }
 
+fn strict() -> NoProductionLogRule {
+    NoProductionLogRule {
+        severity: Severity::Error,
+        only_in: Vec::new(),
+        allow_in: Vec::new(),
+    }
+}
+
 fn git_policy(rules: &mut Rules) {
     rules.branch_naming.get_or_insert_with(|| BranchNamingRule {
         severity: Severity::Error,
@@ -453,6 +461,9 @@ fn reliability(rules: &mut Rules) {
             only_in: Vec::new(),
             allow_in: Vec::new(),
         });
+    rules.network_timeout_required.get_or_insert_with(strict);
+    rules.no_control_flow_in_finally.get_or_insert_with(strict);
+    rules.redundant_catch_rethrow.get_or_insert_with(strict);
 }
 
 fn testing(rules: &mut Rules) {

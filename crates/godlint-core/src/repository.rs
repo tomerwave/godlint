@@ -47,6 +47,7 @@ impl VersionDriftFact {
 pub struct RepositoryFacts {
     branch: Option<TextFile>,
     version_drifts: Vec<VersionDriftFact>,
+    secret_files: Vec<TextFile>,
 }
 
 impl RepositoryFacts {
@@ -54,6 +55,7 @@ impl RepositoryFacts {
         Self {
             branch,
             version_drifts: Vec::new(),
+            secret_files: Vec::new(),
         }
     }
 
@@ -70,11 +72,79 @@ impl RepositoryFacts {
         &self.version_drifts
     }
 
+    pub fn with_secret_files(mut self, secret_files: Vec<TextFile>) -> Self {
+        self.secret_files = secret_files;
+        self
+    }
+
+    pub fn secret_files(&self) -> &[TextFile] {
+        &self.secret_files
+    }
+
+    pub fn read_secret_files(root: &Path) -> Vec<TextFile> {
+        let mut files = Vec::new();
+        collect_secret_files(root, root, &mut files);
+        files
+    }
+
     pub fn read_version_drifts(root: &Path) -> Vec<VersionDriftFact> {
         let mut facts = Vec::new();
         collect(root, root, &mut facts);
         facts
     }
+}
+
+fn collect_secret_files(root: &Path, directory: &Path, files: &mut Vec<TextFile>) {
+    let Ok(entries) = fs::read_dir(directory) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        collect_secret_entry(root, &path, files);
+    }
+}
+
+fn collect_secret_entry(root: &Path, path: &Path, files: &mut Vec<TextFile>) {
+    if path.is_dir() {
+        return collect_secret_directory(root, path, files);
+    }
+    if is_secret_filename(path) {
+        add_secret_file(root, path, files);
+    }
+}
+
+fn collect_secret_directory(root: &Path, path: &Path, files: &mut Vec<TextFile>) {
+    if !ignored_directory(path) {
+        collect_secret_files(root, path, files);
+    }
+}
+
+fn add_secret_file(root: &Path, path: &Path, files: &mut Vec<TextFile>) {
+    if let Some(file) = read_text_file(root, path) {
+        files.push(file);
+    }
+}
+
+fn is_secret_filename(path: &Path) -> bool {
+    let name = path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or_default();
+    matches!(
+        name,
+        ".env"
+            | ".env.local"
+            | ".env.production"
+            | "credentials.json"
+            | "gcloud_credentials.json"
+            | "application_default_credentials.json"
+            | "id_rsa"
+            | "id_dsa"
+            | "id_ecdsa"
+            | "id_ed25519"
+    ) || name.ends_with(".pem")
+        || name.ends_with(".key")
+        || name.ends_with(".p12")
 }
 
 fn collect(root: &Path, directory: &Path, facts: &mut Vec<VersionDriftFact>) {

@@ -36,6 +36,11 @@ enforced there.
 | `ci/untrusted-github-env` | — | — | — | ✓ | — |
 | `git/branch-naming` | — | — | — | — | ✓ |
 | `dependencies/lockfile-version-drift` | — | — | — | — | ✓ |
+| `repository/no-committed-secret-file` | — | — | — | — | ✓ |
+| `style/no-commented-code` | ✓ | ✓ | ✓ | — | — |
+| `maintainability/no-duplicate-string` | ✓ | ✓ | ✓ | — | — |
+| `reliability/no-control-flow-in-finally` | ✓ | ✓ | — | — | — |
+| `reliability/redundant-catch-rethrow` | ✓ | ✓ | — | — | — |
 | `logging/no-production-log` | ✓ | ✓ | ✓ | — | — |
 | `maintainability/cognitive-complexity` | ✓ | ✓ | ✓ | — | — |
 | `maintainability/condition-complexity` | ✓ | ✓ | ✓ | — | — |
@@ -52,6 +57,7 @@ enforced there.
 | `policy/unused-suppression` | ✓ | ✓ | ✓ | — | — |
 | `reliability/empty-error-handler` | ✓ | ✓ | — | — | — |
 | `reliability/explicit-timer-delay` | ✓ | — | — | — | — |
+| `reliability/network-timeout-required` | — | ✓ | — | — | — |
 | `security/direct-environment-read` | ✓ | ✓ | ✓ | — | — |
 | `security/forbidden-dependency` | ✓ | ✓ | ✓ | — | — |
 | `security/no-dynamic-execution` | ✓ | ✓ | — | — | — |
@@ -388,6 +394,7 @@ suppression cannot reach it, because comment facts come from source files and no
 | --- | --- |
 | `reliability/explicit-timer-delay` | A JavaScript or TypeScript timer that omits its millisecond delay |
 | `reliability/empty-error-handler` | An error handler whose body discards the error |
+| `reliability/network-timeout-required` | A known Python network client call without an explicit timeout |
 
 ### What counts as an empty handler
 

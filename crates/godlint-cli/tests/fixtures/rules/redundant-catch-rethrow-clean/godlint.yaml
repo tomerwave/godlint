@@ -1,0 +1,4 @@
+version: 1
+rules:
+  reliability/redundant-catch-rethrow:
+    severity: error

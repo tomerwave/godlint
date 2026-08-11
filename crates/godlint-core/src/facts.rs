@@ -206,6 +206,14 @@ pub struct ErrorHandlerFact {
     source: SourceFile,
     range: SourceRange,
     body_is_empty: bool,
+    rethrows_only: bool,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct FinallyFact {
+    source: SourceFile,
+    range: SourceRange,
+    has_control_flow: bool,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -375,10 +383,20 @@ impl AccessFact {
 
 impl ErrorHandlerFact {
     pub fn new(source: SourceFile, range: SourceRange, body_is_empty: bool) -> Self {
+        Self::with_rethrows(source, range, body_is_empty, false)
+    }
+
+    pub fn with_rethrows(
+        source: SourceFile,
+        range: SourceRange,
+        body_is_empty: bool,
+        rethrows_only: bool,
+    ) -> Self {
         Self {
             source,
             range,
             body_is_empty,
+            rethrows_only,
         }
     }
 
@@ -392,6 +410,30 @@ impl ErrorHandlerFact {
 
     pub fn body_is_empty(&self) -> bool {
         self.body_is_empty
+    }
+
+    pub fn rethrows_only(&self) -> bool {
+        self.rethrows_only
+    }
+}
+
+impl FinallyFact {
+    pub fn new(source: SourceFile, range: SourceRange, has_control_flow: bool) -> Self {
+        Self {
+            source,
+            range,
+            has_control_flow,
+        }
+    }
+
+    pub fn source(&self) -> &SourceFile {
+        &self.source
+    }
+    pub fn range(&self) -> SourceRange {
+        self.range
+    }
+    pub fn has_control_flow(&self) -> bool {
+        self.has_control_flow
     }
 }
 

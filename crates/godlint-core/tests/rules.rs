@@ -39,6 +39,21 @@ mod empty_error_handler;
 #[path = "rules/explicit_timer_delay.rs"]
 mod explicit_timer_delay;
 
+#[path = "rules/no_control_flow_in_finally.rs"]
+mod no_control_flow_in_finally;
+
+#[path = "rules/redundant_catch_rethrow.rs"]
+mod redundant_catch_rethrow;
+
+#[path = "rules/no_committed_secret_file.rs"]
+mod no_committed_secret_file;
+
+#[path = "rules/no_commented_code.rs"]
+mod no_commented_code;
+
+#[path = "rules/no_duplicate_string.rs"]
+mod no_duplicate_string;
+
 #[path = "rules/filename_case.rs"]
 mod filename_case;
 
@@ -80,6 +95,9 @@ mod no_production_log;
 
 #[path = "rules/no_network_in_unit_test.rs"]
 mod no_network_in_unit_test;
+
+#[path = "rules/network_timeout_required.rs"]
+mod network_timeout_required;
 
 #[path = "rules/no_randomness_without_seed.rs"]
 mod no_randomness_without_seed;

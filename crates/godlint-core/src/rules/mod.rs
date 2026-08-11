@@ -40,7 +40,12 @@ pub mod lockfile_version_drift;
 mod metric;
 pub mod module_independence;
 mod module_path;
+pub mod network_timeout_required;
+pub mod no_commented_code;
 pub mod no_comments;
+pub mod no_committed_secret_file;
+pub mod no_control_flow_in_finally;
+pub mod no_duplicate_string;
 pub mod no_dynamic_execution;
 pub mod no_empty_test;
 pub mod no_focused_test;
@@ -61,16 +66,18 @@ pub mod no_workflow_comments;
 pub mod overprovisioned_secrets;
 pub mod parameter_count;
 pub mod pin_third_party_actions;
+pub mod redundant_catch_rethrow;
 mod reference;
 mod scoped;
 mod violation;
 
 pub(crate) use reference::when_configured;
 pub use reference::{
-    AccessRule, ActionRule, CallInTestRule, CallRule, ConditionRule, ErrorHandlerRule, ImportRule,
-    TestRule, WorkflowRule, evaluate_access_rule, evaluate_action_rule, evaluate_call_in_test_rule,
-    evaluate_call_rule, evaluate_condition_rule, evaluate_error_handler_rule, evaluate_import_rule,
-    evaluate_test_rule, evaluate_workflow_rule,
+    AccessRule, ActionRule, CallInTestRule, CallRule, ConditionRule, ErrorHandlerRule, FinallyRule,
+    ImportRule, TestRule, WorkflowRule, evaluate_access_rule, evaluate_action_rule,
+    evaluate_call_in_test_rule, evaluate_call_rule, evaluate_condition_rule,
+    evaluate_error_handler_rule, evaluate_finally_rule, evaluate_import_rule, evaluate_test_rule,
+    evaluate_workflow_rule,
 };
 mod registry;
 pub mod restricted_call;
@@ -411,8 +418,11 @@ const WORKFLOW_EVALUATORS: &[WorkflowEvaluator] = &[
     untrusted_github_env::evaluate,
 ];
 
-const REPOSITORY_EVALUATORS: &[RepositoryEvaluator] =
-    &[branch_naming::evaluate, lockfile_version_drift::evaluate];
+const REPOSITORY_EVALUATORS: &[RepositoryEvaluator] = &[
+    branch_naming::evaluate,
+    lockfile_version_drift::evaluate,
+    no_committed_secret_file::evaluate,
+];
 
 const EVALUATORS: &[Evaluator] = &[
     function_size::evaluate,
@@ -438,6 +448,11 @@ const EVALUATORS: &[Evaluator] = &[
     no_insecure_random::evaluate,
     no_internal_import::evaluate,
     no_network_in_unit_test::evaluate,
+    network_timeout_required::evaluate,
+    no_control_flow_in_finally::evaluate,
+    redundant_catch_rethrow::evaluate,
+    no_commented_code::evaluate,
+    no_duplicate_string::evaluate,
     no_production_log::evaluate,
     no_randomness_without_seed::evaluate,
     no_shell_command::evaluate,

@@ -4,6 +4,10 @@ Godlint is the executable engineering constitution for repositories maintained b
 humans and coding agents. This roadmap prioritizes deterministic rules that preserve
 repository intent as code output scales.
 
+Shipped rules include `reliability/no-control-flow-in-finally`, `reliability/redundant-catch-rethrow`,
+`repository/no-committed-secret-file`, `style/no-commented-code`, and
+`maintainability/no-duplicate-string`.
+
 It should enforce decisions that need one organization-level policy across Rust,
 JavaScript/TypeScript, and Python. It should not reimplement formatters, compilers, or
 each language's general-purpose linter.
@@ -317,7 +321,7 @@ semantic capability exists.
 | `security/no-weak-hash` | Shipped | High | Direct callee match, plus a literal algorithm argument to a hash factory | Require a collision-resistant hash where collision resistance matters |
 | `reliability/explicit-timer-delay` | Shipped | High | Direct JavaScript/TypeScript timer calls with fewer than two arguments | Require an intentional delay value |
 | `logging/no-production-log` | Shipped | High | Direct logging callee match | Ban debug logging outside approved paths |
-| `reliability/network-timeout-required` | Medium | Configured known client calls | Require explicit timeout argument |
+| `reliability/network-timeout-required` | Shipped | Configured known Python client calls | Require explicit timeout argument |
 
 `architecture/restricted-call` establishes the direct-call boundary. It detects only
 spelled, direct callee paths: aliases, computed properties, and type-mediated calls wait

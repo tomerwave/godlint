@@ -1,7 +1,8 @@
 use crate::{
     analyzers::{SourceFacts, workflow::WorkflowFacts},
     facts::{
-        AccessFact, ActionFact, CallFact, ConditionFact, ErrorHandlerFact, ImportFact, TestFact,
+        AccessFact, ActionFact, CallFact, ConditionFact, ErrorHandlerFact, FinallyFact, ImportFact,
+        TestFact,
     },
     rules::{
         Finding, Ranged, Reporting, Rule, Violation, collect_ranged, enclosing::in_test, report,
@@ -78,6 +79,11 @@ pub trait ErrorHandlerRule: Rule {
         error_handler: &ErrorHandlerFact,
         configuration: &Self::Configuration,
     ) -> Option<Violation>;
+}
+
+pub trait FinallyRule: Rule {
+    fn check(finally_block: &FinallyFact, configuration: &Self::Configuration)
+    -> Option<Violation>;
 }
 
 pub trait TestRule: Rule {
@@ -191,6 +197,24 @@ pub fn evaluate_error_handler_rule<R: ErrorHandlerRule>(
         Reporting::of::<R>(configuration),
         SourceFacts::error_handlers,
         |error_handler, _| R::check(error_handler, configuration),
+    )
+}
+
+impl Ranged for FinallyFact {
+    fn source_range(&self) -> SourceRange {
+        self.range()
+    }
+}
+
+pub fn evaluate_finally_rule<R: FinallyRule>(
+    facts: &[SourceFacts],
+    configuration: &R::Configuration,
+) -> Vec<Finding> {
+    collect_ranged(
+        facts,
+        Reporting::of::<R>(configuration),
+        SourceFacts::finally_blocks,
+        |finally_block, _| R::check(finally_block, configuration),
     )
 }
 

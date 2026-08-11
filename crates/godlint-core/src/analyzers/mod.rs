@@ -5,7 +5,7 @@ use tree_sitter::{Language as TreeSitterLanguage, Node, Parser};
 use crate::{
     facts::{
         AccessFact, AssertionFact, AssertionFactDetails, CallArgument, CallFact, CallFactDetails,
-        CallTarget, CommentFact, ConditionFact, ErrorHandlerFact, FunctionFact,
+        CallTarget, CommentFact, ConditionFact, ErrorHandlerFact, FinallyFact, FunctionFact,
         FunctionFactDetails, FunctionFactError, ImportFact, TestFact, TestFactDetails, TestFocus,
     },
     source::{Language, SourceFile, SourceFileError, SourceRange},
@@ -13,6 +13,7 @@ use crate::{
 
 use self::vocabulary::{Focus, Vocabulary};
 
+mod control_flow;
 mod ecmascript;
 mod javascript;
 mod metrics;
@@ -55,6 +56,10 @@ impl SourceFacts {
 
     pub fn error_handlers(&self) -> &[ErrorHandlerFact] {
         &self.collected.error_handlers
+    }
+
+    pub fn finally_blocks(&self) -> &[FinallyFact] {
+        &self.collected.finally_blocks
     }
 
     pub fn conditions(&self) -> &[ConditionFact] {
@@ -155,6 +160,7 @@ struct Collected {
     calls: Vec<CallFact>,
     conditions: Vec<ConditionFact>,
     error_handlers: Vec<ErrorHandlerFact>,
+    finally_blocks: Vec<FinallyFact>,
     imports: Vec<ImportFact>,
     assertions: Vec<AssertionFact>,
 }
@@ -202,13 +208,25 @@ impl Collected {
         vocabulary: &Vocabulary,
     ) -> Result<(), AnalyzerError> {
         self.calls.extend(call_fact(node, source, vocabulary)?);
+        self.absorb_assertions_and_handlers(node, source, vocabulary)?;
+        self.finally_blocks
+            .extend(control_flow::finally_fact(node, source)?);
+
+        Ok(())
+    }
+
+    fn absorb_assertions_and_handlers(
+        &mut self,
+        node: Node<'_>,
+        source: &SourceFile,
+        vocabulary: &Vocabulary,
+    ) -> Result<(), AnalyzerError> {
         self.assertions
             .extend(assertion_fact(node, source, vocabulary)?);
         self.conditions
             .extend(condition_fact(node, source, vocabulary)?);
         self.error_handlers
-            .extend(error_handler_fact(node, source, vocabulary)?);
-
+            .extend(control_flow::error_handler_fact(node, source, vocabulary)?);
         Ok(())
     }
 
@@ -279,22 +297,6 @@ fn focus_of(focus: Focus) -> TestFocus {
 
 fn text_of<'source>(node: Option<Node<'_>>, source: &'source SourceFile) -> Option<&'source str> {
     source.source().get(node?.byte_range())
-}
-
-fn error_handler_fact(
-    node: Node<'_>,
-    source: &SourceFile,
-    vocabulary: &Vocabulary,
-) -> Result<Option<ErrorHandlerFact>, AnalyzerError> {
-    let Some(handler) = (vocabulary.error_handler)(node) else {
-        return Ok(None);
-    };
-
-    Ok(Some(ErrorHandlerFact::new(
-        source.clone(),
-        node_range(handler.node, source)?,
-        handler.body_is_empty,
-    )))
 }
 
 fn condition_fact(

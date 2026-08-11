@@ -170,7 +170,9 @@ fn a_rule_reads_workflows_or_source_and_never_both() {
         assert_eq!(reads_workflows, rule.starts_with("ci/"));
         assert_eq!(
             reads_repository,
-            rule.starts_with("git/") || rule.starts_with("dependencies/")
+            rule.starts_with("git/")
+                || rule.starts_with("dependencies/")
+                || rule.starts_with("repository/")
         );
     }
 }
