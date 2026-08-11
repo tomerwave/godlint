@@ -52,6 +52,7 @@ enforced there.
 | `policy/unused-suppression` | ✓ | ✓ | ✓ | — | — |
 | `reliability/empty-error-handler` | ✓ | ✓ | — | — | — |
 | `reliability/explicit-timer-delay` | ✓ | — | — | — | — |
+| `reliability/network-timeout-required` | — | ✓ | — | — | — |
 | `security/direct-environment-read` | ✓ | ✓ | ✓ | — | — |
 | `security/forbidden-dependency` | ✓ | ✓ | ✓ | — | — |
 | `security/no-dynamic-execution` | ✓ | ✓ | — | — | — |
@@ -388,6 +389,7 @@ suppression cannot reach it, because comment facts come from source files and no
 | --- | --- |
 | `reliability/explicit-timer-delay` | A JavaScript or TypeScript timer that omits its millisecond delay |
 | `reliability/empty-error-handler` | An error handler whose body discards the error |
+| `reliability/network-timeout-required` | A known Python network client call without an explicit timeout |
 
 ### What counts as an empty handler
 

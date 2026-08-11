@@ -9,7 +9,7 @@ use crate::config::{
     HardcodedContainerCredentialsRule, LineLimitRule, LockfileVersionDriftRule,
     ModuleIndependenceRule, NoCommentsRule, NoDynamicExecutionRule, NoEmptyTestRule,
     NoFocusedTestRule, NoInsecureRandomRule, NoInternalImportRule, NoMonolithicJobRule,
-    NoNetworkInUnitTestRule, NoProductionLogRule, NoRandomnessWithoutSeedRule, NoShellCommandRule,
+    NetworkTimeoutRequiredRule, NoNetworkInUnitTestRule, NoProductionLogRule, NoRandomnessWithoutSeedRule, NoShellCommandRule,
     NoSilencedFailureRule, NoSkippedTestRule, NoSleepInTestRule, NoTestHelperInProductionRule,
     NoWeakHashRule, NoWorkflowCommentsRule, OverprovisionedSecretsRule, ParameterCountRule,
     PinThirdPartyActionsRule, RestrictedCallRule, RestrictedImportRule, ReturnCountRule, Rules,
@@ -449,6 +449,13 @@ fn reliability(rules: &mut Rules) {
     rules
         .empty_error_handler
         .get_or_insert(EmptyErrorHandlerRule {
+            severity: Severity::Error,
+            only_in: Vec::new(),
+            allow_in: Vec::new(),
+        });
+    rules
+        .network_timeout_required
+        .get_or_insert(NetworkTimeoutRequiredRule {
             severity: Severity::Error,
             only_in: Vec::new(),
             allow_in: Vec::new(),

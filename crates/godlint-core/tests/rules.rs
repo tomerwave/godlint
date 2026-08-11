@@ -81,6 +81,9 @@ mod no_production_log;
 #[path = "rules/no_network_in_unit_test.rs"]
 mod no_network_in_unit_test;
 
+#[path = "rules/network_timeout_required.rs"]
+mod network_timeout_required;
+
 #[path = "rules/no_randomness_without_seed.rs"]
 mod no_randomness_without_seed;
 

@@ -18,7 +18,8 @@ use crate::{
         no_empty_test::NoEmptyTest, no_focused_test::NoFocusedTest,
         no_inline_script::NoInlineScript, no_insecure_random::NoInsecureRandom,
         no_internal_import::NoInternalImport, no_monolithic_job::NoMonolithicJob,
-        no_network_in_unit_test::NoNetworkInUnitTest, no_production_log::NoProductionLog,
+        no_network_in_unit_test::NoNetworkInUnitTest, network_timeout_required::NetworkTimeoutRequired,
+        no_production_log::NoProductionLog,
         no_randomness_without_seed::NoRandomnessWithoutSeed, no_shell_command::NoShellCommand,
         no_silenced_failure::NoSilencedFailure, no_skipped_test::NoSkippedTest,
         no_sleep_in_test::NoSleepInTest, no_test_helper_in_production::NoTestHelperInProduction,
@@ -88,6 +89,7 @@ registrations! {
     NoSleepInTest => no_sleep_in_test, true;
     NoRandomnessWithoutSeed => no_randomness_without_seed, true;
     NoNetworkInUnitTest => no_network_in_unit_test, true;
+    NetworkTimeoutRequired => network_timeout_required, true;
     NoInternalImport => no_internal_import, true;
     NoShellCommand => no_shell_command, true;
     NoTestHelperInProduction => no_test_helper_in_production, true;

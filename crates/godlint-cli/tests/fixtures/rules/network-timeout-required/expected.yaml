@@ -1,0 +1,5 @@
+exit-code: 1
+
+stdout: |
+  example.py:3:1: error[reliability/network-timeout-required] requests.get has no explicit timeout; bound network calls so they cannot wait forever.
+stderr: ""

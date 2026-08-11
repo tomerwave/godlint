@@ -76,6 +76,8 @@ fixture_tests! {
     restricted_call_clean => "restricted-call-clean",
     no_dynamic_execution => "no-dynamic-execution",
     no_dynamic_execution_clean => "no-dynamic-execution-clean",
+    network_timeout_required => "network-timeout-required",
+    network_timeout_required_clean => "network-timeout-required-clean",
     direct_environment_read => "direct-environment-read",
     direct_environment_read_clean => "direct-environment-read-clean",
     explicit_timer_delay => "explicit-timer-delay",

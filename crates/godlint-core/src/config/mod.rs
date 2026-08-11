@@ -100,6 +100,8 @@ pub struct Rules {
     pub no_randomness_without_seed: Option<NoRandomnessWithoutSeedRule>,
     #[serde(rename = "testing/no-network-in-unit-test")]
     pub no_network_in_unit_test: Option<NoNetworkInUnitTestRule>,
+    #[serde(rename = "reliability/network-timeout-required")]
+    pub network_timeout_required: Option<NetworkTimeoutRequiredRule>,
     #[serde(rename = "security/no-weak-hash")]
     pub no_weak_hash: Option<NoWeakHashRule>,
     #[serde(rename = "security/no-insecure-random")]

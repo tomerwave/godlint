@@ -123,6 +123,7 @@ pub enum Violation {
     NetworkInUnitTest {
         callee: String,
     },
+    NetworkTimeoutMissing { callee: String },
     RestrictedImport {
         module: String,
     },
@@ -177,6 +178,8 @@ const RESTRICTED_IMPORT: &str =
 
 const PRODUCTION_LOG: &str =
     "logs from production code; route it through the project's logger or an approved path.";
+
+const NETWORK_TIMEOUT: &str = "has no explicit timeout; bound network calls so they cannot wait forever.";
 
 const UNUSED_SUPPRESSION: &str =
     "Suppression silences nothing; remove it, or restore the rule it names to this path.";
@@ -357,7 +360,7 @@ impl Violation {
             Self::InheritedSecrets { .. } | Self::OverprovisionedSecrets { .. } | Self::UnredactedSecret => Severity::Error,
             Self::UntrustedGithubEnv { .. } => Severity::Error,
             Self::ScriptExitsSuccessfully { .. } | Self::TestHelperInProduction { .. } | Self::InternalImport { certain: true, .. } => Severity::Error,
-            Self::SleepInTest { .. } | Self::UnseededRandom { .. } | Self::NetworkInUnitTest { .. } => Severity::Error,
+            Self::SleepInTest { .. } | Self::UnseededRandom { .. } | Self::NetworkInUnitTest { .. } | Self::NetworkTimeoutMissing { .. } => Severity::Error,
             Self::RestrictedImport { .. } | Self::CrossedBoundary { .. } | Self::BrokeIndependence { .. } => Severity::Error,
             Self::ForbiddenDependency { .. } | Self::FilenameCase { .. } | Self::InvalidBranchName { .. } => Severity::Error,
             Self::DependencyPolicy { .. } => Severity::Error,
@@ -423,6 +426,7 @@ impl fmt::Display for Violation {
             Self::SleepInTest { callee } => write!(formatter, "{callee} {SLEEP_IN_TEST}"),
             Self::UnseededRandom { callee, remedy } => unseeded(formatter, callee, remedy),
             Self::NetworkInUnitTest { callee } => network(formatter, callee),
+            Self::NetworkTimeoutMissing { callee } => write!(formatter, "{callee} {NETWORK_TIMEOUT}"),
             Self::InsecureRandom { callee, secure } => insecure_random(formatter, callee, secure),
         }
     }

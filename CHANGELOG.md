@@ -13,6 +13,10 @@ speaks about.
 
 - npm release publishing now uses a trusted-publishing-capable npm client.
 
+### Added
+
+- `reliability/network-timeout-required` reports supported Python network calls without an explicit timeout.
+
 ## [0.9.0] - 2026-08-11
 
 ### Added

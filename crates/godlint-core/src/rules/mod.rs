@@ -49,6 +49,7 @@ pub mod no_insecure_random;
 pub mod no_internal_import;
 pub mod no_monolithic_job;
 pub mod no_network_in_unit_test;
+pub mod network_timeout_required;
 pub mod no_production_log;
 pub mod no_randomness_without_seed;
 pub mod no_shell_command;
@@ -438,6 +439,7 @@ const EVALUATORS: &[Evaluator] = &[
     no_insecure_random::evaluate,
     no_internal_import::evaluate,
     no_network_in_unit_test::evaluate,
+    network_timeout_required::evaluate,
     no_production_log::evaluate,
     no_randomness_without_seed::evaluate,
     no_shell_command::evaluate,

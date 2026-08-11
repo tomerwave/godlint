@@ -317,7 +317,7 @@ semantic capability exists.
 | `security/no-weak-hash` | Shipped | High | Direct callee match, plus a literal algorithm argument to a hash factory | Require a collision-resistant hash where collision resistance matters |
 | `reliability/explicit-timer-delay` | Shipped | High | Direct JavaScript/TypeScript timer calls with fewer than two arguments | Require an intentional delay value |
 | `logging/no-production-log` | Shipped | High | Direct logging callee match | Ban debug logging outside approved paths |
-| `reliability/network-timeout-required` | Medium | Configured known client calls | Require explicit timeout argument |
+| `reliability/network-timeout-required` | Shipped | Configured known Python client calls | Require explicit timeout argument |
 
 `architecture/restricted-call` establishes the direct-call boundary. It detects only
 spelled, direct callee paths: aliases, computed properties, and type-mediated calls wait

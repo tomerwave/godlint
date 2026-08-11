@@ -357,6 +357,8 @@ scoped_rules! {
     LockfileVersionDriftRule,
 }
 
+pub type NetworkTimeoutRequiredRule = NoProductionLogRule;
+
 macro_rules! count_limit_rules {
     ($($name:ident { $key:literal => $field:ident }),+ $(,)?) => {
         $(
