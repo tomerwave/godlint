@@ -75,7 +75,9 @@ The workflow runs in stages, and the order is the point:
 1. **agree** — re-checks that the tag, the workspace version and the changelog say the same thing.
 2. **binaries** — builds seven targets: Linux and macOS on both architectures, Windows, and a
    statically linked musl build for containers without glibc.
-3. **publish, npm, pypi** — the three registries, in parallel.
+3. **publish, npm, pypi** — the three registries, in parallel. Each registry preflights the exact
+   package version and skips files that were already accepted, so retrying a partially successful
+   tag does not attempt to overwrite immutable artifacts.
 4. **announce** — creates or edits the GitHub release, attaches every archive, asserts the count
    attached matches the count built, and moves the floating `v1` tag.
 5. **homebrew** — renders the Homebrew formula from the two macOS archive checksums and updates the
@@ -88,6 +90,11 @@ as `latest`, so it hands every user a version that cannot be installed.
 
 The archive count is asserted rather than trusted, because an archive that never attached is invisible
 until somebody tries to install it.
+
+Registry jobs are intentionally retry-safe. A failed tag run can be rerun after fixing the cause;
+crates.io and npm skip versions that already exist, PyPI uses its skip-existing mode, and the GitHub
+release updates an existing release while replacing its archives. The immutable version tag must
+never be moved or recreated.
 
 ## Credentials
 
