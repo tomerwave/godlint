@@ -1,16 +1,20 @@
 # Changelog
 
-- `dependencies/lockfile-version-drift` compares supported manifest versions with their matching
-  lockfile entries without attempting dependency resolution.
-- `ci/frozen-lockfile-install` reports known dependency install/build/test commands that do not
-  enforce their committed lockfile.
-
 All notable changes to Godlint will be documented here.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Before `1.0`, a `0.x` release may
 change the `godlint-core` API; the command line and the configuration schema are what the version
 speaks about.
+
+## [0.9.0] - 2026-08-11
+
+### Added
+
+- `ci/frozen-lockfile-install` reports known dependency install/build/test commands that do not
+  enforce their committed lockfile.
+- `dependencies/lockfile-version-drift` compares supported manifest versions with their matching
+  lockfile entries without attempting dependency resolution.
 
 ## [0.8.0] - 2026-08-11
 
