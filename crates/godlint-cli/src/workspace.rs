@@ -148,5 +148,8 @@ fn repository(root: &Path) -> Result<RepositoryFacts, String> {
         })
         .transpose()?;
 
-    Ok(RepositoryFacts::new(branch))
+    Ok(
+        RepositoryFacts::new(branch)
+            .with_version_drifts(RepositoryFacts::read_version_drifts(root)),
+    )
 }
