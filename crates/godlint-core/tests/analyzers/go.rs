@@ -45,11 +45,13 @@ fn extracts_selector_accesses_and_numeric_literals() {
     ))
     .unwrap_or_else(|error| panic!("analyzes Go: {error}"));
 
-    assert!(
+    assert_eq!(
         facts
             .accesses()
             .iter()
-            .any(|access| access.target() == "value.Field")
+            .map(|access| access.target())
+            .collect::<Vec<_>>(),
+        ["value.Field", "value.Field"]
     );
     assert_eq!(
         facts
@@ -65,17 +67,21 @@ fn extracts_selector_accesses_and_numeric_literals() {
 fn recognizes_go_test_names_and_skip_calls() {
     let facts = analyze(&source(
         "example_test.go",
-        "func TestOne(t *testing.T) { t.Skip(\"later\") }\nfunc BenchmarkOne(b *testing.B) {}\nfunc ExampleOne() {}",
+        "func TestOne(t *testing.T) { helper() }\nfunc TestSkipped(t *testing.T) { t.Skip(\"later\") }\nfunc BenchmarkOne(b *testing.B) {}\nfunc ExampleOne() {}",
     ))
     .unwrap_or_else(|error| panic!("analyzes Go: {error}"));
 
-    assert_eq!(facts.tests().len(), 3);
+    assert_eq!(facts.tests().len(), 4);
     assert_eq!(
         facts.tests()[0].focus(),
+        godlint_core::facts::TestFocus::Ordinary
+    );
+    assert_eq!(
+        facts.tests()[1].focus(),
         godlint_core::facts::TestFocus::Skipped
     );
-    assert!(facts.tests()[1].name() == Some("BenchmarkOne"));
-    assert!(facts.tests()[2].name() == Some("ExampleOne"));
+    assert!(facts.tests()[2].name() == Some("BenchmarkOne"));
+    assert!(facts.tests()[3].name() == Some("ExampleOne"));
 }
 
 #[test]

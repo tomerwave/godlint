@@ -49,6 +49,19 @@ fn enforces_go_timeout_variants_without_affecting_other_languages() {
         1
     );
     assert!(go_violations("package client\nfunc call() { http.Get(url) }\n").len() == 1);
+    assert!(
+        go_violations(
+            "package client\nimport \"net\"\nfunc call() { net.DialTimeout(\"tcp\", address, 5) }\n"
+        )
+        .is_empty()
+    );
+    assert_eq!(
+        go_violations(
+            "package client\nimport \"net\"\nfunc call() { net.Dial(\"tcp\", address) }\n"
+        )
+        .len(),
+        1
+    );
     assert!(violations("import requests\nrequests.get(url)\n").len() == 1);
     assert!(
         rule_violations(

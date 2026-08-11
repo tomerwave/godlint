@@ -86,6 +86,18 @@ fn non_empty(name: &str) -> Option<&str> {
     (!name.is_empty()).then_some(name)
 }
 
+#[cfg(test)]
+mod tests {
+    use super::go_package;
+
+    #[test]
+    fn extracts_a_go_module_root() {
+        assert_eq!(go_package("github.com/acme/service"), Some("github.com"));
+        assert_eq!(go_package("github.com"), Some("github.com"));
+        assert_eq!(go_package(""), None);
+    }
+}
+
 pub(crate) fn last_segment(text: &str, separator: char) -> &str {
     match text.rfind(separator) {
         Some(index) => &text[index + separator.len_utf8()..],
