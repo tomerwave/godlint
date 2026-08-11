@@ -355,7 +355,12 @@ impl ImportFact {
     }
 
     pub fn module(&self) -> &str {
-        &self.source.source()[self.range.start()..self.range.end()]
+        let module = &self.source.source()[self.range.start()..self.range.end()];
+        if matches!(self.source.language(), crate::source::Language::Go) {
+            module.trim_matches('"')
+        } else {
+            module
+        }
     }
 }
 

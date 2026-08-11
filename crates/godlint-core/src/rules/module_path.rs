@@ -13,6 +13,7 @@ pub(crate) fn separator(language: Language) -> &'static str {
         Language::JavaScript | Language::TypeScript => "/",
         Language::Python => ".",
         Language::Rust => "::",
+        Language::Go => "/",
     }
 }
 
@@ -25,6 +26,7 @@ pub(crate) fn package(module: &str, language: Language) -> Option<&str> {
         Language::JavaScript | Language::TypeScript => ecmascript_package(module),
         Language::Python => python_package(module),
         Language::Rust => rust_package(module),
+        Language::Go => go_package(module),
     }
 }
 
@@ -67,6 +69,10 @@ fn rust_package(module: &str) -> Option<&str> {
         "crate" | "self" | "super" => None,
         root => non_empty(root),
     }
+}
+
+fn go_package(module: &str) -> Option<&str> {
+    non_empty(first_segment(module, "/"))
 }
 
 pub(crate) fn first_segment<'a>(text: &'a str, separator: &str) -> &'a str {

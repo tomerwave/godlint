@@ -15,6 +15,7 @@ speaks about.
 
 ### Added
 
+- Go source analysis now covers the supported shared facts and Go-specific rule catalogues.
 - `reliability/network-timeout-required` reports supported Python network calls without an explicit timeout.
 - `reliability/no-control-flow-in-finally` rejects escaping control flow in cleanup blocks.
 - `reliability/redundant-catch-rethrow` rejects handlers that only rethrow.

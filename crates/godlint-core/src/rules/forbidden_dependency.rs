@@ -6,6 +6,7 @@ use crate::{
         Finding, ImportRule, Rule, Violation, catalogue, evaluate_import_rule, module_path,
         when_configured,
     },
+    source::Language,
 };
 
 pub struct ForbiddenDependency;
@@ -23,10 +24,19 @@ impl Rule for ForbiddenDependency {
 impl ImportRule for ForbiddenDependency {
     fn check(import: &ImportFact, configuration: &Self::Configuration) -> Option<Violation> {
         let package = module_path::package(import.module(), import.source().language())?;
-        let forbidden = configuration
-            .packages
-            .iter()
-            .find(|entry| entry.name == package)?;
+        let forbidden = configuration.packages.iter().find(|entry| {
+            if import.source().language() == Language::Go {
+                module_path::covers(&entry.name, import.module(), Language::Go)
+            } else {
+                entry.name == package
+            }
+        })?;
+
+        let package = if import.source().language() == Language::Go {
+            import.module()
+        } else {
+            package
+        };
 
         (!catalogue::matches(import.source(), &forbidden.allow_in)).then(|| {
             Violation::ForbiddenDependency {

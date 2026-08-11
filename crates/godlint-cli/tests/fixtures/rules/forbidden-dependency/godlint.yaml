@@ -6,6 +6,7 @@ rules:
     packages:
       - name: lodash
       - name: openssl
+      - name: github.com/acme/legacy
       - name: "@corp/legacy"
       - name: requests
         allow-in:

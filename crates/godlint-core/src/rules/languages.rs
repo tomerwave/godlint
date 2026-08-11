@@ -16,6 +16,7 @@ impl Languages {
     ]);
 
     pub const WORKFLOWS: Self = Self(&[
+        (Dialect::Go, Absence::NoSuchConstruct),
         (Dialect::JavaScript, Absence::NoSuchConstruct),
         (Dialect::Python, Absence::NoSuchConstruct),
         (Dialect::Rust, Absence::NoSuchConstruct),
@@ -23,6 +24,7 @@ impl Languages {
     ]);
 
     pub const REPOSITORY: Self = Self(&[
+        (Dialect::Go, Absence::NoSuchConstruct),
         (Dialect::JavaScript, Absence::NoSuchConstruct),
         (Dialect::Python, Absence::NoSuchConstruct),
         (Dialect::Rust, Absence::NoSuchConstruct),

@@ -33,7 +33,7 @@ impl CommentRule for NoCommentedCode {
             .trim_start_matches(['#', '/', '*', ' ', '\t']);
         let code = [
             "if ", "for ", "while ", "return ", "throw ", "raise ", "const ", "let ", "var ",
-            "def ", "fn ", "class ", "import ", "from ",
+            "def ", "fn ", "func ", "class ", "import ", "from ", "fmt.",
         ];
         code.iter()
             .any(|prefix| body.starts_with(prefix))

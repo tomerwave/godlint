@@ -95,6 +95,15 @@ fn forbids_a_package_in_each_language() {
         violations("src/a.rs", "extern crate serde;", &forbidding("serde")).len(),
         1
     );
+    assert_eq!(
+        violations(
+            "src/a.go",
+            "package app\n\nimport \"github.com/acme/legacy/codec\"",
+            &forbidding("github.com/acme/legacy")
+        )
+        .len(),
+        1
+    );
 }
 
 #[test]

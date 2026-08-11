@@ -43,6 +43,15 @@ const CLIENTS: Catalogue = Catalogue(&[
     ("ureq::get", Dialect::Rust),
     ("ureq::post", Dialect::Rust),
     ("TcpStream::connect", Dialect::Rust),
+    ("http.Get", Dialect::Go),
+    ("http.Post", Dialect::Go),
+    ("http.PostForm", Dialect::Go),
+    ("http.Head", Dialect::Go),
+    ("(*http.Client).Do", Dialect::Go),
+    ("net.Dial", Dialect::Go),
+    ("net.DialTimeout", Dialect::Go),
+    ("tls.Dial", Dialect::Go),
+    ("tls.DialWithDialer", Dialect::Go),
 ]);
 
 pub struct NoNetworkInUnitTest;

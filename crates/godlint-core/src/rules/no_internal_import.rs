@@ -20,6 +20,7 @@ impl Rule for NoInternalImport {
     const ID: &'static str = "architecture/no-internal-import";
 
     const LANGUAGES: Languages = Languages::all_but(&[
+        (Dialect::Go, Absence::NoSuchConstruct),
         (Dialect::Rust, Absence::NoSuchConstruct),
         (Dialect::Workflow, Absence::NoSuchConstruct),
     ]);

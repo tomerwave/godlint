@@ -46,6 +46,24 @@ fn reports_a_dependency_that_runs_against_the_declared_order() {
 }
 
 #[test]
+fn reads_go_module_paths() {
+    let configuration = LAYERS
+        .replace("crate::ui", "github.com/acme/ui")
+        .replace("crate::app", "github.com/acme/app")
+        .replace("crate::domain", "github.com/acme/domain");
+    assert_eq!(
+        rule_violations(
+            dependency_boundary::evaluate,
+            "src/domain/model.go",
+            "package domain\n\nimport \"github.com/acme/app/service\"",
+            &configuration
+        )
+        .len(),
+        1
+    );
+}
+
+#[test]
 fn permits_a_dependency_that_runs_with_the_order() {
     assert!(violations("src/ui/widget.rs", "use crate::app::service;").is_empty());
     assert!(violations("src/ui/widget.rs", "use crate::domain::model;").is_empty());

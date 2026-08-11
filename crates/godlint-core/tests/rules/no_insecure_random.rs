@@ -26,6 +26,15 @@ fn reports_a_general_purpose_generator_in_each_language() {
         violations("src/example.rs", "let v = rand::random();", ENABLED).len(),
         1
     );
+    assert_eq!(
+        violations(
+            "src/example.go",
+            "package example\n\nimport \"math/rand\"\n\nfunc f() { _ = rand.Int() }",
+            ENABLED
+        )
+        .len(),
+        1
+    );
 }
 
 #[test]
@@ -41,6 +50,11 @@ fn names_the_secure_generator_of_the_language_it_reports() {
             "src/example.rs",
             "let v = rand::random();",
             "rand::rngs::OsRng",
+        ),
+        (
+            "src/example.go",
+            "package example\n\nimport \"math/rand\"\n\nfunc f() { _ = rand.Int() }",
+            "crypto/rand",
         ),
     ];
 

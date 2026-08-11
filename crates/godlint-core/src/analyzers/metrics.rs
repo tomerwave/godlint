@@ -143,6 +143,7 @@ impl Totals {
         let mut cursor = node.walk();
 
         for child in node.children(&mut cursor) {
+            let is_alternative = alternative == Some(child);
             self.absorb(
                 child,
                 Place {
@@ -152,8 +153,13 @@ impl Totals {
                         inner
                     },
                     depth: place.depth
-                        + u32::from(child_opens_block(child, place.in_else, vocabulary)),
-                    in_else: alternative == Some(child),
+                        + u32::from(child_opens_block(
+                            child,
+                            place.in_else,
+                            is_alternative,
+                            vocabulary,
+                        )),
+                    in_else: is_alternative,
                     in_body: place.in_body,
                 },
                 vocabulary,
@@ -181,12 +187,17 @@ fn declared_statements(block: Node<'_>) -> u32 {
     u32::try_from(declared).unwrap_or(u32::MAX)
 }
 
-fn child_opens_block(child: Node<'_>, in_else: bool, vocabulary: &Vocabulary) -> bool {
+fn child_opens_block(
+    child: Node<'_>,
+    in_else: bool,
+    is_alternative: bool,
+    vocabulary: &Vocabulary,
+) -> bool {
     if !matches(child, vocabulary.is_nesting) {
         return false;
     }
 
-    !(in_else && (vocabulary.is_conditional)(child.kind()))
+    !((in_else || is_alternative) && (vocabulary.is_conditional)(child.kind()))
 }
 
 pub(super) fn body_is_empty(function: Node<'_>, source: &str, vocabulary: &Vocabulary) -> bool {

@@ -39,6 +39,10 @@ fn detects_the_supported_languages() {
         Language::from_path(Path::new("types.pyi")),
         Some(Language::Python)
     );
+    assert_eq!(
+        Language::from_path(Path::new("cmd/main.go")),
+        Some(Language::Go)
+    );
 }
 
 #[test]

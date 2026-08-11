@@ -87,6 +87,11 @@ fn reports_a_javascript_shell_launcher() {
 }
 
 #[test]
+fn keeps_a_go_named_launcher_outside_go() {
+    assert!(reported("src/deploy.js", "exec.Command(\"sh\", \"-c\", command);").is_empty());
+}
+
+#[test]
 fn reports_a_destructured_launcher_only_where_the_module_is_imported() {
     let imported = "import { exec } from \"node:child_process\";\nexec(`git checkout ${b}`);\n";
     let required = "const { execSync } = require(\"child_process\");\nexecSync(`git ${b}`);\n";

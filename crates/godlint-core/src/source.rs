@@ -9,6 +9,7 @@ use crate::paths;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Language {
+    Go,
     JavaScript,
     Python,
     Rust,
@@ -19,6 +20,7 @@ pub struct Workflow;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Dialect {
+    Go,
     JavaScript,
     Python,
     Rust,
@@ -77,6 +79,7 @@ const BYTE_ORDER_MARK: &str = "\u{feff}";
 impl Language {
     pub fn from_path(path: &Path) -> Option<Self> {
         match path.extension().and_then(|extension| extension.to_str()) {
+            Some("go") => Some(Self::Go),
             Some("cjs" | "js" | "jsx" | "mjs") => Some(Self::JavaScript),
             Some("py" | "pyi") => Some(Self::Python),
             Some("rs") => Some(Self::Rust),
@@ -87,6 +90,7 @@ impl Language {
 
     pub fn dialect(self) -> Dialect {
         match self {
+            Self::Go => Dialect::Go,
             Self::JavaScript | Self::TypeScript => Dialect::JavaScript,
             Self::Python => Dialect::Python,
             Self::Rust => Dialect::Rust,
@@ -118,16 +122,18 @@ fn names_a_workflow_directory(text: &str) -> bool {
 }
 
 impl Dialect {
-    pub const EVERY: [Self; 5] = [
+    pub const EVERY: [Self; 6] = [
         Self::JavaScript,
         Self::Python,
         Self::Rust,
+        Self::Go,
         Self::Workflow,
         Self::Repository,
     ];
 
     pub fn label(self) -> &'static str {
         match self {
+            Self::Go => "Go",
             Self::JavaScript => "JS/TS",
             Self::Python => "Python",
             Self::Rust => "Rust",

@@ -22,6 +22,39 @@ fn requires_a_delay_for_each_javascript_timer() {
 }
 
 #[test]
+fn requires_a_duration_for_go_timers() {
+    let configuration =
+        "version: 1\nrules:\n  reliability/explicit-timer-delay:\n    severity: error\n";
+
+    assert_eq!(
+        violations(
+            "src/example.go",
+            "package example\n\nimport \"time\"\n\nfunc f() { time.After() }",
+            configuration
+        )
+        .len(),
+        1
+    );
+    assert_eq!(
+        violations(
+            "src/example.go",
+            "package example\n\nimport \"time\"\n\nfunc f() { time.AfterFunc() }",
+            configuration
+        )
+        .len(),
+        1
+    );
+    assert!(
+        violations(
+            "src/example.go",
+            "package example\n\nimport \"time\"\n\nfunc f() { time.NewTimer(time.Second) }",
+            configuration
+        )
+        .is_empty()
+    );
+}
+
+#[test]
 fn permits_timers_with_a_delay_and_unrelated_calls() {
     let configuration =
         "version: 1\nrules:\n  reliability/explicit-timer-delay:\n    severity: error\n";

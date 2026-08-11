@@ -229,6 +229,7 @@ DIALECTS = {
     "py": "Python",
     "pyi": "Python",
     "rs": "Rust",
+    "go": "Go",
     "yml": "Workflow",
     "yaml": "Workflow",
 }
@@ -237,7 +238,7 @@ ANALYSED = "✓"
 
 # The columns the matrix must carry, in order, so that no other table in the document can
 # be read as the matrix.
-DIALECT_COLUMNS = ("JS/TS", "Python", "Rust", "Workflow", "Repository")
+DIALECT_COLUMNS = ("JS/TS", "Python", "Rust", "Go", "Workflow", "Repository")
 
 REPORTED = re.compile(r"^\s*(\S+?):\d+:\d+: \w+\[([a-z-]+/[a-z-]+)\]")
 
@@ -266,7 +267,7 @@ def documented_languages() -> dict[str, dict[str, str]]:
 
         rule = cells[1].strip("`")
         if "/" in rule and len(cells) == len(header):
-            rows[rule] = dict(zip(DIALECT_COLUMNS, cells[2:], strict=False))
+            rows[rule] = dict(zip(DIALECT_COLUMNS, cells[2:]))
 
     return rows
 

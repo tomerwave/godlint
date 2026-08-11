@@ -12,3 +12,4 @@ rules:
       - name: "@app/internal"
         allow-in:
           - app/**
+      - name: github.com/acme/internal

@@ -14,6 +14,7 @@ pub struct NoControlFlowInFinally;
 impl Rule for NoControlFlowInFinally {
     const ID: &'static str = "reliability/no-control-flow-in-finally";
     const LANGUAGES: Languages = Languages::all_but(&[
+        (Dialect::Go, Absence::NoSuchConstruct),
         (Dialect::Rust, Absence::NoSuchConstruct),
         (Dialect::Workflow, Absence::NoSuchConstruct),
     ]);

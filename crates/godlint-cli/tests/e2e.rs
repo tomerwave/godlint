@@ -137,6 +137,7 @@ fixture_tests! {
     no_randomness_without_seed_clean => "no-randomness-without-seed-clean",
     no_network_in_unit_test_clean => "no-network-in-unit-test-clean",
     no_weak_hash_clean => "no-weak-hash-clean",
+    go_support => "go-support",
     explicit_timer_delay_clean => "explicit-timer-delay-clean",
     empty_error_handler_clean => "empty-error-handler-clean",
     explicit_workflow_permissions => "explicit-workflow-permissions",

@@ -15,6 +15,7 @@ use self::vocabulary::{Focus, Vocabulary};
 
 mod control_flow;
 mod ecmascript;
+mod go;
 mod javascript;
 mod metrics;
 mod python;
@@ -104,6 +105,7 @@ pub enum AnalyzerError {
 
 pub fn analyze(source: &SourceFile) -> Result<SourceFacts, AnalyzerError> {
     match source.language() {
+        Language::Go => go::Go.analyze(source),
         Language::JavaScript => javascript::JavaScript.analyze(source),
         Language::Python => python::Python.analyze(source),
         Language::Rust => rust::Rust.analyze(source),

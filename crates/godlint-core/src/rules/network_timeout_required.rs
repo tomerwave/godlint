@@ -7,7 +7,7 @@ use crate::{
         catalogue::{Catalogue, spelled},
         evaluate_call_rule, when_configured,
     },
-    source::Dialect,
+    source::{Dialect, Language},
 };
 
 const CLIENTS: Catalogue = Catalogue(&[
@@ -27,6 +27,15 @@ const CLIENTS: Catalogue = Catalogue(&[
     ("httpx.request", Dialect::Python),
     ("urllib.request.urlopen", Dialect::Python),
     ("socket.create_connection", Dialect::Python),
+    ("http.Get", Dialect::Go),
+    ("http.Post", Dialect::Go),
+    ("http.PostForm", Dialect::Go),
+    ("http.Head", Dialect::Go),
+    ("(*http.Client).Do", Dialect::Go),
+    ("net.Dial", Dialect::Go),
+    ("net.DialContext", Dialect::Go),
+    ("net.DialTimeout", Dialect::Go),
+    ("tls.Dial", Dialect::Go),
 ]);
 
 pub struct NetworkTimeoutRequired;
@@ -57,6 +66,8 @@ impl CallRule for NetworkTimeoutRequired {
         }
 
         let has_timeout = call.named("timeout").is_some()
+            || (source.language() == Language::Go
+                && (name.ends_with("Timeout") || name.ends_with("WithContext")))
             || (name == "urllib.request.urlopen" && call.argument_count() >= 2)
             || (name == "socket.create_connection" && call.argument_count() >= 2);
 

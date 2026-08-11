@@ -22,6 +22,7 @@ impl Rule for NoDynamicExecution {
     const ID: &'static str = "security/no-dynamic-execution";
 
     const LANGUAGES: Languages = Languages::all_but(&[
+        (Dialect::Go, Absence::NoSuchConstruct),
         (Dialect::Rust, Absence::NoSuchConstruct),
         (Dialect::Workflow, Absence::NoSuchConstruct),
     ]);
@@ -60,7 +61,7 @@ fn globals(language: Language) -> &'static [&'static str] {
     match language {
         Language::JavaScript | Language::TypeScript => &ECMASCRIPT_GLOBALS,
         Language::Python => &PYTHON_GLOBALS,
-        Language::Rust => &[],
+        Language::Rust | Language::Go => &[],
     }
 }
 

@@ -33,6 +33,18 @@ pub(super) const GENERATORS: Catalogue = Catalogue(&[
     ("rand::thread_rng", Dialect::Rust),
     ("rand::rng", Dialect::Rust),
     ("rand::random_range", Dialect::Rust),
+    ("math/rand.Float32", Dialect::Go),
+    ("math/rand.Float64", Dialect::Go),
+    ("math/rand.Int", Dialect::Go),
+    ("math/rand.Int31", Dialect::Go),
+    ("math/rand.Int31n", Dialect::Go),
+    ("math/rand.Int63", Dialect::Go),
+    ("math/rand.Int63n", Dialect::Go),
+    ("math/rand.Intn", Dialect::Go),
+    ("rand.Float32", Dialect::Go),
+    ("rand.Float64", Dialect::Go),
+    ("rand.Int", Dialect::Go),
+    ("rand.Intn", Dialect::Go),
 ]);
 
 pub(super) struct Catalogue(pub(super) &'static [(&'static str, Dialect)]);
