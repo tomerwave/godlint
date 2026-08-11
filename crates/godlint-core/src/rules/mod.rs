@@ -36,6 +36,7 @@ pub mod function_statements;
 pub mod hardcoded_container_credentials;
 pub mod languages;
 mod line_count;
+pub mod lockfile_version_drift;
 mod metric;
 pub mod module_independence;
 mod module_path;
@@ -410,7 +411,8 @@ const WORKFLOW_EVALUATORS: &[WorkflowEvaluator] = &[
     untrusted_github_env::evaluate,
 ];
 
-const REPOSITORY_EVALUATORS: &[RepositoryEvaluator] = &[branch_naming::evaluate];
+const REPOSITORY_EVALUATORS: &[RepositoryEvaluator] =
+    &[branch_naming::evaluate, lockfile_version_drift::evaluate];
 
 const EVALUATORS: &[Evaluator] = &[
     function_size::evaluate,

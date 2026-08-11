@@ -35,6 +35,7 @@ enforced there.
 | `ci/unredacted-secrets` | — | — | — | ✓ | — |
 | `ci/untrusted-github-env` | — | — | — | ✓ | — |
 | `git/branch-naming` | — | — | — | — | ✓ |
+| `dependencies/lockfile-version-drift` | — | — | — | — | ✓ |
 | `logging/no-production-log` | ✓ | ✓ | ✓ | — | — |
 | `maintainability/cognitive-complexity` | ✓ | ✓ | ✓ | — | — |
 | `maintainability/condition-complexity` | ✓ | ✓ | ✓ | — | — |
@@ -580,6 +581,16 @@ only where a rule takes paths from configuration, as `no-network-in-unit-test` d
 | Rule | What it reports |
 | --- | --- |
 | `logging/no-production-log` | Debug logging outside the paths a repository approves |
+
+## Dependencies
+
+| Rule | What it reports |
+| --- | --- |
+| `dependencies/lockfile-version-drift` | A manifest's own declared version disagreeing with its matching Cargo, npm, uv, or Poetry lockfile entry |
+
+The rule compares only the package's own version field: it does not resolve dependency ranges or
+validate the complete dependency graph. Unsupported lockfile formats and ambiguous workspace
+layouts remain silent rather than guessed.
 
 ## Architecture
 

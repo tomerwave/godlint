@@ -34,10 +34,7 @@ impl WorkflowRule for FrozenLockfileInstall {
                     let (name, remedy) = missing_lockfile_flag(command)?;
                     Some((
                         range,
-                        Violation::FrozenLockfileInstall {
-                            command: name.to_owned(),
-                            remedy: remedy.to_owned(),
-                        },
+                        Violation::DependencyPolicy { message: format!("This step uses {name} without pinning to the committed lockfile; use {remedy} instead.") },
                     ))
                 })
             })

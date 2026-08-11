@@ -118,6 +118,8 @@ pub struct Rules {
     pub filename_case: Option<FilenameCaseRule>,
     #[serde(rename = "git/branch-naming")]
     pub branch_naming: Option<BranchNamingRule>,
+    #[serde(rename = "dependencies/lockfile-version-drift")]
+    pub lockfile_version_drift: Option<LockfileVersionDriftRule>,
     #[serde(rename = "ci/pin-third-party-actions")]
     pub pin_third_party_actions: Option<PinThirdPartyActionsRule>,
     #[serde(rename = "ci/stale-action-refs")]

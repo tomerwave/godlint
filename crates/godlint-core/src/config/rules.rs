@@ -354,6 +354,7 @@ scoped_rules! {
     UnredactedSecretsRule,
     UntrustedGithubEnvRule,
     UnusedSuppressionRule,
+    LockfileVersionDriftRule,
 }
 
 macro_rules! count_limit_rules {

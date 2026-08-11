@@ -1,5 +1,7 @@
 # Changelog
 
+- `dependencies/lockfile-version-drift` compares supported manifest versions with their matching
+  lockfile entries without attempting dependency resolution.
 - `ci/frozen-lockfile-install` reports known dependency install/build/test commands that do not
   enforce their committed lockfile.
 

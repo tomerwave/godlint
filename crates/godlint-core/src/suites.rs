@@ -6,17 +6,18 @@ use crate::config::{
     DependencyBoundaryRule, DirectEnvironmentReadRule, EmptyErrorHandlerRule, EmptyFunctionRule,
     ExplicitTimerDelayRule, ExplicitWorkflowPermissionsRule, FilenameCaseRule,
     ForbiddenDependencyRule, FunctionNestingRule, FunctionStatementsRule,
-    HardcodedContainerCredentialsRule, LineLimitRule, ModuleIndependenceRule, NoCommentsRule,
-    NoDynamicExecutionRule, NoEmptyTestRule, NoFocusedTestRule, NoInsecureRandomRule,
-    NoInternalImportRule, NoMonolithicJobRule, NoNetworkInUnitTestRule, NoProductionLogRule,
-    NoRandomnessWithoutSeedRule, NoShellCommandRule, NoSilencedFailureRule, NoSkippedTestRule,
-    NoSleepInTestRule, NoTestHelperInProductionRule, NoWeakHashRule, NoWorkflowCommentsRule,
-    OverprovisionedSecretsRule, ParameterCountRule, PinThirdPartyActionsRule, RestrictedCallRule,
-    RestrictedImportRule, ReturnCountRule, Rules, SecretsInheritRule, Severity,
-    StaleActionRefsRule, TemplateInjectionRule, TodoRequiresReferenceRule, UnredactedSecretsRule,
-    UntrustedGithubEnvRule, UnusedSuppressionRule, default_bots, default_branch_types,
-    default_configuration_paths, default_markers, default_reference_prefixes, default_test_helpers,
-    default_test_paths, default_trusted_owners,
+    HardcodedContainerCredentialsRule, LineLimitRule, LockfileVersionDriftRule,
+    ModuleIndependenceRule, NoCommentsRule, NoDynamicExecutionRule, NoEmptyTestRule,
+    NoFocusedTestRule, NoInsecureRandomRule, NoInternalImportRule, NoMonolithicJobRule,
+    NoNetworkInUnitTestRule, NoProductionLogRule, NoRandomnessWithoutSeedRule, NoShellCommandRule,
+    NoSilencedFailureRule, NoSkippedTestRule, NoSleepInTestRule, NoTestHelperInProductionRule,
+    NoWeakHashRule, NoWorkflowCommentsRule, OverprovisionedSecretsRule, ParameterCountRule,
+    PinThirdPartyActionsRule, RestrictedCallRule, RestrictedImportRule, ReturnCountRule, Rules,
+    SecretsInheritRule, Severity, StaleActionRefsRule, TemplateInjectionRule,
+    TodoRequiresReferenceRule, UnredactedSecretsRule, UntrustedGithubEnvRule,
+    UnusedSuppressionRule, default_bots, default_branch_types, default_configuration_paths,
+    default_markers, default_reference_prefixes, default_test_helpers, default_test_paths,
+    default_trusted_owners,
 };
 
 pub const RECOMMENDED: &str = "recommended@1";
@@ -52,7 +53,18 @@ fn recommended(rules: &mut Rules) {
     logging(rules);
     testing(rules);
     git_policy(rules);
+    dependencies(rules);
     continuous_integration(rules);
+}
+
+fn dependencies(rules: &mut Rules) {
+    rules
+        .lockfile_version_drift
+        .get_or_insert(LockfileVersionDriftRule {
+            severity: Severity::Error,
+            only_in: Vec::new(),
+            allow_in: Vec::new(),
+        });
 }
 
 fn git_policy(rules: &mut Rules) {

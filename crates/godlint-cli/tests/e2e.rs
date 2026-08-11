@@ -87,6 +87,8 @@ fixture_tests! {
     no_internal_import => "no-internal-import",
     no_inline_script => "no-inline-script",
     no_inline_script_clean => "no-inline-script-clean",
+    lockfile_version_drift => "lockfile-version-drift",
+    lockfile_version_drift_clean => "lockfile-version-drift-clean",
     frozen_lockfile_install => "frozen-lockfile-install",
     frozen_lockfile_install_clean => "frozen-lockfile-install-clean",
     no_monolithic_job => "no-monolithic-job",

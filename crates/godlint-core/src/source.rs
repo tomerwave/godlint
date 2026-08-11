@@ -227,6 +227,12 @@ impl TextFile {
     }
 }
 
+impl SourceRange {
+    pub(crate) fn new(start: usize, end: usize) -> Self {
+        Self { start, end }
+    }
+}
+
 impl SourceFile {
     pub fn new(path: PathBuf, source: String) -> Result<Self, SourceFileError> {
         let language = Language::from_path(&path)
