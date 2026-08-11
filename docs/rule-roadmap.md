@@ -449,6 +449,7 @@ each appears in the list.
 | `security/forbidden-dependency` | Shipped | Package/import mapping | High | Block dependencies by explicit policy |
 | `architecture/filename-case` | Shipped | Repository path fact | Medium | Support scoped case conventions and generated-file exceptions |
 | `git/branch-naming` | Shipped | Repository branch fact | High | `types`, automation `allow` globs |
+| `dependencies/lockfile-version-drift` | Shipped | Manifest and lockfile repository facts | High | Own-version comparison only; `allow-in` path globs |
 
 `architecture/filename-case` reads no syntax at all — a path is the whole input — which makes it
 the one rule that behaves identically in every language.

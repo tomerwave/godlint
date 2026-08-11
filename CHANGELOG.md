@@ -1,5 +1,8 @@
 # Changelog
 
+- `dependencies/lockfile-version-drift` compares supported manifest versions with their matching
+  lockfile entries without attempting dependency resolution.
+
 All notable changes to Godlint will be documented here.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and

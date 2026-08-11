@@ -283,7 +283,11 @@ def reported_dialects() -> dict[str, set[str]]:
                 continue
 
             path, identifier = match.groups()
-            dialect = "Repository" if path == "<branch>" else DIALECTS.get(path.rsplit(".", 1)[-1])
+            dialect = (
+                "Repository"
+                if path == "<branch>" or path.endswith(("Cargo.toml", "package.json", "pyproject.toml"))
+                else DIALECTS.get(path.rsplit(".", 1)[-1])
+            )
             if dialect is not None:
                 evidence.setdefault(identifier, set()).add(dialect)
 
