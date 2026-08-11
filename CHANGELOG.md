@@ -7,7 +7,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 change the `godlint-core` API; the command line and the configuration schema are what the version
 speaks about.
 
-## [Unreleased]
+## [0.8.0] - 2026-08-11
 
 ### Added
 
@@ -26,6 +26,10 @@ speaks about.
   be emitted for a dialect marked as absent by `Rule::LANGUAGES`.
 - `Violation::cap` now requires every violation variant to choose its severity cap explicitly, so
   adding a new diagnostic cannot silently inherit the uncapped error default.
+
+### Internal
+
+- Godlint's own repository now installs and self-updates the shared Godharness configuration.
 
 ## [0.7.0] - 2026-08-05
 

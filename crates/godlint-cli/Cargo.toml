@@ -12,7 +12,7 @@ keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
-godlint-core = { path = "../godlint-core", version = "0.7.0" }
+godlint-core = { path = "../godlint-core", version = "0.8.0" }
 
 [dev-dependencies]
 serde.workspace = true
