@@ -1,6 +1,6 @@
 # Rule reference
 
-Fifty-two rules are implemented. Every one has an identifier of the form `family/name`, which is
+Sixty rules are implemented. Every one has an identifier of the form `family/name`, which is
 what a configuration entry and a suppression directive both name. [The rule roadmap](rule-roadmap.md)
 records the families still to come, and the reasoning behind each threshold `recommended@1` sets.
 [Language support](#language-support) records which languages each rule covers.
