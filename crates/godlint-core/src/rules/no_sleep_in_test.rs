@@ -25,6 +25,9 @@ const SLEEPS: Catalogue = Catalogue(&[
     ("tokio::time::sleep", Dialect::Rust),
     ("page.waitForTimeout", Dialect::JavaScript),
     ("browser.pause", Dialect::JavaScript),
+    ("time.Sleep", Dialect::Go),
+    ("time.After", Dialect::Go),
+    ("time.AfterFunc", Dialect::Go),
 ]);
 
 pub struct NoSleepInTest;

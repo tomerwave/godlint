@@ -334,6 +334,7 @@ fn recommended_pins_which_paths_count_as_tests() {
             "**/*.spec.*",
             "**/test_*.py",
             "**/*_test.py",
+            "**/*_test.go",
             "**/conftest.py",
         ]
     );

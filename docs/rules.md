@@ -8,71 +8,71 @@ records the families still to come, and the reasoning behind each threshold `rec
 ## Language support
 
 A rule sees a *dialect* rather than a language: TypeScript is read by the JavaScript analyzer, so no
-rule covers one of them without the other. Three dialects are analysed, and `✓` means the rule is
+rule covers one of them without the other. Four source dialects are analysed, and `✓` means the rule is
 enforced there.
 
-| Rule | JS/TS | Python | Rust | Workflow | Repository |
-| --- | --- | --- | --- | --- | --- |
-| `architecture/dependency-boundary` | ✓ | ✓ | ✓ | — | — |
-| `architecture/filename-case` | ✓ | ✓ | ✓ | — | — |
-| `architecture/module-independence` | ✓ | ✓ | ✓ | — | — |
-| `architecture/no-internal-import` | ✓ | ✓ | — | — | — |
-| `architecture/restricted-call` | ✓ | ✓ | ✓ | — | — |
-| `architecture/restricted-import` | ✓ | ✓ | ✓ | — | — |
-| `ci/bot-conditions` | — | — | — | ✓ | — |
-| `ci/explicit-workflow-permissions` | — | — | — | ✓ | — |
-| `ci/hardcoded-container-credentials` | — | — | — | ✓ | — |
-| `ci/no-comments` | — | — | — | ✓ | — |
-| `ci/no-inline-script` | — | — | — | ✓ | — |
-| `ci/frozen-lockfile-install` | — | — | — | ✓ | — |
-| `ci/no-monolithic-job` | — | — | — | ✓ | — |
-| `ci/no-silenced-failure` | — | — | — | ✓ | — |
-| `ci/overprovisioned-secrets` | — | — | — | ✓ | — |
-| `ci/pin-third-party-actions` | — | — | — | ✓ | — |
-| `ci/secrets-inherit` | — | — | — | ✓ | — |
-| `ci/stale-action-refs` | — | — | — | ✓ | — |
-| `ci/template-injection` | — | — | — | ✓ | — |
-| `ci/unredacted-secrets` | — | — | — | ✓ | — |
-| `ci/untrusted-github-env` | — | — | — | ✓ | — |
-| `git/branch-naming` | — | — | — | — | ✓ |
-| `dependencies/lockfile-version-drift` | — | — | — | — | ✓ |
-| `repository/no-committed-secret-file` | — | — | — | — | ✓ |
-| `style/no-commented-code` | ✓ | ✓ | ✓ | — | — |
-| `maintainability/no-duplicate-string` | ✓ | ✓ | ✓ | — | — |
-| `reliability/no-control-flow-in-finally` | ✓ | ✓ | — | — | — |
-| `reliability/redundant-catch-rethrow` | ✓ | ✓ | — | — | — |
-| `logging/no-production-log` | ✓ | ✓ | ✓ | — | — |
-| `maintainability/cognitive-complexity` | ✓ | ✓ | ✓ | — | — |
-| `maintainability/condition-complexity` | ✓ | ✓ | ✓ | — | — |
-| `maintainability/decision-complexity` | ✓ | ✓ | ✓ | — | — |
-| `maintainability/empty-function` | ✓ | ✓ | ✓ | — | — |
-| `maintainability/file-size` | ✓ | ✓ | ✓ | — | — |
-| `maintainability/function-nesting` | ✓ | ✓ | ✓ | — | — |
-| `maintainability/function-size` | ✓ | ✓ | ✓ | — | — |
-| `maintainability/function-statements` | ✓ | ✓ | ✓ | — | — |
-| `maintainability/parameter-count` | ✓ | ✓ | ✓ | — | — |
-| `maintainability/return-count` | ✓ | ✓ | ✓ | — | — |
-| `policy/accountable-suppression` | ✓ | ✓ | ✓ | — | — |
-| `policy/todo-requires-reference` | ✓ | ✓ | ✓ | — | — |
-| `policy/unused-suppression` | ✓ | ✓ | ✓ | — | — |
-| `reliability/empty-error-handler` | ✓ | ✓ | — | — | — |
-| `reliability/explicit-timer-delay` | ✓ | — | — | — | — |
-| `reliability/network-timeout-required` | — | ✓ | — | — | — |
-| `security/direct-environment-read` | ✓ | ✓ | ✓ | — | — |
-| `security/forbidden-dependency` | ✓ | ✓ | ✓ | — | — |
-| `security/no-dynamic-execution` | ✓ | ✓ | — | — | — |
-| `security/no-insecure-random` | ✓ | ✓ | ✓ | — | — |
-| `security/no-shell-command` | ✓ | ✓ | ✓ | — | — |
-| `security/no-weak-hash` | ✓ | ✓ | ✓ | — | — |
-| `style/no-comments` | ✓ | ✓ | ✓ | — | — |
-| `testing/assertion-required` | ✓ | ✓ | ✓ | — | — |
-| `testing/no-empty-test` | ✓ | ✓ | ✓ | — | — |
-| `testing/no-focused-test` | ✓ | — | — | — | — |
-| `testing/no-network-in-unit-test` | ✓ | ✓ | ✓ | — | — |
-| `testing/no-randomness-without-seed` | ✓ | ✓ | ✓ | — | — |
-| `testing/no-skipped-test` | ✓ | ✓ | ✓ | — | — |
-| `testing/no-sleep-in-test` | ✓ | ✓ | ✓ | — | — |
-| `testing/no-test-helper-in-production` | ✓ | ✓ | ✓ | — | — |
+| Rule | JS/TS | Python | Rust | Go | Workflow | Repository |
+| --- | --- | --- | --- | --- | --- | --- |
+| `architecture/dependency-boundary` | ✓ | ✓ | ✓ | ✓ | — | — |
+| `architecture/filename-case` | ✓ | ✓ | ✓ | ✓ | — | — |
+| `architecture/module-independence` | ✓ | ✓ | ✓ | ✓ | — | — |
+| `architecture/no-internal-import` | ✓ | ✓ | — | — | — | — |
+| `architecture/restricted-call` | ✓ | ✓ | ✓ | ✓ | — | — |
+| `architecture/restricted-import` | ✓ | ✓ | ✓ | ✓ | — | — |
+| `ci/bot-conditions` | — | — | — | — | ✓ | — |
+| `ci/explicit-workflow-permissions` | — | — | — | — | ✓ | — |
+| `ci/hardcoded-container-credentials` | — | — | — | — | ✓ | — |
+| `ci/no-comments` | — | — | — | — | ✓ | — |
+| `ci/no-inline-script` | — | — | — | — | ✓ | — |
+| `ci/frozen-lockfile-install` | — | — | — | — | ✓ | — |
+| `ci/no-monolithic-job` | — | — | — | — | ✓ | — |
+| `ci/no-silenced-failure` | — | — | — | — | ✓ | — |
+| `ci/overprovisioned-secrets` | — | — | — | — | ✓ | — |
+| `ci/pin-third-party-actions` | — | — | — | — | ✓ | — |
+| `ci/secrets-inherit` | — | — | — | — | ✓ | — |
+| `ci/stale-action-refs` | — | — | — | — | ✓ | — |
+| `ci/template-injection` | — | — | — | — | ✓ | — |
+| `ci/unredacted-secrets` | — | — | — | — | ✓ | — |
+| `ci/untrusted-github-env` | — | — | — | — | ✓ | — |
+| `git/branch-naming` | — | — | — | — | — | ✓ |
+| `dependencies/lockfile-version-drift` | — | — | — | — | — | ✓ |
+| `repository/no-committed-secret-file` | — | — | — | — | — | ✓ |
+| `style/no-commented-code` | ✓ | ✓ | ✓ | ✓ | — | — |
+| `maintainability/no-duplicate-string` | ✓ | ✓ | ✓ | ✓ | — | — |
+| `reliability/no-control-flow-in-finally` | ✓ | ✓ | — | — | — | — |
+| `reliability/redundant-catch-rethrow` | ✓ | ✓ | — | — | — | — |
+| `logging/no-production-log` | ✓ | ✓ | ✓ | ✓ | — | — |
+| `maintainability/cognitive-complexity` | ✓ | ✓ | ✓ | ✓ | — | — |
+| `maintainability/condition-complexity` | ✓ | ✓ | ✓ | ✓ | — | — |
+| `maintainability/decision-complexity` | ✓ | ✓ | ✓ | ✓ | — | — |
+| `maintainability/empty-function` | ✓ | ✓ | ✓ | ✓ | — | — |
+| `maintainability/file-size` | ✓ | ✓ | ✓ | ✓ | — | — |
+| `maintainability/function-nesting` | ✓ | ✓ | ✓ | ✓ | — | — |
+| `maintainability/function-size` | ✓ | ✓ | ✓ | ✓ | — | — |
+| `maintainability/function-statements` | ✓ | ✓ | ✓ | ✓ | — | — |
+| `maintainability/parameter-count` | ✓ | ✓ | ✓ | ✓ | — | — |
+| `maintainability/return-count` | ✓ | ✓ | ✓ | ✓ | — | — |
+| `policy/accountable-suppression` | ✓ | ✓ | ✓ | ✓ | — | — |
+| `policy/todo-requires-reference` | ✓ | ✓ | ✓ | ✓ | — | — |
+| `policy/unused-suppression` | ✓ | ✓ | ✓ | ✓ | — | — |
+| `reliability/empty-error-handler` | ✓ | ✓ | — | — | — | — |
+| `reliability/explicit-timer-delay` | ✓ | — | — | ✓ | — | — |
+| `reliability/network-timeout-required` | — | ✓ | — | ✓ | — | — |
+| `security/direct-environment-read` | ✓ | ✓ | ✓ | ✓ | — | — |
+| `security/forbidden-dependency` | ✓ | ✓ | ✓ | ✓ | — | — |
+| `security/no-dynamic-execution` | ✓ | ✓ | — | — | — | — |
+| `security/no-insecure-random` | ✓ | ✓ | ✓ | ✓ | — | — |
+| `security/no-shell-command` | ✓ | ✓ | ✓ | ✓ | — | — |
+| `security/no-weak-hash` | ✓ | ✓ | ✓ | ✓ | — | — |
+| `style/no-comments` | ✓ | ✓ | ✓ | ✓ | — | — |
+| `testing/assertion-required` | ✓ | ✓ | ✓ | ✓ | — | — |
+| `testing/no-empty-test` | ✓ | ✓ | ✓ | ✓ | — | — |
+| `testing/no-focused-test` | ✓ | — | — | — | — | — |
+| `testing/no-network-in-unit-test` | ✓ | ✓ | ✓ | ✓ | — | — |
+| `testing/no-randomness-without-seed` | ✓ | ✓ | ✓ | ✓ | — | — |
+| `testing/no-skipped-test` | ✓ | ✓ | ✓ | ✓ | — | — |
+| `testing/no-sleep-in-test` | ✓ | ✓ | ✓ | ✓ | — | — |
+| `testing/no-test-helper-in-production` | ✓ | ✓ | ✓ | ✓ | — | — |
 
 The `Workflow` and `Repository` columns are subjects rather than programming languages. A workflow has
 no functions or imports; repository facts have neither source nor workflow syntax. Every rule reads one
@@ -100,16 +100,16 @@ fails, and so does a fixture reporting a rule in a dialect the rule says it does
 
 | Rule | What it measures |
 | --- | --- |
-| `maintainability/file-size` | Effective lines in a file |
-| `maintainability/function-size` | Effective lines in a function |
-| `maintainability/function-nesting` | How deeply control-flow blocks nest inside a function |
-| `maintainability/parameter-count` | Declared parameters, excluding a method receiver |
-| `maintainability/decision-complexity` | Branch points in a function |
-| `maintainability/condition-complexity` | `&&`, `\|\|`, and ternary operators combined in a single condition |
-| `maintainability/cognitive-complexity` | How hard a function is to follow, weighting nested control flow |
-| `maintainability/return-count` | Exit paths from a function, explicit or implicit |
-| `maintainability/function-statements` | Statements in a function |
-| `maintainability/empty-function` | Function bodies that appear unintentionally empty |
+| `maintainability/file-size` | Effective lines in a file |  |
+| `maintainability/function-size` | Effective lines in a function |  |
+| `maintainability/function-nesting` | How deeply control-flow blocks nest inside a function |  |
+| `maintainability/parameter-count` | Declared parameters, excluding a method receiver |  |
+| `maintainability/decision-complexity` | Branch points in a function |  |
+| `maintainability/condition-complexity` | `&&`, `\ | \ | `, and ternary operators combined in a single condition | ✓ |
+| `maintainability/cognitive-complexity` | How hard a function is to follow, weighting nested control flow |  |
+| `maintainability/return-count` | Exit paths from a function, explicit or implicit |  |
+| `maintainability/function-statements` | Statements in a function |  |
+| `maintainability/empty-function` | Function bodies that appear unintentionally empty |  |
 
 `decision-complexity` counts a `match` or `switch` once rather than once per arm, and a guard on an
 arm counts. `function-statements` counts through nested blocks but not into nested functions.
@@ -145,9 +145,9 @@ this condition's operator count.
 
 | Rule | What it reports |
 | --- | --- |
-| `policy/todo-requires-reference` | A TODO-style marker with no issue reference |
-| `policy/accountable-suppression` | A suppression that cannot account for itself |
-| `policy/unused-suppression` | A suppression that silences nothing |
+| `policy/todo-requires-reference` | A TODO-style marker with no issue reference |  |
+| `policy/accountable-suppression` | A suppression that cannot account for itself |  |
+| `policy/unused-suppression` | A suppression that silences nothing |  |
 
 Neither policy rule about suppressions can itself be suppressed. See
 [inline suppression](suppressions.md).
@@ -156,18 +156,18 @@ Neither policy rule about suppressions can itself be suppressed. See
 
 | Rule | What it reports |
 | --- | --- |
-| `style/no-comments` | Commentary where the code should speak for itself |
+| `style/no-comments` | Commentary where the code should speak for itself |  |
 
 ## Security
 
 | Rule | What it reports |
 | --- | --- |
-| `security/no-dynamic-execution` | JavaScript `eval`, `Function`, `new Function`; Python `eval`, `exec`. A global-object spelling of the same built-in counts: `globalThis`, `window`, `self`, or `global` in JavaScript and TypeScript, and `builtins` in Python |
-| `security/direct-environment-read` | Environment access outside a configuration boundary |
-| `security/no-weak-hash` | A broken hash algorithm, named either by the callee — Python `hashlib.md5`/`hashlib.sha1`, Rust `md5::compute`, `Md5::new`, `Sha1::new` — or by a literal argument to a factory: `crypto.createHash("md5")`, `crypto.createHmac("sha1", …)`, `hashlib.new("md5")`. Spelling and case do not matter (`MD5`, `sha-1`). An algorithm it cannot read reports at warning rather than at the configured severity. `allow-in` exempts a cache key or an ETag, where collision resistance is not the point |
-| `security/no-insecure-random` | A general-purpose random generator, which is predictable: JavaScript `Math.random` and `crypto.pseudoRandomBytes`, Python's `random` module, Rust `rand::random` and `rand::thread_rng`. `allow-in` exempts a path where unpredictability is not the point |
-| `security/no-shell-command` | A command run through a shell, which makes any interpolated value executable: Python `shell=True` on a `subprocess` launcher, `os.system`, `os.popen`; JavaScript `child_process.exec`/`execSync`, including a destructured or required `exec` where the module is imported; Rust `Command::new` given a shell as its program. `allow-in` exempts a release script |
-| `security/forbidden-dependency` | An import of a package the project has ruled out |
+| `security/no-dynamic-execution` | JavaScript `eval`, `Function`, `new Function`; Python `eval`, `exec`. A global-object spelling of the same built-in counts: `globalThis`, `window`, `self`, or `global` in JavaScript and TypeScript, and `builtins` in Python |  |
+| `security/direct-environment-read` | Environment access outside a configuration boundary |  |
+| `security/no-weak-hash` | A broken hash algorithm, named either by the callee — Python `hashlib.md5`/`hashlib.sha1`, Rust `md5::compute`, `Md5::new`, `Sha1::new` — or by a literal argument to a factory: `crypto.createHash("md5")`, `crypto.createHmac("sha1", …)`, `hashlib.new("md5")`. Spelling and case do not matter (`MD5`, `sha-1`). An algorithm it cannot read reports at warning rather than at the configured severity. `allow-in` exempts a cache key or an ETag, where collision resistance is not the point |  |
+| `security/no-insecure-random` | A general-purpose random generator, which is predictable: JavaScript `Math.random` and `crypto.pseudoRandomBytes`, Python's `random` module, Rust `rand::random` and `rand::thread_rng`. `allow-in` exempts a path where unpredictability is not the point |  |
+| `security/no-shell-command` | A command run through a shell, which makes any interpolated value executable: Python `shell=True` on a `subprocess` launcher, `os.system`, `os.popen`; JavaScript `child_process.exec`/`execSync`, including a destructured or required `exec` where the module is imported; Rust `Command::new` given a shell as its program. `allow-in` exempts a release script |  |
+| `security/forbidden-dependency` | An import of a package the project has ruled out |  |
 
 `no-shell-command` reads three different signals, because the languages put the defect in three
 different places. In Python the callee is innocent and the *argument* is the finding, so the check is
@@ -200,21 +200,21 @@ have to decide what interpolation looks like inside an f-string.
 
 | Rule | What it reports |
 | --- | --- |
-| `ci/bot-conditions` | A step or job condition that compares an attacker-influenced actor field with a configured bot identity |
-| `ci/pin-third-party-actions` | A workflow step using a third-party action at a ref that can move |
-| `ci/stale-action-refs` | A commit-pinned action without an inline version label, or contradictory labels and pins within the repository |
-| `ci/explicit-workflow-permissions` | A job that runs with whatever the repository grants by default |
-| `ci/overprovisioned-secrets` | A step input or environment variable receiving the whole `secrets` context |
-| `ci/hardcoded-container-credentials` | A literal username or password in a job container or service |
-| `ci/no-comments` | A comment in a workflow |
-| `ci/template-injection` | An attacker-influenced expression interpolated directly into a `run:` script |
-| `ci/no-inline-script` | A `run:` script exceeding its effective-line limit |
-| `ci/frozen-lockfile-install` | A known package-manager install, build, or test command that does not enforce the committed lockfile |
-| `ci/no-monolithic-job` | A job exceeding its step limit |
-| `ci/secrets-inherit` | A reusable-workflow call passing every secret available to its job |
-| `ci/unredacted-secrets` | A script directly writing a secret expression to `GITHUB_ENV` or `GITHUB_OUTPUT` |
-| `ci/untrusted-github-env` | An attacker-influenced expression in a script that writes to `GITHUB_ENV` or `GITHUB_PATH` |
-| `ci/no-silenced-failure` | A step or job configured to stay green after failure, or a script that discards a failing exit status |
+| `ci/bot-conditions` | A step or job condition that compares an attacker-influenced actor field with a configured bot identity |  |
+| `ci/pin-third-party-actions` | A workflow step using a third-party action at a ref that can move |  |
+| `ci/stale-action-refs` | A commit-pinned action without an inline version label, or contradictory labels and pins within the repository |  |
+| `ci/explicit-workflow-permissions` | A job that runs with whatever the repository grants by default |  |
+| `ci/overprovisioned-secrets` | A step input or environment variable receiving the whole `secrets` context |  |
+| `ci/hardcoded-container-credentials` | A literal username or password in a job container or service |  |
+| `ci/no-comments` | A comment in a workflow |  |
+| `ci/template-injection` | An attacker-influenced expression interpolated directly into a `run:` script |  |
+| `ci/no-inline-script` | A `run:` script exceeding its effective-line limit |  |
+| `ci/frozen-lockfile-install` | A known package-manager install, build, or test command that does not enforce the committed lockfile |  |
+| `ci/no-monolithic-job` | A job exceeding its step limit |  |
+| `ci/secrets-inherit` | A reusable-workflow call passing every secret available to its job |  |
+| `ci/unredacted-secrets` | A script directly writing a secret expression to `GITHUB_ENV` or `GITHUB_OUTPUT` |  |
+| `ci/untrusted-github-env` | An attacker-influenced expression in a script that writes to `GITHUB_ENV` or `GITHUB_PATH` |  |
+| `ci/no-silenced-failure` | A step or job configured to stay green after failure, or a script that discards a failing exit status |  |
 
 
 `ci/secrets-inherit` reports the `inherit` value in a job-level `secrets: inherit` declaration.
@@ -392,9 +392,9 @@ suppression cannot reach it, because comment facts come from source files and no
 
 | Rule | What it reports |
 | --- | --- |
-| `reliability/explicit-timer-delay` | A JavaScript or TypeScript timer that omits its millisecond delay |
-| `reliability/empty-error-handler` | An error handler whose body discards the error |
-| `reliability/network-timeout-required` | A known Python network client call without an explicit timeout |
+| `reliability/explicit-timer-delay` | A JavaScript or TypeScript timer that omits its millisecond delay |  |
+| `reliability/empty-error-handler` | An error handler whose body discards the error |  |
+| `reliability/network-timeout-required` | A known Python network client call without an explicit timeout |  |
 
 ### What counts as an empty handler
 
@@ -413,14 +413,14 @@ Rust is out of scope. It has no `catch`, and a discarded `Result` is `reliabilit
 
 | Rule | What it reports |
 | --- | --- |
-| `testing/no-focused-test` | A test or suite marked to run on its own: `it.only`, `describe.only` and the other runners' `.only` |
-| `testing/no-empty-test` | A test whose body does nothing, so it cannot fail |
-| `testing/no-skipped-test` | A test that does not run: `.skip` or `.todo` in JavaScript and TypeScript, `#[ignore]` beside `#[test]` in Rust, and a `pytest.mark.skip` or `unittest.skip` decorator in Python |
-| `testing/no-sleep-in-test` | A test that waits on the clock: `time.sleep` or `asyncio.sleep` in Python, `thread::sleep` or `tokio::time::sleep` in Rust, and `page.waitForTimeout` or `browser.pause` in JavaScript and TypeScript |
-| `testing/no-randomness-without-seed` | A test drawing from a general-purpose generator in a file that never seeds one, so a failure cannot be reproduced |
-| `testing/no-network-in-unit-test` | A test in a declared unit path calling an HTTP or socket client, so it is slow, dependent on a service being up, and unable to run offline |
-| `testing/assertion-required` | A test that asserts nothing, so it passes unless the code raises. Reported at warning, whatever severity is configured |
-| `testing/no-test-helper-in-production` | A production file importing its own test tree: a local import naming `tests`, `test`, `__tests__`, `__mocks__`, `fixtures`, `mocks` or `conftest`. `test-paths` says which files count as tests, `helpers` which segments name scaffolding |
+| `testing/no-focused-test` | A test or suite marked to run on its own: `it.only`, `describe.only` and the other runners' `.only` |  |
+| `testing/no-empty-test` | A test whose body does nothing, so it cannot fail |  |
+| `testing/no-skipped-test` | A test that does not run: `.skip` or `.todo` in JavaScript and TypeScript, `#[ignore]` beside `#[test]` in Rust, and a `pytest.mark.skip` or `unittest.skip` decorator in Python |  |
+| `testing/no-sleep-in-test` | A test that waits on the clock: `time.sleep` or `asyncio.sleep` in Python, `thread::sleep` or `tokio::time::sleep` in Rust, and `page.waitForTimeout` or `browser.pause` in JavaScript and TypeScript |  |
+| `testing/no-randomness-without-seed` | A test drawing from a general-purpose generator in a file that never seeds one, so a failure cannot be reproduced |  |
+| `testing/no-network-in-unit-test` | A test in a declared unit path calling an HTTP or socket client, so it is slow, dependent on a service being up, and unable to run offline |  |
+| `testing/assertion-required` | A test that asserts nothing, so it passes unless the code raises. Reported at warning, whatever severity is configured |  |
+| `testing/no-test-helper-in-production` | A production file importing its own test tree: a local import naming `tests`, `test`, `__tests__`, `__mocks__`, `fixtures`, `mocks` or `conftest`. `test-paths` says which files count as tests, `helpers` which segments name scaffolding |  |
 
 `no-empty-test` reads the test's own body rather than any function inside it, so a test that registers
 an empty callback is not empty itself. A test with no body to read at all, such as `it.todo('later')`,
@@ -551,7 +551,7 @@ Three things that look assertion-free are not, and are silent:
 
 | Shape | Why |
 | --- | --- |
-| `pytest.raises`, `#[should_panic]` | Asserting that something raises is asserting |
+| `pytest.raises`, `#[should_panic]` | Asserting that something raises is asserting |  |
 | A `describe` or other suite | It asserts through the tests inside it, so reporting it would double every finding |
 | An empty test | That is `no-empty-test`'s finding, and two findings for one defect is noise |
 
@@ -575,7 +575,7 @@ Segments match whole and case-insensitively, so `Tests/` counts and `testing-uti
 
 A file that is itself a test is exempt, since a test using its own helpers is the arrangement this rule
 is protecting. `test-paths` decides that, and its defaults are the conventions of all four languages —
-`**/tests/**`, `**/__tests__/**`, `**/*.test.*`, `**/*.spec.*`, `**/test_*.py`, `**/conftest.py` and the
+`**/tests/**`, `**/__tests__/**`, `**/*.test.*`, `**/*.spec.*`, `**/test_*.py`, `**/*_test.go`, `**/conftest.py` and the
 rest. Setting either list *replaces* the default rather than adding to it.
 
 What counts as a test is decided by syntax alone — a runner call, a `#[test]` attribute, a `test_`
@@ -587,13 +587,13 @@ only where a rule takes paths from configuration, as `no-network-in-unit-test` d
 
 | Rule | What it reports |
 | --- | --- |
-| `logging/no-production-log` | Debug logging outside the paths a repository approves |
+| `logging/no-production-log` | Debug logging outside the paths a repository approves |  |
 
 ## Dependencies
 
 | Rule | What it reports |
 | --- | --- |
-| `dependencies/lockfile-version-drift` | A manifest's own declared version disagreeing with its matching Cargo, npm, uv, or Poetry lockfile entry |
+| `dependencies/lockfile-version-drift` | A manifest's own declared version disagreeing with its matching Cargo, npm, uv, or Poetry lockfile entry |  |
 
 The rule compares only the package's own version field: it does not resolve dependency ranges or
 validate the complete dependency graph. Unsupported lockfile formats and ambiguous workspace
@@ -603,12 +603,12 @@ layouts remain silent rather than guessed.
 
 | Rule | What it reports |
 | --- | --- |
-| `architecture/restricted-call` | An abrupt process exit, plus configured callees outside their approved paths |
-| `architecture/no-internal-import` | An import that reaches past a package's public surface: a path segment named `internal`, `private`, `impl` or `_internal`, a Python segment beginning with `_`, or a build-output segment `dist`, `src` or `build`, which reports at warning. `allow` exempts a module the project must reach into |
-| `architecture/restricted-import` | An import of a module a repository puts behind a boundary |
-| `architecture/dependency-boundary` | A dependency that runs against the declared layer order |
-| `architecture/module-independence` | A dependency between modules declared independent of each other |
-| `architecture/filename-case` | A file name that does not follow the convention for its extension or scope |
+| `architecture/restricted-call` | An abrupt process exit, plus configured callees outside their approved paths |  |
+| `architecture/no-internal-import` | An import that reaches past a package's public surface: a path segment named `internal`, `private`, `impl` or `_internal`, a Python segment beginning with `_`, or a build-output segment `dist`, `src` or `build`, which reports at warning. `allow` exempts a module the project must reach into |  |
+| `architecture/restricted-import` | An import of a module a repository puts behind a boundary |  |
+| `architecture/dependency-boundary` | A dependency that runs against the declared layer order |  |
+| `architecture/module-independence` | A dependency between modules declared independent of each other |  |
+| `architecture/filename-case` | A file name that does not follow the convention for its extension or scope |  |
 
 `no-internal-import` reads the import path and nothing else, which is honest but has consequences. A
 marker only counts *after* the first segment, so `src/utils` — a path alias to this project's own code —
@@ -677,7 +677,7 @@ as written; malformed bracketed names remain subject to the configured conventio
 
 | Rule | What it reports |
 | --- | --- |
-| `git/branch-naming` | A branch that lacks an allowed type and lowercase description |
+| `git/branch-naming` | A branch that lacks an allowed type and lowercase description |  |
 
 `git/branch-naming` uses `GITHUB_HEAD_REF` for pull requests and otherwise asks the current repository
 for its checked-out branch. Detached checkouts and the repository's default branch are silent. The default

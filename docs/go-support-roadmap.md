@@ -1,11 +1,21 @@
 # Go support roadmap
 
-This document records the feasibility audit for adding Go source support to Godlint. It is a
-roadmap, not an implementation plan or a claim that Go support exists today.
+This document records the feasibility audit and delivery roadmap for Go source support in Godlint.
+The first analyzer tranche is implemented in PR #306; the table remains the source of truth for
+what is supported, what still needs Go-specific facts, and what should not be ported unchanged.
 
 Godlint currently has 60 registered rules. A Go repository can already use repository, Git,
 dependency, and CI rules because those rules inspect metadata or workflow YAML rather than source
-language syntax. The work below concerns rules that need a Go analyzer.
+language syntax. The work below separates the delivered analyzer coverage from the remaining
+language-specific work.
+
+## Delivery status
+
+PR #306 delivers Go discovery, parsing, shared facts, fixtures, and the direct structural, policy,
+logging, environment, hash, shell, and basic testing rules marked `Yes` below. The remaining `Adapt`
+items are deliberately future work: each needs a narrowly defined Go fact or policy decision rather
+than a superficial syntax match. The `No` items stay excluded because their source-language
+constructs do not exist in Go.
 
 ## Decision legend
 
@@ -87,19 +97,17 @@ These rules already apply to Go repositories. They do not require Go parser supp
 | `ci/unredacted-secrets` | Existing | Reads workflow scripts and environment files. |
 | `ci/untrusted-github-env` | Existing | Reads workflow expressions. |
 
-## Recommended delivery order
+## Recommended delivery order for the remaining work
 
-1. Add a `tree-sitter-go` analyzer and shared facts for functions, methods, calls, imports,
-   comments, literals, conditions, statements, and tests.
-2. Port the direct structural, policy, logging, environment, hash, shell, and basic testing rules.
-3. Add Go package and module facts for imports, package identity, `go.mod`, and dependency graphs.
-4. Add Go-specific reliability facts for HTTP timeouts, contexts, timers, and randomness.
-5. Decide the assertion policy before implementing `testing/assertion-required`.
-6. Keep the three exception/focused-test rules out of Go unless a distinct Go-specific rule is
+1. Add Go package and module facts for imports, package identity, `go.mod`, and dependency graphs.
+2. Add Go-specific reliability facts for HTTP timeouts, contexts, timers, and randomness.
+3. Decide the assertion policy before implementing `testing/assertion-required`.
+4. Keep the three exception/focused-test rules out of Go unless a distinct Go-specific rule is
    proposed for their underlying concern.
 
 ## Repository follow-up
 
-Go support issues currently include [#302](https://github.com/tomerwave/godlint/issues/302) and
-[#303](https://github.com/tomerwave/godlint/issues/303). Consolidate them before implementation.
-The rule reference also needs its rule count corrected from 52 to the current registry count of 60.
+The implementation is tracked in [#302](https://github.com/tomerwave/godlint/issues/302),
+[#303](https://github.com/tomerwave/godlint/issues/303), and [PR #306](https://github.com/tomerwave/godlint/pull/306).
+Future `Adapt` items should be proposed as separate rule issues with valid, invalid, configuration,
+and scoped-exclusion fixtures before implementation.

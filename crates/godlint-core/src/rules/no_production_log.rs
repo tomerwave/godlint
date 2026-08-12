@@ -18,6 +18,18 @@ const LOGGERS: Catalogue = Catalogue(&[
     ("print", Dialect::Python),
     ("pprint.pprint", Dialect::Python),
     ("dbg!", Dialect::Rust),
+    ("log.Print", Dialect::Go),
+    ("log.Printf", Dialect::Go),
+    ("log.Println", Dialect::Go),
+    ("log.Fatal", Dialect::Go),
+    ("log.Fatalf", Dialect::Go),
+    ("log.Fatalln", Dialect::Go),
+    ("log.Panic", Dialect::Go),
+    ("log.Panicf", Dialect::Go),
+    ("log.Panicln", Dialect::Go),
+    ("fmt.Print", Dialect::Go),
+    ("fmt.Printf", Dialect::Go),
+    ("fmt.Println", Dialect::Go),
 ]);
 
 pub struct NoProductionLog;

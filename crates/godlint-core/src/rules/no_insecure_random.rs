@@ -47,5 +47,6 @@ fn secure_generator(language: Language) -> &'static str {
         Language::JavaScript | Language::TypeScript => "crypto.getRandomValues",
         Language::Python => "secrets",
         Language::Rust => "rand::rngs::OsRng",
+        Language::Go => "crypto/rand",
     }
 }

@@ -14,6 +14,7 @@ pub struct RedundantCatchRethrow;
 impl Rule for RedundantCatchRethrow {
     const ID: &'static str = "reliability/redundant-catch-rethrow";
     const LANGUAGES: Languages = Languages::all_but(&[
+        (Dialect::Go, Absence::NoSuchConstruct),
         (Dialect::Rust, Absence::NoSuchConstruct),
         (Dialect::Workflow, Absence::NoSuchConstruct),
     ]);

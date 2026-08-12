@@ -15,6 +15,7 @@ impl Rule for EmptyErrorHandler {
     const ID: &'static str = "reliability/empty-error-handler";
 
     const LANGUAGES: Languages = Languages::all_but(&[
+        (Dialect::Go, Absence::NoSuchConstruct),
         (Dialect::Rust, Absence::NoSuchConstruct),
         (Dialect::Workflow, Absence::NoSuchConstruct),
     ]);

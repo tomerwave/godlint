@@ -15,6 +15,7 @@ const BUILT_INS: Catalogue = Catalogue(&[
     ("sys.exit", Dialect::Python),
     ("os._exit", Dialect::Python),
     ("std::process::exit", Dialect::Rust),
+    ("os.Exit", Dialect::Go),
 ]);
 
 pub struct RestrictedCall;

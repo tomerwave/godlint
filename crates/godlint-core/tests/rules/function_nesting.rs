@@ -79,6 +79,10 @@ fn reads_an_else_if_chain_as_one_level() {
             "src/example.py",
             "def example():\n    if a:\n        pass\n    elif b:\n        pass\n    elif c:\n        run()",
         ),
+        (
+            "src/example.go",
+            "func example() {\n    if a {\n    } else if b {\n    } else if c {\n        run()\n    }\n}",
+        ),
     ];
 
     for (path, source) in cases {
@@ -140,7 +144,7 @@ fn accepts_a_function_at_its_limit() {
     );
 }
 
-const NESTED_IN_ELSE: [(&str, &str); 3] = [
+const NESTED_IN_ELSE: [(&str, &str); 4] = [
     (
         "src/example.js",
         "function classify(a, items) {\n  if (a) {\n    return 1;\n  } else {\n    for (const item of items) {\n      if (item) {\n        return 2;\n      }\n    }\n  }\n  return 0;\n}\n",
@@ -153,9 +157,13 @@ const NESTED_IN_ELSE: [(&str, &str); 3] = [
         "src/example.py",
         "def classify(a, items):\n    if a:\n        return 1\n    else:\n        for item in items:\n            if item:\n                return 2\n    return 0\n",
     ),
+    (
+        "src/example.go",
+        "func classify(a bool, items []bool) int {\n    if a {\n        return 1\n    } else {\n        for _, item := range items {\n            if item {\n                return 2\n            }\n        }\n    }\n    return 0\n}\n",
+    ),
 ];
 
-const CHAINED_ELSE_IF: [(&str, &str); 3] = [
+const CHAINED_ELSE_IF: [(&str, &str); 4] = [
     (
         "src/chain.js",
         "function classify(a, b) {\n  if (a) {\n    return 1;\n  } else if (b) {\n    return 2;\n  }\n  return 0;\n}\n",
@@ -167,6 +175,10 @@ const CHAINED_ELSE_IF: [(&str, &str); 3] = [
     (
         "src/chain.py",
         "def classify(a, b):\n    if a:\n        return 1\n    elif b:\n        return 2\n    return 0\n",
+    ),
+    (
+        "src/chain.go",
+        "func classify(a bool, b bool) int {\n    if a {\n        return 1\n    } else if b {\n        return 2\n    }\n    return 0\n}\n",
     ),
 ];
 

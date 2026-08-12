@@ -59,6 +59,15 @@ fn reads_an_import_in_each_language() {
         1,
         "a re-export is an import edge too"
     );
+    assert_eq!(
+        violations(
+            "src/example.go",
+            "package example\n\nimport \"github.com/acme/internal/store\"",
+            &restricting("github.com/acme/internal")
+        )
+        .len(),
+        1
+    );
 }
 
 #[test]

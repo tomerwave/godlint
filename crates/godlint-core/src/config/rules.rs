@@ -477,6 +477,7 @@ pub(crate) fn default_test_paths() -> Vec<String> {
         "**/*.spec.*".into(),
         "**/test_*.py".into(),
         "**/*_test.py".into(),
+        "**/*_test.go".into(),
         "**/conftest.py".into(),
     ]
 }

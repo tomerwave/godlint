@@ -17,6 +17,9 @@ const READS: Catalogue = Catalogue(&[
 const READERS: Catalogue = Catalogue(&[
     ("os.getenv", Dialect::Python),
     ("std::env::var", Dialect::Rust),
+    ("os.Getenv", Dialect::Go),
+    ("os.LookupEnv", Dialect::Go),
+    ("os.Environ", Dialect::Go),
 ]);
 
 pub struct DirectEnvironmentRead;

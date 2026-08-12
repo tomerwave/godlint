@@ -28,6 +28,7 @@ fn scoped(paths: &str, case: &str) -> String {
 fn every_extension_carries_its_own_convention_without_configuration() {
     for good in [
         "src/line_count.rs",
+        "src/line_count.go",
         "src/module.py",
         "src/stub.pyi",
         "src/http-client.ts",
@@ -47,6 +48,7 @@ fn every_extension_carries_its_own_convention_without_configuration() {
 
     for bad in [
         "src/lineCount.rs",
+        "src/lineCount.go",
         "src/LineCount.rs",
         "src/line-count.py",
         "src/httpClient.ts",

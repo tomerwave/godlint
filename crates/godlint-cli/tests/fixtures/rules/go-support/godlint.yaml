@@ -1,0 +1,88 @@
+version: 1
+
+rules:
+  architecture/dependency-boundary:
+    severity: error
+  architecture/filename-case:
+    severity: error
+  architecture/module-independence:
+    severity: error
+  architecture/restricted-call:
+    severity: error
+  architecture/restricted-import:
+    severity: error
+  style/no-commented-code:
+    severity: error
+  maintainability/no-duplicate-string:
+    severity: error
+  logging/no-production-log:
+    severity: error
+  maintainability/cognitive-complexity:
+    max-score: 2
+    severity: error
+  maintainability/decision-complexity:
+    max-complexity: 2
+    severity: error
+  maintainability/empty-function:
+    severity: error
+  maintainability/file-size:
+    max-lines: 4
+    severity: error
+  maintainability/function-nesting:
+    max-depth: 1
+    severity: error
+  maintainability/function-size:
+    max-lines: 4
+    severity: error
+  maintainability/function-statements:
+    max-statements: 2
+    severity: error
+  maintainability/parameter-count:
+    max-parameters: 3
+    severity: error
+  maintainability/return-count:
+    max-returns: 1
+    severity: error
+  policy/accountable-suppression:
+    severity: error
+    require-owner: true
+    require-expiry: true
+  policy/todo-requires-reference:
+    severity: error
+  policy/unused-suppression:
+    severity: error
+  reliability/explicit-timer-delay:
+    severity: error
+  reliability/network-timeout-required:
+    severity: error
+  security/direct-environment-read:
+    severity: error
+  security/forbidden-dependency:
+    severity: error
+  security/no-insecure-random:
+    severity: error
+  security/no-shell-command:
+    severity: error
+  security/no-weak-hash:
+    severity: error
+  style/no-comments:
+    severity: error
+  testing/assertion-required:
+    severity: error
+  testing/no-empty-test:
+    severity: error
+  testing/no-network-in-unit-test:
+    severity: error
+    unit-paths:
+      - "**/*_test.go"
+  testing/no-randomness-without-seed:
+    severity: error
+  testing/no-skipped-test:
+    severity: error
+  testing/no-sleep-in-test:
+    severity: error
+  testing/no-test-helper-in-production:
+    severity: error
+  maintainability/condition-complexity:
+    max-operators: 1
+    severity: error

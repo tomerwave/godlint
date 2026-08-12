@@ -26,6 +26,15 @@ fn reports_a_logging_call_in_each_language() {
         violations("src/example.rs", "dbg!(value);", ENABLED).len(),
         1
     );
+    assert_eq!(
+        violations(
+            "src/example.go",
+            "package example\n\nimport \"log\"\n\nfunc f() { log.Println(\"value\") }",
+            ENABLED
+        )
+        .len(),
+        1
+    );
 }
 
 #[test]

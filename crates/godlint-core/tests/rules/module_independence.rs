@@ -39,6 +39,23 @@ fn reports_a_member_reaching_another_member() {
 }
 
 #[test]
+fn reads_go_module_paths() {
+    let configuration = FEATURES
+        .replace("crate::billing", "github.com/acme/billing")
+        .replace("crate::notifications", "github.com/acme/notifications");
+    assert_eq!(
+        rule_violations(
+            module_independence::evaluate,
+            "src/billing/charge.go",
+            "package billing\n\nimport \"github.com/acme/notifications/send\"",
+            &configuration
+        )
+        .len(),
+        1
+    );
+}
+
+#[test]
 fn reports_the_reverse_direction_too() {
     assert_eq!(
         violations("src/notifications/send.rs", "use crate::billing::charge;"),

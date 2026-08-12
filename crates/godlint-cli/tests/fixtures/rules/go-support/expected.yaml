@@ -1,0 +1,46 @@
+exit-code: 1
+stdout: |
+  example.go:1:1: error[maintainability/file-size] File has 31 effective lines (max 4).
+  example.go:14:1: error[style/no-comments] Comment is not permitted; express the intent in the code.
+  example.go:14:4: error[policy/todo-requires-reference] TODO comment requires an issue reference.
+  example.go:15:1: error[style/no-commented-code] This comment appears to be disabled source code; delete it or restore it as executable code.
+  example.go:15:1: error[style/no-comments] Comment is not permitted; express the intent in the code.
+  example.go:16:1: error[maintainability/empty-function] Function has an empty body.
+  example.go:18:1: error[maintainability/cognitive-complexity] Function has cognitive complexity 5 (max 2).
+  example.go:18:1: error[maintainability/decision-complexity] Function has decision complexity 3 (max 2).
+  example.go:18:1: error[maintainability/function-nesting] Function nests blocks 2 levels deep (max 1).
+  example.go:18:1: error[maintainability/function-size] Function has 18 effective lines (max 4).
+  example.go:18:1: error[maintainability/function-statements] Function has 3 statements (max 2).
+  example.go:18:1: error[maintainability/parameter-count] Function has 4 parameters (max 3).
+  example.go:18:1: error[maintainability/return-count] Function has 2 return paths (max 1).
+  example.go:19:5: error[logging/no-production-log] fmt.Println logs from production code; route it through the project's logger or an approved path.
+  example.go:19:17: error[maintainability/no-duplicate-string] "a deliberately long repeated literal for duplicate detection" is repeated in this file; give the shared value a named constant.
+  example.go:20:5: error[logging/no-production-log] fmt.Println logs from production code; route it through the project's logger or an approved path.
+  example.go:20:17: error[maintainability/no-duplicate-string] "a deliberately long repeated literal for duplicate detection" is repeated in this file; give the shared value a named constant.
+  example.go:21:5: error[security/direct-environment-read] os.Getenv reads environment directly; read configuration through a config boundary instead.
+  example.go:22:5: error[security/no-weak-hash] md5.New is not collision resistant; use sha256.New where collision resistance matters.
+  example.go:23:5: error[security/no-insecure-random] rand.Int is predictable; use crypto/rand for a value that must not be guessable.
+  example.go:25:5: error[reliability/network-timeout-required] http.Get has no explicit timeout; bound network calls so they cannot wait forever.
+  example.go:26:5: error[security/no-shell-command] exec.Command("sh") runs its argument through a shell, so any value interpolated into it becomes executable; pass the program and its arguments as an array instead.
+  example.go:27:5: error[architecture/restricted-call] os.Exit is restricted by project policy.
+  example.go:28:8: error[maintainability/condition-complexity] Condition combines 2 operators; the limit is 1.
+  example.go:37:4: error[policy/accountable-suppression] Suppression has no justification; state the reason after `--`.
+  example.go:37:4: error[policy/accountable-suppression] Suppression has no owner; name one with `owner=<name>`.
+  example.go:37:4: error[policy/accountable-suppression] Suppression has no expiry; set one with `expires=YYYY-MM-DD`.
+  example.go:37:4: error[policy/unused-suppression] Suppression silences nothing; remove it, or restore the rule it names to this path.
+  example_test.go:1:1: error[maintainability/file-size] File has 17 effective lines (max 4).
+  example_test.go:10:1: error[maintainability/empty-function] Function has an empty body.
+  example_test.go:10:1: error[testing/no-empty-test] This test has an empty body, so it cannot fail; write the assertion or delete the test.
+  example_test.go:13:1: error[maintainability/function-size] Function has 8 effective lines (max 4).
+  example_test.go:13:1: warning[testing/assertion-required] This test asserts nothing, so it passes unless the code raises; assert what the code should do, or name the helper that asserts for it in extra-assertions.
+  example_test.go:13:1: error[testing/no-skipped-test] This test does not run, so it can rot without anything noticing; delete it, fix it, or suppress it with an owner and an expiry.
+  example_test.go:15:5: error[security/no-insecure-random] rand.Int is predictable; use crypto/rand for a value that must not be guessable.
+  example_test.go:15:5: error[testing/no-randomness-without-seed] rand.Int is unseeded, so a failure here cannot be reproduced; seed the generator or use a dedicated rand.Source, or use a fixed fixture.
+  example_test.go:16:5: error[testing/no-sleep-in-test] time.Sleep makes this test wait on the clock, which is the usual cause of a flaky suite; wait for the condition instead.
+  example_test.go:17:5: error[testing/no-sleep-in-test] time.After makes this test wait on the clock, which is the usual cause of a flaky suite; wait for the condition instead.
+  example_test.go:18:5: error[reliability/explicit-timer-delay] time.After needs an explicit delay; pass the intended delay in milliseconds.
+  example_test.go:18:5: error[testing/no-sleep-in-test] time.After makes this test wait on the clock, which is the usual cause of a flaky suite; wait for the condition instead.
+  example_test.go:19:5: error[reliability/network-timeout-required] http.Get has no explicit timeout; bound network calls so they cannot wait forever.
+  example_test.go:19:5: error[testing/no-network-in-unit-test] http.Get reaches the network from a unit test, which makes it slow, dependent on a service being up, and unable to run offline; inject the client and fake it.
+  helper_import.go:3:8: error[testing/no-test-helper-in-production] ./tests/helpers names tests, which is test scaffolding, so production now depends on the test tree and ships it to users; keep the fake in the tests and take an interface here.
+stderr: ""

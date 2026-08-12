@@ -9,6 +9,12 @@ use crate::{
 };
 
 const TIMERS: [&str; 2] = ["setTimeout", "setInterval"];
+const GO_TIMERS: [&str; 4] = [
+    "time.After",
+    "time.AfterFunc",
+    "time.NewTimer",
+    "time.NewTicker",
+];
 
 const GLOBALS: [&str; 3] = ["globalThis", "self", "window"];
 
@@ -50,6 +56,14 @@ fn is_timer_without_delay(call: &CallFact) -> bool {
         Language::JavaScript | Language::TypeScript
     ) && TIMERS.contains(&timer_name(call.callee()))
         && call.argument_count() < 2
+        || (call.source().language() == Language::Go
+            && GO_TIMERS.contains(&call.callee())
+            && call.argument_count()
+                < if call.callee() == "time.AfterFunc" {
+                    2
+                } else {
+                    1
+                })
 }
 
 fn timer_name(callee: &str) -> &str {

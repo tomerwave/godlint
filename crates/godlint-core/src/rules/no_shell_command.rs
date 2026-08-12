@@ -24,6 +24,8 @@ const IMPORTED: Catalogue = Catalogue(&[
     ("popen", Dialect::Python),
     ("getoutput", Dialect::Python),
     ("getstatusoutput", Dialect::Python),
+    ("Command", Dialect::Go),
+    ("CommandContext", Dialect::Go),
 ]);
 
 const SHELLS: [&str; 8] = [
@@ -37,12 +39,13 @@ const SHELLS: [&str; 8] = [
     "pwsh",
 ];
 
-const PROCESS_MODULES: [&str; 5] = [
+const PROCESS_MODULES: [&str; 6] = [
     "child_process",
     "node:child_process",
     "os",
     "commands",
     "subprocess",
+    "os/exec",
 ];
 
 const MODULE_RECEIVERS: [&str; 2] = ["child_process", "childProcess"];
@@ -84,7 +87,9 @@ fn shell_of(call: &CallFact, facts: &SourceFacts) -> Option<String> {
         return Some(name);
     }
 
-    launched_shell(call, &name).map(|program| format!("{name}(\"{program}\")"))
+    launched_shell(call, &name)
+        .or_else(|| launched_go_shell(call, &name))
+        .map(|program| format!("{name}(\"{program}\")"))
 }
 
 const TRUTHY: [&str; 2] = ["True", "1"];
@@ -100,6 +105,17 @@ fn launched_shell<'call>(call: &'call CallFact, name: &str) -> Option<&'call str
         .then(|| call.positional_literal(0))
         .flatten()
         .filter(|program| SHELLS.contains(&basename(program)))
+}
+
+fn launched_go_shell<'call>(call: &'call CallFact, name: &str) -> Option<&'call str> {
+    (call.source().language() == Language::Go
+        && matches!(
+            name,
+            "exec.Command" | "exec.CommandContext" | "os/exec.Command"
+        ))
+    .then(|| call.positional_literal(0))
+    .flatten()
+    .filter(|program| SHELLS.contains(&basename(program)))
 }
 
 fn basename(program: &str) -> &str {

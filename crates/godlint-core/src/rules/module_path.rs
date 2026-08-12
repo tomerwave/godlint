@@ -13,6 +13,7 @@ pub(crate) fn separator(language: Language) -> &'static str {
         Language::JavaScript | Language::TypeScript => "/",
         Language::Python => ".",
         Language::Rust => "::",
+        Language::Go => "/",
     }
 }
 
@@ -25,6 +26,7 @@ pub(crate) fn package(module: &str, language: Language) -> Option<&str> {
         Language::JavaScript | Language::TypeScript => ecmascript_package(module),
         Language::Python => python_package(module),
         Language::Rust => rust_package(module),
+        Language::Go => go_package(module),
     }
 }
 
@@ -69,6 +71,10 @@ fn rust_package(module: &str) -> Option<&str> {
     }
 }
 
+fn go_package(module: &str) -> Option<&str> {
+    non_empty(first_segment(module, "/"))
+}
+
 pub(crate) fn first_segment<'a>(text: &'a str, separator: &str) -> &'a str {
     match text.find(separator) {
         Some(index) => &text[..index],
@@ -84,5 +90,17 @@ pub(crate) fn last_segment(text: &str, separator: char) -> &str {
     match text.rfind(separator) {
         Some(index) => &text[index + separator.len_utf8()..],
         None => text,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::go_package;
+
+    #[test]
+    fn extracts_a_go_module_root() {
+        assert_eq!(go_package("github.com/acme/service"), Some("github.com"));
+        assert_eq!(go_package("github.com"), Some("github.com"));
+        assert_eq!(go_package(""), None);
     }
 }

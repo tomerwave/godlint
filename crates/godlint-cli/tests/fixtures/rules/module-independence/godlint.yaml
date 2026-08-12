@@ -13,6 +13,7 @@ rules:
               - crate::billing
               - billing
               - "@app/billing"
+              - github.com/acme/billing
           - name: notifications
             paths:
               - src/notifications/**
@@ -20,3 +21,4 @@ rules:
               - crate::notifications
               - notifications
               - "@app/notifications"
+              - github.com/acme/notifications

@@ -32,6 +32,10 @@ const WEAK: Catalogue = Catalogue(&[
     ("md5::compute", Dialect::Rust),
     ("Md5::new", Dialect::Rust),
     ("Sha1::new", Dialect::Rust),
+    ("md5.New", Dialect::Go),
+    ("md5.Sum", Dialect::Go),
+    ("sha1.New", Dialect::Go),
+    ("sha1.Sum", Dialect::Go),
 ]);
 
 pub struct NoWeakHash;
@@ -91,5 +95,6 @@ fn strong_hash(language: Language) -> &'static str {
         Language::JavaScript | Language::TypeScript => "sha256",
         Language::Python => "hashlib.sha256",
         Language::Rust => "sha2::Sha256",
+        Language::Go => "sha256.New",
     }
 }

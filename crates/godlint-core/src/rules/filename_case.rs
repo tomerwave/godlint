@@ -52,7 +52,7 @@ fn expected_case(configuration: &FilenameCaseRule, source: &SourceFile) -> Namin
 
 fn conventional_case(source: &SourceFile) -> NamingCase {
     match source.language() {
-        Language::Python | Language::Rust => NamingCase::Snake,
+        Language::Go | Language::Python | Language::Rust => NamingCase::Snake,
         Language::JavaScript | Language::TypeScript => ecmascript_case(source),
     }
 }

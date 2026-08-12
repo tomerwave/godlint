@@ -14,6 +14,7 @@ impl Rule for NoFocusedTest {
     const ID: &'static str = "testing/no-focused-test";
 
     const LANGUAGES: Languages = Languages::all_but(&[
+        (Dialect::Go, Absence::NoSuchConstruct),
         (Dialect::Python, Absence::NoSuchConstruct),
         (Dialect::Rust, Absence::NoSuchConstruct),
         (Dialect::Workflow, Absence::NoSuchConstruct),

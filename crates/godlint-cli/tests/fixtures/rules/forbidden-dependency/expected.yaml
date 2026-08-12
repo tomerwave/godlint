@@ -5,5 +5,6 @@ stdout: |
   src/app.ts:2:16: error[security/forbidden-dependency] @corp/legacy is a forbidden dependency; the policy that names it decides where it may be used.
   src/client.py:1:6: error[security/forbidden-dependency] requests is a forbidden dependency; the policy that names it decides where it may be used.
   src/hash.rs:1:5: error[security/forbidden-dependency] openssl is a forbidden dependency; the policy that names it decides where it may be used.
+  src/legacy.go:3:8: error[security/forbidden-dependency] github.com/acme/legacy/codec is a forbidden dependency; the policy that names it decides where it may be used.
 
 stderr: ""

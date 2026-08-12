@@ -27,6 +27,12 @@ const SEEDS: Catalogue = Catalogue(&[
     ("SeedableRng::seed_from_u64", Dialect::Rust),
     ("StdRng::from_seed", Dialect::Rust),
     ("SeedableRng::from_seed", Dialect::Rust),
+    ("math/rand.Seed", Dialect::Go),
+    ("math/rand.New", Dialect::Go),
+    ("math/rand.NewSource", Dialect::Go),
+    ("rand.Seed", Dialect::Go),
+    ("rand.New", Dialect::Go),
+    ("rand.NewSource", Dialect::Go),
 ]);
 
 pub struct NoRandomnessWithoutSeed;
@@ -78,5 +84,6 @@ fn remedy(language: Language) -> &'static str {
     match language {
         Language::Rust => "replace it with a seeded StdRng",
         Language::Python | Language::JavaScript | Language::TypeScript => "seed the generator",
+        Language::Go => "seed the generator or use a dedicated rand.Source",
     }
 }

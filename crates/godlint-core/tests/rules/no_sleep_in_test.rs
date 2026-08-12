@@ -39,6 +39,10 @@ fn reports_a_blocking_sleep_in_each_language() {
             "tests/worker.spec.ts",
             "it('drains', async () => {\n  await browser.pause(500);\n});\n",
         ),
+        (
+            "worker_test.go",
+            "package worker\n\nimport \"testing\"\nimport \"time\"\n\nfunc TestDrains(t *testing.T) {\n\ttime.Sleep(time.Second)\n}\n",
+        ),
     ];
 
     for (path, source) in cases {
