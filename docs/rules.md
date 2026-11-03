@@ -680,8 +680,11 @@ as written; malformed bracketed names remain subject to the configured conventio
 | `git/branch-naming` | A branch that lacks an allowed type and lowercase description |  |
 
 `git/branch-naming` uses `GITHUB_HEAD_REF` for pull requests and otherwise asks the current repository
-for its checked-out branch. Detached checkouts and the repository's default branch are silent. The default
-types are `feat`, `fix`, `perf`, `docs`, `chore`, `refactor`, `style`, `build`, `revert`, `test`, `ci` and
+for its checked-out branch. Detached checkouts, `main`, `master` and the default branch recorded in
+`refs/remotes/origin/HEAD` are silent, with no `allow` entry needed. The two names are built in because
+`actions/checkout` does not create that ref, so a push build cannot detect its default branch; a repository
+whose default has another name lists it in `allow` to pass on pushes. A pull request's `GITHUB_HEAD_REF` is
+always checked, so a pull request opened from a fork's `main` is still reported. The default types are `feat`, `fix`, `perf`, `docs`, `chore`, `refactor`, `style`, `build`, `revert`, `test`, `ci` and
 `release`; a description must start lowercase or numeric and may contain lowercase letters, numbers,
 periods, underscores, hyphens and further slashes. `types` replaces that list, while `allow` accepts
 glob patterns for automation branches such as `dependabot/**`.

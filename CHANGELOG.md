@@ -7,6 +7,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 change the `godlint-core` API; the command line and the configuration schema are what the version
 speaks about.
 
+## [Unreleased]
+
+### Fixed
+
+- `git/branch-naming` no longer reports `main` or `master` on a push build, where `actions/checkout`
+  leaves no `origin/HEAD` to detect the default branch from.
+
 ## [0.9.1] - 2026-08-11
 
 ### Fixed
