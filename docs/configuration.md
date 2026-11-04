@@ -134,7 +134,8 @@ Rules take three settings: `severity`, and the two that say which files it appli
 | `allow-in` | nothing | Glob patterns exempted, including inside `only-in`. |
 
 `git/branch-naming` is repository policy rather than file policy. It also takes `types`, which replaces
-the conventional branch types, and `allow`, a list of whole-branch glob patterns for automation:
+the conventional branch types, and `allow`, a list of whole-branch glob patterns for automation.
+`main` and `master` are accepted without an entry:
 
 ```yaml
 rules:
