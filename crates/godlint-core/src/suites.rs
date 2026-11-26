@@ -464,6 +464,7 @@ fn reliability(rules: &mut Rules) {
     rules.network_timeout_required.get_or_insert_with(strict);
     rules.no_control_flow_in_finally.get_or_insert_with(strict);
     rules.redundant_catch_rethrow.get_or_insert_with(strict);
+    rules.pulumi_protect_stateful.get_or_insert_with(strict);
 }
 
 fn testing(rules: &mut Rules) {

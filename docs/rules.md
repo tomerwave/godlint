@@ -593,9 +593,8 @@ only where a rule takes paths from configuration, as `no-network-in-unit-test` d
 
 Pulumi deletes a resource whenever a program stops declaring it, a `pulumi destroy` runs, or a change
 forces a replacement. `protect: true` makes Pulumi refuse all three until the flag is removed, which is
-the one guard that holds whoever runs the command. The rule is opt-in and is not part of
-`recommended@1`: it names a single infrastructure tool, and adding it would change what every
-repository that already adopted the suite is held to.
+the one guard that holds whoever runs the command. `recommended@1` enables it at `error`; it reads only
+files that import `@pulumi/aws`, so a repository with no Pulumi program sees nothing from it.
 
 It reads a file only if that file imports `@pulumi/aws` or a path under it, and only a call to
 `new <service>.<Resource>` or `new <alias>.<service>.<Resource>` whose service and resource are in its

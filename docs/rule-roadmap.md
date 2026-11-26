@@ -322,7 +322,7 @@ semantic capability exists.
 | `reliability/explicit-timer-delay` | Shipped | High | Direct JavaScript/TypeScript timer calls with fewer than two arguments | Require an intentional delay value |
 | `logging/no-production-log` | Shipped | High | Direct logging callee match | Ban debug logging outside approved paths |
 | `reliability/network-timeout-required` | Shipped | Configured known Python client calls | Require explicit timeout argument |
-| `infra/pulumi-protect-stateful` | Shipped | High | Catalogued `@pulumi/aws` constructor and its object-literal options; opt-in, outside `recommended@1` | Require `protect: true` on resources that hold data |
+| `infra/pulumi-protect-stateful` | Shipped | High | Catalogued `@pulumi/aws` constructor and its object-literal options; in `recommended@1` | Require `protect: true` on resources that hold data |
 
 `architecture/restricted-call` establishes the direct-call boundary. It detects only
 spelled, direct callee paths: aliases, computed properties, and type-mediated calls wait

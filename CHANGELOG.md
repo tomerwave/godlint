@@ -14,7 +14,7 @@ speaks about.
 - `infra/pulumi-protect-stateful` reports a Pulumi AWS resource that holds data — an RDS instance or
   cluster, S3 bucket, DynamoDB table, KMS key, ElastiCache, EFS or EBS volume, among others — created
   in TypeScript or JavaScript without `protect: true` in its resource options. It reads only files
-  that import `@pulumi/aws`, stays silent on options it cannot read, and is opt-in: it is not part of
+  that import `@pulumi/aws`, stays silent on options it cannot read, and runs at `error` in
   `recommended@1`.
 
 ### Internal
