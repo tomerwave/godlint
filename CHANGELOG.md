@@ -17,6 +17,11 @@ speaks about.
   that import `@pulumi/aws`, stays silent on options it cannot read, and runs at `error` in
   `recommended@1`.
 
+### Fixed
+
+- `git/branch-naming` no longer reports `main` or `master` on a push build, where `actions/checkout`
+  leaves no `origin/HEAD` to detect the default branch from.
+
 ### Internal
 
 - JavaScript and TypeScript call facts now record the properties of an object literal argument,

@@ -1,21 +1,28 @@
 use std::{path::Path, process::Command};
 
+const CONVENTIONAL_DEFAULT_BRANCHES: [&str; 2] = ["main", "master"];
+
 pub fn resolve(root: &Path) -> Option<String> {
     if let Some(branch) = std::env::var("GITHUB_HEAD_REF")
         .ok()
         .filter(|branch| !branch.is_empty())
     {
-        return Some(branch.to_owned());
+        return Some(branch);
     }
 
     let branch = git(root, ["branch", "--show-current"])?;
     let branch = branch.trim().to_owned();
 
-    if branch.is_empty() || default_branch(root).is_some_and(|default| default == branch) {
+    if branch.is_empty() || is_default_branch(root, &branch) {
         None
     } else {
         Some(branch)
     }
+}
+
+fn is_default_branch(root: &Path, branch: &str) -> bool {
+    CONVENTIONAL_DEFAULT_BRANCHES.contains(&branch)
+        || default_branch(root).is_some_and(|default| default == branch)
 }
 
 fn default_branch(root: &Path) -> Option<String> {

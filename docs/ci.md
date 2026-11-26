@@ -180,7 +180,9 @@ reports that it changes no Rust source and passes. Both uses of the commit-pinne
 The change-scoped checks need the release line, so shallow history is not enough.
 
 A branch name is the first thing a reader of the history sees, so `git/branch-naming` runs inside the
-normal Godlint quality gate. It cannot refuse the push, but it does refuse the merge. `release` is not a
+normal Godlint quality gate. It cannot refuse the push, but it does refuse the merge. A push to `main` or
+`master` is silent without configuration; `actions/checkout` leaves no `origin/HEAD`, so a default branch
+with any other name needs an `allow` entry. `release` is not a
 Conventional Commits type; it is allowed because a version bump is not honestly any of the others.
 
 ### Real-world corpus (`real-world.yml`)
