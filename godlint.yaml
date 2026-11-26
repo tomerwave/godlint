@@ -26,3 +26,9 @@ exclude:
 
 suites:
   - recommended@1
+
+# Opt-in rules outside recommended@1 are named here so Godlint still runs every rule it ships
+# against itself. This repository has no Pulumi program, so the rule is expected to stay silent.
+rules:
+  infra/pulumi-protect-stateful:
+    severity: error
