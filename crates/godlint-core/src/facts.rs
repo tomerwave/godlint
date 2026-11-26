@@ -174,6 +174,16 @@ impl AssertionFact {
 pub struct CallArgument {
     pub name: Option<String>,
     pub literal: Option<String>,
+    pub properties: Option<Vec<CallArgument>>,
+}
+
+impl CallArgument {
+    pub fn property(&self, name: &str) -> Option<&CallArgument> {
+        self.properties
+            .as_deref()?
+            .iter()
+            .find(|property| property.name.as_deref() == Some(name))
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]

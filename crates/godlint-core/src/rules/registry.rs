@@ -27,6 +27,7 @@ use crate::{
         no_test_helper_in_production::NoTestHelperInProduction, no_weak_hash::NoWeakHash,
         no_workflow_comments::NoWorkflowComments, overprovisioned_secrets::OverprovisionedSecrets,
         parameter_count::ParameterCount, pin_third_party_actions::PinThirdPartyActions,
+        pulumi_protect_stateful::PulumiProtectStateful,
         redundant_catch_rethrow::RedundantCatchRethrow, restricted_call::RestrictedCall,
         restricted_import::RestrictedImport, return_count::ReturnCount,
         secrets_inherit::SecretsInherit, stale_action_refs::StaleActionRefs,
@@ -92,6 +93,7 @@ registrations! {
     NoRandomnessWithoutSeed => no_randomness_without_seed, true;
     NoNetworkInUnitTest => no_network_in_unit_test, true;
     NetworkTimeoutRequired => network_timeout_required, true;
+    PulumiProtectStateful => pulumi_protect_stateful, true;
     NoControlFlowInFinally => no_control_flow_in_finally, true;
     NoCommittedSecretFile => no_committed_secret_file, true;
     NoCommentedCode => no_commented_code, true;

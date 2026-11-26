@@ -102,6 +102,8 @@ pub struct Rules {
     pub no_network_in_unit_test: Option<NoNetworkInUnitTestRule>,
     #[serde(rename = "reliability/network-timeout-required")]
     pub network_timeout_required: Option<NetworkTimeoutRequiredRule>,
+    #[serde(rename = "infra/pulumi-protect-stateful")]
+    pub pulumi_protect_stateful: Option<PulumiProtectStatefulRule>,
     #[serde(rename = "reliability/no-control-flow-in-finally")]
     pub no_control_flow_in_finally: Option<NoProductionLogRule>,
     #[serde(rename = "reliability/redundant-catch-rethrow")]

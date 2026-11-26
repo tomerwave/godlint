@@ -7,12 +7,28 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 change the `godlint-core` API; the command line and the configuration schema are what the version
 speaks about.
 
-## [Unreleased]
+## [0.10.0] - 2026-11-26
+
+### Added
+
+- `infra/pulumi-protect-stateful` reports a Pulumi AWS resource that holds data — an RDS instance or
+  cluster, S3 bucket, DynamoDB table, KMS key, ElastiCache, EFS or EBS volume, among others — created
+  in TypeScript or JavaScript without `protect: true` in its resource options. It reads only files
+  that import `@pulumi/aws`, stays silent on options it cannot read, and runs at `error` in
+  `recommended@1`.
 
 ### Fixed
 
 - `git/branch-naming` no longer reports `main` or `master` on a push build, where `actions/checkout`
   leaves no `origin/HEAD` to detect the default branch from.
+
+### Internal
+
+- JavaScript and TypeScript call facts now record the properties of an object literal argument,
+  when every member is a plain pair or shorthand, so a rule can read an options object. Not
+  observable on its own.
+- Violation message text moves to its own module, keeping `rules/violation.rs` under the
+  file-size limit. Not observable.
 
 ## [0.9.1] - 2026-08-11
 

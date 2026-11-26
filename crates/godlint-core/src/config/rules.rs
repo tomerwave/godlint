@@ -359,6 +359,8 @@ scoped_rules! {
 
 pub type NetworkTimeoutRequiredRule = NoProductionLogRule;
 
+pub type PulumiProtectStatefulRule = NoProductionLogRule;
+
 macro_rules! count_limit_rules {
     ($($name:ident { $key:literal => $field:ident }),+ $(,)?) => {
         $(

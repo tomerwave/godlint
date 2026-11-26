@@ -1,6 +1,6 @@
 # Rule reference
 
-Sixty rules are implemented. Every one has an identifier of the form `family/name`, which is
+Sixty-one rules are implemented. Every one has an identifier of the form `family/name`, which is
 what a configuration entry and a suppression directive both name. [The rule roadmap](rule-roadmap.md)
 records the families still to come, and the reasoning behind each threshold `recommended@1` sets.
 [Language support](#language-support) records which languages each rule covers.
@@ -35,6 +35,7 @@ enforced there.
 | `ci/unredacted-secrets` | — | — | — | — | ✓ | — |
 | `ci/untrusted-github-env` | — | — | — | — | ✓ | — |
 | `git/branch-naming` | — | — | — | — | — | ✓ |
+| `infra/pulumi-protect-stateful` | ✓ | · | — | · | — | — |
 | `dependencies/lockfile-version-drift` | — | — | — | — | — | ✓ |
 | `repository/no-committed-secret-file` | — | — | — | — | — | ✓ |
 | `style/no-commented-code` | ✓ | ✓ | ✓ | ✓ | — | — |
@@ -85,10 +86,11 @@ find empty, no `.only` marker for `no-focused-test`, and no way to import anothe
 `no-internal-import` to report. There is nothing to report and nothing to implement, and a rule that
 claimed the dialect would only ever be silent.
 
-`·` would mean the construct exists and Godlint has not taught the dialect this rule yet, which is a
-gap to close rather than a fact about the language. No rule is in that state today, which is why the
-distinction is in the table rather than in a sentence: the two look identical to a reader deciding
-whether to file a bug.
+`·` means the construct exists and Godlint has not taught the dialect this rule yet, which is a
+gap to close rather than a fact about the language. `infra/pulumi-protect-stateful` is the one rule in
+that state: Pulumi has Python and Go SDKs, and Godlint reads only the TypeScript and JavaScript one.
+The distinction is in the table rather than in a sentence because the two look identical to a reader
+deciding whether to file a bug.
 
 Neither mark is a claim a reader has to take on trust. Each rule declares `Rule::LANGUAGES`, this
 table is asserted against those declarations by `crates/godlint-core/tests/languages.rs`, and
@@ -582,6 +584,31 @@ What counts as a test is decided by syntax alone — a runner call, a `#[test]` 
 prefix or a `pytest.mark` decorator. None of the test rules knows about test directories on its own,
 because an analyzer sees no configuration; a repository that keeps tests somewhere unusual is covered
 only where a rule takes paths from configuration, as `no-network-in-unit-test` does.
+
+## Infrastructure
+
+| Rule | What it reports |
+| --- | --- |
+| `infra/pulumi-protect-stateful` | A Pulumi AWS resource that holds data, created without `protect: true` in its resource options |  |
+
+Pulumi deletes a resource whenever a program stops declaring it, a `pulumi destroy` runs, or a change
+forces a replacement. `protect: true` makes Pulumi refuse all three until the flag is removed, which is
+the one guard that holds whoever runs the command. `recommended@1` enables it at `error`; it reads only
+files that import `@pulumi/aws`, so a repository with no Pulumi program sees nothing from it.
+
+It reads a file only if that file imports `@pulumi/aws` or a path under it, and only a call to
+`new <service>.<Resource>` or `new <alias>.<service>.<Resource>` whose service and resource are in its
+catalogue: `rds.Instance`, `rds.Cluster`, `s3.Bucket`, `s3.BucketV2`, `dynamodb.Table`, `kms.Key`,
+`elasticache.ReplicationGroup`, `elasticache.ServerlessCache`, `elasticache.Cluster`,
+`efs.FileSystem`, `ebs.Volume`, `docdb.Cluster`, `neptune.Cluster`, `redshift.Cluster`,
+`memorydb.Cluster`, `opensearch.Domain` and `backup.Vault`.
+
+It reports when the third argument is missing, or is an object literal with no `protect` property, or
+with `protect` set to a literal other than `true`. It stays silent when it cannot read the decision:
+options passed as a variable, an object with a spread or a computed key, or `protect` set to an
+expression such as `isProduction`. A stack that protects only production is a decision, and the rule
+does not second-guess it. A `require("@pulumi/aws")` is not an import fact, so a CommonJS program is
+not read, and neither is a call that spreads its arguments.
 
 ## Logging
 

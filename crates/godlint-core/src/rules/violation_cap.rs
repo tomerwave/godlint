@@ -18,7 +18,7 @@ impl Violation {
             Self::HardcodedContainerCredential { .. } | Self::MutableActionReference { .. } | Self::ContradictoryActionLabels { .. } => Severity::Error,
             Self::ContradictoryActionPins { .. } | Self::TemplateInjection { certain: true, .. } | Self::AttackerInfluencedBotCondition { .. } => Severity::Error,
             Self::InheritedSecrets { .. } | Self::OverprovisionedSecrets { .. } | Self::UnredactedSecret => Severity::Error,
-            Self::UntrustedGithubEnv { .. } => Severity::Error,
+            Self::UntrustedGithubEnv { .. } | Self::UnprotectedStatefulResource { .. } => Severity::Error,
             Self::ScriptExitsSuccessfully { .. } | Self::TestHelperInProduction { .. } | Self::InternalImport { certain: true, .. } => Severity::Error,
             Self::SleepInTest { .. } | Self::UnseededRandom { .. } | Self::NetworkInUnitTest { .. } | Self::NetworkTimeoutMissing { .. } | Self::NoControlFlowInFinally | Self::RedundantCatchRethrow | Self::CommittedSecretFile | Self::CommentedCode | Self::DuplicateString { .. } => Severity::Error,
             Self::RestrictedImport { .. } | Self::CrossedBoundary { .. } | Self::BrokeIndependence { .. } => Severity::Error,

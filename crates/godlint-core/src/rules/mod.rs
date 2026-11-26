@@ -66,6 +66,7 @@ pub mod no_workflow_comments;
 pub mod overprovisioned_secrets;
 pub mod parameter_count;
 pub mod pin_third_party_actions;
+pub mod pulumi_protect_stateful;
 pub mod redundant_catch_rethrow;
 mod reference;
 mod scoped;
@@ -449,6 +450,7 @@ const EVALUATORS: &[Evaluator] = &[
     no_internal_import::evaluate,
     no_network_in_unit_test::evaluate,
     network_timeout_required::evaluate,
+    pulumi_protect_stateful::evaluate,
     no_control_flow_in_finally::evaluate,
     redundant_catch_rethrow::evaluate,
     no_commented_code::evaluate,
