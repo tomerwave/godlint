@@ -11,7 +11,7 @@ use crate::{
     source::{Language, SourceFile, SourceFileError, SourceRange},
 };
 
-use self::vocabulary::{Focus, Vocabulary};
+use self::vocabulary::{Argument, Focus, Vocabulary};
 
 mod control_flow;
 mod ecmascript;
@@ -400,15 +400,27 @@ fn call_argument(
     source: &SourceFile,
     vocabulary: &Vocabulary,
 ) -> Option<CallArgument> {
-    let argument = (vocabulary.argument)(node)?;
+    (vocabulary.argument)(node).map(|argument| read_argument(argument, source, vocabulary))
+}
 
-    Some(CallArgument {
+fn read_argument(
+    argument: Argument<'_>,
+    source: &SourceFile,
+    vocabulary: &Vocabulary,
+) -> CallArgument {
+    CallArgument {
         name: argument
             .name
             .and_then(|name| source.source().get(name.byte_range()))
             .map(str::to_owned),
         literal: (vocabulary.literal)(argument.value, source.source()),
-    })
+        properties: (vocabulary.properties)(argument.value).map(|properties| {
+            properties
+                .into_iter()
+                .map(|property| read_argument(property, source, vocabulary))
+                .collect()
+        }),
+    }
 }
 
 fn access_fact(

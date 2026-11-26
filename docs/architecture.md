@@ -52,6 +52,14 @@ grammar reports them as named nodes
 inside the argument list, so counting named children alone would read
 `setTimeout(work /*, 100 */)` as a call that passes two arguments.
 
+An argument carries its literal value when it has one, and in JavaScript and TypeScript an object
+literal argument also carries its properties, each read the same way as an argument. The properties
+are recorded only when every member is a plain `key: value` pair or a shorthand: a spread, a computed
+key, a numeric key or a method means the object holds something Godlint cannot read, so it records
+none rather than a partial list a rule would mistake for the whole object. Python, Rust and Go record
+none, because a dictionary, a struct literal and a composite literal are not the options object the
+JavaScript call convention passes.
+
 The macro flag exists because a name is not enough to identify a callee in Rust. A grammar
 names a macro without its `!`, so a `fn dbg` and the `dbg!` macro reach a rule as the same
 string, and restricting one restricted the other. Rules spell a macro callee with its `!`,

@@ -38,6 +38,7 @@ const VOCABULARY: Vocabulary = Vocabulary {
     direct_path,
     argument,
     literal,
+    properties: super::vocabulary::no_properties,
     test,
     assertion,
     import,

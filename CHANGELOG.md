@@ -7,6 +7,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 change the `godlint-core` API; the command line and the configuration schema are what the version
 speaks about.
 
+## [Unreleased]
+
+### Internal
+
+- JavaScript and TypeScript call facts now record the properties of an object literal argument,
+  when every member is a plain pair or shorthand, so a rule can read an options object. Not
+  observable on its own.
+
 ## [0.9.1] - 2026-08-11
 
 ### Fixed

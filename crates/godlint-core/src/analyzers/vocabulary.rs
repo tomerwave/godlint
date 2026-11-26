@@ -75,11 +75,16 @@ pub(crate) struct Vocabulary {
     pub direct_path: fn(&str) -> Option<String>,
     pub argument: fn(Node<'_>) -> Option<Argument<'_>>,
     pub literal: fn(Node<'_>, &str) -> Option<String>,
+    pub properties: fn(Node<'_>) -> Option<Vec<Argument<'_>>>,
     pub test: for<'tree> fn(Node<'tree>, &str) -> Option<TestDeclaration<'tree>>,
     pub assertion: for<'tree> fn(Node<'tree>, &str) -> Option<Assertion<'tree>>,
     pub import: fn(Node<'_>) -> Option<Node<'_>>,
     pub comment_kind: fn(Node<'_>, &str) -> Option<CommentKind>,
     pub has_implicit_tail_return: fn(Node<'_>) -> bool,
+}
+
+pub(crate) fn no_properties(_node: Node<'_>) -> Option<Vec<Argument<'_>>> {
+    None
 }
 
 pub(crate) fn literal_value(node: Node<'_>, source: &str, content: &str) -> String {

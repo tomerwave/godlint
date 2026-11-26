@@ -24,6 +24,7 @@ pub(super) const VOCABULARY: Vocabulary = Vocabulary {
     direct_path,
     argument,
     literal,
+    properties,
     test,
     assertion,
     import,
@@ -199,6 +200,41 @@ fn argument(node: Node<'_>) -> Option<Argument<'_>> {
         name: None,
         value: node,
     })
+}
+
+fn properties(node: Node<'_>) -> Option<Vec<Argument<'_>>> {
+    if node.kind() != "object" {
+        return None;
+    }
+
+    let mut cursor = node.walk();
+
+    node.named_children(&mut cursor)
+        .filter(|member| !member.is_extra())
+        .map(property)
+        .collect()
+}
+
+fn property(member: Node<'_>) -> Option<Argument<'_>> {
+    match member.kind() {
+        "pair" => Some(Argument {
+            name: Some(property_key(member.child_by_field_name("key")?)?),
+            value: member.child_by_field_name("value")?,
+        }),
+        "shorthand_property_identifier" => Some(Argument {
+            name: Some(member),
+            value: member,
+        }),
+        _ => None,
+    }
+}
+
+fn property_key(key: Node<'_>) -> Option<Node<'_>> {
+    match key.kind() {
+        "property_identifier" => Some(key),
+        "string" => key.named_child(0),
+        _ => None,
+    }
 }
 
 fn literal(node: Node<'_>, source: &str) -> Option<String> {

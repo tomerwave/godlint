@@ -101,10 +101,12 @@ fn records_a_call() {
                 CallArgument {
                     name: None,
                     literal: Some("1".to_owned()),
+                    properties: None,
                 },
                 CallArgument {
                     name: Some("flag".to_owned()),
                     literal: Some("true".to_owned()),
+                    properties: None,
                 },
             ],
         },
