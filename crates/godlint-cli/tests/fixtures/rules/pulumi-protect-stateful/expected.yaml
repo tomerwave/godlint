@@ -1,0 +1,8 @@
+exit-code: 1
+
+stdout: |
+  example.js:3:20: error[infra/pulumi-protect-stateful] s3.Bucket holds data but is not created with `protect: true`; set it in the resource options so a `pulumi up` or `pulumi destroy` cannot delete it.
+  example.ts:4:22: error[infra/pulumi-protect-stateful] aws.rds.Instance holds data but is not created with `protect: true`; set it in the resource options so a `pulumi up` or `pulumi destroy` cannot delete it.
+  example.ts:5:20: error[infra/pulumi-protect-stateful] aws.s3.BucketV2 holds data but is not created with `protect: true`; set it in the resource options so a `pulumi up` or `pulumi destroy` cannot delete it.
+  example.ts:6:19: error[infra/pulumi-protect-stateful] aws.dynamodb.Table holds data but is not created with `protect: true`; set it in the resource options so a `pulumi up` or `pulumi destroy` cannot delete it.
+stderr: ""

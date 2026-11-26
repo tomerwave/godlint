@@ -44,6 +44,7 @@ fn recommended_enables_every_rule_at_error() {
         "repository/no-committed-secret-file",
         "style/no-commented-code",
         "maintainability/no-duplicate-string",
+        "infra/pulumi-protect-stateful",
     ];
     let off: Vec<&str> = rule_ids()
         .filter(|id| !opt_in.contains(id))

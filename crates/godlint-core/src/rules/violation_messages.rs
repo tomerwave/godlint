@@ -16,6 +16,8 @@ pub(super) const RESTRICTED_IMPORT: &str =
 pub(super) const PRODUCTION_LOG: &str =
     "logs from production code; route it through the project's logger or an approved path.";
 
+pub(super) const UNPROTECTED_STATEFUL_RESOURCE: &str = "holds data but is not created with `protect: true`; set it in the resource options so a `pulumi up` or `pulumi destroy` cannot delete it.";
+
 pub(super) const NETWORK_TIMEOUT: &str =
     "has no explicit timeout; bound network calls so they cannot wait forever.";
 pub(super) const NO_CONTROL_FLOW_IN_FINALLY: &str = "A finally block contains escaping control flow; return, break, and continue can suppress errors or skip cleanup.";

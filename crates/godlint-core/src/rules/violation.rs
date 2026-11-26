@@ -134,6 +134,9 @@ pub enum Violation {
     NetworkTimeoutMissing {
         callee: String,
     },
+    UnprotectedStatefulResource {
+        resource: String,
+    },
     NoControlFlowInFinally,
     RedundantCatchRethrow,
     CommittedSecretFile,
@@ -332,6 +335,7 @@ impl fmt::Display for Violation {
             Self::UnseededRandom { callee, remedy } => unseeded(formatter, callee, remedy),
             Self::NetworkInUnitTest { callee } => network(formatter, callee),
             Self::NetworkTimeoutMissing { callee } => write!(formatter, "{callee} {NETWORK_TIMEOUT}"),
+            Self::UnprotectedStatefulResource { resource } => write!(formatter, "{resource} {UNPROTECTED_STATEFUL_RESOURCE}"),
             Self::NoControlFlowInFinally => formatter.write_str(NO_CONTROL_FLOW_IN_FINALLY),
             Self::RedundantCatchRethrow => formatter.write_str(REDUNDANT_CATCH_RETHROW),
             Self::CommittedSecretFile => formatter.write_str(COMMITTED_SECRET_FILE),

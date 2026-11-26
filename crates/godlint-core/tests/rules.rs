@@ -99,6 +99,9 @@ mod no_network_in_unit_test;
 #[path = "rules/network_timeout_required.rs"]
 mod network_timeout_required;
 
+#[path = "rules/pulumi_protect_stateful.rs"]
+mod pulumi_protect_stateful;
+
 #[path = "rules/no_randomness_without_seed.rs"]
 mod no_randomness_without_seed;
 
