@@ -14,6 +14,8 @@ speaks about.
 - JavaScript and TypeScript call facts now record the properties of an object literal argument,
   when every member is a plain pair or shorthand, so a rule can read an options object. Not
   observable on its own.
+- Violation message text moves to its own module, keeping `rules/violation.rs` under the
+  file-size limit. Not observable.
 
 ## [0.9.1] - 2026-08-11
 
