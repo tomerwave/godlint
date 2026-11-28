@@ -68,6 +68,7 @@ pub mod overprovisioned_secrets;
 pub mod parameter_count;
 pub mod pin_third_party_actions;
 pub mod pulumi_protect_stateful;
+pub mod pulumi_unchecked_config;
 pub mod redundant_catch_rethrow;
 mod reference;
 mod scoped;
@@ -87,6 +88,7 @@ pub mod restricted_import;
 pub mod return_count;
 pub mod secrets_inherit;
 pub mod stale_action_refs;
+mod suppression_defect;
 pub mod template_injection;
 pub mod todo_requires_reference;
 pub mod unredacted_secrets;
@@ -101,22 +103,8 @@ pub use registry::{
     closest_rule_id, configured_severity, is_known_rule, is_suppressible_rule, rule_ids,
     rule_languages,
 };
+pub use suppression_defect::SuppressionDefect;
 pub use violation::Violation;
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum SuppressionDefect {
-    NoRules,
-    UnknownRule { rule: String },
-    NotSuppressible { rule: String },
-    UnknownOption { option: String },
-    RepeatedOption { option: String },
-    MissingJustification,
-    MissingOwner,
-    MissingExpiry,
-    InvalidExpiry { value: String },
-    Expired { expires: String },
-    Unresolved,
-}
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Finding {
@@ -453,6 +441,7 @@ const EVALUATORS: &[Evaluator] = &[
     no_network_in_unit_test::evaluate,
     network_timeout_required::evaluate,
     pulumi_protect_stateful::evaluate,
+    pulumi_unchecked_config::evaluate,
     no_control_flow_in_finally::evaluate,
     redundant_catch_rethrow::evaluate,
     no_commented_code::evaluate,

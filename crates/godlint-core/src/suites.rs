@@ -459,6 +459,7 @@ fn reliability(rules: &mut Rules) {
     rules.no_control_flow_in_finally.get_or_insert_with(strict);
     rules.redundant_catch_rethrow.get_or_insert_with(strict);
     rules.pulumi_protect_stateful.get_or_insert_with(strict);
+    rules.pulumi_unchecked_config.get_or_insert_with(strict);
 }
 
 fn testing(rules: &mut Rules) {

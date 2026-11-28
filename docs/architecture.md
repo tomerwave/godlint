@@ -62,6 +62,12 @@ none rather than a partial list a rule would mistake for the whole object. Pytho
 none, because a dictionary, a struct literal and a composite literal are not the options object the
 JavaScript call convention passes.
 
+A call also records whether it passes type arguments, which TypeScript answers from the call's
+`type_arguments` field. Every other language answers no: JavaScript has no type arguments, Python
+has no call-site generics, and a Rust turbofish or a Go generic call has a callee `direct_path` does
+not read, so no call fact exists to carry the flag. The question lives in the vocabulary rather than
+the shared extractor so that the field name stays inside the language module.
+
 The macro flag exists because a name is not enough to identify a callee in Rust. A grammar
 names a macro without its `!`, so a `fn dbg` and the `dbg!` macro reach a rule as the same
 string, and restricting one restricted the other. Rules spell a macro callee with its `!`,

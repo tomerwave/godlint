@@ -102,6 +102,9 @@ mod network_timeout_required;
 #[path = "rules/pulumi_protect_stateful.rs"]
 mod pulumi_protect_stateful;
 
+#[path = "rules/pulumi_unchecked_config.rs"]
+mod pulumi_unchecked_config;
+
 #[path = "rules/no_randomness_without_seed.rs"]
 mod no_randomness_without_seed;
 

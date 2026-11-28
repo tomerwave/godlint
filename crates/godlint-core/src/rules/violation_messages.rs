@@ -18,6 +18,8 @@ pub(super) const PRODUCTION_LOG: &str =
 
 pub(super) const UNPROTECTED_STATEFUL_RESOURCE: &str = "holds data but is not created with `protect: true`; set it in the resource options so a `pulumi up` or `pulumi destroy` cannot delete it.";
 
+pub(super) const UNCHECKED_CONFIG: &str = "casts configuration to its type argument without checking it; drop the type argument and validate the value with a schema, such as `schema.parse(config.requireObject(\"key\"))`.";
+
 pub(super) const NETWORK_TIMEOUT: &str =
     "has no explicit timeout; bound network calls so they cannot wait forever.";
 pub(super) const NO_CONTROL_FLOW_IN_FINALLY: &str = "A finally block contains escaping control flow; return, break, and continue can suppress errors or skip cleanup.";

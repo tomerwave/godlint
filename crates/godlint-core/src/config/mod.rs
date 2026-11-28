@@ -104,6 +104,8 @@ pub struct Rules {
     pub network_timeout_required: Option<NetworkTimeoutRequiredRule>,
     #[serde(rename = "infra/pulumi-protect-stateful")]
     pub pulumi_protect_stateful: Option<PulumiProtectStatefulRule>,
+    #[serde(rename = "infra/pulumi-unchecked-config")]
+    pub pulumi_unchecked_config: Option<NoProductionLogRule>,
     #[serde(rename = "reliability/no-control-flow-in-finally")]
     pub no_control_flow_in_finally: Option<NoProductionLogRule>,
     #[serde(rename = "reliability/redundant-catch-rethrow")]

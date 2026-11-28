@@ -189,3 +189,35 @@ fn reads_no_properties_in_languages_without_object_literals() {
         None
     );
 }
+
+fn type_arguments_of(path: &str, contents: &str) -> bool {
+    analyze(&source(path, contents))
+        .unwrap_or_else(|error| panic!("analyzes {path}: {error}"))
+        .calls()
+        .first()
+        .unwrap_or_else(|| panic!("no call in {path}"))
+        .has_type_arguments()
+}
+
+#[test]
+fn records_whether_a_call_passes_type_arguments() {
+    assert!(type_arguments_of(
+        "a.ts",
+        "config.requireObject<Settings>(\"key\");"
+    ));
+    assert!(type_arguments_of(
+        "a.tsx",
+        "config.getObject<string[]>(\"key\");"
+    ));
+    assert!(!type_arguments_of("a.ts", "config.requireObject(\"key\");"));
+    assert!(!type_arguments_of("a.js", "config.requireObject(\"key\");"));
+    assert!(!type_arguments_of(
+        "a.go",
+        "package a\nfunc a() { Map(values) }"
+    ));
+    assert!(!type_arguments_of("a.py", "config.require_object(\"key\")"));
+    assert!(!type_arguments_of(
+        "a.rs",
+        "fn a() { config.require(\"key\"); }"
+    ));
+}

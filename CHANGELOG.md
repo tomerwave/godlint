@@ -17,8 +17,18 @@ speaks about.
   rather than one exact version. `peerDependencies`, `workspace:`, `file:`, `link:` and tarball
   specs are not judged, and an `npm:` alias is judged by its version. It skips a `package.json` marked `linguist-generated` and
   runs at `error` in `recommended@1`.
+- `infra/pulumi-unchecked-config` reports `requireObject<T>`, `getObject<T>`, `requireSecretObject<T>`
+  or `getSecretObject<T>` on a Pulumi `Config` in TypeScript that imports `@pulumi/pulumi`: the type
+  argument casts configuration without checking it. Validate the value with a schema instead, such as
+  `schema.parse(config.requireObject("key"))`. A call without a type argument is silent. It runs at
+  `error` in `recommended@1`.
 
 ### Internal
+
+- Call facts record whether a call passes type arguments, read from TypeScript; JavaScript, Python,
+  Rust and Go record none. Not observable on its own.
+- `SuppressionDefect` moves to its own module, keeping `rules/mod.rs` under the file-size limit. Not
+  observable.
 
 - `LockfileVersionDriftRule` becomes an alias of the shared scoped configuration, so
   `recommended@1` sets it the same way as other scoped rules and `config/rules.rs` and `suites.rs` stay

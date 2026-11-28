@@ -1,0 +1,10 @@
+exit-code: 1
+
+stdout: |
+  example.ts:8:17: error[infra/pulumi-unchecked-config] config.requireObject casts configuration to its type argument without checking it; drop the type argument and validate the value with a schema, such as `schema.parse(config.requireObject("key"))`.
+  example.ts:9:15: error[infra/pulumi-unchecked-config] config.getObject casts configuration to its type argument without checking it; drop the type argument and validate the value with a schema, such as `schema.parse(config.requireObject("key"))`.
+  example.ts:10:15: error[infra/pulumi-unchecked-config] config.requireObject casts configuration to its type argument without checking it; drop the type argument and validate the value with a schema, such as `schema.parse(config.requireObject("key"))`.
+  example.ts:11:14: error[infra/pulumi-unchecked-config] config.getObject casts configuration to its type argument without checking it; drop the type argument and validate the value with a schema, such as `schema.parse(config.requireObject("key"))`.
+  example.ts:12:15: error[infra/pulumi-unchecked-config] config.requireSecretObject casts configuration to its type argument without checking it; drop the type argument and validate the value with a schema, such as `schema.parse(config.requireObject("key"))`.
+
+stderr: ""
