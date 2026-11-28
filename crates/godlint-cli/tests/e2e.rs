@@ -63,6 +63,7 @@ fixture_tests! {
     hardcoded_container_credentials => "hardcoded-container-credentials",
     hardcoded_container_credentials_clean => "hardcoded-container-credentials-clean",
     invalid_syntax => "invalid-syntax",
+    linguist_generated => "linguist-generated",
     marker_word_boundary => "marker-word-boundary",
     module_independence => "module-independence",
     module_independence_clean => "module-independence-clean",

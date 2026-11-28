@@ -15,6 +15,14 @@ pub fn matches(pattern: &str, path: &str) -> bool {
     match_segments(&pattern_segments, &path_segments)
 }
 
+pub(crate) fn matches_path(pattern: &str, path: &str) -> bool {
+    match_segments(&split(pattern), &split(path))
+}
+
+pub(crate) fn matches_name(pattern: &str, name: &str) -> bool {
+    segment_matches(pattern, name)
+}
+
 fn split(value: &str) -> Vec<&str> {
     value.split('/').filter(|part| !part.is_empty()).collect()
 }

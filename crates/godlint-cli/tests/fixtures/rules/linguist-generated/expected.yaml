@@ -1,0 +1,7 @@
+exit-code: 1
+
+stdout: |
+  authored.rs:1:1: error[maintainability/empty-function] Function has an empty body.
+  sdks/db/scripts/kept.js:1:1: error[maintainability/empty-function] Function has an empty body.
+
+stderr: ""

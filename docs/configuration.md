@@ -104,11 +104,34 @@ first ten lines — one starting `//`, `/*`, `*` or `#` — carries one of these
 The first two are matched exactly, so a header saying "do not edit this by hand" is advice rather
 than a marker. A marker below line ten, or outside a comment, does not count.
 
+A file without a marker counts as generated when `.gitattributes` gives it GitHub Linguist's
+`linguist-generated` attribute — the convention GitHub already uses to collapse generated files in a
+diff, and the one Pulumi writes into each SDK directory:
+
+```gitattributes
+infra/pulumi/*/sdks/** linguist-generated=true
+```
+
+`linguist-generated` and `linguist-generated=true` set it; `-linguist-generated`,
+`!linguist-generated` and any other value such as `=false` clear it. Patterns follow gitattributes:
+one without a slash matches a file name at any depth, one with a slash is anchored to the directory
+of the `.gitattributes` holding it, `*` stays within a path segment and `**` spans any number. The
+last matching line wins, and a `.gitattributes` in a deeper directory overrides one above it, so a
+nested `* linguist-generated` covers everything below it — scripts like `postinstall.js` included.
+
+Godlint reads every `.gitattributes` from the scan root down to each file's directory. It does not
+read `.git/info/attributes` or a global attributes file, which are local to one clone and so cannot
+decide CI. It also ignores what gitattributes itself ignores or what cannot name a file: a quoted
+pattern, a `!` negative pattern, a pattern ending in `/` (which matches only directories), and an
+`[attr]` macro definition. Character classes such as `[abc]` and backslash escapes are not
+interpreted and match literally. A symbolically linked `.gitattributes` is not read.
+
 Every source and workflow rule skips the file. The repository rules do not —
 `repository/no-committed-secret-file`, `dependencies/lockfile-version-drift` and `git/branch-naming`
 judge a file's name, a manifest or the branch rather than authored code, so a generated `.env` is
-still a committed secret. A marker is a claim anyone can write, so it is visible in review like any
-other change; a hand-written file carrying one is skipped as well.
+still a committed secret. A marker or attribute is a claim anyone can write, so it is visible in
+review like any other change; a hand-written file carrying one is skipped as well. A file marked by
+`.gitattributes` is not read at all, so it raises no issue for its size or encoding either.
 
 ## Suites
 
