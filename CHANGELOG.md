@@ -7,6 +7,23 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 change the `godlint-core` API; the command line and the configuration schema are what the version
 speaks about.
 
+## [Unreleased]
+
+### Added
+
+- `dependencies/exact-versions` reports a `package.json` dependency in `dependencies`,
+  `devDependencies` or `optionalDependencies` declared as a range — `^`, `~`, comparators, `*`, `x`,
+  partial versions, `||`, `latest` or an empty spec — or a git reference not pinned to a commit hash,
+  rather than one exact version. `peerDependencies`, `workspace:`, `file:`, `link:` and tarball
+  specs are not judged, and an `npm:` alias is judged by its version. It skips a `package.json` marked `linguist-generated` and
+  runs at `error` in `recommended@1`.
+
+### Internal
+
+- `LockfileVersionDriftRule` becomes an alias of the shared scoped configuration, so
+  `recommended@1` sets it the same way as other scoped rules and `config/rules.rs` and `suites.rs` stay
+  under the file-size limit. Not observable.
+
 ## [0.12.0] - 2026-11-28
 
 ### Added

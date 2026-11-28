@@ -24,6 +24,7 @@ pub mod direct_environment_read;
 pub mod empty_error_handler;
 pub mod empty_function;
 mod enclosing;
+pub mod exact_versions;
 pub mod explicit_timer_delay;
 pub mod explicit_workflow_permissions;
 pub mod file_size;
@@ -422,6 +423,7 @@ const WORKFLOW_EVALUATORS: &[WorkflowEvaluator] = &[
 const REPOSITORY_EVALUATORS: &[RepositoryEvaluator] = &[
     branch_naming::evaluate,
     lockfile_version_drift::evaluate,
+    exact_versions::evaluate,
     no_committed_secret_file::evaluate,
 ];
 

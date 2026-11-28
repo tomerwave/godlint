@@ -26,6 +26,7 @@ expected: read it here.
 | `analyzers::vocabulary` | The questions the extractor asks a grammar |
 | `analyzers::metrics` | Derivation of the function metrics |
 | `analyzers::workflow` | Reading a GitHub Actions workflow into workflow facts |
+| `analyzers::manifest` | Reading a `package.json` into dependency spec facts |
 | `facts` | The fact types rules consume |
 | `rules` | Rule declarations, the drivers that run them, and the registry |
 | `config` | The configuration schema and its validation |
@@ -636,6 +637,19 @@ rather than adding a dependency, which is why character classes are not interpre
 
 Repository facts are not read through `scan`, so the repository rules still apply: a committed
 secret file or a drifted lockfile is a problem whoever wrote it.
+
+The dependency spec facts are the exception, because what a manifest declares is decided by whoever
+generated it. `RepositoryFacts::read_dependency_specs` collects every `package.json`, builds the same
+`Attributes` the scan uses from those paths, and drops a manifest they mark `linguist-generated`
+before reading it. JSON allows no comment, so the header markers cannot apply.
+
+`analyzers::manifest` reads the JSON by hand rather than through a dependency: it needs the byte range
+of each spec string, which a deserializer discards, and the reading is small — the top-level object,
+the three installing sections, and a skip over every other value. The skip is iterative, counting
+brackets outside strings, so a deeply nested value cannot exhaust the stack. A string's contents are
+taken as written rather than unescaped, and a document that is not an object reports nothing, which
+keeps a malformed manifest from producing a finding. Judging a spec is the rule's job; the fact
+records only the section, the package and the quoted spec.
 
 ## Reporting untrusted text
 

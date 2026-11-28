@@ -7,7 +7,7 @@ use crate::{
         condition_complexity::ConditionComplexity, decision_complexity::DecisionComplexity,
         dependency_boundary::DependencyBoundary, direct_environment_read::DirectEnvironmentRead,
         empty_error_handler::EmptyErrorHandler, empty_function::EmptyFunction,
-        explicit_timer_delay::ExplicitTimerDelay,
+        exact_versions::ExactVersions, explicit_timer_delay::ExplicitTimerDelay,
         explicit_workflow_permissions::ExplicitWorkflowPermissions, file_size::FileSize,
         filename_case::FilenameCase, forbidden_dependency::ForbiddenDependency,
         frozen_lockfile_install::FrozenLockfileInstall, function_nesting::FunctionNesting,
@@ -112,6 +112,7 @@ registrations! {
     FilenameCase => filename_case, true;
     BranchNaming => branch_naming, false;
     LockfileVersionDrift => lockfile_version_drift, true;
+    ExactVersions => exact_versions, true;
     ExplicitWorkflowPermissions => explicit_workflow_permissions, true;
     PinThirdPartyActions => pin_third_party_actions, true;
     StaleActionRefs => stale_action_refs, true;

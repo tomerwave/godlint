@@ -3,7 +3,15 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::source::{SourceRange, TextFile};
+use crate::{
+    analyzers::manifest,
+    facts::DependencySpecFact,
+    generated::Attributes,
+    paths,
+    source::{SourceRange, TextFile},
+};
+
+const PACKAGE_MANIFEST: &str = "package.json";
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct VersionDriftFact {
@@ -48,6 +56,7 @@ pub struct RepositoryFacts {
     branch: Option<TextFile>,
     version_drifts: Vec<VersionDriftFact>,
     secret_files: Vec<TextFile>,
+    dependency_specs: Vec<DependencySpecFact>,
 }
 
 impl RepositoryFacts {
@@ -56,6 +65,7 @@ impl RepositoryFacts {
             branch,
             version_drifts: Vec::new(),
             secret_files: Vec::new(),
+            dependency_specs: Vec::new(),
         }
     }
 
@@ -81,6 +91,32 @@ impl RepositoryFacts {
         &self.secret_files
     }
 
+    pub fn with_dependency_specs(mut self, dependency_specs: Vec<DependencySpecFact>) -> Self {
+        self.dependency_specs = dependency_specs;
+        self
+    }
+
+    pub fn dependency_specs(&self) -> &[DependencySpecFact] {
+        &self.dependency_specs
+    }
+
+    pub fn read_dependency_specs(root: &Path) -> Vec<DependencySpecFact> {
+        let mut manifests = Vec::new();
+        collect_package_manifests(root, &mut manifests);
+        manifests.sort();
+        let attributes = Attributes::read(root, &manifests);
+
+        manifests
+            .iter()
+            .filter(|path| {
+                path.strip_prefix(root)
+                    .is_ok_and(|relative| !attributes.marks_generated(relative))
+            })
+            .filter_map(|path| read_text_file(root, path))
+            .flat_map(|file| manifest::dependency_specs(&file))
+            .collect()
+    }
+
     pub fn read_secret_files(root: &Path) -> Vec<TextFile> {
         let mut files = Vec::new();
         collect_secret_files(root, root, &mut files);
@@ -91,6 +127,36 @@ impl RepositoryFacts {
         let mut facts = Vec::new();
         collect(root, root, &mut facts);
         facts
+    }
+}
+
+fn collect_package_manifests(directory: &Path, manifests: &mut Vec<PathBuf>) {
+    let Ok(entries) = fs::read_dir(directory) else {
+        return;
+    };
+    for path in entries.flatten().map(|entry| entry.path()) {
+        collect_package_manifest_entry(path, manifests);
+    }
+}
+
+fn collect_package_manifest_entry(path: PathBuf, manifests: &mut Vec<PathBuf>) {
+    if paths::is_symlink(&path) {
+        return;
+    }
+    if path.is_dir() {
+        return collect_package_manifest_directory(&path, manifests);
+    }
+    if path
+        .file_name()
+        .is_some_and(|name| name == PACKAGE_MANIFEST)
+    {
+        manifests.push(path);
+    }
+}
+
+fn collect_package_manifest_directory(path: &Path, manifests: &mut Vec<PathBuf>) {
+    if !ignored_directory(path) {
+        collect_package_manifests(path, manifests);
     }
 }
 

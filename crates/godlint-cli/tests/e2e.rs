@@ -105,6 +105,8 @@ fixture_tests! {
     no_inline_script_clean => "no-inline-script-clean",
     lockfile_version_drift => "lockfile-version-drift",
     lockfile_version_drift_clean => "lockfile-version-drift-clean",
+    exact_versions => "exact-versions",
+    exact_versions_clean => "exact-versions-clean",
     frozen_lockfile_install => "frozen-lockfile-install",
     frozen_lockfile_install_clean => "frozen-lockfile-install-clean",
     no_monolithic_job => "no-monolithic-job",

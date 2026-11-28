@@ -1,0 +1,17 @@
+exit-code: 1
+
+stdout: |
+  package.json:6:14: error[dependencies/exact-versions] react in dependencies is "^18.2.0", which can resolve to more than one release; declare the exact version so every install gets the same one.
+  package.json:8:15: error[dependencies/exact-versions] lodash in dependencies is "~4.17", which can resolve to more than one release; declare the exact version so every install gets the same one.
+  package.json:9:17: error[dependencies/exact-versions] anything in dependencies is "*", which can resolve to more than one release; declare the exact version so every install gets the same one.
+  package.json:10:15: error[dependencies/exact-versions] newest in dependencies is "latest", which can resolve to more than one release; declare the exact version so every install gets the same one.
+  package.json:11:17: error[dependencies/exact-versions] unstated in dependencies is "", which can resolve to more than one release; declare the exact version so every install gets the same one.
+  package.json:12:16: error[dependencies/exact-versions] renamed in dependencies is "npm:@scope/pkg@^2.0.0", which can resolve to more than one release; declare the exact version so every install gets the same one.
+  package.json:16:15: error[dependencies/exact-versions] branch in dependencies is "github:owner/repo#main", a git reference that can move; pin it to a commit hash so every install gets the same code.
+  package.json:17:18: error[dependencies/exact-versions] shorthand in dependencies is "owner/repo", a git reference that can move; pin it to a commit hash so every install gets the same code.
+  package.json:21:19: error[dependencies/exact-versions] typescript in devDependencies is ">=5.0.0 <6.0.0", which can resolve to more than one release; declare the exact version so every install gets the same one.
+  package.json:22:15: error[dependencies/exact-versions] either in devDependencies is "1.0.0 || 2.0.0", which can resolve to more than one release; declare the exact version so every install gets the same one.
+  package.json:23:14: error[dependencies/exact-versions] minor in devDependencies is "1.x", which can resolve to more than one release; declare the exact version so every install gets the same one.
+  packages/app/package.json:3:32: error[dependencies/exact-versions] vite in devDependencies is "^5.0.0", which can resolve to more than one release; declare the exact version so every install gets the same one.
+
+stderr: ""

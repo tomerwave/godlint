@@ -129,7 +129,9 @@ interpreted and match literally. A symbolically linked `.gitattributes` is not r
 Every source and workflow rule skips the file. The repository rules do not —
 `repository/no-committed-secret-file`, `dependencies/lockfile-version-drift` and `git/branch-naming`
 judge a file's name, a manifest or the branch rather than authored code, so a generated `.env` is
-still a committed secret. A marker or attribute is a claim anyone can write, so it is visible in
+still a committed secret. `dependencies/exact-versions` is the exception: it judges what a manifest
+declares, which the generator rather than the repository decides, so it skips a `package.json` that
+`.gitattributes` marks `linguist-generated`. JSON allows no comment, so a header marker cannot apply. A marker or attribute is a claim anyone can write, so it is visible in
 review like any other change; a hand-written file carrying one is skipped as well. A file marked by
 `.gitattributes` is not read at all, so it raises no issue for its size or encoding either.
 

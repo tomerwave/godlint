@@ -19,6 +19,9 @@ mod tests;
 #[path = "analyzers/go.rs"]
 mod go;
 
+#[path = "analyzers/manifest.rs"]
+mod manifest;
+
 const SUPPORTED: [&str; 11] = [
     "rs", "js", "jsx", "mjs", "cjs", "ts", "tsx", "mts", "cts", "py", "pyi",
 ];

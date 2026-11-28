@@ -109,6 +109,9 @@ mod no_randomness_without_seed;
 mod frozen_lockfile_install;
 #[path = "rules/lockfile_version_drift.rs"]
 mod lockfile_version_drift;
+
+#[path = "rules/exact_versions.rs"]
+mod exact_versions;
 #[path = "rules/no_inline_script.rs"]
 mod no_inline_script;
 #[path = "rules/no_internal_import.rs"]
