@@ -40,6 +40,7 @@ const VOCABULARY: Vocabulary = Vocabulary {
     argument,
     literal,
     properties: super::vocabulary::no_properties,
+    has_type_arguments: super::vocabulary::no_type_arguments,
     test,
     assertion,
     import,

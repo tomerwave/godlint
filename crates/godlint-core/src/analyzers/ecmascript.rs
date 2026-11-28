@@ -25,6 +25,7 @@ pub(super) const VOCABULARY: Vocabulary = Vocabulary {
     argument,
     literal,
     properties,
+    has_type_arguments,
     test,
     assertion,
     import,
@@ -200,6 +201,10 @@ fn argument(node: Node<'_>) -> Option<Argument<'_>> {
         name: None,
         value: node,
     })
+}
+
+fn has_type_arguments(node: Node<'_>) -> bool {
+    node.child_by_field_name("type_arguments").is_some()
 }
 
 fn properties(node: Node<'_>) -> Option<Vec<Argument<'_>>> {

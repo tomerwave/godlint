@@ -375,6 +375,7 @@ fn call_fact(
                 is_macro: callee.is_macro,
             },
             arguments: call_arguments(node, source, vocabulary),
+            has_type_arguments: (vocabulary.has_type_arguments)(node),
         },
     )))
 }

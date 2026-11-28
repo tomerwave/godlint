@@ -1,0 +1,7 @@
+version: 1
+
+rules:
+  infra/pulumi-unchecked-config:
+    severity: error
+    allow-in:
+      - excluded.ts

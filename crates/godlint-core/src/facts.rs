@@ -68,6 +68,7 @@ pub struct CallFact {
     extent: SourceRange,
     target: CallTarget,
     arguments: Vec<CallArgument>,
+    has_type_arguments: bool,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -192,6 +193,7 @@ impl CallArgument {
 pub struct CallFactDetails {
     pub target: CallTarget,
     pub arguments: Vec<CallArgument>,
+    pub has_type_arguments: bool,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -303,6 +305,7 @@ impl CallFact {
             extent,
             target: details.target,
             arguments: details.arguments,
+            has_type_arguments: details.has_type_arguments,
         }
     }
 
@@ -324,6 +327,10 @@ impl CallFact {
 
     pub fn is_macro(&self) -> bool {
         self.target.is_macro
+    }
+
+    pub fn has_type_arguments(&self) -> bool {
+        self.has_type_arguments
     }
 
     pub fn argument_count(&self) -> usize {

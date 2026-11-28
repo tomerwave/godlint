@@ -82,6 +82,8 @@ fixture_tests! {
     network_timeout_required_clean => "network-timeout-required-clean",
     pulumi_protect_stateful => "pulumi-protect-stateful",
     pulumi_protect_stateful_clean => "pulumi-protect-stateful-clean",
+    pulumi_unchecked_config => "pulumi-unchecked-config",
+    pulumi_unchecked_config_clean => "pulumi-unchecked-config-clean",
     no_control_flow_in_finally => "no-control-flow-in-finally",
     no_control_flow_in_finally_clean => "no-control-flow-in-finally-clean",
     redundant_catch_rethrow => "redundant-catch-rethrow",

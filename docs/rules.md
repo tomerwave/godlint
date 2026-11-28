@@ -1,6 +1,6 @@
 # Rule reference
 
-Sixty-two rules are implemented. Every one has an identifier of the form `family/name`, which is
+Sixty-three rules are implemented. Every one has an identifier of the form `family/name`, which is
 what a configuration entry and a suppression directive both name. [The rule roadmap](rule-roadmap.md)
 records the families still to come, and the reasoning behind each threshold `recommended@1` sets.
 [Language support](#language-support) records which languages each rule covers.
@@ -42,6 +42,7 @@ enforced there.
 | `ci/untrusted-github-env` | — | — | — | — | ✓ | — |
 | `git/branch-naming` | — | — | — | — | — | ✓ |
 | `infra/pulumi-protect-stateful` | ✓ | · | — | · | — | — |
+| `infra/pulumi-unchecked-config` | ✓ | · | — | — | — | — |
 | `dependencies/lockfile-version-drift` | — | — | — | — | — | ✓ |
 | `dependencies/exact-versions` | — | — | — | — | — | ✓ |
 | `repository/no-committed-secret-file` | — | — | — | — | — | ✓ |
@@ -94,8 +95,10 @@ find empty, no `.only` marker for `no-focused-test`, and no way to import anothe
 claimed the dialect would only ever be silent.
 
 `·` means the construct exists and Godlint has not taught the dialect this rule yet, which is a
-gap to close rather than a fact about the language. `infra/pulumi-protect-stateful` is the one rule in
+gap to close rather than a fact about the language. The two `infra/pulumi-*` rules are the ones in
 that state: Pulumi has Python and Go SDKs, and Godlint reads only the TypeScript and JavaScript one.
+`infra/pulumi-unchecked-config` marks Go absent rather than untaught, because Go's
+`config.RequireObject(ctx, key, &out)` decodes into a declared type instead of asserting one.
 The distinction is in the table rather than in a sentence because the two look identical to a reader
 deciding whether to file a bug.
 
@@ -597,6 +600,7 @@ only where a rule takes paths from configuration, as `no-network-in-unit-test` d
 | Rule | What it reports |
 | --- | --- |
 | `infra/pulumi-protect-stateful` | A Pulumi AWS resource that holds data, created without `protect: true` in its resource options |  |
+| `infra/pulumi-unchecked-config` | A Pulumi structured-configuration read given a type argument, which asserts the value's shape without checking it |  |
 
 Pulumi deletes a resource whenever a program stops declaring it, a `pulumi destroy` runs, or a change
 forces a replacement. `protect: true` makes Pulumi refuse all three until the flag is removed, which is
@@ -616,6 +620,22 @@ options passed as a variable, an object with a spread or a computed key, or `pro
 expression such as `isProduction`. A stack that protects only production is a decision, and the rule
 does not second-guess it. A `require("@pulumi/aws")` is not an import fact, so a CommonJS program is
 not read, and neither is a call that spreads its arguments.
+
+`config.requireObject<Settings>("key")` compiles to a plain `JSON.parse` of whatever the stack
+configuration holds: the type argument is a cast, so a missing field or a string where a number
+belongs reaches resource arguments unnoticed and fails, if at all, in the provider. `unchecked-config`
+reports `requireObject`, `getObject`, `requireSecretObject` or `getSecretObject` called as a method
+with a type argument, in a TypeScript file that imports `@pulumi/pulumi` or a path under it. The fix is
+to drop the type argument and validate the value, for example
+`Settings.parse(config.requireObject("key"))` with a zod schema, which also infers the type. A call
+without a type argument is silent, as is `require<T>` or `get<T>` for a scalar. `recommended@1`
+enables it at `error`.
+
+It reads the callee as written, so a call on a chained receiver such as
+`new pulumi.Config().requireObject<T>("key")` is not read, and neither is a getter reached through
+an alias or a destructured method. JavaScript has no type arguments, so a `.js` file never reports.
+Python's `config.require_object` takes no type argument; a variable annotation does the same job and
+is not yet read.
 
 ## Logging
 

@@ -76,6 +76,7 @@ pub(crate) struct Vocabulary {
     pub argument: fn(Node<'_>) -> Option<Argument<'_>>,
     pub literal: fn(Node<'_>, &str) -> Option<String>,
     pub properties: fn(Node<'_>) -> Option<Vec<Argument<'_>>>,
+    pub has_type_arguments: fn(Node<'_>) -> bool,
     pub test: for<'tree> fn(Node<'tree>, &str) -> Option<TestDeclaration<'tree>>,
     pub assertion: for<'tree> fn(Node<'tree>, &str) -> Option<Assertion<'tree>>,
     pub import: fn(Node<'_>) -> Option<Node<'_>>,
@@ -85,6 +86,10 @@ pub(crate) struct Vocabulary {
 
 pub(crate) fn no_properties(_node: Node<'_>) -> Option<Vec<Argument<'_>>> {
     None
+}
+
+pub(crate) fn no_type_arguments(_node: Node<'_>) -> bool {
+    false
 }
 
 pub(crate) fn literal_value(node: Node<'_>, source: &str, content: &str) -> String {

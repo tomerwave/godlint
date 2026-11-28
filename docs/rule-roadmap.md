@@ -6,8 +6,8 @@ repository intent as code output scales.
 
 Shipped rules include `reliability/no-control-flow-in-finally`, `reliability/redundant-catch-rethrow`,
 `repository/no-committed-secret-file`, `style/no-commented-code`, and
-`maintainability/no-duplicate-string`, `infra/pulumi-protect-stateful`, and
-`dependencies/exact-versions`.
+`maintainability/no-duplicate-string`, `infra/pulumi-protect-stateful`, `infra/pulumi-unchecked-config`,
+and `dependencies/exact-versions`.
 
 It should enforce decisions that need one organization-level policy across Rust,
 JavaScript/TypeScript, and Python. It should not reimplement formatters, compilers, or
@@ -324,6 +324,7 @@ semantic capability exists.
 | `logging/no-production-log` | Shipped | High | Direct logging callee match | Ban debug logging outside approved paths |
 | `reliability/network-timeout-required` | Shipped | Configured known Python client calls | Require explicit timeout argument |
 | `infra/pulumi-protect-stateful` | Shipped | High | Catalogued `@pulumi/aws` constructor and its object-literal options; in `recommended@1` | Require `protect: true` on resources that hold data |
+| `infra/pulumi-unchecked-config` | Shipped | High | Call fact type-argument flag in files importing `@pulumi/pulumi`; in `recommended@1` | Validate structured config with a schema instead of casting it |
 
 `architecture/restricted-call` establishes the direct-call boundary. It detects only
 spelled, direct callee paths: aliases, computed properties, and type-mediated calls wait

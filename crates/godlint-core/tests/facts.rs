@@ -109,6 +109,7 @@ fn records_a_call() {
                     properties: None,
                 },
             ],
+            has_type_arguments: false,
         },
     );
 
