@@ -7,6 +7,21 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 change the `godlint-core` API; the command line and the configuration schema are what the version
 speaks about.
 
+## [Unreleased]
+
+### Added
+
+- A path that `.gitattributes` marks `linguist-generated` (or `linguist-generated=true`) is treated as
+  generated, exactly like a file with a generated-code header: source and workflow rules skip it and
+  repository rules still apply. Every `.gitattributes` from the scan root down is read, with
+  gitattributes precedence — a later line and a deeper file win, and `-linguist-generated`,
+  `!linguist-generated` or `=false` clears the attribute. `.git/info/attributes` is not read.
+
+### Internal
+
+- Generated-file detection moves from `scan.rs` to its own `generated.rs`, which the mutation gate
+  now covers. Not observable.
+
 ## [0.11.0] - 2026-11-28
 
 ### Added

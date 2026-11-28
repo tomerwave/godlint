@@ -50,6 +50,17 @@ impl Repository {
 
         paths.sort();
         paths
+            .into_iter()
+            .map(|path| path.replace('\\', "/"))
+            .collect()
+    }
+
+    fn scanned_beside(&self, files: &[&str]) -> Vec<String> {
+        for file in files {
+            self.write(file, "export const value = 1;\n");
+        }
+
+        self.scanned_paths()
     }
 }
 
@@ -384,4 +395,132 @@ fn a_generated_marker_only_counts_in_a_header_comment() {
         ],
         "the tenth line is still the header; the eleventh is not"
     );
+}
+
+#[test]
+fn a_root_gitattributes_pattern_marks_files_generated() {
+    let repository = Repository::new();
+
+    repository.write(
+        ".gitattributes",
+        "# Pulumi SDKs are generated.\n\
+         infra/*/sdks/** linguist-generated=true\n\
+         /top.ts linguist-generated\n\
+         gen/*.ts linguist-generated\n\
+         *.pb.ts linguist-generated\n\
+         *.pb.ts text eol=lf\n\
+         .github/workflows/lock.yml linguist-generated\n",
+    );
+    repository.write(
+        ".github/workflows/lock.yml",
+        "jobs:\n  build:\n    steps:\n      - uses: actions/checkout@v4\n",
+    );
+
+    assert_eq!(
+        repository.scanned_beside(&[
+            "infra/db/sdks/db/index.ts",
+            "infra/db/main.ts",
+            "top.ts",
+            "nested/top.ts",
+            "gen/api.ts",
+            "gen/deep/api.ts",
+            "other/gen/api.ts",
+            "nested/messages.pb.ts",
+        ]),
+        vec![
+            "gen/deep/api.ts",
+            "infra/db/main.ts",
+            "nested/top.ts",
+            "other/gen/api.ts",
+        ]
+    );
+}
+
+#[test]
+fn a_nested_gitattributes_applies_below_its_directory() {
+    let repository = Repository::new();
+
+    repository.write("sdks/db/.gitattributes", "* linguist-generated\n");
+    repository.write(
+        "vendored/.gitattributes",
+        "** linguist-generated\nauthored.ts linguist-generated=false\n",
+    );
+    repository.write(".gitattributes", "vendored/kept.ts -linguist-generated\n");
+
+    assert_eq!(
+        repository.scanned_beside(&[
+            "sdks/db/scripts/postinstall.js",
+            "sdks/db/index.ts",
+            "sdks/other.ts",
+            "vendored/authored.ts",
+            "vendored/kept.ts",
+        ]),
+        vec!["sdks/other.ts", "vendored/authored.ts"],
+        "a deeper file overrides the root one, and a later line an earlier one"
+    );
+}
+
+#[test]
+fn a_gitattributes_line_only_marks_generated_when_it_sets_the_attribute() {
+    let repository = Repository::new();
+
+    repository.write(
+        ".gitattributes",
+        "*.ts linguist-generated\n\
+         unset.ts -linguist-generated\n\
+         unspecified.ts !linguist-generated\n\
+         false.ts linguist-generated=false\n\
+         yes.ts linguist-generated=yes\n\
+         both.ts linguist-generated -linguist-generated\n\
+         *.js linguist-vendored\n\
+         dir/ linguist-generated\n\
+         \"quoted.mjs\" linguist-generated\n\
+         !negated.mjs linguist-generated\n\
+         [attr]macro.mjs linguist-generated\n\
+         #comment.mjs linguist-generated\n",
+    );
+
+    assert_eq!(
+        repository.scanned_beside(&[
+            "marked.ts",
+            "unset.ts",
+            "unspecified.ts",
+            "false.ts",
+            "yes.ts",
+            "both.ts",
+            "vendored.js",
+            "dir/file.cjs",
+            "quoted.mjs",
+            "negated.mjs",
+            "[attr]macro.mjs",
+            "#comment.mjs",
+        ]),
+        vec![
+            "#comment.mjs",
+            "[attr]macro.mjs",
+            "both.ts",
+            "dir/file.cjs",
+            "false.ts",
+            "negated.mjs",
+            "quoted.mjs",
+            "unset.ts",
+            "unspecified.ts",
+            "vendored.js",
+            "yes.ts",
+        ]
+    );
+}
+
+#[cfg(unix)]
+#[test]
+fn a_symbolically_linked_gitattributes_is_not_read() {
+    let repository = Repository::new();
+    let target = repository
+        .directory
+        .write("attributes.txt", "* linguist-generated\n");
+
+    std::os::unix::fs::symlink(&target, repository.directory.path().join(".gitattributes"))
+        .unwrap_or_else(|error| panic!("links .gitattributes: {error}"));
+
+    assert_eq!(repository.scanned_beside(&["index.ts"]), vec!["index.ts"]);
 }

@@ -1,0 +1,8 @@
+version: 1
+
+# A path .gitattributes marks linguist-generated is not analysed, however plainly it violates.
+rules:
+  style/no-comments:
+    severity: error
+  maintainability/empty-function:
+    severity: error
