@@ -52,9 +52,12 @@ impl Reader<'_> {
     }
 
     fn skip_space(&mut self) {
-        while self.peek().is_some_and(|byte| byte.is_ascii_whitespace()) {
-            self.at += 1;
-        }
+        self.at += self
+            .text
+            .iter()
+            .skip(self.at)
+            .take_while(|byte| byte.is_ascii_whitespace())
+            .count();
     }
 
     fn opens(&mut self, byte: u8) -> bool {
@@ -76,17 +79,14 @@ impl Reader<'_> {
 
     fn string(&mut self) -> Option<SourceRange> {
         let start = self.at;
-        self.at += 1;
+        let mut escaped = false;
+        let length = self.text.get(start + 1..)?.iter().position(|byte| {
+            let closes = *byte == b'"' && !escaped;
+            escaped = *byte == b'\\' && !escaped;
+            closes
+        })?;
 
-        loop {
-            match self.peek()? {
-                b'"' => break,
-                b'\\' => self.at += 2,
-                _ => self.at += 1,
-            }
-        }
-
-        self.at += 1;
+        self.at = start + length + 2;
         Some(SourceRange::new(start, self.at))
     }
 
@@ -99,9 +99,20 @@ impl Reader<'_> {
             return Some(());
         }
 
-        while self.member(&mut member)? {}
+        self.members(&mut member)
+    }
 
-        self.expect(b'}')
+    fn members(
+        &mut self,
+        member: &mut impl FnMut(&mut Self, SourceRange) -> Option<()>,
+    ) -> Option<()> {
+        for _ in 0..=self.text.len() {
+            if !self.member(member)? {
+                return self.expect(b'}');
+            }
+        }
+
+        None
     }
 
     fn member(
@@ -128,13 +139,15 @@ impl Reader<'_> {
         let mut depth = 0_usize;
         self.skip_space();
 
-        loop {
+        for _ in 0..=self.text.len() {
             depth = self.step(depth)?;
 
             if depth == 0 && self.ends_scalar() {
                 return Some(());
             }
         }
+
+        None
     }
 
     fn step(&mut self, depth: usize) -> Option<usize> {
