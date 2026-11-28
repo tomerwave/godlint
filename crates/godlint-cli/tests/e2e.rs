@@ -59,6 +59,7 @@ fixture_tests! {
     function_nesting => "function-nesting",
     function_size => "function-size",
     function_statements => "function-statements",
+    generated_file => "generated-file",
     hardcoded_container_credentials => "hardcoded-container-credentials",
     hardcoded_container_credentials_clean => "hardcoded-container-credentials-clean",
     invalid_syntax => "invalid-syntax",

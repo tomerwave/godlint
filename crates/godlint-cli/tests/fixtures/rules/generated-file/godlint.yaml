@@ -1,0 +1,8 @@
+version: 1
+
+# A file whose header declares it generated is not analysed, however plainly it violates.
+rules:
+  style/no-comments:
+    severity: error
+  maintainability/empty-function:
+    severity: error
