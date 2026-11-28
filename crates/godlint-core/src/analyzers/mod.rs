@@ -17,6 +17,7 @@ mod control_flow;
 mod ecmascript;
 mod go;
 mod javascript;
+pub mod manifest;
 mod metrics;
 mod python;
 mod rust;

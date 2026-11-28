@@ -2,8 +2,10 @@ use std::{error::Error, fmt};
 
 use crate::source::{SourceFile, SourceRange, range_contains};
 
+pub mod manifest;
 pub mod workflow;
 
+pub use manifest::DependencySpecFact;
 pub use workflow::{
     ActionFact, BooleanFact, CredentialFact, ExpressionFact, JobFact, Secrets, Setting, StepFact,
 };

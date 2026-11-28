@@ -1,0 +1,7 @@
+version: 1
+
+rules:
+  dependencies/exact-versions:
+    severity: error
+    allow-in:
+      - tools/package.json

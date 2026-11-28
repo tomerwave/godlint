@@ -354,12 +354,13 @@ scoped_rules! {
     UnredactedSecretsRule,
     UntrustedGithubEnvRule,
     UnusedSuppressionRule,
-    LockfileVersionDriftRule,
 }
 
 pub type NetworkTimeoutRequiredRule = NoProductionLogRule;
 
 pub type PulumiProtectStatefulRule = NoProductionLogRule;
+
+pub type LockfileVersionDriftRule = NoProductionLogRule;
 
 macro_rules! count_limit_rules {
     ($($name:ident { $key:literal => $field:ident }),+ $(,)?) => {

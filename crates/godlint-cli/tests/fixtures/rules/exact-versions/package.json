@@ -1,0 +1,31 @@
+{
+  "name": "web",
+  "version": "1.0.0",
+  "scripts": { "build": "tsc" },
+  "dependencies": {
+    "react": "^18.2.0",
+    "left-pad": "1.3.0",
+    "lodash": "~4.17",
+    "anything": "*",
+    "newest": "latest",
+    "unstated": "",
+    "renamed": "npm:@scope/pkg@^2.0.0",
+    "pinned-alias": "npm:pkg@2.0.0",
+    "shared": "workspace:*",
+    "forked": "github:owner/repo#0123456789abcdef0123456789abcdef01234567",
+    "branch": "github:owner/repo#main",
+    "shorthand": "owner/repo",
+    "local": "file:../local"
+  },
+  "devDependencies": {
+    "typescript": ">=5.0.0 <6.0.0",
+    "either": "1.0.0 || 2.0.0",
+    "minor": "1.x"
+  },
+  "optionalDependencies": {
+    "fsevents": "2.3.3"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0"
+  }
+}

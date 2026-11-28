@@ -1,0 +1,15 @@
+{
+  "name": "web",
+  "version": "1.0.0",
+  "dependencies": {
+    "react": "18.2.0",
+    "shared": "workspace:^1.0.0",
+    "local": "file:../local",
+    "linked": "link:../linked",
+    "renamed": "npm:pkg@2.0.0",
+    "forked": "git+https://github.com/owner/repo.git#0123456789abcdef0123456789abcdef01234567"
+  },
+  "devDependencies": { "typescript": "5.4.5" },
+  "optionalDependencies": { "fsevents": "2.3.3" },
+  "peerDependencies": { "react": "^18.0.0" }
+}

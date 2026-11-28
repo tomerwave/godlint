@@ -6,7 +6,8 @@ repository intent as code output scales.
 
 Shipped rules include `reliability/no-control-flow-in-finally`, `reliability/redundant-catch-rethrow`,
 `repository/no-committed-secret-file`, `style/no-commented-code`, and
-`maintainability/no-duplicate-string`, and `infra/pulumi-protect-stateful`.
+`maintainability/no-duplicate-string`, `infra/pulumi-protect-stateful`, and
+`dependencies/exact-versions`.
 
 It should enforce decisions that need one organization-level policy across Rust,
 JavaScript/TypeScript, and Python. It should not reimplement formatters, compilers, or
@@ -455,6 +456,7 @@ each appears in the list.
 | `architecture/filename-case` | Shipped | Repository path fact | Medium | Support scoped case conventions and generated-file exceptions |
 | `git/branch-naming` | Shipped | Repository branch fact | High | `types`, automation `allow` globs |
 | `dependencies/lockfile-version-drift` | Shipped | Manifest and lockfile repository facts | High | Own-version comparison only; `allow-in` path globs |
+| `dependencies/exact-versions` | Shipped | `package.json` dependency spec facts | High | Semver ranges, `latest`, empty specs and git refs without a commit in installed sections; peers and local protocols unjudged; in `recommended@1` |
 
 `architecture/filename-case` reads no syntax at all — a path is the whole input — which makes it
 the one rule that behaves identically in every language.
